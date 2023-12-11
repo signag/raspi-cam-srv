@@ -2,7 +2,6 @@ import os
 
 from flask import Flask
 
-
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -24,12 +23,16 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # Make database available within the session
     from . import db
-
     db.init_app(app)
 
+    # Make the camera available within the session
+    from . import camera
+    camera.init_app(app)
+    
+    # Register required blueprints
     from . import auth
-
     app.register_blueprint(auth.bp)
     
     from . import home
