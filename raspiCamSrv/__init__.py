@@ -1,6 +1,7 @@
 import os
-
 from flask import Flask
+import logging
+from flask.logging import default_handler
 
 def create_app(test_config=None):
     # create and configure the app
@@ -26,10 +27,6 @@ def create_app(test_config=None):
     # Make database available in the application context
     from . import db
     db.init_app(app)
-
-    # Make the camera available in the application context
-    from . import cameraFactory
-    cameraFactory.init_app(app)
     
     # Register required blueprints
     from . import auth
@@ -44,5 +41,16 @@ def create_app(test_config=None):
 
     from . import images
     app.register_blueprint(images.bp)
+    
+    # Configure loggers
+    for logger in(
+        app.logger,
+        logging.getLogger("raspiCamSrv.home"),
+        logging.getLogger("raspiCamSrv.camera_case"),
+        logging.getLogger("raspiCamSrv.camera_pi"),
+        logging.getLogger("raspiCamSrv.config"),
+        logging.getLogger("raspiCamSrv.images"),
+    ):
+        logger.setLevel(logging.WARNING)
 
     return app

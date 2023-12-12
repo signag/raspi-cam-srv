@@ -2,12 +2,11 @@ from flask import Blueprint, Response, flash, g, redirect, render_template, requ
 from werkzeug.exceptions import abort
 
 from raspiCamSrv.auth import login_required
+import logging
 
 bp = Blueprint("config", __name__)
 
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @bp.route("/config")
 @login_required
