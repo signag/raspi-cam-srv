@@ -23,13 +23,13 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Make database available within the session
+    # Make database available in the application context
     from . import db
     db.init_app(app)
 
-    # Make the camera available within the session
-    from . import camera
-    camera.init_app(app)
+    # Make the camera available in the application context
+    from . import cameraFactory
+    cameraFactory.init_app(app)
     
     # Register required blueprints
     from . import auth
@@ -38,5 +38,11 @@ def create_app(test_config=None):
     from . import home
     app.register_blueprint(home.bp)
     app.add_url_rule("/", endpoint="index")
+
+    from . import config
+    app.register_blueprint(config.bp)
+
+    from . import images
+    app.register_blueprint(images.bp)
 
     return app

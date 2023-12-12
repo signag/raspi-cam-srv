@@ -2,8 +2,7 @@ from flask import Blueprint, Response, flash, g, redirect, render_template, requ
 from werkzeug.exceptions import abort
 
 from raspiCamSrv.auth import login_required
-from raspiCamSrv.db import get_db
-from raspiCamSrv.camera import get_camera
+from raspiCamSrv.cameraFactory import get_camera
 
 bp = Blueprint("home", __name__)
 
