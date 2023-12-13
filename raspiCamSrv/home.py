@@ -1,8 +1,9 @@
-from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
+from flask import current_app, Blueprint, Response, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import abort
-
 from raspiCamSrv.auth import login_required
 from raspiCamSrv.camera_pi import Camera
+import datetime
+import time
 import logging
 
 bp = Blueprint("home", __name__)
@@ -30,3 +31,19 @@ def video_feed():
     logger.debug("In video_feed")
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+    
+@bp.route("/take_image", methods=("GET", "POST"))
+@login_required
+def take_image():
+    logger.debug("In take_image")
+    if request.method == "POST":
+        path = current_app.instance_path
+        filename = request.form["filename"]
+        logger.debug("Filename from form is %s")
+        if len(filename) == 0:
+            timeImg = datetime.datetime.now()
+            filename = "image_" + timeImg.strftime("%Y%m%d_%H%M%S") + ".jpeg"
+        fp = path + "/" + filename
+        Camera().takeImage(fp)
+        return render_template("home/index.html")        
+    

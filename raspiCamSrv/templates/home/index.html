@@ -8,4 +8,11 @@
     <div>
         <img src="{{ url_for('home.video_feed') }}" width="640" height="480" >
     </div>
+    <div>
+        <form method="post" action="{{ url_for('home.take_image') }}">
+            <label for="filename">File Name</label>
+            <input name="filename" id="filename">
+            <input type="submit" value="Photo">
+        </form>
+    </div>
 {% endblock %}

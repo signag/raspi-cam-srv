@@ -27,14 +27,27 @@ class StreamingOutput(io.BufferedIOBase):
         logger.debug("write done")
 
 class Camera(BaseCamera):
+    cam = None
+    
     def __init__(self):
-        logger.debug("Camera.__init__")
+        logger.info("Camera.__init__")
+        if Camera.cam is None:
+            logger.info("Camera.__init__: Camera instantiated")
+            Camera.cam = Picamera2()
         super().__init__()
+        
+    @staticmethod
+    def takeImage(fp):
+        logger.info("Camera.takeImage")
+        with Camera.cam as cam:
+            stillConfig = cam.create_still_configuration()
+            cam.switch_mode_and_capture_file(stillConfig, fp)
+            logger.info("Camera.takeImage: Image taken %s", fp)
             
     @staticmethod
     def frames():
         logger.debug("Camera.frames")
-        with Picamera2() as cam:
+        with Camera.cam as cam:
             streamingConfig = cam.create_video_configuration(main={"size": (640, 480)})
             cam.configure(streamingConfig)
             logger.debug("starting recording")
