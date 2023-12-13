@@ -46,11 +46,12 @@ def create_app(test_config=None):
     for logger in(
         app.logger,
         logging.getLogger("raspiCamSrv.home"),
-        logging.getLogger("raspiCamSrv.camera_case"),
+        logging.getLogger("raspiCamSrv.camera_base"),
         logging.getLogger("raspiCamSrv.camera_pi"),
         logging.getLogger("raspiCamSrv.config"),
         logging.getLogger("raspiCamSrv.images"),
     ):
-        logger.setLevel(logging.WARNING)
+        logger.setLevel(logging.ERROR)
+    logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.ERROR),
 
     return app

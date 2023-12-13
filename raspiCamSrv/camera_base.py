@@ -1,6 +1,6 @@
 import time
 import threading
-from greenlet import getcurrent as get_ident
+from _thread import get_ident
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,20 +15,21 @@ class CameraEvent(object):
 
     def wait(self):
         """Invoked from each client's thread to wait for the next frame."""
-        logger.debug("CameraEvent.wait")
+        #logger.debug("CameraEvent.wait")
         ident = get_ident()
-        logger.debug("Register client with ident %s", ident)
+        logger.debug("Thread %s: CameraEvent.wait - waiting requested", ident)
         if ident not in self.events:
-            logger.debug("Adding to events dict")
             # this is a new client
             # add an entry for it in the self.events dict
             # each entry has two elements, a threading.Event() and a timestamp
             self.events[ident] = [threading.Event(), time.time()]
+            logger.debug("Thread %s: CameraEvent.wait - added to events dict.", ident)
+        logger.debug("Thread %s: CameraEvent.wait - Flag is %s", ident, self.events[ident][0].is_set())
         return self.events[ident][0].wait()
 
     def set(self):
         """Invoked by the camera thread when a new frame is available."""
-        logger.debug("CameraEvent.set")
+        #logger.debug("CameraEvent.set")
         now = time.time()
         remove = None
         for ident, event in self.events.items():
@@ -37,19 +38,23 @@ class CameraEvent(object):
                 # also update the last set timestamp to now
                 event[0].set()
                 event[1] = now
+                logger.debug("Thread %s: CameraEvent.set - Flag for event %s changed from False to True -> unblock.", get_ident(), ident)
             else:
                 # if the client's event is already set, it means the client
                 # did not process a previous frame
                 # if the event stays set for more than 5 seconds, then assume
                 # the client is gone and remove it
+                logger.debug("Thread %s: CameraEvent.set - Flag for event %s was already True.", get_ident(), ident)
                 if now - event[1] > 5:
+                    logger.debug("Thread %s: CameraEvent.set - Flag for event %s too old; marked for removal.", get_ident(), ident)
                     remove = ident
         if remove:
+            logger.debug("Thread %s: CameraEvent.set - Event %s removed.", get_ident(), ident)
             del self.events[remove]
 
     def clear(self):
         """Invoked from each client's thread after a frame was processed."""
-        logger.debug("CameraEvent.clear")
+        logger.debug("Thread %s: CameraEvent.clear - Flag set to False -> blocking.", get_ident())
         self.events[get_ident()][0].clear()
 
 
@@ -61,17 +66,18 @@ class BaseCamera(object):
 
     def __init__(self):
         """Start the background camera thread if it isn't running yet."""
-        logger.debug("BaseCamera.__init__")
+        #logger.debug("BaseCamera.__init__")
         if BaseCamera.thread is None:
-            logger.debug("Starting new thread")
+            logger.debug("BaseCamera.__init__: Starting new thread")
             BaseCamera.last_access = time.time()
 
             # start background frame thread
             BaseCamera.thread = threading.Thread(target=self._thread)
             BaseCamera.thread.start()
-            logger.debug("Thread started")
+            logger.debug("Thread %s: BaseCamera.__init__ - Thread started", get_ident())
 
             # wait until first frame is available
+            logger.debug("Thread %s: BaseCamera.__init__ - waiting for frame", get_ident())
             BaseCamera.event.wait()
 
     def get_frame(self):
@@ -80,9 +86,9 @@ class BaseCamera(object):
         BaseCamera.last_access = time.time()
 
         # wait for a signal from the camera thread
-        #logger.debug("Waiting for signal from camera thread")
+        logger.debug("Thread %s: BaseCamera.get_frame - waiting for frame", get_ident())
         BaseCamera.event.wait()
-        #logger.debug("Clearing events")
+        logger.debug("Thread %s: BaseCamera.get_frame - continue", get_ident())
         BaseCamera.event.clear()
 
         #logger.debug("Returning frame")
@@ -96,11 +102,12 @@ class BaseCamera(object):
     @classmethod
     def _thread(cls):
         """Camera background thread."""
-        logger.debug("BaseCamera._thread")
+        logger.debug("Thread %s: BaseCamera._thread", get_ident())
         frames_iterator = cls.frames()
-        logger.debug("frames_iterator instantiated")
+        logger.debug("Thread %s: BaseCamera._thread - frames_iterator instantiated", get_ident())
         for frame in frames_iterator:
             BaseCamera.frame = frame
+            logger.debug("Thread %s: BaseCamera._thread - received frame from camera", get_ident())
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
 
@@ -108,6 +115,6 @@ class BaseCamera(object):
             # the last 10 seconds then stop the thread
             if time.time() - BaseCamera.last_access > 10:
                 frames_iterator.close()
-                logger.debug('Stopping camera thread due to inactivity.')
+                logger.debug("Thread %s: BaseCamera._thread - Stopping camera thread due to inactivity.", get_ident())
                 break
         BaseCamera.thread = None
