@@ -49,6 +49,11 @@ class Camera(BaseCamera):
         logger.debug("Camera.frames")
         with Camera.cam as cam:
             streamingConfig = cam.create_video_configuration(main={"size": (640, 480)})
+#            streamingConfig = cam.create_video_configuration(
+#                lores={"size": (640, 480)},
+#                display=None,
+#                encode="lores"
+#            )
             cam.configure(streamingConfig)
             logger.debug("starting recording")
             output = StreamingOutput()
