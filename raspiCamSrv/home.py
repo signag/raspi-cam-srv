@@ -51,7 +51,7 @@ def focus_control():
         cc.focalDistance = fDist
         lenspos = cc.lensePosition
         logger.info("lensePosition is %s", lenspos)
-        #Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
+        Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
     return render_template("home/index.html", cc=cc)
         
 @bp.route("/take_image", methods=("GET", "POST"))
