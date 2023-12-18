@@ -1,13 +1,14 @@
 from libcamera import controls
+from raspiCamSrv.camera_pi import Camera
 
 class cameraControls():
-    def __init___(self):
+    def __init__(self):
         self._aeConstraintMode = 0
         self._aeEnable = None
         self._aeExposureMode = 0
         self._aeMeteringMode = 0
         self._afMetering = 0
-        self._afMode = controls.AfModeEnum.AfModeManual
+        self._afMode = controls.AfModeEnum.Manual
         self._afPause = 0
         self._afRange = 0
         self._afSpeed = 0
@@ -27,6 +28,13 @@ class cameraControls():
         self._saturation = 1.0
         self._scalerCrop = (576, 0, 3456, 2592)
         self._sharpness = 1.0
+
+    @property
+    def hasFocus(self):
+        if "AfMode" in Camera().cam.camera_controls:
+            return True
+        else:
+            return False
         
     @property
     def afMode(self):
@@ -77,5 +85,9 @@ class cameraControls():
             raise ValueError("focalDistance must be > 0")
     
 class CameraCfg():
-    def __init__():
-        pass
+    def __init__(self):
+        self._controls = cameraControls()
+    
+    @property
+    def controls(self):
+        return self._controls

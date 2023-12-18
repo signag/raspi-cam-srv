@@ -2,6 +2,7 @@ from flask import current_app, Blueprint, Response, flash, g, redirect, render_t
 from werkzeug.exceptions import abort
 from raspiCamSrv.auth import login_required
 from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.camCfg import CameraCfg
 import datetime
 import time
 import logging
@@ -13,7 +14,10 @@ logger = logging.getLogger(__name__)
 @bp.route("/")
 @login_required
 def index():
-    return render_template("home/index.html")
+    logger.debug("In index")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    return render_template("home/index.html", cc=cc)
 
 def gen(camera):
     """Video streaming generator function."""
@@ -31,7 +35,25 @@ def video_feed():
     logger.debug("In video_feed")
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
-    
+
+@bp.route("/focus_control", methods=("GET", "POST"))
+@login_required
+def focus_control():
+    logger.info("In focus_control")
+    if request.method == "POST":
+        afMode = request.form["afmode"]
+        logger.info("afMode is %s", afMode)
+        fDist = request.form["fdist"]
+        logger.info("fDist is %s", fDist)
+        cfg = CameraCfg()
+        cc = cfg.controls
+        cc.afMode = afMode
+        cc.focalDistance = fDist
+        lenspos = cc.lensePosition
+        logger.info("lensePosition is %s", lenspos)
+        Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
+    return render_template("home/index.html", cc=cc)
+        
 @bp.route("/take_image", methods=("GET", "POST"))
 @login_required
 def take_image():
