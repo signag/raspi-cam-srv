@@ -41,6 +41,9 @@ def create_app(test_config=None):
 
     from . import images
     app.register_blueprint(images.bp)
+
+    from . import info
+    app.register_blueprint(info.bp)
     
     # Configure loggers
     for logger in(

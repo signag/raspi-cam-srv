@@ -1,19 +1,21 @@
 <!doctype html>
 <title>{% block title %}{% endblock %} - Raspi Camera</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <nav>
     <h1>raspiCamSrv</h1>
     <ul>
+        {% if g.user %}
         <li><a href="{{ url_for('home.index') }}">Live</a>
         <li><a href="{{ url_for('images.main') }}">Images</a>
+        <li><a href="{{ url_for('info.main') }}">Info</a>
         <li><a href="{{ url_for('config.main') }}">Config</a>
-        {% if g.user %}
         <li><span>{{ g.user['username'] }}</span>
         <li><a href="{{ url_for('auth.logout') }}">Log Out</a>
-            {% else %}
+        {% else %}
         <li><a href="{{ url_for('auth.register') }}">Register</a>
         <li><a href="{{ url_for('auth.login') }}">Log In</a>
-            {% endif %}
+        {% endif %}
     </ul>
 </nav>
 <section class="content">
