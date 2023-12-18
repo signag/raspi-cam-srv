@@ -41,9 +41,9 @@ def video_feed():
 def focus_control():
     logger.info("In focus_control")
     if request.method == "POST":
-        afMode = request.form["afmode"]
+        afMode = int(request.form["afmode"])
         logger.info("afMode is %s", afMode)
-        fDist = request.form["fdist"]
+        fDist = float(request.form["fdist"])
         logger.info("fDist is %s", fDist)
         cfg = CameraCfg()
         cc = cfg.controls
@@ -51,7 +51,7 @@ def focus_control():
         cc.focalDistance = fDist
         lenspos = cc.lensePosition
         logger.info("lensePosition is %s", lenspos)
-        Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
+        #Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
     return render_template("home/index.html", cc=cc)
         
 @bp.route("/take_image", methods=("GET", "POST"))

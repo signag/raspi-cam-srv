@@ -26,11 +26,11 @@
                     {% if cc.afMode == 2 %}
                         <option value="2" selected>Continuous</option>
                     {% else %}
-                        <option value="1">Continuous</option>
+                        <option value="2">Continuous</option>
                     {% endif %}
                 </select>
                 <label for="fdist">Distance (between 0 and 999):</label>
-                <input type="number" id="fdist" name="fdist" min="0" max="999" step="0.01" value="1">
+                <input type="number" id="fdist" name="fdist" min="0" max="999" step="0.01" value={{ cc.focalDistance }}>
             </form>
         </div>
     {% endif %}
