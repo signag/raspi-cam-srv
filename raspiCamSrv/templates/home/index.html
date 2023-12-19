@@ -17,7 +17,7 @@
             </div>
             <div id="focus" class="w3-container controlgroup">
                 <h5>Focus handling</h5>
-                {% if not cc.hasFocus %}
+                {% if cc.hasFocus %}
                 <div>
                     <form method="post" action="{{ url_for('home.focus_control') }}">
                         <label for="afmode">Autofocus Mode:</label>
