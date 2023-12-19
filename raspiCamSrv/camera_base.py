@@ -66,7 +66,7 @@ class BaseCamera(object):
 
     def __init__(self):
         """Start the background camera thread if it isn't running yet."""
-        #logger.debug("BaseCamera.__init__")
+        logger.debug("BaseCamera.__init__")
         if BaseCamera.thread is None:
             logger.debug("BaseCamera.__init__: Starting new thread")
             BaseCamera.last_access = time.time()
@@ -79,6 +79,14 @@ class BaseCamera(object):
             # wait until first frame is available
             logger.debug("Thread %s: BaseCamera.__init__ - waiting for frame", get_ident())
             BaseCamera.event.wait()
+        else:
+            logger.debug("Thread %s: BaseCamera.__init__ - Thread exists", get_ident())
+            if not BaseCamera.thread.is_alive:
+                logger.debug("Thread %s: BaseCamera.__init__ - Thread is not alive", get_ident())
+                BaseCamera.thread = threading.Thread(target=self._thread)
+                BaseCamera.thread.start()
+                logger.debug("Thread %s: BaseCamera.__init__ - Thread started", get_ident())
+                
 
     def get_frame(self):
         """Return the current camera frame."""

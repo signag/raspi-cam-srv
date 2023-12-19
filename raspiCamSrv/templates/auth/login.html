@@ -5,11 +5,12 @@
 {% endblock %}
 
 {% block content %}
-<form method="post">
+<form class="w3-container" method="post">
     <label for="username">Username</label>
-    <input name="username" id="username" required>
+    <input class="w3-input" name="username" id="username" required>
     <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <input type="submit" value="Log In">
+    <input class="w3-input" type="password" name="password" id="password" required>
+    <p> </p>
+    <input class="w3-button w3-black" type="submit" value="Log In">
 </form>
 {% endblock %}

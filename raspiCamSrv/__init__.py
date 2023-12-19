@@ -46,6 +46,8 @@ def create_app(test_config=None):
     app.register_blueprint(info.bp)
     
     # Configure loggers
+    filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
+    filehandler.setFormatter(app.logger.handlers[0].formatter)
     for logger in(
         app.logger,
         logging.getLogger("raspiCamSrv.home"),
@@ -54,7 +56,8 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.config"),
         logging.getLogger("raspiCamSrv.images"),
     ):
-        logger.setLevel(logging.INFO)
-    logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO),
-    app.logger.setLevel(logging.INFO)
+#        logger.addHandler(filehandler)
+        logger.setLevel(logging.DEBUG)
+#    logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO),
+#    app.logger.setLevel(logging.INFO)
     return app

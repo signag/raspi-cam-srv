@@ -3,6 +3,7 @@ from werkzeug.exceptions import abort
 from raspiCamSrv.auth import login_required
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg
+import os
 import datetime
 import time
 import logging
@@ -17,7 +18,7 @@ def index():
     logger.debug("In index")
     cfg = CameraCfg()
     cc = cfg.controls
-    return render_template("home/index.html", cc=cc)
+    return render_template("home/index.html", cc=cc, ip=current_app.instance_path)
 
 def gen(camera):
     """Video streaming generator function."""
@@ -53,20 +54,26 @@ def focus_control():
             lenspos = cc.lensePosition
             logger.info("lensePosition is %s", lenspos)
             Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
-    return render_template("home/index.html", cc=cc)
+    return render_template("home/index.html", cc=cc, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
 @login_required
 def take_image():
     logger.debug("In take_image")
+    cfg = CameraCfg()
+    cc = cfg.controls
     if request.method == "POST":
-        path = current_app.instance_path
+        path = request.form["filepath"]
+        if not os.path.exists(path):
+            path = current_app.instance_path
         filename = request.form["filename"]
-        logger.debug("Filename from form is %s")
         if len(filename) == 0:
             timeImg = datetime.datetime.now()
             filename = "image_" + timeImg.strftime("%Y%m%d_%H%M%S") + ".jpeg"
         fp = path + "/" + filename
+        logger.debug("Saving image to %s", fp)
         Camera().takeImage(fp)
-        return render_template("home/index.html")        
+        msg="Image saved as " + fp
+        flash(msg)
+    return render_template("home/index.html", cc=cc, ip=current_app.instance_path)        
     

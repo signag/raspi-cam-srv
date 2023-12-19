@@ -1,6 +1,7 @@
 import io
 import time
-from raspiCamSrv.camera_base import BaseCamera
+from raspiCamSrv.camera_base import BaseCamera, CameraEvent
+import threading
 from threading import Condition
 from picamera2 import Picamera2
 from picamera2.encoders import JpegEncoder, MJPEGEncoder
@@ -36,25 +37,27 @@ class Camera(BaseCamera):
         if Camera.cam is None:
             logger.info("Camera.__init__: Camera instantiated")
             Camera.cam = Picamera2()
+        else:
+            logger.info("Camera.__init__: Camera was already instantiated")
+            if not Camera.cam.is_open:
+                logger.info("Camera.__init__: Camera was not open")
+                Camera.cam = None
+                logger.info("Camera.__init__: Camera destroyed")
+                Camera.cam = Picamera2()
+                logger.info("Camera.__init__: Camera instantiated")
+                
         super().__init__()
 
     @staticmethod
     def takeImage(fp):
         logger.info("Camera.takeImage")
         with Camera.cam as cam:
-            # stillConfig = cam.create_still_configuration(
-            #                main={"size": (640, 480), "format": "YUV420"},
-            #                raw=None,
-            #                display=None,
-            #                encode="main",
-            # )
-            # logger.info("Still config created")
-            # cam.stop_recording()
-            # Camera.thread = None
-            # cam.switch_mode_and_capture_file(stillConfig, fp)
-            cam.capture_file(fp)
+            stillConfig = cam.create_still_configuration()
+            logger.info("Camera.takeImage: Still config created")
+            logger.info("Camera.takeImage: Stopping thread")
+            cam.stop_recording()
+            cam.switch_mode_and_capture_file(stillConfig, fp)
             logger.info("Camera.takeImage: Image taken %s", fp)
-            # Camera.__init__()
 
     @staticmethod
     def frames():

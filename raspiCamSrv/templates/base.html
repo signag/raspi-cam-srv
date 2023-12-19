@@ -6,12 +6,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='w3.css') }}">
     <body>
         <div class="w3-container">
-            <div class="w3-bar w3-green w3-large">
-                <div class="w3-bar-item w3-left-align">raspiCamSrv</div>
+            <div class="w3-bar w3-blue w3-large">
+                <div class="w3-bar-item w3-left">raspiCamSrv</div>
                 <div class="w3-bar-item w3-center">{% block header %}{% endblock %}</div>
-                <div class="w3-bar-item w3-right-align">{% block device %}{% endblock %}</div>
                 {% if g.user %}
-                <span class="w3-bar-item">{{ g.user['username'] }}</span>
+                <div class="w3-bar-item w3-right">{{ g.user['username'] }}</div>
                 {% endif %}
             </div>
             <div class="w3-bar w3-black">
@@ -28,9 +27,7 @@
                 </div>
                 {% endif %}
             </div>
-            <div class="w3-row w3-light-grey">
-                {% block content %}{% endblock %}
-            </div>
+            {% block content %}{% endblock %}
             <div class="w3-bottom w3-bar w3-dark-grey">
                 {% for message in get_flashed_messages() %}
                 <div class="flash">{{ message }}</div>
