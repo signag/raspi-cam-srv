@@ -10,10 +10,10 @@
             <img src="{{ url_for('home.video_feed') }}" class="w3-image">
         </div>
         <div class="w3-container w3-half">
-        {% if not cc.hasFocus %}
+        {% if cc.hasFocus %}
             <div>
                 <form method="post" action="{{ url_for('home.focus_control') }}">
-                    <label for="afmode">Autofocus Mode:</label><br>
+                    <label for="afmode">Autofocus Mode:</label>
                     <select name="afmode" id="afmode">
                         {% if cc.afMode == 0 %}
                             <option value="0" selected>Manual</option>

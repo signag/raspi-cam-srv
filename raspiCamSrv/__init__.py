@@ -57,7 +57,7 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.images"),
     ):
 #        logger.addHandler(filehandler)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
 #    logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO),
 #    app.logger.setLevel(logging.INFO)
     return app
