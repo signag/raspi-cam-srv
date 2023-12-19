@@ -3,6 +3,7 @@ from werkzeug.exceptions import abort
 from raspiCamSrv.auth import login_required
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg
+from libcamera import controls
 import os
 import datetime
 import time
@@ -41,9 +42,9 @@ def video_feed():
 @login_required
 def focus_control():
     logger.info("In focus_control")
+    cfg = CameraCfg()
+    cc = cfg.controls
     if request.method == "POST":
-        cfg = CameraCfg()
-        cc = cfg.controls
         if cc.hasFocus:
             afMode = int(request.form["afmode"])
             logger.info("afMode is %s", afMode)
@@ -54,6 +55,25 @@ def focus_control():
             lenspos = cc.lensePosition
             logger.info("lensePosition is %s", lenspos)
             Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
+    return render_template("home/index.html", cc=cc, ip=current_app.instance_path)
+    
+@bp.route("/trigger_autofocus", methods=("GET", "POST"))
+@login_required
+def trigger_autofocus():
+    logger.debug("In trigger_autofocus")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    if request.method == "POST":
+        if cc.hasFocus:
+            if cc.afMode == controls.AfModeEnum.Auto:
+                success = Camera().cam.autofocus_cycle()
+                if success:
+                    msg = "Autofocus successful"
+                else:
+                    msg = "Autofocus not successful"
+            else:
+                msg="ERROR: Autofocus Mode must be set to 'Auto'!"
+                flash(msg)
     return render_template("home/index.html", cc=cc, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
@@ -76,4 +96,3 @@ def take_image():
         msg="Image saved as " + fp
         flash(msg)
     return render_template("home/index.html", cc=cc, ip=current_app.instance_path)        
-    

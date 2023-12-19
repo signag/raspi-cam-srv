@@ -9,33 +9,123 @@
         <div class="w3-half">
             <img src="{{ url_for('home.video_feed') }}" class="w3-image">
         </div>
-        <div class="w3-container w3-half">
-        {% if cc.hasFocus %}
-            <div>
-                <form method="post" action="{{ url_for('home.focus_control') }}">
-                    <label for="afmode">Autofocus Mode:</label>
-                    <select name="afmode" id="afmode">
-                        {% if cc.afMode == 0 %}
-                            <option value="0" selected>Manual</option>
-                        {% else %}
-                            <option value="0">Manual</option>
-                        {% endif %}
-                        {% if cc.afMode == 1 %}
-                            <option value="1" selected>Auto</option>
-                        {% else %}
-                            <option value="1">Auto</option>
-                        {% endif %}
-                        {% if cc.afMode == 2 %}
-                            <option value="2" selected>Continuous</option>
-                        {% else %}
-                            <option value="2">Continuous</option>
-                        {% endif %}
-                    </select>
-                    <label for="fdist">Focal Distance [m]:</label>
-                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value={{ cc.focalDistance }}>
-                </form>
+        <div class="w3-half">
+            <div class="w3-bar w3-green">
+                <button class="w3-bar-item w3-button" onclick="openCtrlTab('focus')">Focus</button>
+                <button class="w3-bar-item w3-button" onclick="openCtrlTab('zoom')">Zoom</button>
+                <button class="w3-bar-item w3-button" onclick="openCtrlTab('exposure')">Exposure</button>
             </div>
-        {% endif %}
+            <div id="focus" class="w3-container controlgroup">
+                <h5>Focus handling</h5>
+                {% if not cc.hasFocus %}
+                <div>
+                    <form method="post" action="{{ url_for('home.focus_control') }}">
+                        <label for="afmode">Autofocus Mode:</label>
+                        <select name="afmode" id="afmode">
+                            {% if cc.afMode == 0 %}
+                            <option value="0" selected>Manual</option>
+                            {% else %}
+                            <option value="0">Manual</option>
+                            {% endif %}
+                            {% if cc.afMode == 1 %}
+                            <option value="1" selected>Auto</option>
+                            {% else %}
+                            <option value="1">Auto</option>
+                            {% endif %}
+                            {% if cc.afMode == 2 %}
+                            <option value="2" selected>Continuous</option>
+                            {% else %}
+                            <option value="2">Continuous</option>
+                            {% endif %}
+                        </select>
+                        <br>
+                        <label for="fdist">Focal Distance [m]:</label>
+                        <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value={{ cc.focalDistance }}>
+                        <br>
+                        <label for="afmetering">Autofocus Metering:</label>
+                        <select name="afmetering" id="afmetering">
+                            {% if cc.afMetering == 0 %}
+                            <option value="0" selected>Auto</option>
+                            {% else %}
+                            <option value="0">Auto</option>
+                            {% endif %}
+                            {% if cc.afMetering == 1 %}
+                            <option value="1" selected>Windows</option>
+                            {% else %}
+                            <option value="1">Windows</option>
+                            {% endif %}
+                        </select>
+                        <br>
+                        <label for="afpause">Autofocus Pause:</label>
+                        <select name="afpause" id="afpause">
+                            {% if cc.afPause == 0 %}
+                            <option value="0" selected>Immediate</option>
+                            {% else %}
+                            <option value="0">Immediate</option>
+                            {% endif %}
+                            {% if cc.afPause == 1 %}
+                            <option value="1" selected>Deferred</option>
+                            {% else %}
+                            <option value="1">Deferred</option>
+                            {% endif %}
+                            {% if cc.afPause == 2 %}
+                            <option value="2" selected>Resume</option>
+                            {% else %}
+                            <option value="2">Resume</option>
+                            {% endif %}
+                        </select>
+                        <br>
+                        <label for="afrange">Autofocus Range:</label>
+                        <select name="afrange" id="afrange">
+                            {% if cc.afRange == 0 %}
+                            <option value="0" selected>Normal</option>
+                            {% else %}
+                            <option value="0">Normal</option>
+                            {% endif %}
+                            {% if cc.afRange == 1 %}
+                            <option value="1" selected>Macro</option>
+                            {% else %}
+                            <option value="1">Macro</option>
+                            {% endif %}
+                            {% if cc.afRange == 2 %}
+                            <option value="2" selected>Full</option>
+                            {% else %}
+                            <option value="2">Full</option>
+                            {% endif %}
+                        </select>
+                        <br>
+                        <label for="afspeed">Autofocus Speed:</label>
+                        <select name="afspeed" id="afspeed">
+                            {% if cc.afSpeed == 0 %}
+                            <option value="0" selected>Normal</option>
+                            {% else %}
+                            <option value="0">Normal</option>
+                            {% endif %}
+                            {% if cc.afSpeed == 1 %}
+                            <option value="1" selected>Fast</option>
+                            {% else %}
+                            <option value="1">Fast</option>
+                            {% endif %}
+                        </select>
+                        <br>
+                        <input class="w3-button w3-black" type="submit" value="Submit">
+                    </form>
+                    <br>
+                    <br>
+                    <form method="post" action="{{ url_for('home.trigger_autofocus') }}">
+                        <input class="w3-button w3-black" type="submit" value="Trigger Autofocus">
+                    </form>
+                </div>
+                {% else %}
+                <p>Not available for this camera</p>
+                {% endif %}
+            </div>
+            <div id="zoom" class="w3-container controlgroup" style="display:none">
+                <h5>Zoom and pan</h5>
+            </div>        
+            <div id="exposure" class="w3-container controlgroup" style="display:none">
+                <h5>Exposure</h5>
+            </div>
         </div>
     </div>
     <div class="w3-row w3-border">
@@ -47,12 +137,24 @@
                 <p></p>
                 <label for="filename">File Name (leave empty for automatic naming)</label>
                 <input class="w3-input" name="filename" id="filename">
-                <p></p>
+                <p> </p>
                 <input class="w3-button w3-black" type="submit" value="Photo">
             </form>
+            <p> </p>
         </div>
         <div class="w3-half">
             <p></p>
         </div>
     </div>
+    <script>
+        function openCtrlTab(ctrlTabName) {
+            var i;
+            var x = document.getElementsByClassName("controlgroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(ctrlTabName).style.display = "block";
+        }
+    </script>
+
 {% endblock %}
