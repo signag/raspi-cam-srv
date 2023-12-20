@@ -98,7 +98,7 @@ def trigger_autofocus():
                     msg = "Autofocus not successful"
             else:
                 msg="ERROR: Autofocus Mode must be set to 'Auto'!"
-                flash(msg)
+            flash(msg)
     return render_template("home/index.html", cc=cc, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
