@@ -83,10 +83,80 @@ class cameraControls():
                 self._lensPosition = 1.0 / value
         else:
             raise ValueError("focalDistance must be > 0")
+        
+    @property
+    def afMetering(self):
+        return self._afPause
+
+    @afMetering.setter
+    def afMetering(self, value: int):
+        if value == controls.AfMteringEnum.Auto \
+        or value == controls.AfMetringEnum.Windows:
+            self._afMetering = value
+        else:
+            raise ValueError("Invalid value for afMetering")
+
+    @afMetering.deleter
+    def afMetering(self):
+        del self._afMetering
+        
+    @property
+    def afPause(self):
+        return self._afPause
+
+    @afPause.setter
+    def afPause(self, value: int):
+        if value == controls.AfPauseEnum.Immediate \
+        or value == controls.AfPauseEnum.Deferred \
+        or value == controls.AfPauseEnum.Resume:
+            self._afPause = value
+        else:
+            raise ValueError("Invalid value for afPause")
+
+    @afPause.deleter
+    def afPause(self):
+        del self._afPause
+        
+    @property
+    def afRange(self):
+        return self._afRange
+
+    @afRange.setter
+    def afRange(self, value: int):
+        if value == controls.AfRangeEnum.Normal \
+        or value == controls.AfRangeEnum.Macro \
+        or value == controls.AfRangeEnum.Full:
+            self._afRange = value
+        else:
+            raise ValueError("Invalid value for afRange")
+
+    @afRange.deleter
+    def afRange(self):
+        del self._afRange
+        
+    @property
+    def afSpeed(self):
+        return self._afSpeed
+
+    @afSpeed.setter
+    def afSpeed(self, value: int):
+        if value == controls.AfSpeedEnum.Normal \
+        or value == controls.AfSpeedEnum.Fast:
+            self._afSpeed = value
+        else:
+            raise ValueError("Invalid value for afSpeed")
+
+    @afSpeed.deleter
+    def afSpeed(self):
+        del self._afSpeed
     
 class CameraCfg():
-    def __init__(self):
-        self._controls = cameraControls()
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(CameraCfg, cls).__new__(cls)
+            cls._controls = cameraControls()
+        return cls._instance
     
     @property
     def controls(self):

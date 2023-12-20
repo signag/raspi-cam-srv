@@ -47,14 +47,39 @@ def focus_control():
     if request.method == "POST":
         if cc.hasFocus:
             afMode = int(request.form["afmode"])
+            cc.afMode = afMode
             logger.info("afMode is %s", afMode)
+
             fDist = float(request.form["fdist"])
             logger.info("fDist is %s", fDist)
-            cc.afMode = afMode
             cc.focalDistance = fDist
             lenspos = cc.lensePosition
             logger.info("lensePosition is %s", lenspos)
-            Camera().cam.set_controls({"AfMode": afMode, "LensPosition": lenspos})
+
+            afMetering = float(request.form["afmetering"])
+            logger.info("afMetering is %s", afMetering)
+            cc.afMetering = afMetering
+
+            afPause = float(request.form["afpause"])
+            logger.info("afPause is %s", afPause)
+            cc.afPause = afPause
+
+            afRange = float(request.form["afrange"])
+            logger.info("afRange is %s", afRange)
+            cc.afRange = afRange
+
+            afSpeed = float(request.form["afspeed"])
+            logger.info("afSpeed is %s", afSpeed)
+            cc.afSpeed = afSpeed
+            
+            Camera().cam.set_controls({
+                "AfMode": afMode, 
+                "AfMetering": afMetering, 
+                "AfPause": afPause, 
+                "AfRange": afRange, 
+                "AfSpeed": afSpeed, 
+                "LensPosition": lenspos
+            })
     return render_template("home/index.html", cc=cc, ip=current_app.instance_path)
     
 @bp.route("/trigger_autofocus", methods=("GET", "POST"))
