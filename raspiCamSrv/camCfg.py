@@ -90,8 +90,8 @@ class cameraControls():
 
     @afMetering.setter
     def afMetering(self, value: int):
-        if value == controls.AfMteringEnum.Auto \
-        or value == controls.AfMetringEnum.Windows:
+        if value == controls.AfMeteringEnum.Auto \
+        or value == controls.AfMeteringEnum.Windows:
             self._afMetering = value
         else:
             raise ValueError("Invalid value for afMetering")
