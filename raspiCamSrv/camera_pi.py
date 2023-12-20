@@ -33,37 +33,52 @@ class Camera(BaseCamera):
     cam = None
 
     def __init__(self):
-        logger.info("Camera.__init__")
+        logger.debug("Camera.__init__")
         if Camera.cam is None:
-            logger.info("Camera.__init__: Camera instantiated")
+            logger.debug("Camera.__init__: Camera instantiated")
             Camera.cam = Picamera2()
         else:
-            logger.info("Camera.__init__: Camera was already instantiated")
+            logger.debug("Camera.__init__: Camera was already instantiated")
             if not Camera.cam.is_open:
-                logger.info("Camera.__init__: Camera was not open")
+                logger.debug("Camera.__init__: Camera was not open")
                 Camera.cam = None
-                logger.info("Camera.__init__: Camera destroyed")
+                logger.debug("Camera.__init__: Camera destroyed")
                 Camera.cam = Picamera2()
-                logger.info("Camera.__init__: Camera instantiated")
+                logger.debug("Camera.__init__: Camera instantiated")
                 
         super().__init__()
 
     @staticmethod
     def takeImage(fp):
-        logger.info("Camera.takeImage")
+        logger.debug("Camera.takeImage")
+        logger.debug("Camera.takeImage: Stopping thread")
+        BaseCamera.stopRequested = True
+        cnt = 0
+        while BaseCamera.thread:
+            time.sleep(0.01)
+            cnt += 1
+            if cnt > 200:
+                raise TimeoutError("Background thread did not stop within 2 sec")
+        logger.debug("Camera.takeImage: Thread has stopped")
+        Camera.cam.stop_recording()
+        logger.debug("Camera.takeImage: Recording stopped")
+        Camera.cam = Picamera2()
+        logger.debug("Camera.takeImage: Camera reinitialized")
         with Camera.cam as cam:
             stillConfig = cam.create_still_configuration()
-            logger.info("Camera.takeImage: Still config created")
-            logger.info("Camera.takeImage: Stopping thread")
-            cam.stop_recording()
-            cam.switch_mode_and_capture_file(stillConfig, fp)
-            logger.info("Camera.takeImage: Image taken %s", fp)
+            logger.debug("Camera.takeImage: Still config created: %s", stillConfig)
+            cam.configure(stillConfig)
+            logger.debug("Camera.takeImage: Camera configured for still")
+            cam.start(show_preview=False)
+            logger.debug("Camera.takeImage: Camera started")
+            logger.debug("Camera.takeImage: Image file %s", fp)
+            cam.capture_file(fp)
+            logger.debug("Camera.takeImage: Image taken %s", fp)
 
     @staticmethod
     def frames():
         logger.debug("Camera.frames")
         with Camera.cam as cam:
-            #            streamingConfig = cam.create_video_configuration(main={"size": (640, 480)})
             streamingConfig = cam.create_video_configuration(
                 lores={"size": (640, 480), "format": "YUV420"},
                 raw=None,

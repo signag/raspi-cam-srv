@@ -62,6 +62,7 @@ class BaseCamera(object):
     thread = None  # background thread that reads frames from camera
     frame = None  # current frame is stored here by background thread
     last_access = 0  # time of last client access to the camera
+    stopRequested = False #Request to stop the background thread
     event = CameraEvent()
 
     def __init__(self):
@@ -118,6 +119,13 @@ class BaseCamera(object):
             logger.debug("Thread %s: BaseCamera._thread - received frame from camera", get_ident())
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
+            
+            # Check whether stop is requested
+            if BaseCamera.stopRequested:
+                frames_iterator.close()
+                BaseCamera.stopRequested = False
+                logger.debug("Thread %s: BaseCamera._thread - Thread is requested to stop.", get_ident())
+                break
 
             # if there hasn't been any clients asking for frames in
             # the last 10 seconds then stop the thread
