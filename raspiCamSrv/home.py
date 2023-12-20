@@ -56,19 +56,19 @@ def focus_control():
             lenspos = cc.lensePosition
             logger.info("lensePosition is %s", lenspos)
 
-            afMetering = float(request.form["afmetering"])
+            afMetering = int(request.form["afmetering"])
             logger.info("afMetering is %s", afMetering)
             cc.afMetering = afMetering
 
-            afPause = float(request.form["afpause"])
+            afPause = int(request.form["afpause"])
             logger.info("afPause is %s", afPause)
             cc.afPause = afPause
 
-            afRange = float(request.form["afrange"])
+            afRange = int(request.form["afrange"])
             logger.info("afRange is %s", afRange)
             cc.afRange = afRange
 
-            afSpeed = float(request.form["afspeed"])
+            afSpeed = int(request.form["afspeed"])
             logger.info("afSpeed is %s", afSpeed)
             cc.afSpeed = afSpeed
             
