@@ -15,7 +15,11 @@
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('zoom')">Zoom</button>
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('exposure')">Exposure</button>
             </div>
+            {% if sc.lastLiveTab == "focus" %}
             <div id="focus" class="w3-container controlgroup">
+            {% else %}
+            <div id="focus" class="w3-container controlgroup" style="display:none">
+            {% endif %}
                 <h4>Focus handling</h4>
                 {% if cc.hasFocus %}
                 <div>
@@ -170,11 +174,118 @@
                 <p>Not available for this camera</p>
                 {% endif %}
             </div>
+            {% if sc.lastLiveTab == "zoom" %}
+            <div id="zoom" class="w3-container controlgroup">
+            {% else %}
             <div id="zoom" class="w3-container controlgroup" style="display:none">
-                <h5>Zoom and pan</h5>
+            {% endif %}
+                <h4>Zoom and pan</h4>
+                <div>
+                    <form method="post" action="{{ url_for('home.set_zoom') }}">
+                        <table class="w3-table-all">
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        The current zoom factor in %
+                                    </span>
+                                    <label for="zoomfactor">Current zoom factor in %:</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="zoomfactor" name="zoomfactor" value={{ sc.zoomFactor }} disabled>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        The increment or decrement (in %) by which the zoom factor will be modified in each step
+                                    </span>
+                                    <label for="zoomfactorstep">Zoom & pan step in %:</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="zoomfactorstep" name="zoomfactorstep" value={{ sc.zoomFactorStep }} min="2" max="20">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        The scaler crop rectangle determines which part of the image received from the sensor is
+                                        cropped and then scaled to produce an output image of the correct size.
+                                        (x_offset, y_offset, width, height)
+                                    </span>
+                                    <label for="scalercrop">Current ScalerCrop:</label>
+                                </td>
+                                <td>
+                                    <input type="text" id="scalercrop" name="scalercrop" value={{ cc.scalerCropStr }} disabled>
+                                </td>
+                            </tr>
+                        </table>
+                        <input class="w3-button w3-black" style ="display:none" type="submit" value="Submit">
+                    </form>
+                    <br>
+                    <table class="w3-table">
+                        <tr>
+                            <td>
+                                <form method="post" action="{{ url_for('home.zoom_in') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Zoom in">
+                                </form>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('home.pan_up') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan up">
+                                </form>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <form method="post" action="{{ url_for('home.zoom_out') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Zoom out">
+                                </form>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('home.pan_left') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan left">
+                                </form>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('home.pan_center') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Center">
+                                </form>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('home.pan_right') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan right">
+                                </form>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <form method="post" action="{{ url_for('home.zoom_full') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Full">
+                                </form>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('home.pan_down') }}">
+                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan down">
+                                </form>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>        
+            {% if sc.lastLiveTab == "exposure" %}
             <div id="exposure" class="w3-container controlgroup" style="display:none">
-                <h5>Exposure</h5>
+            {% else %}
+            <div id="exposure" class="w3-container controlgroup" style="display:none">
+            {% endif %}
+                <h4>Exposure</h4>
             </div>
         </div>
     </div>

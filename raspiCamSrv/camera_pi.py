@@ -1,6 +1,7 @@
 import io
 import time
 from raspiCamSrv.camera_base import BaseCamera, CameraEvent
+from raspiCamSrv.camCfg import CameraCfg
 import threading
 from threading import Condition
 from picamera2 import Picamera2
@@ -45,8 +46,33 @@ class Camera(BaseCamera):
                 logger.debug("Camera.__init__: Camera destroyed")
                 Camera.cam = Picamera2()
                 logger.debug("Camera.__init__: Camera instantiated")
-                
+        self.loadCameraSpecifics()
         super().__init__()
+        
+    @staticmethod
+    def loadCameraSpecifics():
+        """ Load camera specific parameters into configuration, if not already done
+        """
+        logger.info("Camera.loadCameraSpecifics")
+        cfg = CameraCfg()
+        cfgProps = cfg.cameraProperties
+        cfgCtrls = cfg.controls
+        if cfgProps.model is None:
+            camPprops = Camera.cam.camera_properties
+            cfgProps.model = camPprops["Model"]
+            cfgProps.unitCellSize = camPprops["UnitCellSize"]
+            cfgProps.location = camPprops["Location"]
+            cfgProps.rotation = camPprops["Rotation"]
+            cfgProps.pixelArraySize = camPprops["PixelArraySize"]
+            cfgProps.pixelArrayActiveAreas = camPprops["PixelArrayActiveAreas"]
+            cfgProps.colorFilterArrangement= camPprops["ColorFilterArrangement"]
+            cfgProps.scalerCropMaximum = camPprops["ScalerCropMaximum"]
+            cfgProps.systemDevices = camPprops["SystemDevices"]
+            
+            cfgProps.hasFocus = "AfMode" in Camera().cam.camera_controls
+            
+            cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
+            logger.info("Camera.loadCameraSpecifics loaded to config")
 
     @staticmethod
     def takeImage(fp):
