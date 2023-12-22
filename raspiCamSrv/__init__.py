@@ -60,4 +60,5 @@ def create_app(test_config=None):
         logger.setLevel(logging.INFO)
 #    logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO),
 #    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(logging.DEBUG)
     return app

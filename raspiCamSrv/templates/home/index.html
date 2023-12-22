@@ -13,7 +13,9 @@
             <div class="w3-bar w3-green">
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('focus')">Focus</button>
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('zoom')">Zoom</button>
+                <button class="w3-bar-item w3-button" onclick="openCtrlTab('autoexposure')">Auto-Exposure</button>
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('exposure')">Exposure</button>
+                <button class="w3-bar-item w3-button" onclick="openCtrlTab('image')">Image</button>
             </div>
             {% if sc.lastLiveTab == "focus" %}
             <div id="focus" class="w3-container controlgroup">
@@ -279,13 +281,190 @@
                         </tr>
                     </table>
                 </div>
-            </div>        
+            </div>
+            {% if sc.lastLiveTab == "autoexposure" %}
+            <div id="autoexposure" class="w3-container controlgroup">
+            {% else %}
+            <div id="autoexposure" class="w3-container controlgroup" style="display:none">
+            {% endif %}
+                <h4>Auto Exposure</h4>
+                <div>
+                    <form method="post" action="{{ url_for('home.ae_control') }}">
+                        <table class="w3-table-all">
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Enable or disable the Automatic Exposure (AE).
+                                    </span>
+                                    <label for="aeenable">AE enabled:</label>
+                                </td>
+                                <td>
+                                    {% if cc.aeEnable == True%}
+                                    <input type="checkbox" id="aeenable" name="aeenable" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="aeenable" name="aeenable" value="0">
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the metering mode of the algorithm for 
+                                        automatic gain control (AGC) and automatic exposure control (AEC).
+                                    </span>
+                                    <label for="aemeteringmode">AEC/AGC Metering Mode:</label>
+                                </td>
+                                <td>
+                                    <select name="aemeteringmode" id="aemeteringmode">
+                                        {% if cc.aeMeteringMode == 0 %}
+                                        <option value="0" selected>Center Weighted</option>
+                                        {% else %}
+                                        <option value="0">Center Weighted</option>
+                                        {% endif %}
+                                        {% if cc.aeMeteringMode == 1 %}
+                                        <option value="1" selected>Spot</option>
+                                        {% else %}
+                                        <option value="1">Spot</option>
+                                        {% endif %}
+                                        {% if cc.aeMeteringMode == 2 %}
+                                        <option value="2" selected>Matrix</option>
+                                        {% else %}
+                                        <option value="2">Matrix</option>
+                                        {% endif %}
+                                        {% if cc.aeMeteringMode == 3 %}
+                                        <option value="3" selected>Custom</option>
+                                        {% else %}
+                                        <option value="3">Custom</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the constraint mode of the algorithm for 
+                                        automatic gain control (AGC) and automatic exposure control (AEC).
+                                    </span>
+                                    <label for="aeexposuremode">AEC/AGC Exposure Mode:</label>
+                                </td>
+                                <td>
+                                    <select name="aeexposuremode" id="aeexposuremode">
+                                        {% if cc.aeExposureMode == 0 %}
+                                        <option value="0" selected>Normal</option>
+                                        {% else %}
+                                        <option value="0">Normal</option>
+                                        {% endif %}
+                                        {% if cc.aeExposureMode == 1 %}
+                                        <option value="1" selected>Short</option>
+                                        {% else %}
+                                        <option value="1">Short</option>
+                                        {% endif %}
+                                        {% if cc.aeExposureMode == 2 %}
+                                        <option value="2" selected>Long</option>
+                                        {% else %}
+                                        <option value="2">Long</option>
+                                        {% endif %}
+                                        {% if cc.aeExposureMode == 3 %}
+                                        <option value="3" selected>Custom</option>
+                                        {% else %}
+                                        <option value="3">Custom</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the constraint mode of the algorithm for 
+                                        automatic gain control (AGC) and automatic exposure control (AEC).
+                                    </span>
+                                    <label for="aeconstraintmode">AEC/AGC Constraint Mode:</label>
+                                </td>
+                                <td>
+                                    <select name="aeconstraintmode" id="aeconstraintmode">
+                                        {% if cc.aeConstraintMode == 0 %}
+                                        <option value="0" selected>Normal</option>
+                                        {% else %}
+                                        <option value="0">Normal</option>
+                                        {% endif %}
+                                        {% if cc.aeConstraintMode == 1 %}
+                                        <option value="1" selected>Highlight</option>
+                                        {% else %}
+                                        <option value="1">Highlight</option>
+                                        {% endif %}
+                                        {% if cc.aeConstraintMode == 2 %}
+                                        <option value="2" selected>Shadows</option>
+                                        {% else %}
+                                        <option value="2">Shadows</option>
+                                        {% endif %}
+                                        {% if cc.aeConstraintMode == 3 %}
+                                        <option value="3" selected>Custom</option>
+                                        {% else %}
+                                        <option value="3">Custom</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the flicker avoidance mode of the algorithm for
+                                        automatic gain control (AGC) and automatic exposure control (AEC).
+                                    </span>
+                                    <label for="aeflickermode">AEC/AGC Flicker Mode:</label>
+                                </td>
+                                <td>
+                                    <select name="aeflickermode" id="aeflickermode">
+                                        {% if cc.aeFlickerMode == 0 %}
+                                        <option value="0" selected>Off</option>
+                                        {% else %}
+                                        <option value="0">Off</option>
+                                        {% endif %}
+                                        {% if cc.aeFlickerMode == 1 %}
+                                        <option value="1" selected>Manual</option>
+                                        {% else %}
+                                        <option value="1">Manual</option>
+                                        {% endif %}
+                                        {% if cc.aeFlickerMode == 2 %}
+                                        <option value="2" selected>Auto</option>
+                                        {% else %}
+                                        <option value="2">Auto</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the lighting flicker period in microseconds.<br>
+                                        For example, for 50Hz mains lighting the flicker occurs at 100Hz, 
+                                        so the period would be 10000 microseconds
+                                    </span>
+                                    <label for="aeflickerperiod">AEC/AGC Flicker Period:</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="aeflickerperiod" name="aeflickerperiod" min="0" value={{ cc.aeFlickerPeriod }}>
+                                </td>
+                            </tr>
+                        </table>
+                        <br>
+                        <input class="w3-button w3-black" type="submit" value="Submit">
+                    </form>
+                </div>
+            </div>
             {% if sc.lastLiveTab == "exposure" %}
             <div id="exposure" class="w3-container controlgroup" style="display:none">
             {% else %}
             <div id="exposure" class="w3-container controlgroup" style="display:none">
             {% endif %}
                 <h4>Exposure</h4>
+            </div>
+            {% if sc.lastLiveTab == "image" %}
+            <div id="image" class="w3-container controlgroup" style="display:none">
+            {% else %}
+            <div id="image" class="w3-container controlgroup" style="display:none">
+            {% endif %}
+                <h4>Image</h4>
             </div>
         </div>
     </div>

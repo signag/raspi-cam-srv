@@ -16,11 +16,14 @@ logger = logging.getLogger(__name__)
 @bp.route("/")
 @login_required
 def index():
-    logger.debug("In index")
+    logger.info("In index")
+    cam = Camera()
+    logger.info("Camera instatntiated")
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    logger.info("cp.hasFocus is %s", cp.hasFocus)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
 
 def gen(camera):
@@ -55,7 +58,7 @@ def focus_control():
             cc.afMode = afMode
             logger.info("afMode is %s", afMode)
 
-            fDist = int(request.form["fdist"])
+            fDist = float(request.form["fdist"])
             logger.info("fDist is %s", fDist)
             cc.focalDistance = fDist
             lenspos = cc.lensePosition
@@ -311,6 +314,49 @@ def pan_down():
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
+
+@bp.route("/ae_control", methods=("GET", "POST"))
+@login_required
+def ae_control():
+    logger.info("In ae_control")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.lastLiveTab = "autoexposure"
+    if request.method == "POST":
+        aeConstraintMode = int(request.form["aeconstraintmode"])
+        cc.aeConstraintMode = aeConstraintMode
+
+        aeEnableForm = request.form.get("aeenable")
+        logger.info("aeEnableForm: %s", aeEnableForm)
+        if aeEnableForm is None:
+            aeEnable = False
+        else:
+            aeEnable = True
+        cc.aeEnable = aeEnable
+
+        aeExposureMode = int(request.form["aeexposuremode"])
+        cc.aeExposureMode = aeExposureMode
+
+        aeMeteringMode = int(request.form["aemeteringmode"])
+        cc.aeMeteringMode = aeMeteringMode
+
+        aeFlickerMode = int(request.form["aeflickermode"])
+        cc.aeFlickerMode = aeFlickerMode
+
+        aeFlickerPeriod = int(request.form["aeflickerperiod"])
+        cc.aeFlickerPeriod = aeFlickerPeriod
+        
+        Camera().cam.set_controls({
+            "AeConstraintMode": aeConstraintMode, 
+            "AeEnable": aeEnable, 
+            "AeExposureMode": aeExposureMode, 
+            "AeMeteringMode": aeMeteringMode, 
+            "AeFlickerMode": aeFlickerMode, 
+            "AeFlickerPeriod": aeFlickerPeriod
+        })
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
