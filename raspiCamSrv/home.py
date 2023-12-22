@@ -20,7 +20,8 @@ def index():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    cp = cfg.cameraProperties
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
 
 def gen(camera):
     """Video streaming generator function."""
@@ -46,6 +47,7 @@ def focus_control():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "focus"
     if request.method == "POST":
         if cc.hasFocus:
@@ -83,7 +85,7 @@ def focus_control():
                 "AfSpeed": afSpeed, 
                 "LensPosition": lenspos
             })
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
     
 @bp.route("/trigger_autofocus", methods=("GET", "POST"))
 @login_required
@@ -92,6 +94,7 @@ def trigger_autofocus():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "focus"
     if request.method == "POST":
         if cc.hasFocus:
@@ -104,7 +107,7 @@ def trigger_autofocus():
             else:
                 msg="ERROR: Autofocus Mode must be set to 'Auto'!"
             flash(msg)
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
     
 @bp.route("/set_zoom", methods=("GET", "POST"))
 @login_required
@@ -113,12 +116,13 @@ def set_zoom():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         step = int(request.form["zoomfactorstep"])
         sc.zoomFactorStep = step
         logger.info("sc.zoomFactorStep set to %s", step)
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
     
 @bp.route("/zoom_in", methods=("GET", "POST"))
 @login_required
@@ -126,8 +130,8 @@ def zoom_in():
     logger.info("In zoom_in")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         logger.info("ScalerCrop old: %s", cc.scalerCrop)
@@ -145,7 +149,7 @@ def zoom_in():
         cc.scalerCrop = sccrop
         logger.info("ScalerCrop new: %s", cc.scalerCrop)
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
     
 @bp.route("/zoom_out", methods=("GET", "POST"))
 @login_required
@@ -153,8 +157,8 @@ def zoom_out():
     logger.debug("In zoom_out")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         xCenter = int((cc.scalerCrop[0] + cc.scalerCrop[2])/2)
@@ -186,7 +190,7 @@ def zoom_out():
         sc.zoomFactor = zfNext
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
     
 @bp.route("/zoom_full", methods=("GET", "POST"))
 @login_required
@@ -194,15 +198,15 @@ def zoom_full():
     logger.debug("In zoom_full")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         sc.zoomFactor = 100
         sccrop = (0, 0, cp.pixelArraySize[0], cp.pixelArraySize[1])
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
     
 @bp.route("/pan_up", methods=("GET", "POST"))
 @login_required
@@ -210,8 +214,8 @@ def pan_up():
     logger.debug("In pan_up")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
@@ -223,7 +227,7 @@ def pan_up():
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
 
 @bp.route("/pan_left", methods=("GET", "POST"))
 @login_required
@@ -231,8 +235,8 @@ def pan_left():
     logger.debug("In pan_left")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
@@ -244,7 +248,7 @@ def pan_left():
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
 
 @bp.route("/pan_center", methods=("GET", "POST"))
 @login_required
@@ -252,8 +256,8 @@ def pan_center():
     logger.debug("In pan_center")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         xOffset = int((cp.pixelArraySize[0] - cc.scalerCrop[2])/2)
@@ -265,7 +269,7 @@ def pan_center():
         sccrop = (xOffset, yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
 
 @bp.route("/pan_right", methods=("GET", "POST"))
 @login_required
@@ -273,8 +277,8 @@ def pan_right():
     logger.debug("In pan_right")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
@@ -286,7 +290,7 @@ def pan_right():
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
 
 @bp.route("/pan_down", methods=("GET", "POST"))
 @login_required
@@ -294,8 +298,8 @@ def pan_down():
     logger.debug("In pan_down")
     cfg = CameraCfg()
     cc = cfg.controls
-    cp = cfg.cameraProperties
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
@@ -307,7 +311,7 @@ def pan_down():
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
 @login_required
@@ -316,6 +320,7 @@ def take_image():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     if request.method == "POST":
         path = request.form["filepath"]
         if not os.path.exists(path):
@@ -329,4 +334,4 @@ def take_image():
         Camera().takeImage(fp)
         msg="Image saved as " + fp
         flash(msg)
-    return render_template("home/index.html", cc=cc, sc=sc, ip=current_app.instance_path)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)        
