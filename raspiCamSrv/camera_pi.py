@@ -34,7 +34,7 @@ class Camera(BaseCamera):
     cam = None
 
     def __init__(self):
-        logger.debug("Camera.__init__")
+        logger.info("Camera.__init__")
         if Camera.cam is None:
             logger.debug("Camera.__init__: Camera instantiated")
             Camera.cam = Picamera2()
@@ -69,7 +69,8 @@ class Camera(BaseCamera):
             cfgProps.scalerCropMaximum = camPprops["ScalerCropMaximum"]
             cfgProps.systemDevices = camPprops["SystemDevices"]
             
-            cfgProps.hasFocus = "AfMode" in Camera().cam.camera_controls
+            cfgProps.hasFocus = "AfMode" in Camera.cam.camera_controls
+            logger.info("hasFocus set to %s", cfgProps.hasFocus)
             
             cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
             logger.info("Camera.loadCameraSpecifics loaded to config")
