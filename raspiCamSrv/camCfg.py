@@ -20,11 +20,11 @@ class CameraControls():
         self._awbEnable = True
         self._awbMode = controls.AwbModeEnum.Auto
         self._brightness = 0.0
-        self._colourGains = None
+        self._colourGains = (0, 0)
         self._contrast = 1.0
         self._exposureTime = 0
         self._exposureValue = 0.0
-        self._frameDurationLimits = 0
+        self._frameDurationLimits = (0, 0)
         self._hdrMode = controls.HdrModeEnum.Off
         self._noiseReductionMode = 0
         self._saturation = 1.0
@@ -289,14 +289,14 @@ class CameraControls():
 
     @property
     def analogueGain(self) -> float:
-        return self.__analogueGain
+        return self._analogueGain
 
     @analogueGain.setter
     def analogueGain(self, value: float):
-        if value > 1:
+        if value >= 1:
             self._analogueGain = value
         else:
-            raise ValueError("Invalid value for _analogueGain. Must be > 1.")
+            raise ValueError("Invalid value for _analogueGain. Must be >= 1.")
 
     @analogueGain.deleter
     def analogueGain(self):
@@ -373,6 +373,14 @@ class CameraControls():
         del self._colourGains
 
     @property
+    def colourGainRed(self) -> float:
+        return self._colourGains[0]
+
+    @property
+    def colourGainBlue(self) -> float:
+        return self._colourGains[1]
+
+    @property
     def contrast(self) -> float:
         return self._contrast
 
@@ -405,10 +413,10 @@ class CameraControls():
 
     @property
     def exposureTimeSec(self) -> float:
-        return int(self._exposureTime / 1000000)
+        return float(self._exposureTime / 1000000)
 
     @exposureTimeSec.setter
-    def exposureTime(self, value: float):
+    def exposureTimeSec(self, value: float):
         if value >= 0:
             self._exposureTime = int(value * 1000000)
         else:
@@ -431,12 +439,13 @@ class CameraControls():
         del self._exposureValue
 
     @property
-    def frameDurationLimits(self) -> int:
+    def frameDurationLimits(self) -> tuple:
         return self._frameDurationLimits
 
     @frameDurationLimits.setter
-    def frameDurationLimits(self, value: int):
-        if value > 0:
+    def frameDurationLimits(self, value: tuple):
+        if value[0] >= 0 \
+        and value[1] >= 0:
             self._frameDurationLimits = value
         else:
             raise ValueError("Invalid value for frameDurationLimits")
@@ -444,6 +453,14 @@ class CameraControls():
     @frameDurationLimits.deleter
     def frameDurationLimits(self):
         del self._frameDurationLimits
+
+    @property
+    def frameDurationLimitMax(self) -> int:
+        return self._frameDurationLimits[0]
+
+    @property
+    def frameDurationLimitMin(self) -> int:
+        return self._frameDurationLimits[1]
 
     @property
     def hdrMode(self) -> int:

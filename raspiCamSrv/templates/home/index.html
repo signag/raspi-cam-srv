@@ -453,11 +453,149 @@
                 </div>
             </div>
             {% if sc.lastLiveTab == "exposure" %}
-            <div id="exposure" class="w3-container controlgroup" style="display:none">
+            <div id="exposure" class="w3-container controlgroup">
             {% else %}
             <div id="exposure" class="w3-container controlgroup" style="display:none">
             {% endif %}
                 <h4>Exposure</h4>
+                <div>
+                    <form method="post" action="{{ url_for('home.exposure_control') }}">
+                        <table class="w3-table-all">
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Exposure time (shutter speed) in sec. <br>A value of 0 will activate AE.
+                                    </span>
+                                    <label for="exposuretimesec">Exposure Time in sec:</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="exposuretimesec" name="exposuretimesec" min="0.0" max="999" step="0.000001" value={{ cc.exposureTimeSec }}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Exposure compensation value in "stops", 
+                                        which adjusts the target of the AEC/AGC algorithm.
+                                        Positive values increase the target brightness,
+                                        and negative values decrease it.<br>
+                                        Zero represents the base or "normal" exposure level.
+                                    </span>
+                                    <label for="exposurevalue">Exposure Value:</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="exposurevalue" name="exposurevalue" min="-8.0" max="8.0" step="0.1" value={{ cc.exposureValue }}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Analogue gain applied by the sensor
+                                    </span>
+                                    <label for="analoguegain">Analogue Gain:</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="analoguegain" name="analoguegain" min="1.0" max="99.0" step="0.1" value={{ cc.analogueGain }}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Red colour gain. The gain applied to red pixels 
+                                        by the Automatic White Balance algorithm (AWB)
+                                    </span>
+                                    <label for="colourgainred">Colour Gain (Red):</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="colourgainred" name="colourgainred" min="0.0" max="32.0" step="0.1" value={{ cc.colourGainRed }}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Blue colour gain. The gain applied to blue pixels
+                                        by the Automatic White Balance algorithm (AWB)
+                                    </span>
+                                    <label for="colourgainblue">Colour Gain (Blue):</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" value={{ cc.colourGainBlue }}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        The maximum time that the
+                                        sensor can take to deliver a frame, measured
+                                        in microseconds. So the reciprocal of this
+                                        value (first divided by 1000000) will give the
+                                        minimum framerate that the sensor can deliver.<br>
+                                        A value of 0 reverts to using the camera default.
+                                    </span>
+                                    <label for="framedurationlimitmax">Frame Duration Limit Max (μs):</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="framedurationlimitmax" name="framedurationlimitmax" 
+                                        min="0" step="1" value={{ cc.frameDurationLimitMax }}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        The minimum time that the
+                                        sensor can take to deliver a frame, measured
+                                        in microseconds. So the reciprocal of this
+                                        value (first divided by 1000000) will give the
+                                        macimum framerate that the sensor can deliver.<br>
+                                        A value of 0 reverts to using the camera default.
+                                    </span>
+                                    <label for="framedurationlimitmin">Frame Duration Limit Min (μs):</label>
+                                </td>
+                                <td>
+                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" 
+                                        min="0" step="1" value={{ cc.frameDurationLimitMin }}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Whether to run the camera in an HDR mode
+                                        (distinct from the in-camera HDR supported by
+                                        the Camera Module 3). Most of these HDR
+                                        features work only on Pi 5 or later devices.
+                                    </span>
+                                    <label for="hdrmode">HDR Mode:</label>
+                                </td>
+                                <td>
+                                    <select name="hdrmode" id="hdrmode">
+                                        {% if cc.hdrMode == 0 %}
+                                        <option value="0" selected>Off</option>
+                                        {% else %}
+                                        <option value="0">Off</option>
+                                        {% endif %}
+                                        {% if cc.aeConstraintMode == 1 %}
+                                        <option value="1" selected>MultiExposureUnmerged</option>
+                                        {% else %}
+                                        <option value="1">MultiExposureUnmerged</option>
+                                        {% endif %}
+                                        {% if cc.aeConstraintMode == 2 %}
+                                        <option value="2" selected>MultiExposure</option>
+                                        {% else %}
+                                        <option value="2">MultiExposure</option>
+                                        {% endif %}
+                                        {% if cc.aeConstraintMode == 3 %}
+                                        <option value="3" selected>SingleExposure</option>
+                                        {% else %}
+                                        <option value="3">SingleExposure</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                        <br>
+                        <input class="w3-button w3-black" type="submit" value="Submit">
+                    </form>
+                </div>
             </div>
             {% if sc.lastLiveTab == "image" %}
             <div id="image" class="w3-container controlgroup" style="display:none">

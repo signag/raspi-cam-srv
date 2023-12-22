@@ -358,6 +358,49 @@ def ae_control():
             "AeFlickerPeriod": aeFlickerPeriod
         })
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
+
+@bp.route("/exposure_control", methods=("GET", "POST"))
+@login_required
+def exposure_control():
+    logger.info("In exposure_control")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.lastLiveTab = "exposure"
+    if request.method == "POST":
+        analogueGain = float(request.form["analoguegain"])
+        cc.analogueGain = analogueGain
+        
+        colourGainRed = float(request.form["colourgainred"])
+        colourGainBlue = float(request.form["colourgainblue"])
+        colourGains = (colourGainRed, colourGainBlue)
+        cc.colourGains = colourGains
+
+        exposureTimeSec = float(request.form["exposuretimesec"])
+        cc.exposureTimeSec = exposureTimeSec
+        exposureTime = cc.exposureTime
+
+        exposureValue = float(request.form["exposurevalue"])
+        cc.aeMeteringMode = exposureValue
+
+        frameDurationLimitMax = int(request.form["framedurationlimitmax"])
+        frameDurationLimitMin = int(request.form["framedurationlimitmin"])
+        frameDurationLimits = (frameDurationLimitMax, frameDurationLimitMin)
+        cc.frameDurationLimits = frameDurationLimits
+
+        hdrMode = int(request.form["hdrmode"])
+        cc.hdrMode = hdrMode
+        
+        Camera().cam.set_controls({
+            "AnalogueGain": analogueGain, 
+            "ColourGains": colourGains, 
+            "ExposureTime": exposureTime, 
+            "ExposureValue": exposureValue, 
+            "FrameDurationLimits": frameDurationLimits, 
+            "HdrMode": hdrMode
+        })
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
 @login_required
