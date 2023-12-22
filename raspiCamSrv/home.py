@@ -50,7 +50,7 @@ def focus_control():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "focus"
     if request.method == "POST":
-        if cc.hasFocus:
+        if cp.hasFocus:
             afMode = int(request.form["afmode"])
             cc.afMode = afMode
             logger.info("afMode is %s", afMode)
@@ -97,7 +97,7 @@ def trigger_autofocus():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "focus"
     if request.method == "POST":
-        if cc.hasFocus:
+        if cp.hasFocus:
             if cc.afMode == controls.AfModeEnum.Auto:
                 success = Camera().cam.autofocus_cycle()
                 if success:
