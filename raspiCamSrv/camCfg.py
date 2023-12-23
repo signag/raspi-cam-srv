@@ -175,18 +175,18 @@ class CameraControls():
         del self._afMode
         
     @property
-    def lensePosition(self) -> float:
+    def lensPosition(self) -> float:
         return self._lensPosition
     
-    @lensePosition.setter
-    def lensePosition(self, value: float):
+    @lensPosition.setter
+    def lensPosition(self, value: float):
         if value >= 0.0 \
         and value <= 32.0:
             self._lensPosition = value
         else:
-            raise ValueError("Invalid value for lense position. Allowed range is (0,32)")
-    @lensePosition.deleter
-    def lensePosition(self):
+            raise ValueError("Invalid value for lens position. Allowed range is (0,32)")
+    @lensPosition.deleter
+    def lensPosition(self):
         del self._lensPosition
         
     @property

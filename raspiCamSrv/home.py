@@ -63,13 +63,13 @@ def focus_control():
                 cc.afMode = afMode
                 ctrls["AfMode"] = afMode
 
-            if request.form.get("include_lenseposition") is None:
+            if request.form.get("include_lensposition") is None:
                 cc.include_lensPosition = False
             else:
                 cc.include_lensPosition = True
                 fDist = float(request.form["fdist"])
                 cc.focalDistance = fDist
-                lensPosition = cc.lensePosition
+                lensPosition = cc.lensPosition
                 ctrls["LensPosition"] = lensPosition
 
             if request.form.get("include_afmetering") is None:
@@ -86,7 +86,7 @@ def focus_control():
                 cc.include_afPause = True
                 afPause = int(request.form["afpause"])
                 cc.afPause = afPause
-                ctrls["AfPause"] = afMetering
+                ctrls["AfPause"] = afPause
 
             if request.form.get("include_afrange") is None:
                 cc.include_afRange = False
