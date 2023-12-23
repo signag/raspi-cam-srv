@@ -8,7 +8,7 @@ class CameraControls():
         self.include_aeEnable = False
         self._aeExposureMode = controls.AeExposureModeEnum.Normal
         self.include_aeExposureMode = False
-        self._aeFlickerMode = controls.AeFlickerModeEnum.Off
+        self._aeFlickerMode = 0
         self.include_aeFlickerMode = False
         self._aeFlickerPeriod = 10000
         self.include_aeFlickerPeriod = False
@@ -48,7 +48,7 @@ class CameraControls():
         self.include_exposureValue = False
         self._frameDurationLimits = (0, 0)
         self.include_frameDurationLimits = False
-        self._hdrMode = controls.HdrModeEnum.Off
+        self._hdrMode = 0
         self.include_hdrMode = False
         self._noiseReductionMode = 0
         self.include_noiseReductionMode = False
@@ -572,6 +572,8 @@ class cameraConfig():
 class CameraProperties():
     def __init__(self):
         self._hasFocus = True
+        self._hasFlicker = True
+        self._hasHdr = True
         self._model = None
         self._unitCellSize = None
         self._location = None
@@ -583,16 +585,40 @@ class CameraProperties():
         self.systemDevices = None
 
     @property
-    def hasFocus(self):
+    def hasFocus(self) -> bool:
         return self._hasFocus
 
     @hasFocus.setter
-    def hasFocus(self, value: str):
+    def hasFocus(self, value: bool):
         self._hasFocus = value
 
     @hasFocus.deleter
     def hasFocus(self):
         del self._hasFocus
+
+    @property
+    def hasFlicker(self) -> bool:
+        return self._hasFlicker
+
+    @hasFlicker.setter
+    def hasFlicker(self, value: bool):
+        self._hasFlicker = value
+
+    @hasFlicker.deleter
+    def hasFlicker(self):
+        del self._hasFlicker
+
+    @property
+    def hasHdr(self) -> bool:
+        return self._hasHdr
+
+    @hasHdr.setter
+    def hasHdr(self, value: bool):
+        self._hasHdr = value
+
+    @hasHdr.deleter
+    def hasHdr(self):
+        del self._hasHdr
 
     @property
     def model(self):

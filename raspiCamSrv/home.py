@@ -103,15 +103,9 @@ def focus_control():
                 afSpeed = int(request.form["afspeed"])
                 cc.afSpeed = afSpeed
                 ctrls["AfSpeed"] = afSpeed
-            
-            Camera().cam.set_controls({
-                "AfMode": afMode, 
-                "AfMetering": afMetering, 
-                "AfPause": afPause, 
-                "AfRange": afRange, 
-                "AfSpeed": afSpeed, 
-                "LensPosition": lenspos
-            })
+
+        if len(ctrls) > 0:
+            Camera().cam.set_controls(ctrls)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
     
 @bp.route("/trigger_autofocus", methods=("GET", "POST"))
@@ -387,21 +381,22 @@ def ae_control():
             cc.aeMeteringMode = aeMeteringMode
             ctrls["AeMeteringMode"] = aeMeteringMode
 
-        if request.form.get("include_aeflickermode") is None:
-            cc.include_aeFlickerMode = False
-        else:
-            cc.include_aeFlickerMode = True
-            aeFlickerMode = int(request.form["aeflickermode"])
-            cc.aeFlickerMode = aeFlickerMode
-            ctrls["AeFlickerMode"] = aeFlickerMode
+        if cp.hasFlicker:
+            if request.form.get("include_aeflickermode") is None:
+                cc.include_aeFlickerMode = False
+            else:
+                cc.include_aeFlickerMode = True
+                aeFlickerMode = int(request.form["aeflickermode"])
+                cc.aeFlickerMode = aeFlickerMode
+                ctrls["AeFlickerMode"] = aeFlickerMode
 
-        if request.form.get("include_aeflickerperiod") is None:
-            cc.include_aeFlickerPeriod = False
-        else:
-            cc.include_aeFlickerPeriod = True
-            aeFlickerPeriod = int(request.form["aeflickerperiod"])
-            cc.aeFlickerPeriod = aeFlickerPeriod
-            ctrls["AeFlickerPeriod"] = aeFlickerPeriod
+            if request.form.get("include_aeflickerperiod") is None:
+                cc.include_aeFlickerPeriod = False
+            else:
+                cc.include_aeFlickerPeriod = True
+                aeFlickerPeriod = int(request.form["aeflickerperiod"])
+                cc.aeFlickerPeriod = aeFlickerPeriod
+                ctrls["AeFlickerPeriod"] = aeFlickerPeriod
 
         if len(ctrls) > 0:
             Camera().cam.set_controls(ctrls)
@@ -463,14 +458,14 @@ def exposure_control():
             cc.frameDurationLimits = frameDurationLimits
             ctrls["FrameDurationLimits"] = frameDurationLimits
 
-
-        if request.form.get("include_hdrmode") is None:
-            cc.include_hdrMode = False
-        else:
-            cc.include_hdrMode = True
-            hdrMode = int(request.form["hdrmode"])
-            cc.hdrMode = hdrMode
-            ctrls["HdrMode"] = hdrMode
+        if cp.hasHdr:
+            if request.form.get("include_hdrmode") is None:
+                cc.include_hdrMode = False
+            else:
+                cc.include_hdrMode = True
+                hdrMode = int(request.form["hdrmode"])
+                cc.hdrMode = hdrMode
+                ctrls["HdrMode"] = hdrMode
 
         if len(ctrls) > 0:
             Camera().cam.set_controls(ctrls)

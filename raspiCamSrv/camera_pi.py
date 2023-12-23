@@ -70,7 +70,8 @@ class Camera(BaseCamera):
             cfgProps.systemDevices = camPprops["SystemDevices"]
             
             cfgProps.hasFocus = "AfMode" in Camera.cam.camera_controls
-            logger.info("hasFocus set to %s", cfgProps.hasFocus)
+            cfgProps.hasFlicker = "AeFlickerMode" in Camera.cam.camera_controls
+            cfgProps.hasHdr = "hdrMode" in Camera.cam.camera_controls
             
             cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
             logger.info("Camera.loadCameraSpecifics loaded to config")
