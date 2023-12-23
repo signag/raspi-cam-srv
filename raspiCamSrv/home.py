@@ -228,7 +228,7 @@ def zoom_full():
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
-    
+
 @bp.route("/pan_up", methods=("GET", "POST"))
 @login_required
 def pan_up():
@@ -240,9 +240,9 @@ def pan_up():
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
-        yOffset = cc.scalerCrop[1] + step
-        if yOffset + cc.scalerCrop[3] > cp.pixelArraySize[1]:
-            yOffset = cp.pixelArraySize[1] - cc.scalerCrop[3]
+        yOffset = cc.scalerCrop[1] - step
+        if yOffset < 0:
+            yOffset = 0
             msg="WARNING: Upper border reached!"
             flash(msg)
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
@@ -312,7 +312,7 @@ def pan_right():
         cc.scalerCrop = sccrop
         Camera().cam.set_controls({"ScalerCrop": sccrop})
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
-
+    
 @bp.route("/pan_down", methods=("GET", "POST"))
 @login_required
 def pan_down():
@@ -324,10 +324,10 @@ def pan_down():
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
-        yOffset = cc.scalerCrop[1] - step
-        if yOffset < 0:
-            yOffset = 0
-            msg="WARNING: Bottom border reached!"
+        yOffset = cc.scalerCrop[1] + step
+        if yOffset + cc.scalerCrop[3] > cp.pixelArraySize[1]:
+            yOffset = cp.pixelArraySize[1] - cc.scalerCrop[3]
+            msg="WARNING: bottom border reached!"
             flash(msg)
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
