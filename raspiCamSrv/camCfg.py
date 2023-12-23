@@ -3,33 +3,61 @@ from libcamera import controls, Transform
 class CameraControls():
     def __init__(self):
         self._aeConstraintMode = controls.AeConstraintModeEnum.Normal
+        self.include_aeConstraintMode = False
         self._aeEnable = True
+        self.include_aeEnable = False
         self._aeExposureMode = controls.AeExposureModeEnum.Normal
+        self.include_aeExposureMode = False
         self._aeFlickerMode = controls.AeFlickerModeEnum.Off
+        self.include_aeFlickerMode = False
         self._aeFlickerPeriod = 10000
+        self.include_aeFlickerPeriod = False
         self._aeMeteringMode = controls.AeMeteringModeEnum.CentreWeighted
+        self.include_aeMeteringMode = False
         self._afMode = controls.AfModeEnum.Manual
+        self.include_afMode = False
         self._lensPosition = 1.0
+        self.include_lensPosition = False
         self._afMetering = controls.AfMeteringEnum.Auto
+        self.include_afMetering = False
         self._afPause = controls.AfPauseEnum.Immediate
+        self.include_afPause = False
         self._afRange = controls.AfRangeEnum.Normal
+        self.include_afRange = False
         self._afSpeed = controls.AfSpeedEnum.Normal
+        self.include_afSpeed = False
         self._afTrigger = controls.AfTriggerEnum.Start
+        self.include_afTrigger = False
         self._afWindows = (0, 0, 0, 0)
+        self.include_afWindows = False
         self._analogueGain = 1.0
+        self.include_analogueGain = False
         self._awbEnable = True
+        self.include_awbEnable = False
         self._awbMode = controls.AwbModeEnum.Auto
+        self.include_awbMode = False
         self._brightness = 0.0
+        self.include_brightness = False
         self._colourGains = (0, 0)
+        self.include_colourGains = False
         self._contrast = 1.0
+        self.include_contrast = False
         self._exposureTime = 0
+        self.include_exposureTime = False
         self._exposureValue = 0.0
+        self.include_exposureValue = False
         self._frameDurationLimits = (0, 0)
+        self.include_frameDurationLimits = False
         self._hdrMode = controls.HdrModeEnum.Off
+        self.include_hdrMode = False
         self._noiseReductionMode = 0
+        self.include_noiseReductionMode = False
         self._saturation = 1.0
+        self.include_saturation = False
         self._scalerCrop = (0, 0, 4608, 2592)
+        self.include_scalerCrop = False
         self._sharpness = 1.0
+        self.include_sharpness = False
         
     @property
     def aeConstraintMode(self) -> int:

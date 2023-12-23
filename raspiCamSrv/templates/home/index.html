@@ -28,6 +28,15 @@
                     <form method="post" action="{{ url_for('home.focus_control') }}">
                         <table class="w3-table-all">
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_afMode == True %}
+                                    <input type="checkbox" id="include_afmode" name="include_afmode"
+                                        onclick="includeCtrl('include_afmode', 'afmode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_afmode" name="include_afmode"
+                                        onclick="includeCtrl('include_afmode', 'afmode')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         The autofocus mode.
@@ -35,7 +44,11 @@
                                     <label for="afmode">Autofocus Mode:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_afMode == True %}
                                     <select name="afmode" id="afmode">
+                                    {% else %}
+                                    <select name="afmode" id="afmode" disabled>
+                                    {% endif %}
                                         {% if cc.afMode == 0 %}
                                         <option value="0" selected>Manual</option>
                                         {% else %}
@@ -55,6 +68,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_lensPosition == True %}
+                                    <input type="checkbox" id="include_lensposition" name="include_lensposition" 
+                                        onclick="includeCtrl('include_lensposition', 'fdist')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_lensposition" name="include_lensposition" 
+                                        onclick="includeCtrl('include_lensposition', 'fdist')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         The focal distance in m. <br>(pressing Enter will automatially submit)
@@ -62,10 +84,23 @@
                                     <label for="fdist">Focal Distance [m]:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_lensPosition == True %}
                                     <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value={{ cc.focalDistance }}>
+                                    {% else %}
+                                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value={{ cc.focalDistance }} disabled>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_afMetering == True %}
+                                    <input type="checkbox" id="include_afmetering" name="include_afmetering"
+                                        onclick="includeCtrl('include_afmetering', 'afmetering')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_afmetering" name="include_afmetering"
+                                        onclick="includeCtrl('include_afmetering', 'afmetering')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Specifies where focus should be measured.
@@ -73,7 +108,11 @@
                                     <label for="afmetering">Autofocus Metering:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_afMetering == True %}
                                     <select name="afmetering" id="afmetering">
+                                    {% else %}
+                                    <select name="afmetering" id="afmetering" disabled>
+                                    {% endif %}
                                         {% if cc.afMetering == 0 %}
                                         <option value="0" selected>Auto</option>
                                         {% else %}
@@ -88,6 +127,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_afPause == True %}
+                                    <input type="checkbox" id="include_afpause" name="include_afpause"
+                                        onclick="includeCtrl('include_afpause', 'afpause')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_afpause" name="include_afpause"
+                                        onclick="includeCtrl('include_afpause', 'afpause')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Pause continuous autofocus. Only has any effect when in continuous autofocus mode.
@@ -95,7 +143,11 @@
                                     <label for="afpause">Autofocus Pause:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_afPause == True %}
                                     <select name="afpause" id="afpause">
+                                    {% else %}
+                                    <select name="afpause" id="afpause" disabled>
+                                    {% endif %}
                                         {% if cc.afPause == 0 %}
                                         <option value="0" selected>Immediate</option>
                                         {% else %}
@@ -115,6 +167,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_afRange == True %}
+                                    <input type="checkbox" id="include_afrange" name="include_afrange"
+                                        onclick="includeCtrl('include_afrange', 'afrange')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_afrange" name="include_afrange"
+                                        onclick="includeCtrl('include_afrange', 'afrange')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <label for="afrange">Autofocus Range:</label>
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -122,7 +183,11 @@
                                     </span>
                                 </td>
                                 <td>
+                                    {% if cc.include_afRange == True %}
                                     <select name="afrange" id="afrange">
+                                    {% else %}
+                                    <select name="afrange" id="afrange" disabled>
+                                    {% endif %}
                                         {% if cc.afRange == 0 %}
                                         <option value="0" selected>Normal</option>
                                         {% else %}
@@ -142,6 +207,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_afSpeed == True %}
+                                    <input type="checkbox" id="include_afspeed" name="include_afspeed"
+                                        onclick="includeCtrl('include_afspeed', 'afspeed')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_afspeed" name="include_afspeed"
+                                        onclick="includeCtrl('include_afspeed', 'afspeed')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <label for="afspeed">Autofocus Speed:</label>
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -149,7 +223,11 @@
                                     </span>
                                 </td>
                                 <td>
+                                    {% if cc.include_afSpeed == True %}
                                     <select name="afspeed" id="afspeed">
+                                    {% else %}
+                                    <select name="afspeed" id="afspeed" disabled >
+                                    {% endif %}
                                         {% if cc.afSpeed == 0 %}
                                         <option value="0" selected>Normal</option>
                                         {% else %}
@@ -292,6 +370,15 @@
                     <form method="post" action="{{ url_for('home.ae_control') }}">
                         <table class="w3-table-all">
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_aeEnable == True %}
+                                    <input type="checkbox" id="include_aeenable" name="include_aeenable" 
+                                        onclick="includeCtrl('include_aeenable', 'aeenable')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_aeenable" name="include_aeenable" 
+                                        onclick="includeCtrl('include_aeenable', 'aeenable')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Enable or disable the Automatic Exposure (AE).
@@ -299,14 +386,31 @@
                                     <label for="aeenable">AE enabled:</label>
                                 </td>
                                 <td>
-                                    {% if cc.aeEnable == True%}
+                                    {% if cc.aeEnable == True %}
+                                    {% if cc.include_aeEnable == True %}
                                     <input type="checkbox" id="aeenable" name="aeenable" value="1" checked>
                                     {% else %}
+                                    <input type="checkbox" id="aeenable" name="aeenable" value="1" checked disabled>
+                                    {% endif %}
+                                    {% else %}
+                                    {% if cc.include_aeEnable == True%}
                                     <input type="checkbox" id="aeenable" name="aeenable" value="0">
+                                    {% else %}
+                                    <input type="checkbox" id="aeenable" name="aeenable" value="0" disabled>
+                                    {% endif %}
                                     {% endif %}
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_aeMeteringMode == True %}
+                                    <input type="checkbox" id="include_aemeteringmode" name="include_aemeteringmode" 
+                                        onclick="includeCtrl('include_aemeteringmode', 'aemeteringmode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_aemeteringmode" name="include_aemeteringmode" 
+                                        onclick="includeCtrl('include_aemeteringmode', 'aemeteringmode')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Sets the metering mode of the algorithm for 
@@ -315,7 +419,11 @@
                                     <label for="aemeteringmode">AEC/AGC Metering Mode:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_aeMeteringMode == True %}
                                     <select name="aemeteringmode" id="aemeteringmode">
+                                    {% else %}
+                                    <select name="aemeteringmode" id="aemeteringmode" disabled>
+                                    {% endif %}
                                         {% if cc.aeMeteringMode == 0 %}
                                         <option value="0" selected>Center Weighted</option>
                                         {% else %}
@@ -340,6 +448,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_aeExposureMode == True %}
+                                    <input type="checkbox" id="include_aeexposuremode" name="include_aeexposuremode"
+                                        onclick="includeCtrl('include_aeexposuremode', 'aeexposuremode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_aeexposuremode" name="include_aeexposuremode"
+                                        onclick="includeCtrl('include_aeexposuremode', 'aeexposuremode')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Sets the constraint mode of the algorithm for 
@@ -348,7 +465,11 @@
                                     <label for="aeexposuremode">AEC/AGC Exposure Mode:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_aeExposureMode == True %}
                                     <select name="aeexposuremode" id="aeexposuremode">
+                                    {% else %}
+                                    <select name="aeexposuremode" id="aeexposuremode" disabled>
+                                    {% endif %}
                                         {% if cc.aeExposureMode == 0 %}
                                         <option value="0" selected>Normal</option>
                                         {% else %}
@@ -373,6 +494,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_aeConstraintMode == True %}
+                                    <input type="checkbox" id="include_aeconstraintmode" name="include_aeconstraintmode"
+                                        onclick="includeCtrl('include_aeconstraintmode', 'aeconstraintmode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_aeconstraintmode" name="include_aeconstraintmode"
+                                        onclick="includeCtrl('include_aeconstraintmode', 'aeconstraintmode')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Sets the constraint mode of the algorithm for 
@@ -381,7 +511,11 @@
                                     <label for="aeconstraintmode">AEC/AGC Constraint Mode:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_aeConstraintMode == True %}
                                     <select name="aeconstraintmode" id="aeconstraintmode">
+                                    {% else %}
+                                    <select name="aeconstraintmode" id="aeconstraintmode" disabled>
+                                    {% endif %}
                                         {% if cc.aeConstraintMode == 0 %}
                                         <option value="0" selected>Normal</option>
                                         {% else %}
@@ -406,6 +540,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_aeFlickerMode == True %}
+                                    <input type="checkbox" id="include_aeflickermode" name="include_aeflickermode"
+                                        onclick="includeCtrl('include_aeflickermode', 'aeflickermode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_aeflickermode" name="include_aeflickermode"
+                                        onclick="includeCtrl('include_aeflickermode', 'aeflickermode')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Sets the flicker avoidance mode of the algorithm for
@@ -414,7 +557,11 @@
                                     <label for="aeflickermode">AEC/AGC Flicker Mode:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_aeFlickerMode == True %}
                                     <select name="aeflickermode" id="aeflickermode">
+                                    {% else %}
+                                    <select name="aeflickermode" id="aeflickermode" disabled>
+                                    {% endif %}
                                         {% if cc.aeFlickerMode == 0 %}
                                         <option value="0" selected>Off</option>
                                         {% else %}
@@ -434,6 +581,15 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_aeFlickerPeriod == True %}
+                                    <input type="checkbox" id="include_aeflickerperiod" name="include_aeflickerperiod"
+                                        onclick="includeCtrl('include_aeflickerperiod', 'aeflickerperiod')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_aeflickerperiod" name="include_aeflickerperiod"
+                                        onclick="includeCtrl('include_aeflickerperiod', 'aeflickerperiod')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Sets the lighting flicker period in microseconds.<br>
@@ -443,7 +599,11 @@
                                     <label for="aeflickerperiod">AEC/AGC Flicker Period:</label>
                                 </td>
                                 <td>
+                                    {% if cc.include_aeFlickerPeriod == True %}
                                     <input type="number" id="aeflickerperiod" name="aeflickerperiod" min="0" value={{ cc.aeFlickerPeriod }}>
+                                    {% else %}
+                                    <input type="number" id="aeflickerperiod" name="aeflickerperiod" min="0" value={{ cc.aeFlickerPeriod }} disabled>
+                                    {% endif %}
                                 </td>
                             </tr>
                         </table>
@@ -462,17 +622,41 @@
                     <form method="post" action="{{ url_for('home.exposure_control') }}">
                         <table class="w3-table-all">
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_exposureTime == True %}
+                                    <input type="checkbox" id="include_exposuretime" name="include_exposuretime"
+                                        onclick="includeCtrl('include_exposuretime', 'exposuretimesec')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_exposuretime" name="include_exposuretime"
+                                        onclick="includeCtrl('include_exposuretime', 'exposuretimesec')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Exposure time (shutter speed) in sec. <br>A value of 0 will activate AE.
                                     </span>
                                     <label for="exposuretimesec">Exposure Time in sec:</label>
                                 </td>
-                                <td>
-                                    <input type="number" id="exposuretimesec" name="exposuretimesec" min="0.0" max="999" step="0.000001" value={{ cc.exposureTimeSec }}>
+                                <td colspan="2">
+                                    {% if cc.include_exposureTime == True %}
+                                    <input type="number" id="exposuretimesec" name="exposuretimesec" min="0.0" max="999" step="0.000001" 
+                                        value={{ cc.exposureTimeSec }}>
+                                    {% else %}
+                                    <input type="number" id="exposuretimesec" name="exposuretimesec" min="0.0" max="999" step="0.000001" 
+                                        value={{ cc.exposureTimeSec }} disabled>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_exposureValue == True %}
+                                    <input type="checkbox" id="include_exposurevalue" name="include_exposurevalue"
+                                        onclick="includeCtrl('include_exposurevalue', 'exposurevalue')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_exposurevalue" name="include_exposurevalue"
+                                        onclick="includeCtrl('include_exposurevalue', 'exposurevalue')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Exposure compensation value in "stops", 
@@ -483,80 +667,128 @@
                                     </span>
                                     <label for="exposurevalue">Exposure Value:</label>
                                 </td>
-                                <td>
-                                    <input type="number" id="exposurevalue" name="exposurevalue" min="-8.0" max="8.0" step="0.1" value={{ cc.exposureValue }}>
+                                <td colspan="2">
+                                    {% if cc.include_exposureValue == True %}
+                                    <input type="number" id="exposurevalue" name="exposurevalue" min="-8.0" max="8.0" step="0.1" 
+                                        value={{ cc.exposureValue }}>
+                                    {% else %}
+                                    <input type="number" id="exposurevalue" name="exposurevalue" min="-8.0" max="8.0" step="0.1" 
+                                        value={{ cc.exposureValue }} disabled>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_analogueGain == True %}
+                                    <input type="checkbox" id="include_analoguegain" name="include_analoguegain"
+                                        onclick="includeCtrl('include_analoguegain', 'analoguegain')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_analoguegain" name="include_analoguegain"
+                                        onclick="includeCtrl('include_analoguegain', 'analoguegain')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Analogue gain applied by the sensor
                                     </span>
                                     <label for="analoguegain">Analogue Gain:</label>
                                 </td>
-                                <td>
-                                    <input type="number" id="analoguegain" name="analoguegain" min="1.0" max="99.0" step="0.1" value={{ cc.analogueGain }}>
+                                <td colspan="2">
+                                    {% if cc.include_analogueGain == True %}
+                                    <input type="number" id="analoguegain" name="analoguegain" min="1.0" max="99.0" step="0.1" 
+                                        value={{ cc.analogueGain }}>
+                                    {% else %}
+                                    <input type="number" id="analoguegain" name="analoguegain" min="1.0" max="99.0" step="0.1" 
+                                        value={{ cc.analogueGain }} disabled>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_colourGains == True %}
+                                    <input type="checkbox" id="include_colourgains" name="include_colourgains"
+                                        onclick="includeCtrl('include_colourgains', 'colourgainred', 'colourgainblue')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_colourgains" name="include_colourgains"
+                                        onclick="includeCtrl('include_colourgains', 'colourgainred', 'colourgainblue')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                        Red colour gain. The gain applied to red pixels 
+                                        Colour gain for red (left) and blue (right). The gain applied to red / blue pixels 
                                         by the Automatic White Balance algorithm (AWB)
                                     </span>
-                                    <label for="colourgainred">Colour Gain (Red):</label>
+                                    <label for="colourgains">Colour Gain:</label>
                                 </td>
                                 <td>
-                                    <input type="number" id="colourgainred" name="colourgainred" min="0.0" max="32.0" step="0.1" value={{ cc.colourGainRed }}>
+                                    {% if cc.include_colourGains == True %}
+                                    <input type="number" id="colourgainred" name="colourgainred" min="0.0" max="32.0" step="0.1" 
+                                        value={{ cc.colourGainRed }}>
+                                    {% else %}
+                                    <input type="number" id="colourgainred" name="colourgainred" min="0.0" max="32.0" step="0.1" 
+                                        value={{ cc.colourGainRed }} disabled>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cc.include_colourGains == True %}
+                                    <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" 
+                                        value={{ cc.colourGainBlue }}>
+                                    {% else %}
+                                    <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" 
+                                        value={{ cc.colourGainBlue }} disabled>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_frameDurationLimits == True %}
+                                    <input type="checkbox" id="include_framedurationlimits" name="include_framedurationlimits"
+                                        onclick="includeCtrl('include_framedurationlimits', 'framedurationlimitmax', 'framedurationlimitmin')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_framedurationlimits" name="include_framedurationlimits"
+                                        onclick="includeCtrl('include_framedurationlimits', 'framedurationlimitmax', 'framedurationlimitmin')" value="0">
+                                    {% endif %}
+                                </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                        Blue colour gain. The gain applied to blue pixels
-                                        by the Automatic White Balance algorithm (AWB)
-                                    </span>
-                                    <label for="colourgainblue">Colour Gain (Blue):</label>
-                                </td>
-                                <td>
-                                    <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" value={{ cc.colourGainBlue }}>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="w3-tooltip">
-                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                        The maximum time that the
+                                        The maximum time (left) and minimum time (right) that the
                                         sensor can take to deliver a frame, measured
-                                        in microseconds. So the reciprocal of this
-                                        value (first divided by 1000000) will give the
-                                        minimum framerate that the sensor can deliver.<br>
+                                        in microseconds. So the reciprocal of these
+                                        values (first divided by 1000000) will give the
+                                        minimum / maximum framerates that the sensor can deliver.<br>
                                         A value of 0 reverts to using the camera default.
                                     </span>
-                                    <label for="framedurationlimitmax">Frame Duration Limit Max (μs):</label>
+                                    <label for="framedurationlimits">Frame Duration Lim Max/Min (μs):</label>
                                 </td>
                                 <td>
-                                    <input type="number" id="framedurationlimitmax" name="framedurationlimitmax" 
-                                        min="0" step="1" value={{ cc.frameDurationLimitMax }}>
+                                    {% if cc.include_frameDurationLimits == True %}
+                                    <input type="number" id="framedurationlimitmax" name="framedurationlimitmax" min="0" max="1000000" step="1" 
+                                        value={{ cc.frameDurationLimitMax }}>
+                                    {% else %}
+                                    <input type="number" id="framedurationlimitmax" name="framedurationlimitmax" min="0" max="1000000" step="1" 
+                                        value={{ cc.frameDurationLimitMax }} disabled>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cc.include_frameDurationLimits == True %}
+                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" min="0" max="1000000" step="1" 
+                                        value={{ cc.frameDurationLimitMin }}>
+                                    {% else %}
+                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" min="0" max="1000000" step="1" 
+                                        value={{ cc.frameDurationLimitMin }} disabled>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="w3-tooltip">
-                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                        The minimum time that the
-                                        sensor can take to deliver a frame, measured
-                                        in microseconds. So the reciprocal of this
-                                        value (first divided by 1000000) will give the
-                                        macimum framerate that the sensor can deliver.<br>
-                                        A value of 0 reverts to using the camera default.
-                                    </span>
-                                    <label for="framedurationlimitmin">Frame Duration Limit Min (μs):</label>
+                                <td style="width:5%">
+                                    {% if cc.include_hdrMode == True %}
+                                    <input type="checkbox" id="include_hdrmode" name="include_hdrmode"
+                                        onclick="includeCtrl('include_hdrmode', 'hdrmode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_hdrmode" name="include_hdrmode"
+                                        onclick="includeCtrl('include_hdrmode', 'hdrmode')" value="0">
+                                    {% endif %}
                                 </td>
-                                <td>
-                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" 
-                                        min="0" step="1" value={{ cc.frameDurationLimitMin }}>
-                                </td>
-                            </tr>
-                            <tr>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         Whether to run the camera in an HDR mode
@@ -566,24 +798,28 @@
                                     </span>
                                     <label for="hdrmode">HDR Mode:</label>
                                 </td>
-                                <td>
+                                <td colspan="2">
+                                    {% if cc.include_hdrMode == True %}
                                     <select name="hdrmode" id="hdrmode">
+                                    {% else %}
+                                    <select name="hdrmode" id="hdrmode" disabled>
+                                    {% endif %}
                                         {% if cc.hdrMode == 0 %}
                                         <option value="0" selected>Off</option>
                                         {% else %}
                                         <option value="0">Off</option>
                                         {% endif %}
-                                        {% if cc.aeConstraintMode == 1 %}
+                                        {% if cc.hdrMode == 1 %}
                                         <option value="1" selected>MultiExposureUnmerged</option>
                                         {% else %}
                                         <option value="1">MultiExposureUnmerged</option>
                                         {% endif %}
-                                        {% if cc.aeConstraintMode == 2 %}
+                                        {% if cc.hdrMode == 2 %}
                                         <option value="2" selected>MultiExposure</option>
                                         {% else %}
                                         <option value="2">MultiExposure</option>
                                         {% endif %}
-                                        {% if cc.aeConstraintMode == 3 %}
+                                        {% if cc.hdrMode == 3 %}
                                         <option value="3" selected>SingleExposure</option>
                                         {% else %}
                                         <option value="3">SingleExposure</option>
@@ -632,6 +868,22 @@
                 x[i].style.display = "none";
             }
             document.getElementById(ctrlTabName).style.display = "block";
+        }
+    </script>
+    <script>
+        function includeCtrl(cbId, ctrlId, ctrlId2) {
+            cb = document.getElementById(cbId)
+            if (cb.checked == true) {
+                document.getElementById(ctrlId).disabled = false;
+                if (ctrlId2 !== undefined) {
+                    document.getElementById(ctrlId2).disabled = false;
+                }
+            } else {
+                document.getElementById(ctrlId).disabled = true;
+                if (ctrlId2 !== undefined) {
+                    document.getElementById(ctrlId2).disabled = true;
+                }
+            }
         }
     </script>
 

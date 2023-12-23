@@ -54,31 +54,55 @@ def focus_control():
     sc.lastLiveTab = "focus"
     if request.method == "POST":
         if cp.hasFocus:
-            afMode = int(request.form["afmode"])
-            cc.afMode = afMode
-            logger.info("afMode is %s", afMode)
+            ctrls = {}
+            if request.form.get("include_afmode") is None:
+                cc.include_afMode = False
+            else:
+                cc.include_afMode = True
+                afMode = int(request.form["afmode"])
+                cc.afMode = afMode
+                ctrls["AfMode"] = afMode
 
-            fDist = float(request.form["fdist"])
-            logger.info("fDist is %s", fDist)
-            cc.focalDistance = fDist
-            lenspos = cc.lensePosition
-            logger.info("lensePosition is %s", lenspos)
+            if request.form.get("include_lenseposition") is None:
+                cc.include_lensPosition = False
+            else:
+                cc.include_lensPosition = True
+                fDist = float(request.form["fdist"])
+                cc.focalDistance = fDist
+                lensPosition = cc.lensePosition
+                ctrls["LensPosition"] = lensPosition
 
-            afMetering = int(request.form["afmetering"])
-            logger.info("afMetering is %s", afMetering)
-            cc.afMetering = afMetering
+            if request.form.get("include_afmetering") is None:
+                cc.include_afMetering = False
+            else:
+                cc.include_afMetering = True
+                afMetering = int(request.form["afmetering"])
+                cc.afMetering = afMetering
+                ctrls["AfMetering"] = afMetering
 
-            afPause = int(request.form["afpause"])
-            logger.info("afPause is %s", afPause)
-            cc.afPause = afPause
+            if request.form.get("include_afpause") is None:
+                cc.include_afPause = False
+            else:
+                cc.include_afPause = True
+                afPause = int(request.form["afpause"])
+                cc.afPause = afPause
+                ctrls["AfPause"] = afMetering
 
-            afRange = int(request.form["afrange"])
-            logger.info("afRange is %s", afRange)
-            cc.afRange = afRange
+            if request.form.get("include_afrange") is None:
+                cc.include_afRange = False
+            else:
+                cc.include_afRange = True
+                afRange = int(request.form["afrange"])
+                cc.afRange = afRange
+                ctrls["AfRange"] = afRange
 
-            afSpeed = int(request.form["afspeed"])
-            logger.info("afSpeed is %s", afSpeed)
-            cc.afSpeed = afSpeed
+            if request.form.get("include_afspeed") is None:
+                cc.include_afSpeed = False
+            else:
+                cc.include_afSpeed = True
+                afSpeed = int(request.form["afspeed"])
+                cc.afSpeed = afSpeed
+                ctrls["AfSpeed"] = afSpeed
             
             Camera().cam.set_controls({
                 "AfMode": afMode, 
@@ -326,37 +350,61 @@ def ae_control():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "autoexposure"
     if request.method == "POST":
-        aeConstraintMode = int(request.form["aeconstraintmode"])
-        cc.aeConstraintMode = aeConstraintMode
-
-        aeEnableForm = request.form.get("aeenable")
-        logger.info("aeEnableForm: %s", aeEnableForm)
-        if aeEnableForm is None:
-            aeEnable = False
+        ctrls = {}
+        if request.form.get("include_aeconstraintmode") is None:
+            cc.include_aeConstraintMode = False
+            logger.info("AeConstraintMode excluded")
         else:
-            aeEnable = True
-        cc.aeEnable = aeEnable
+            logger.info("AeConstraintMode included")
+            cc.include_aeConstraintMode = True
+            aeConstraintMode = int(request.form["aeconstraintmode"])
+            cc.aeConstraintMode = aeConstraintMode
+            ctrls["AeConstraintMode"] = aeConstraintMode
+            
+        if request.form.get("include_aeenable") is None:
+            cc.include_aeEnable = False
+        else:
+            cc.include_aeEnable = True
+            aeEnable = not request.form.get("aeenable") is None
+            cc.aeEnable = aeEnable
+            ctrls["AeEnable"] = aeEnable
 
-        aeExposureMode = int(request.form["aeexposuremode"])
-        cc.aeExposureMode = aeExposureMode
+        if request.form.get("include_aeexposuremode") is None:
+            cc.include_aeExposureMode = False
+        else:
+            cc.include_aeExposureMode = True
+            aeExposureMode = int(request.form["aeexposuremode"])
+            cc.aeExposureMode = aeExposureMode
+            ctrls["AeExposureMode"] = aeExposureMode
 
-        aeMeteringMode = int(request.form["aemeteringmode"])
-        cc.aeMeteringMode = aeMeteringMode
+        if request.form.get("include_aemeteringmode") is None:
+            cc.include_aeMeteringMode = False
+            logger.info("AeMeteringMode excluded")
+        else:
+            logger.info("AeMeteringMode included")
+            cc.include_aeMeteringMode = True
+            aeMeteringMode = int(request.form["aemeteringmode"])
+            cc.aeMeteringMode = aeMeteringMode
+            ctrls["AeMeteringMode"] = aeMeteringMode
 
-        aeFlickerMode = int(request.form["aeflickermode"])
-        cc.aeFlickerMode = aeFlickerMode
+        if request.form.get("include_aeflickermode") is None:
+            cc.include_aeFlickerMode = False
+        else:
+            cc.include_aeFlickerMode = True
+            aeFlickerMode = int(request.form["aeflickermode"])
+            cc.aeFlickerMode = aeFlickerMode
+            ctrls["AeFlickerMode"] = aeFlickerMode
 
-        aeFlickerPeriod = int(request.form["aeflickerperiod"])
-        cc.aeFlickerPeriod = aeFlickerPeriod
-        
-        Camera().cam.set_controls({
-            "AeConstraintMode": aeConstraintMode, 
-            "AeEnable": aeEnable, 
-            "AeExposureMode": aeExposureMode, 
-            "AeMeteringMode": aeMeteringMode, 
-            "AeFlickerMode": aeFlickerMode, 
-            "AeFlickerPeriod": aeFlickerPeriod
-        })
+        if request.form.get("include_aeflickerperiod") is None:
+            cc.include_aeFlickerPeriod = False
+        else:
+            cc.include_aeFlickerPeriod = True
+            aeFlickerPeriod = int(request.form["aeflickerperiod"])
+            cc.aeFlickerPeriod = aeFlickerPeriod
+            ctrls["AeFlickerPeriod"] = aeFlickerPeriod
+
+        if len(ctrls) > 0:
+            Camera().cam.set_controls(ctrls)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
 
 @bp.route("/exposure_control", methods=("GET", "POST"))
@@ -369,37 +417,63 @@ def exposure_control():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "exposure"
     if request.method == "POST":
-        analogueGain = float(request.form["analoguegain"])
-        cc.analogueGain = analogueGain
+        ctrls = {}
+        if request.form.get("include_analoguegain") is None:
+            cc.include_analogueGain = False
+        else:
+            cc.include_analogueGain = True
+            analogueGain = float(request.form["analoguegain"])
+            cc.analogueGain = analogueGain
+            ctrls["AnalogueGain"] = analogueGain
         
-        colourGainRed = float(request.form["colourgainred"])
-        colourGainBlue = float(request.form["colourgainblue"])
-        colourGains = (colourGainRed, colourGainBlue)
-        cc.colourGains = colourGains
-
-        exposureTimeSec = float(request.form["exposuretimesec"])
-        cc.exposureTimeSec = exposureTimeSec
-        exposureTime = cc.exposureTime
-
-        exposureValue = float(request.form["exposurevalue"])
-        cc.aeMeteringMode = exposureValue
-
-        frameDurationLimitMax = int(request.form["framedurationlimitmax"])
-        frameDurationLimitMin = int(request.form["framedurationlimitmin"])
-        frameDurationLimits = (frameDurationLimitMax, frameDurationLimitMin)
-        cc.frameDurationLimits = frameDurationLimits
-
-        hdrMode = int(request.form["hdrmode"])
-        cc.hdrMode = hdrMode
+        if request.form.get("include_colourgains") is None:
+            cc.include_colourGains = False
+        else:
+            cc.include_colourGains = True
+            colourGainRed = float(request.form["colourgainred"])
+            colourGainBlue = float(request.form["colourgainblue"])
+            colourGains = (colourGainRed, colourGainBlue)
+            cc.colourGains = colourGains
+            ctrls["ColourGains"] = colourGains
         
-        Camera().cam.set_controls({
-            "AnalogueGain": analogueGain, 
-            "ColourGains": colourGains, 
-            "ExposureTime": exposureTime, 
-            "ExposureValue": exposureValue, 
-            "FrameDurationLimits": frameDurationLimits, 
-            "HdrMode": hdrMode
-        })
+        if request.form.get("include_exposuretime") is None:
+            cc.include_exposureTime = False
+        else:
+            cc.include_exposureTime = True
+            exposureTimeSec = float(request.form["exposuretimesec"])
+            cc.exposureTimeSec = exposureTimeSec
+            exposureTime = cc.exposureTime
+            ctrls["ExposureTime"] = exposureTime
+        
+        if request.form.get("include_exposurevalue") is None:
+            cc.include_exposureValue = False
+        else:
+            cc.include_exposureValue = True
+            exposureValue = float(request.form["exposurevalue"])
+            cc.exposureValue = exposureValue
+            ctrls["ExposureValue"] = exposureValue
+
+        if request.form.get("include_framedurationlimits") is None:
+            cc.include_frameDurationLimits = False
+        else:
+            cc.include_frameDurationLimits = True
+            frameDurationLimitMax = int(request.form["framedurationlimitmax"])
+            frameDurationLimitMin = int(request.form["framedurationlimitmin"])
+            frameDurationLimits = (frameDurationLimitMax, frameDurationLimitMin)
+            cc.frameDurationLimits = frameDurationLimits
+            ctrls["FrameDurationLimits"] = frameDurationLimits
+
+
+        if request.form.get("include_hdrmode") is None:
+            cc.include_hdrMode = False
+        else:
+            cc.include_hdrMode = True
+            hdrMode = int(request.form["hdrmode"])
+            cc.hdrMode = hdrMode
+            ctrls["HdrMode"] = hdrMode
+
+        if len(ctrls) > 0:
+            Camera().cam.set_controls(ctrls)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
