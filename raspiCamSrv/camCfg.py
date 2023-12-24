@@ -369,8 +369,8 @@ class CameraControls():
 
     @brightness.setter
     def brightness(self, value: float):
-        if value > -1.0 \
-        and value < 1.0:
+        if value >= -1.0 \
+        and value <= 1.0:
             self._brightness = value
         else:
             raise ValueError("Invalid value for brightness. Allowed range is [-1;1]")

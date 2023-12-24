@@ -838,11 +838,278 @@
                 </div>
             </div>
             {% if sc.lastLiveTab == "image" %}
-            <div id="image" class="w3-container controlgroup" style="display:none">
+            <div id="image" class="w3-container controlgroup">
             {% else %}
             <div id="image" class="w3-container controlgroup" style="display:none">
             {% endif %}
                 <h4>Image</h4>
+                <div>
+                    <form method="post" action="{{ url_for('home.image_control') }}">
+                        <table class="w3-table-all">
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_awbEnable == True %}
+                                    <input type="checkbox" id="include_awbenable" name="include_awbenable"
+                                        onclick="includeCtrl('include_awbenable', 'awbenable')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_awbenable" name="include_awbenable"
+                                        onclick="includeCtrl('include_awbenable', 'awbenable')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Turn the auto white balance (AWB) algorithm
+                                        on or off. When it is off, there will be no
+                                        automatic updates to the colour gains.
+                                    </span>
+                                    <label for="awbenable">AWB enabled:</label>
+                                </td>
+                                <td>
+                                    {% if cc.awbEnable == True %}
+                                    {% if cc.include_awbEnable == True %}
+                                    <input type="checkbox" id="awbenable" name="awbenable" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="awbenable" name="awbenable" value="1" checked disabled>
+                                    {% endif %}
+                                    {% else %}
+                                    {% if cc.include_awbEnable == True%}
+                                    <input type="checkbox" id="awbenable" name="awbenable" value="0">
+                                    {% else %}
+                                    <input type="checkbox" id="awbenable" name="awbenable" value="0" disabled>
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_awbMode == True %}
+                                    <input type="checkbox" id="include_awbmode" name="include_awbmode"
+                                        onclick="includeCtrl('include_awbmode', 'awbmode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_awbmode" name="include_awbmode"
+                                        onclick="includeCtrl('include_awbmode', 'awbmode')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the mode of the Automatic White Balance algorithm.
+                                    </span>
+                                    <label for="awbmode">AWB Mode:</label>
+                                </td>
+                                <td>
+                                    {% if cc.include_awbMode == True %}
+                                    <select name="awbmode" id="awbmode">
+                                        {% else %}
+                                        <select name="awbmode" id="awbmode" disabled>
+                                            {% endif %}
+                                            {% if cc.awbMode == 0 %}
+                                            <option value="0" selected>Auto</option>
+                                            {% else %}
+                                            <option value="0">Auto</option>
+                                            {% endif %}
+                                            {% if cc.awbMode == 1 %}
+                                            <option value="1" selected>Incandescent</option>
+                                            {% else %}
+                                            <option value="1">Incandescent</option>
+                                            {% endif %}
+                                            {% if cc.awbMode == 2 %}
+                                            <option value="2" selected>Tungsten</option>
+                                            {% else %}
+                                            <option value="2">Tungsten</option>
+                                            {% endif %}
+                                            {% if cc.awbMode == 3 %}
+                                            <option value="3" selected>Fluorescent</option>
+                                            {% else %}
+                                            <option value="3">Fluorescent</option>
+                                            {% endif %}
+                                            {% if cc.awbMode == 4 %}
+                                            <option value="4" selected>Indoor</option>
+                                            {% else %}
+                                            <option value="4">Indoor</option>
+                                            {% endif %}
+                                            {% if cc.awbMode == 3 %}
+                                            <option value="5" selected>Daylight</option>
+                                            {% else %}
+                                            <option value="5">Daylight</option>
+                                            {% endif %}
+                                            {% if cc.awbMode == 3 %}
+                                            <option value="6" selected>Cloudy</option>
+                                            {% else %}
+                                            <option value="6">Cloudy</option>
+                                            {% endif %}
+                                            {% if cc.awbMode == 3 %}
+                                            <option value="7" selected>Custom</option>
+                                            {% else %}
+                                            <option value="7">Custom</option>
+                                            {% endif %}
+                                        </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_noiseReductionMode == True %}
+                                    <input type="checkbox" id="include_noisereductionmode" name="include_noisereductionmode"
+                                        onclick="includeCtrl('include_noisereductionmode', 'noisereductionmode')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_noisereductionmode" name="include_noisereductionmode"
+                                        onclick="includeCtrl('include_noisereductionmode', 'noisereductionmode')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Selects a suitable noise reduction mode.
+                                        Normally Picamera2’s configuration will select
+                                        an appropriate mode automatically, so it
+                                        should not normally be necessary to change it.
+                                        The HighQuality noise reduction mode can be
+                                        expected to affect the maximum achievable
+                                        framerate.
+                                    </span>
+                                    <label for="noisereductionmode">Noise Reduction Mode:</label>
+                                </td>
+                                <td>
+                                    {% if cc.include_noiseReductionMode == True %}
+                                    <select name="noisereductionmode" id="noisereductionmode">
+                                        {% else %}
+                                        <select name="noisereductionmode" id="noisereductionmode" disabled>
+                                            {% endif %}
+                                            {% if cc.noiseReductionMode == 0 %}
+                                            <option value="0" selected>Off</option>
+                                            {% else %}
+                                            <option value="0">Off</option>
+                                            {% endif %}
+                                            {% if cc.noiseReductionMode == 1 %}
+                                            <option value="1" selected>Fast</option>
+                                            {% else %}
+                                            <option value="1">Fast</option>
+                                            {% endif %}
+                                            {% if cc.noiseReductionMode == 2 %}
+                                            <option value="2" selected>highQuality</option>
+                                            {% else %}
+                                            <option value="2">highQuality</option>
+                                            {% endif %}
+                                        </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_sharpness == True %}
+                                    <input type="checkbox" id="include_sharpness" name="include_sharpness"
+                                        onclick="includeCtrl('include_sharpness', 'sharpness')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_sharpness" name="include_sharpness"
+                                        onclick="includeCtrl('include_sharpness', 'sharpness')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the image sharpness, where zero implies
+                                        no additional sharpening is performed, 1.0 is
+                                        the default "normal" level of sharpening, and
+                                        larger values apply proportionately stronger
+                                        sharpening.
+                                    </span>
+                                    <label for="sharpness">Sharpness:</label>
+                                </td>
+                                <td>
+                                    {% if cc.include_sharpness == True %}
+                                    <input type="number" id="sharpness" name="sharpness" min="0.0" max="16.0" step="0.1"
+                                        value={{ cc.sharpness }}>
+                                    {% else %}
+                                    <input type="number" id="sharpness" name="sharpness" min="0.0" max="16.0" step="0.1"
+                                        value={{ cc.sharpness}} disabled>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_contrast == True %}
+                                    <input type="checkbox" id="include_contrast" name="include_contrast"
+                                        onclick="includeCtrl('include_contrast', 'contrast')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_contrast" name="include_contrast"
+                                        onclick="includeCtrl('include_contrast', 'contrast')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Sets the contrast of the image, where zero
+                                        means "no contrast", 1.0 is the default "normal"
+                                        contrast, and larger values increase the
+                                        contrast proportionately.
+                                    </span>
+                                    <label for="contrast">Contrast:</label>
+                                </td>
+                                <td>
+                                    {% if cc.include_contrast == True %}
+                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value={{ cc.contrast }}>
+                                    {% else %}
+                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value={{ cc.contrast}}
+                                        disabled>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_saturation == True %}
+                                    <input type="checkbox" id="include_saturation" name="include_saturation"
+                                        onclick="includeCtrl('include_saturation', 'saturation')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_saturation" name="include_saturation"
+                                        onclick="includeCtrl('include_saturation', 'saturation')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Amount of colour saturation, where zero
+                                        produces greyscale images, 1.0 represents
+                                        default "normal" saturation, and higher values
+                                        produce more saturated colours.
+                                    </span>
+                                    <label for="saturation">Saturation:</label>
+                                </td>
+                                <td>
+                                    {% if cc.include_saturation == True %}
+                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value={{ cc.saturation }}>
+                                    {% else %}
+                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value={{ cc.saturation}}
+                                        disabled>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_brightness == True %}
+                                    <input type="checkbox" id="include_brightness" name="include_brightness"
+                                        onclick="includeCtrl('include_brightness', 'brightness')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_brightness" name="include_brightness"
+                                        onclick="includeCtrl('include_brightness', 'brightness')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Adjusts the image brightness where -1.0 is
+                                        very dark, 1.0 is very bright, and 0.0 is the
+                                        default "normal" brightness.
+                                    </span>
+                                    <label for="brightness">Brightness:</label>
+                                </td>
+                                <td>
+                                    {% if cc.include_brightness == True %}
+                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value={{ cc.brightness
+                                        }}>
+                                    {% else %}
+                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value={{ cc.brightness}}
+                                        disabled>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                        <br>
+                        <input class="w3-button w3-black" type="submit" value="Submit">
+                    </form>
+                </div>
             </div>
         </div>
     </div>

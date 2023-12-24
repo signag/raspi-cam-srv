@@ -470,6 +470,77 @@ def exposure_control():
         if len(ctrls) > 0:
             Camera().cam.set_controls(ctrls)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
+
+@bp.route("/image_control", methods=("GET", "POST"))
+@login_required
+def image_control():
+    logger.info("In image_control")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.lastLiveTab = "image"
+    if request.method == "POST":
+        ctrls = {}
+        if request.form.get("include_noisereductionmode") is None:
+            cc.include_noiseReductionMode = False
+        else:
+            cc.include_noiseReductionMode = True
+            noiseReductionMode = int(request.form["noisereductionmode"])
+            cc.noiseReductionMode = noiseReductionMode
+            ctrls["NoiseReductionMode"] = noiseReductionMode
+        
+        if request.form.get("include_saturation") is None:
+            cc.include_saturation = False
+        else:
+            cc.include_saturation = True
+            saturation = float(request.form["saturation"])
+            cc.saturation = saturation
+            ctrls["Saturation"] = saturation
+        
+        if request.form.get("include_sharpness") is None:
+            cc.include_sharpness = False
+        else:
+            cc.include_sharpness = True
+            sharpness = float(request.form["sharpness"])
+            cc.sharpness = sharpness
+            ctrls["Sharpness"] = sharpness
+            
+        if request.form.get("include_awbenable") is None:
+            cc.include_awbEnable = False
+        else:
+            cc.include_awbEnable = True
+            awbEnable = not request.form.get("awbenable") is None
+            cc.awbEnable = awbEnable
+            ctrls["AwbEnable"] = awbEnable
+        
+        if request.form.get("include_awbmode") is None:
+            cc.include_awbMode = False
+        else:
+            cc.include_awbMode = True
+            awbMode = float(request.form["awbmode"])
+            cc.awbMode = awbMode
+            ctrls["AwbMode"] = awbMode
+        
+        if request.form.get("include_contrast") is None:
+            cc.include_contrast = False
+        else:
+            cc.include_contrast = True
+            contrast = float(request.form["contrast"])
+            cc.contrast = contrast
+            ctrls["Contrast"] = contrast
+
+        if request.form.get("include_brightness") is None:
+            cc.include_brightness = False
+        else:
+            cc.include_brightness = True
+            brightness = float(request.form["brightness"])
+            cc.brightness = brightness
+            ctrls["Brightness"] = brightness
+
+        if len(ctrls) > 0:
+            Camera().cam.set_controls(ctrls)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)
         
 @bp.route("/take_image", methods=("GET", "POST"))
 @login_required
