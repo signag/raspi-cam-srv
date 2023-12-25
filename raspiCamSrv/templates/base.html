@@ -28,7 +28,7 @@
                 {% endif %}
             </div>
             {% block content %}{% endblock %}
-            <div class="w3-bottom w3-bar w3-dark-grey">
+            <div class="w3-bar w3-bottom w3-dark-grey">
                 {% for message in get_flashed_messages() %}
                 <div class="flash">{{ message }}</div>
                 {% endfor %}

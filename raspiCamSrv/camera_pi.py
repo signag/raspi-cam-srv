@@ -77,9 +77,11 @@ class Camera(BaseCamera):
             logger.info("Camera.loadCameraSpecifics loaded to config")
 
     @staticmethod
-    def takeImage(fp):
-        logger.debug("Camera.takeImage")
-        logger.debug("Camera.takeImage: Stopping thread")
+    def takeImage(path: str, filename: str):
+        logger.info("Camera.takeImage")
+        cfg = CameraCfg()
+        sc = cfg.serverConfig        
+        logger.info("Camera.takeImage: Stopping thread")
         BaseCamera.stopRequested = True
         cnt = 0
         while BaseCamera.thread:
@@ -87,21 +89,29 @@ class Camera(BaseCamera):
             cnt += 1
             if cnt > 200:
                 raise TimeoutError("Background thread did not stop within 2 sec")
-        logger.debug("Camera.takeImage: Thread has stopped")
+        logger.info("Camera.takeImage: Thread has stopped")
         Camera.cam.stop_recording()
-        logger.debug("Camera.takeImage: Recording stopped")
+        logger.info("Camera.takeImage: Recording stopped")
         Camera.cam = Picamera2()
-        logger.debug("Camera.takeImage: Camera reinitialized")
+        logger.info("Camera.takeImage: Camera reinitialized")
         with Camera.cam as cam:
             stillConfig = cam.create_still_configuration()
-            logger.debug("Camera.takeImage: Still config created: %s", stillConfig)
+            logger.info("Camera.takeImage: Still config created: %s", stillConfig)
             cam.configure(stillConfig)
-            logger.debug("Camera.takeImage: Camera configured for still")
+            logger.info("Camera.takeImage: Camera configured for still")
             cam.start(show_preview=False)
-            logger.debug("Camera.takeImage: Camera started")
-            logger.debug("Camera.takeImage: Image file %s", fp)
-            cam.capture_file(fp)
-            logger.debug("Camera.takeImage: Image taken %s", fp)
+            logger.info("Camera.takeImage: Camera started")
+            request = cam.capture_request()
+            logger.info("Camera.takeImage: Request started")
+            fp = path + "/" + filename
+            request.save("main", fp)
+            sc.displayPhoto = "photos/" + filename
+            logger.info("Camera.takeImage: Image saved as %s", fp)
+            metadata = request.get_metadata()
+            sc.displayMeta = metadata
+            logger.info("Camera.takeImage: Image metedata captured")
+            request.release()
+            logger.info("Camera.takeImage: Request released")
 
     @staticmethod
     def frames():

@@ -24,9 +24,21 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # ensure the photos folder exists
+    try:
+        os.makedirs(app.static_folder + "/photos")
+    except OSError:
+        pass
+
     # Make database available in the application context
     from . import db
     db.init_app(app)
+    
+    # Configure Config
+    from . import camCfg
+    cfg = camCfg.CameraCfg()
+    sc = cfg.serverConfig
+    sc.photoPath = app.static_folder + "/photos"
     
     # Register required blueprints
     from . import auth

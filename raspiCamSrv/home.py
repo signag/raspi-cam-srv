@@ -43,6 +43,16 @@ def video_feed():
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@bp.route("/photos/<photo>")
+@login_required
+def displayImage(photo: str):
+    logger.info("In displayImage")
+    logger.info("photo=%s", photo)
+    logger.info("current_app.root_path=%s", current_app.root_path)
+    fp = current_app.root_path + "/photos/" + photo
+    logger.info("fp = %s", fp)
+    return Response(fp, mimetype='image/jpg')
+
 @bp.route("/focus_control", methods=("GET", "POST"))
 @login_required
 def focus_control():
@@ -551,16 +561,14 @@ def take_image():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        path = request.form["filepath"]
-        if not os.path.exists(path):
-            path = current_app.instance_path
+        path =sc.photoPath
         filename = request.form["filename"]
         if len(filename) == 0:
             timeImg = datetime.datetime.now()
-            filename = "image_" + timeImg.strftime("%Y%m%d_%H%M%S") + ".jpeg"
+            filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + ".jpg"
         fp = path + "/" + filename
         logger.debug("Saving image to %s", fp)
-        Camera().takeImage(fp)
+        Camera().takeImage(path, filename)
         msg="Image saved as " + fp
         flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp, ip=current_app.instance_path)        

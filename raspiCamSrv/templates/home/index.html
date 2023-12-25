@@ -1115,20 +1115,44 @@
     </div>
     <div class="w3-row w3-border">
         <div class="w3-half">
-            <p> </p>
             <form class="w3-container" method="post" action="{{ url_for('home.take_image') }}">
-                <label for="filepath">File Path</label>
-                <input class="w3-input" name="filepath" id="filepath" value = "{{ ip }}">
-                <p></p>
-                <label for="filename">File Name (leave empty for automatic naming)</label>
-                <input class="w3-input" name="filename" id="filename">
-                <p> </p>
-                <input class="w3-button w3-black" type="submit" value="Photo">
+                <table>
+                    <tr>
+                        <td style="width:90%">
+                            <label for="filepath">File Path</label>
+                            <input class="w3-input" name="filepath" id="filepath" value = "{{ sc.photoPath }}" disabled>
+                        </td>
+                        <td class="w3-right-align" rowspan="2">
+                            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:90%">
+                            <label for="filename">File Name (leave empty for automatic naming)</label>
+                            <input class="w3-input" name="filename" id="filename">
+                        </td>
+                    </tr>
+                </table>
             </form>
-            <p> </p>
+            <p> {{ sc.displayPhoto }}</p>
+            {% if sc.displayPhoto != None %}
+            <img src="{{ url_for('static', filename=sc.displayPhoto) }}" class="w3-image">
+            {% endif %}
         </div>
         <div class="w3-half">
-            <p></p>
+            <p> Metadata</p>
+            <table class="w3-table-all">
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                </tr>
+                {% for prop in sc.displayMeta %}
+                <tr>
+                    <td>{{ prop|string() }}</td>
+                    <td>{{ sc.displayMeta[prop]|string() }}</td>
+                </tr>
+                {% endfor%}
+            </table>
         </div>
     </div>
     <script>

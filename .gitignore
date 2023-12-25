@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 tests/
+raspiCamSrv/static/photos/*.*
 
 # C extensions
 *.so

@@ -730,9 +730,24 @@ class CameraProperties():
 
 class ServerConfig():
     def __init__(self):
+        self._photoPath = None
         self._zoomFactor = 100
         self._zoomFactorStep = 10
         self._lastLiveTab = "focus"
+        self._displayPhoto = None
+        self._displayMeta = None
+
+    @property
+    def photoPath(self):
+        return self._photoPath
+
+    @photoPath.setter
+    def photoPath(self, value: str):
+        self._photoPath = value
+
+    @photoPath.deleter
+    def photoPath(self):
+        del self._photoPath
         
     @property
     def zoomFactor(self):
@@ -777,6 +792,30 @@ class ServerConfig():
     @lastLiveTab.deleter
     def lastLiveTab(self):
         del self._lastLiveTab
+
+    @property
+    def displayPhoto(self):
+        return self._displayPhoto
+
+    @displayPhoto.setter
+    def displayPhoto(self, value: str):
+        self._displayPhoto = value
+
+    @displayPhoto.deleter
+    def displayPhoto(self):
+        del self._displayPhoto
+
+    @property
+    def displayMeta(self):
+        return self._displayMeta
+
+    @displayMeta.setter
+    def displayMeta(self, value: str):
+        self._displayMeta = value
+
+    @displayMeta.deleter
+    def displayMeta(self):
+        del self._displayMeta
         
     
 class CameraCfg():
