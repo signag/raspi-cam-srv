@@ -1140,6 +1140,7 @@
             {% endif %}
         </div>
         <div class="w3-half">
+            {% if sc.displayMeta != None %}
             <p> Metadata</p>
             <table class="w3-table-all">
                 <tr>
@@ -1153,6 +1154,7 @@
                 </tr>
                 {% endfor%}
             </table>
+            {% endif %}
         </div>
     </div>
     <script>
