@@ -109,6 +109,11 @@ class Camera(BaseCamera):
             logger.info("Camera.takeImage: Image saved as %s", fp)
             metadata = request.get_metadata()
             sc.displayMeta = metadata
+            sc.displayMetaFirst = 0
+            if len(metadata) < 11:
+                sc._displayMetaLast = 999
+            else:
+                sc.displayMetaLast = 10
             logger.info("Camera.takeImage: Image metedata captured")
             request.release()
             logger.info("Camera.takeImage: Request released")

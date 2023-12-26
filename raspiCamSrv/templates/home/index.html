@@ -1134,8 +1134,8 @@
                     </tr>
                 </table>
             </form>
-            <p> {{ sc.displayPhoto }}</p>
             {% if sc.displayPhoto != None %}
+            <p> {{ sc.displayPhoto }}</p>
             <img src="{{ url_for('static', filename=sc.displayPhoto) }}" class="w3-image">
             {% endif %}
         </div>
@@ -1148,12 +1148,49 @@
                     <th>Value</th>
                 </tr>
                 {% for prop in sc.displayMeta %}
+                {% if loop.index >= sc.displayMetaFirst and loop.index < sc.displayMetaLast %}
                 <tr>
                     <td>{{ prop|string() }}</td>
                     <td>{{ sc.displayMeta[prop]|string() }}</td>
                 </tr>
-                {% endfor%}
+                {% endif%}
+                {% endfor %}
             </table>
+            <p> </p>
+            <table class="w3-table">
+                <tr>
+                    <td style="width:25%">
+                        <form method="post" action="{{ url_for('home.meta_clear') }}">
+                            <input class="w3-button w3-black" style="width:80%" type="submit" value="Clear">
+                        </form>
+                    </td>
+                    <td style="width:25%">
+                    </td>
+                    <td style="width:25%">
+                        {% if sc.displayMetaFirst == 0 %}
+                        <form method="post" action="{{ url_for('home.meta_prev') }}">
+                            <input class="w3-button w3-black" style="width:80%" type="submit" value="Previous" disabled>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('home.meta_prev') }}">
+                            <input class="w3-button w3-black" style="width:80%" type="submit" value="Previous">
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td style="width:25%">
+                        {% if sc.displayMetaLast < 999 %}
+                        <form method="post" action="{{ url_for('home.meta_next') }}">
+                            <input class="w3-button w3-black" style="width:80%" type="submit" value="Next">
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('home.meta_next') }}">
+                            <input class="w3-button w3-black" style="width:80%" type="submit" value="Next" disabled>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+
             {% endif %}
         </div>
     </div>

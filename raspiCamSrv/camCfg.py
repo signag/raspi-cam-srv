@@ -736,6 +736,8 @@ class ServerConfig():
         self._lastLiveTab = "focus"
         self._displayPhoto = None
         self._displayMeta = None
+        self._displayMetaFirst = 0
+        self._displayMetaLast = 999
 
     @property
     def photoPath(self):
@@ -816,6 +818,30 @@ class ServerConfig():
     @displayMeta.deleter
     def displayMeta(self):
         del self._displayMeta
+
+    @property
+    def displayMetaFirst(self):
+        return self._displayMetaFirst
+
+    @displayMetaFirst.setter
+    def displayMetaFirst(self, value: int):
+        self._displayMetaFirst = value
+
+    @displayMetaFirst.deleter
+    def displayMetaFirst(self):
+        del self._displayMetaFirst
+
+    @property
+    def displayMetaLast(self):
+        return self._displayMetaLast
+
+    @displayMetaLast.setter
+    def displayMetaLast(self, value: int):
+        self._displayMetaLast = value
+
+    @displayMetaLast.deleter
+    def displayMetaLast(self):
+        del self._displayMetaLast
         
     
 class CameraCfg():
