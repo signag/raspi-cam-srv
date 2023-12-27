@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def index():
     logger.info("In index")
+    g.hostname = request.host
     cam = Camera()
     logger.info("Camera instatntiated")
     cfg = CameraCfg()
@@ -57,6 +58,7 @@ def displayImage(photo: str):
 @login_required
 def focus_control():
     logger.info("In focus_control")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -122,6 +124,7 @@ def focus_control():
 @login_required
 def trigger_autofocus():
     logger.debug("In trigger_autofocus")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -144,6 +147,7 @@ def trigger_autofocus():
 @login_required
 def set_zoom():
     logger.info("In set_zoom")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -159,6 +163,7 @@ def set_zoom():
 @login_required
 def zoom_in():
     logger.info("In zoom_in")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -186,6 +191,7 @@ def zoom_in():
 @login_required
 def zoom_out():
     logger.debug("In zoom_out")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -227,6 +233,7 @@ def zoom_out():
 @login_required
 def zoom_full():
     logger.debug("In zoom_full")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -243,6 +250,7 @@ def zoom_full():
 @login_required
 def pan_up():
     logger.debug("In pan_up")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -264,6 +272,7 @@ def pan_up():
 @login_required
 def pan_left():
     logger.debug("In pan_left")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -285,6 +294,7 @@ def pan_left():
 @login_required
 def pan_center():
     logger.debug("In pan_center")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -306,6 +316,7 @@ def pan_center():
 @login_required
 def pan_right():
     logger.debug("In pan_right")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -327,6 +338,7 @@ def pan_right():
 @login_required
 def pan_down():
     logger.debug("In pan_down")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -348,6 +360,7 @@ def pan_down():
 @login_required
 def ae_control():
     logger.info("In ae_control")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -416,6 +429,7 @@ def ae_control():
 @login_required
 def exposure_control():
     logger.info("In exposure_control")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -485,6 +499,7 @@ def exposure_control():
 @login_required
 def image_control():
     logger.info("In image_control")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -556,6 +571,7 @@ def image_control():
 @login_required
 def meta_clear():
     logger.debug("In meta_clear")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -571,6 +587,7 @@ def meta_clear():
 @login_required
 def meta_prev():
     logger.debug("In meta_prev")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -588,6 +605,7 @@ def meta_prev():
 @login_required
 def meta_next():
     logger.debug("In meta_next")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -606,6 +624,7 @@ def meta_next():
 @login_required
 def take_photo():
     logger.debug("In take_photo")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -625,6 +644,7 @@ def take_photo():
 @login_required
 def photoBuffer_add():
     logger.debug("In photoBuffer_add")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -637,6 +657,7 @@ def photoBuffer_add():
 @login_required
 def photoBuffer_remove():
     logger.debug("In photoBuffer_remove")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -649,6 +670,7 @@ def photoBuffer_remove():
 @login_required
 def photoBuffer_prev():
     logger.debug("In photoBuffer_prev")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -661,6 +683,7 @@ def photoBuffer_prev():
 @login_required
 def photoBuffer_next():
     logger.debug("In photoBuffer_next")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -673,6 +696,7 @@ def photoBuffer_next():
 @login_required
 def show_photo():
     logger.debug("In show_photo")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -685,6 +709,7 @@ def show_photo():
 @login_required
 def hide_photo():
     logger.debug("In hide_photo")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -697,6 +722,7 @@ def hide_photo():
 @login_required
 def clear_buffer():
     logger.debug("In clear_buffer")
+    g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig

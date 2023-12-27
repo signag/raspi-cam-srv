@@ -10,7 +10,11 @@
                 <div class="w3-bar-item w3-left">raspiCamSrv</div>
                 <div class="w3-bar-item w3-center">{% block header %}{% endblock %}</div>
                 {% if g.user %}
-                <div class="w3-bar-item w3-right">{{ g.user['username'] }}</div>
+                <div class="w3-bar-item w3-right">
+                    {{ g.user['username'] }}
+                     | 
+                    {{ g.hostname }}
+                </div>
                 {% endif %}
             </div>
             <div class="w3-bar w3-black">
