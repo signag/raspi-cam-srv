@@ -561,11 +561,101 @@ class CameraControls():
     def sharpness(self):
         del self._sharpness
 
-class cameraConfig():
+class SensorMode():
+    """ The class represents a specific sensor mode of the camera
+    """
+    def __init__(self):
+        self._id = None
+        self._format = None
+        self._unpacked = None
+        self._bit_depth = None
+        self._size = None
+        self._fps = None
+        self._crop_limits = None
+        self._exposure_limits = None
+
+    @property
+    def id(self) -> int:
+        return self._id
+
+    @id.setter
+    def id(self, value: int):
+        self._id = value
+
+    @property
+    def format(self) -> str:
+        return self._format
+
+    @format.setter
+    def format(self, value: str):
+        self._format = value
+
+    @property
+    def unpacked(self) -> str:
+        return self._unpacked
+
+    @unpacked.setter
+    def unpacked(self, value: str):
+        self._unpacked = value
+
+    @property
+    def bit_depth(self) -> int:
+        return self._bit_depth
+
+    @bit_depth.setter
+    def bit_depth(self, value: int):
+        self._bit_depth = value
+
+    @property
+    def size(self) -> tuple:
+        return self._size
+
+    @size.setter
+    def size(self, value: tuple):
+        self._size = value
+
+    @property
+    def fps(self) -> float:
+        return self._fps
+
+    @fps.setter
+    def fps(self, value: float):
+        self._fps = value
+
+    @property
+    def crop_limits(self) -> tuple:
+        return self._crop_limits
+
+    @crop_limits.setter
+    def crop_limits(self, value: tuple):
+        self._crop_limits = value
+
+    @property
+    def exposure_limits(self) -> tuple:
+        return self._exposure_limits
+
+    @exposure_limits.setter
+    def exposure_limits(self, value: tuple):
+        self._exposure_limits = value
+
+    @property
+    def tabId(self) -> str:
+        return "sensormode" + str(self.id)
+
+    @property
+    def tabButtonId(self) -> str:
+        return "sensormodetab" + str(self.id)
+
+    @property
+    def tabTitle(self) -> str:
+        return "Sensor Mode " + str(self.id)
+
+class CameraConfig():
     def __init__(self):
         self._transform = 0
         self._colour_space = 0
         self._buffer_count = 0
+        self._queue = False
         self._display = "main"
         self._encode = "main"
         self._sensor = None
@@ -737,6 +827,7 @@ class ServerConfig():
         self._zoomFactor = 100
         self._zoomFactorStep = 10
         self._lastLiveTab = "focus"
+        self._lastInfoTab = "camprops"
         self._isDisplayHidden = True
         self._displayPhoto = None
         self._displayFile = None
@@ -800,6 +891,18 @@ class ServerConfig():
     @lastLiveTab.deleter
     def lastLiveTab(self):
         del self._lastLiveTab
+
+    @property
+    def lastInfoTab(self):
+        return self._lastInfoTab
+
+    @lastInfoTab.setter
+    def lastInfoTab(self, value: str):
+        self._lastInfoTab = value
+
+    @lastInfoTab.deleter
+    def lastInfoTab(self):
+        del self._lastInfoTab
 
     @property
     def isDisplayHidden(self) -> bool:
@@ -1064,6 +1167,7 @@ class CameraCfg():
             cls._instance = super(CameraCfg, cls).__new__(cls)
             cls._controls = CameraControls()
             cls._cameraProperties = CameraProperties()
+            cls._sensorModes = []
             cls._serverConfig = ServerConfig()
         return cls._instance
     
@@ -1074,6 +1178,14 @@ class CameraCfg():
     @property
     def cameraProperties(self):
         return self._cameraProperties
+    
+    @property
+    def sensorModes(self) -> list:
+        return self._sensorModes
+
+    @property
+    def nrSensorModes(self) -> int:
+        return len(self._sensorModes)
     
     @property
     def serverConfig(self):

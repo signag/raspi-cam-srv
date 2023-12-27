@@ -1,7 +1,7 @@
 import io
 import time
 from raspiCamSrv.camera_base import BaseCamera, CameraEvent
-from raspiCamSrv.camCfg import CameraCfg
+from raspiCamSrv.camCfg import CameraCfg, SensorMode
 import threading
 from threading import Condition
 from picamera2 import Picamera2
@@ -57,6 +57,7 @@ class Camera(BaseCamera):
         cfg = CameraCfg()
         cfgProps = cfg.cameraProperties
         cfgCtrls = cfg.controls
+        cfgSensorModes = cfg.sensorModes
         if cfgProps.model is None:
             camPprops = Camera.cam.camera_properties
             cfgProps.model = camPprops["Model"]
@@ -75,6 +76,22 @@ class Camera(BaseCamera):
             
             cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
             logger.info("Camera.loadCameraSpecifics loaded to config")
+        if len(cfgSensorModes) == 0:
+            sensorModes = Camera.cam.sensor_modes
+            ind = 0
+            for mode in sensorModes:
+                cfgMode = SensorMode()
+                cfgMode.id = str(ind)
+                cfgMode.format = mode["format"]
+                cfgMode.unpacked = mode["unpacked"]
+                cfgMode.bit_depth = mode["bit_depth"]
+                cfgMode.size = mode["size"]
+                cfgMode.fps = mode["fps"]
+                cfgMode.crop_limits = mode["crop_limits"]
+                cfgMode.exposure_limits = mode["exposure_limits"]
+                cfgSensorModes.append(cfgMode)
+                ind = ind + 1
+        logger.info("%s sensor modes found", len(cfg.sensorModes))
 
     @staticmethod
     def takeImage(path: str, filename: str):
