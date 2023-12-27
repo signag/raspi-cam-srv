@@ -105,7 +105,9 @@ class Camera(BaseCamera):
             logger.info("Camera.takeImage: Request started")
             fp = path + "/" + filename
             request.save("main", fp)
+            sc.displayFile = filename
             sc.displayPhoto = "photos/" + filename
+            sc.isDisplayHidden = False
             logger.info("Camera.takeImage: Image saved as %s", fp)
             metadata = request.get_metadata()
             sc.displayMeta = metadata

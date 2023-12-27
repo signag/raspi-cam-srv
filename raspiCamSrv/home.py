@@ -602,23 +602,105 @@ def meta_next():
                 sc.displayMetaFirst = 0
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
             
-@bp.route("/take_image", methods=("GET", "POST"))
+@bp.route("/take_photo", methods=("GET", "POST"))
 @login_required
-def take_image():
-    logger.debug("In take_image")
+def take_photo():
+    logger.debug("In take_photo")
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
         path =sc.photoPath
-        filename = request.form["filename"]
-        if len(filename) == 0:
-            timeImg = datetime.datetime.now()
-            filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + ".jpg"
+        timeImg = datetime.datetime.now()
+        filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + ".jpg"
         fp = path + "/" + filename
         logger.debug("Saving image to %s", fp)
         Camera().takeImage(path, filename)
         msg="Image saved as " + fp
         flash(msg)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/photoBuffer_add", methods=("GET", "POST"))
+@login_required
+def photoBuffer_add():
+    logger.debug("In photoBuffer_add")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.displayBufferAdd()
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/photoBuffer_remove", methods=("GET", "POST"))
+@login_required
+def photoBuffer_remove():
+    logger.debug("In photoBuffer_remove")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.displayBufferRemove()
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/photoBuffer_prev", methods=("GET", "POST"))
+@login_required
+def photoBuffer_prev():
+    logger.debug("In photoBuffer_prev")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.displayBufferPrev()
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/photoBuffer_next", methods=("GET", "POST"))
+@login_required
+def photoBuffer_next():
+    logger.debug("In photoBuffer_next")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.displayBufferNext()
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/show_photo", methods=("GET", "POST"))
+@login_required
+def show_photo():
+    logger.debug("In show_photo")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.isDisplayHidden = False
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/hide_photo", methods=("GET", "POST"))
+@login_required
+def hide_photo():
+    logger.debug("In hide_photo")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.isDisplayHidden = True
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/clear_buffer", methods=("GET", "POST"))
+@login_required
+def clear_buffer():
+    logger.debug("In clear_buffer")
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.displayBufferClear()        
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        

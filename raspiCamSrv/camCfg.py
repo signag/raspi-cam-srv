@@ -1,4 +1,7 @@
 from libcamera import controls, Transform
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CameraControls():
     def __init__(self):
@@ -734,10 +737,13 @@ class ServerConfig():
         self._zoomFactor = 100
         self._zoomFactorStep = 10
         self._lastLiveTab = "focus"
+        self._isDisplayHidden = True
         self._displayPhoto = None
+        self._displayFile = None
         self._displayMeta = None
         self._displayMetaFirst = 0
         self._displayMetaLast = 999
+        self._displayBuffer = {}
 
     @property
     def photoPath(self):
@@ -796,6 +802,18 @@ class ServerConfig():
         del self._lastLiveTab
 
     @property
+    def isDisplayHidden(self) -> bool:
+        return self._isDisplayHidden
+
+    @isDisplayHidden.setter
+    def isDisplayHidden(self, value: bool):
+        self._isDisplayHidden = value
+
+    @property
+    def buttonClear(self) -> str:
+        return "Clr(" + str(self.displayBufferCount) + ")"
+
+    @property
     def displayPhoto(self):
         return self._displayPhoto
 
@@ -806,6 +824,18 @@ class ServerConfig():
     @displayPhoto.deleter
     def displayPhoto(self):
         del self._displayPhoto
+
+    @property
+    def displayFile(self):
+        return self._displayFile
+
+    @displayFile.setter
+    def displayFile(self, value: str):
+        self._displayFile = value
+
+    @displayFile.deleter
+    def displayFile(self):
+        del self.displayFile
 
     @property
     def displayMeta(self):
@@ -842,7 +872,190 @@ class ServerConfig():
     @displayMetaLast.deleter
     def displayMetaLast(self):
         del self._displayMetaLast
+    
+    @property
+    def displayBufferCount(self) -> int:
+        """ Returns the number of elements in the display buffer
+        """
+        return len(self._displayBuffer)
+    
+    @property
+    def displayBufferIndex(self) -> str:
+        """ Returns the index of the active element in the form (x/y)
+        """
+        res = ""
+        if self.isDisplayBufferIn():
+            for i, (key, value) in enumerate(self._displayBuffer.items()):
+                if key == self.displayFile:
+                    res = "(" + str(i + 1) + "/" + str(self.displayBufferCount) + ")"
+                    break
+            
+        return res
+
+    def isDisplayBufferIn(self) -> bool:
+        """Determine whether the current display is in the buffer"""
+        res = False
+        if len(self._displayBuffer) > 0:
+            if self._displayFile in self._displayBuffer:
+                res = True
+        return res
         
+    def displayBufferAdd(self):
+        """ Adds the current display photo to the buffer
+            if it is not yet included
+        """
+        if self.isDisplayBufferIn() == False:
+            el = {}
+            el["displayPhoto"] = self._displayPhoto
+            el["displayFile"]  = self._displayFile
+            el["displayMeta"]  = self._displayMeta
+            el["displayMetaFirst"]  = self._displayMetaFirst
+            el["displayMetaLast"]  = self._displayMetaLast
+            self._displayBuffer[self._displayFile] = el
+        
+    def displayBufferRemove(self):
+        """ Removes the current display photo from the buffer
+            and set active display to next element
+        """
+        if self.displayBufferCount > 0:
+            if self.displayBufferCount == 1:
+                # If the buffer contains just one element: clear it
+                self.displayBufferClear()
+            else:
+                # Buffer contains more than one element
+                if self.isDisplayBufferIn():
+                    # Active element is in buffer
+                    idel = -1
+                    if self.isDisplayBufferIn() == True:
+                        # If active element in buffer: find and delete it
+                        for i, (key, value) in enumerate(self._displayBuffer.items()):
+                            if key == self.displayFile:
+                                idel = i
+                                # idel is now the index of the element to activate (show)
+                                del self._displayBuffer[key]
+                                break
+                    if idel >= 0:
+                        # If the previouslay active element has been deleted,
+                        # activate another element
+                        # This will normally the next in buffer ...
+                        if idel >= self.displayBufferCount:
+                            # ... except when the last element has been deleted.
+                            # then activate the previous element
+                            idel = idel - 1
+                        for i, (key, value) in enumerate(self._displayBuffer.items()):
+                            if i == idel:
+                                self.displayFile = key
+                                self.displayPhoto = value["displayPhoto"]
+                                self.displayMeta = value["displayMeta"]
+                                self.displayMetaFirst = value["displayMetaFirst"]
+                                self.displayMetaLast = value["displayMetaLast"]
+                                break
+                else:
+                    # Active element is not in buffer: Just clear active element
+                    self.displayFile = None
+                    self.displayPhoto = None
+                    self.displayMeta = None
+                    self.displayMetaFirst = 0
+                    self.displayMetaLast = 999
+        else:
+            # Buffer is empty: Just clear active element
+            self.displayFile = None
+            self.displayPhoto = None
+            self.displayMeta = None
+            self.displayMetaFirst = 0
+            self.displayMetaLast = 999
+        
+    def displayBufferClear(self):
+        """ Clears the display buffer as well as the current display
+        """
+        self._displayBuffer.clear()
+        self.displayFile = None
+        self.displayPhoto = None
+        self.displayMeta = None
+        self.displayMetaFirst = 0
+        self.displayMetaLast = 999
+
+    def isDisplayBufferFirst(self) -> bool:
+        """Determine whether the current display is the first element in the buffer"""
+        res = False
+        if self.isDisplayBufferIn():
+            for i, (key, value) in enumerate(self._displayBuffer.items()):
+                if i == 0:
+                    if key == self.displayFile:
+                        res = True
+                else:
+                    break
+        return res
+
+    def isDisplayBufferLast(self) -> bool:
+        """Determine whether the current display is the last element in the buffer"""
+        res = False
+        l = len(self._displayBuffer) - 1
+        if self.isDisplayBufferIn():
+            for i, (key, value) in enumerate(self._displayBuffer.items()):
+                if i == l:
+                    if key == self.displayFile:
+                        res = True
+        return res
+
+    def displayBufferFirst(self):
+        """Change the current display element to the first in buffer"""
+        firstKey = None
+        firstEl = None
+        if self.displayBufferCount > 0:
+            for i, (key, value) in enumerate(self._displayBuffer.items()):
+                if i == 0:
+                    firstKey = key
+                    firstEl = value
+                    break
+        if firstKey:
+            self.displayFile = firstKey
+            self.displayPhoto = firstEl["displayPhoto"]
+            self.displayMeta = firstEl["displayMeta"]
+            self.displayMetaFirst = firstEl["displayMetaFirst"]
+            self.displayMetaLast = firstEl["displayMetaLast"]
+
+    def displayBufferNext(self):
+        """Change the current display element to the next in buffer"""
+        nextKey = None
+        nextEl = None
+        if self.isDisplayBufferIn():
+            if not self.isDisplayBufferLast():
+                found = False
+                for i, (key, value) in enumerate(self._displayBuffer.items()):
+                    if key == self.displayFile:
+                        found = True
+                    else:
+                        if found:
+                            nextKey = key
+                            nextEl = value
+                            break
+        else:
+            self.displayBufferFirst()
+        if nextKey:
+            self.displayFile = nextKey
+            self.displayPhoto = nextEl["displayPhoto"]
+            self.displayMeta = nextEl["displayMeta"]
+            self.displayMetaFirst = nextEl["displayMetaFirst"]
+            self.displayMetaLast = nextEl["displayMetaLast"]
+
+    def displayBufferPrev(self):
+        """Change the current display element to the previous in buffer"""
+        prevKey = None
+        prevEl = None
+        if self.isDisplayBufferIn():
+            if not self.isDisplayBufferFirst():
+                for i, (key, value) in enumerate(self._displayBuffer.items()):
+                    if key == self.displayFile:
+                        break
+                    prevKey = key
+                    prevEl = value
+        if prevKey:
+            self.displayFile = prevKey
+            self.displayPhoto = prevEl["displayPhoto"]
+            self.displayMeta = prevEl["displayMeta"]
+            self.displayMetaFirst = prevEl["displayMetaFirst"]
+            self.displayMetaLast = prevEl["displayMetaLast"]
     
 class CameraCfg():
     _instance = None

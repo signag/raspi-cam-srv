@@ -1,3 +1,6 @@
+<!--
+RaspiCamSrv's Live page    
+-->
 {% extends 'base.html' %}
 
 {% block header %}
@@ -6,11 +9,17 @@
 
 {% block content %}
     <div class="w3-row w3-border">
-        <div class="w3-half">
+        <!-- First row -->
+        <div class="w3-half" style="min-height: 440px;">
+            <!-- Live stream -->
             <img src="{{ url_for('home.video_feed') }}" class="w3-image">
         </div>
         <div class="w3-half">
+            <!-- Camara control sections 
+                Settings changed here are applied to the camera while the live stream is active
+            -->
             <div class="w3-bar w3-green">
+                <!-- Controls menue -->
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('focus')">Focus</button>
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('zoom')">Zoom</button>
                 <button class="w3-bar-item w3-button" onclick="openCtrlTab('autoexposure')">Auto-Exposure</button>
@@ -22,6 +31,7 @@
             {% else %}
             <div id="focus" class="w3-container controlgroup" style="display:none">
             {% endif %}
+                <!-- Focus handling -->
                 <h4>Focus handling</h4>
                 {% if cp.hasFocus %}
                 <div>
@@ -242,10 +252,10 @@
                                 </td>
                             </tr>
                         </table>
-                        <br>
+                        <p style="margin-bottom: 0"></p>
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
-                    <br>
+                    <p style="margin-bottom: 0"></p>
                     <form method="post" action="{{ url_for('home.trigger_autofocus') }}">
                         <input class="w3-button w3-black" type="submit" value="Trigger Autofocus">
                     </form>
@@ -259,6 +269,7 @@
             {% else %}
             <div id="zoom" class="w3-container controlgroup" style="display:none">
             {% endif %}
+                <!-- Zoom & Pan -->
                 <h4>Zoom and pan</h4>
                 <div>
                     <form method="post" action="{{ url_for('home.set_zoom') }}">
@@ -365,6 +376,7 @@
             {% else %}
             <div id="autoexposure" class="w3-container controlgroup" style="display:none">
             {% endif %}
+                <!-- Control settings for auto-exposure -->
                 <h4>Auto Exposure</h4>
                 <div>
                     <form method="post" action="{{ url_for('home.ae_control') }}">
@@ -609,7 +621,7 @@
                             </tr>
                             {% endif %}
                         </table>
-                        <br>
+                        <p style="margin-bottom: 0"></p>
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
@@ -619,6 +631,7 @@
             {% else %}
             <div id="exposure" class="w3-container controlgroup" style="display:none">
             {% endif %}
+                <!-- Control settings for manual exposure control -->
                 <h4>Exposure</h4>
                 <div>
                     <form method="post" action="{{ url_for('home.exposure_control') }}">
@@ -832,7 +845,7 @@
                             </tr>
                             {% endif %}
                         </table>
-                        <br>
+                        <p style="margin-bottom: 0"></p>
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
@@ -842,6 +855,7 @@
             {% else %}
             <div id="image" class="w3-container controlgroup" style="display:none">
             {% endif %}
+                <!-- Control settings for other image parameters -->
                 <h4>Image</h4>
                 <div>
                     <form method="post" action="{{ url_for('home.image_control') }}">
@@ -1106,7 +1120,7 @@
                                 </td>
                             </tr>
                         </table>
-                        <br>
+                        <p style="margin-bottom: 0"></p>
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
@@ -1115,32 +1129,102 @@
     </div>
     <div class="w3-row w3-border">
         <div class="w3-half">
-            <form class="w3-container" method="post" action="{{ url_for('home.take_image') }}">
-                <table>
-                    <tr>
-                        <td style="width:90%">
-                            <label for="filepath">File Path</label>
-                            <input class="w3-input" name="filepath" id="filepath" value = "{{ sc.photoPath }}" disabled>
-                        </td>
-                        <td class="w3-right-align" rowspan="2">
+            <!-- Lower left area -->
+            <table class="w3-table-all">
+                <tr>
+                    <td style="width:40%">
+                        <!-- Photo button -->
+                        <form method="post" action="{{ url_for('home.take_photo') }}">
                             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width:90%">
-                            <label for="filename">File Name (leave empty for automatic naming)</label>
-                            <input class="w3-input" name="filename" id="filename">
-                        </td>
-                    </tr>
-                </table>
-            </form>
-            {% if sc.displayPhoto != None %}
-            <p> {{ sc.displayPhoto }}</p>
-            <img src="{{ url_for('static', filename=sc.displayPhoto) }}" class="w3-image">
-            {% endif %}
+                        </form>
+                    </td>
+                    <td style="width:15%">
+                        <p style="margin-bottom: 0;">{{ sc.displayBufferIndex }}</p>
+                    </td>
+                    <td style="width:15%">
+                    </td>
+                    <td style="width:15%">
+                        <!-- Show button: shows photo and meta -->
+                        {% if sc.isDisplayHidden == true and sc.displayPhoto != None %}
+                        <form method="post" action="{{ url_for('home.show_photo') }}">
+                            <input class="w3-button w3-black" type="submit" value="Show">
+                        </form>
+                        {% endif %}
+                        {% if sc.isDisplayHidden == false and sc.displayPhoto != None %}
+                        <form method="post" action="{{ url_for('home.hide_photo') }}">
+                            <input class="w3-button w3-black" type="submit" value="Hide">
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td style="width:15%">
+                        <!-- Clear button: clears Photo buffer -->
+                        {% if sc.displayBufferCount > 0 or sc.displayPhoto != None %}
+                        <form method="post" action="{{ url_for('home.clear_buffer') }}">
+                            <input class="w3-button w3-black" type="submit" value="{{ sc.buttonClear }}">
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if sc.isDisplayHidden == false and sc.displayPhoto != None %}
+                <tr>
+                    <td style="width:40%">
+                        <!-- Photo filename -->
+                        <p style="margin-bottom: 0">{{ sc.displayFile }}</p>
+                    </td>
+                    <td style="width:15%">
+                        <!-- Button +: Add to buffer -->
+                        {% if sc.isDisplayBufferIn() == false %}
+                        <form method="post" action="{{ url_for('home.photoBuffer_add') }}">
+                            <input class="w3-button w3-circle w3-black" type="submit" value="+">
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('home.photoBuffer_add') }}">
+                            <input class="w3-button w3-circle w3-black" type="submit" value="+" disabled>
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td style="width:15%">
+                        <!-- Button -: Remove from buffer -->
+                        <form method="post" action="{{ url_for('home.photoBuffer_remove') }}">
+                            <input class="w3-button w3-circle w3-black" type="submit" value="-">
+                        </form>
+                    </td>
+                    <td style="width:15%">
+                        <!-- Button <: Prev -->
+                        {% if (sc.isDisplayBufferIn() == true and sc.isDisplayBufferFirst() == false) or sc.isDisplayBufferIn() == flase  %}
+                        <form method="post" action="{{ url_for('home.photoBuffer_prev') }}">
+                            <input class="w3-button w3-circle w3-black" type="submit" value="<">
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('home.photoBuffer_prev') }}">
+                            <input class="w3-button w3-circle w3-black" type="submit" value="<" disabled>
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td style="width:15%">
+                        <!-- Button >: Next -->
+                        {% if (sc.isDisplayBufferIn() == true and sc.isDisplayBufferLast() == false) or sc.isDisplayBufferIn() == flase %}
+                        <form method="post" action="{{ url_for('home.photoBuffer_next') }}">
+                            <input class="w3-button w3-circle w3-black" type="submit" value=">">
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('home.photoBuffer_next') }}">
+                            <input class="w3-button w3-circle w3-black" type="submit" value=">" disabled>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <!-- The active Photo-->
+                    <td colspan="5">
+                        <img style="max-height: 600px;" src="{{ url_for('static', filename=sc.displayPhoto) }}" class="w3-image">
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
         </div>
         <div class="w3-half">
-            {% if sc.displayMeta != None %}
+            {% if sc.isDisplayHidden == false and sc.displayMeta != None %}
             <p> Metadata</p>
             <table class="w3-table-all">
                 <tr>
@@ -1160,9 +1244,6 @@
             <table class="w3-table">
                 <tr>
                     <td style="width:25%">
-                        <form method="post" action="{{ url_for('home.meta_clear') }}">
-                            <input class="w3-button w3-black" style="width:80%" type="submit" value="Clear">
-                        </form>
                     </td>
                     <td style="width:25%">
                     </td>
