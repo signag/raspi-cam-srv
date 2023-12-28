@@ -24,6 +24,7 @@ def index():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.curMenu = "live"
     logger.info("cp.hasFocus is %s", cp.hasFocus)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 

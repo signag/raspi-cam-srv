@@ -15,19 +15,56 @@
                      | 
                     {{ g.hostname }}
                 </div>
+                {% else%}
+                <div class="w3-bar-item w3-right">
+                    {{ g.hostname }}
+                </div>
                 {% endif %}
             </div>
             <div class="w3-bar w3-black">
                 {% if g.user %}
-                <a href="{{ url_for('home.index') }}" class="w3-bar-item w3-button">Live</a>
-                <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button">Images</a>
-                <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button">Info</a>
-                <a href="{{ url_for('config.main') }}" class="w3-bar-item w3-button">Config</a>
-                <a href="{{ url_for('auth.logout') }}" class="w3-bar-item w3-button">Log Out</a>
+                {% if sc.curMenu == "live" %}
+                <a href="{{ url_for('home.index') }}" class="w3-bar-item w3-button menubtns w3-dark-grey" id='livebtn' onclick="openMenu('livebtn')">Live</a>
+                {% else %}
+                <a href="{{ url_for('home.index') }}" class="w3-bar-item w3-button menubtns" id='livebtn' onclick="openMenu('livebtn')">Live</a>
+                {% endif %}
+                {% if sc.curMenu == "config" %}
+                <a href="{{ url_for('config.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='cfgbtn' onclick="openMenu('cfgbtn')">Config</a>
+                {% else %}
+                <a href="{{ url_for('config.main') }}" class="w3-bar-item w3-button" id='cfgbtn' onclick="openMenu('cfgbtn')">Config</a>
+                {% endif %}
+                {% if sc.curMenu == "images" %}
+                <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='imagesbtn' onclick="openMenu('imagesbtn')">Images</a>
+                {% else %}
+                <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button" id='imagesbtn' onclick="openMenu('imagesbtn')">Images</a>
+                {% endif %}
+                {% if sc.curMenu == "info" %}
+                <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='infobtn' onclick="openMenu('infobtn')">Info</a>
+                {% else %}
+                <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button" id='infobtn' onclick="openMenu('infobtn')">Info</a>
+                {% endif %}
+                {% if sc.curMenu == "settings" %}
+                <a href="{{ url_for('settings.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='settingsbtn' onclick="openMenu('settingsbtn')">Settings</a>
+                {% else %}
+                <a href="{{ url_for('settings.main') }}" class="w3-bar-item w3-button" id='settingsbtn' onclick="openMenu('settingsbtn')">Settings</a>
+                {% endif %}
+                {% if sc.curMenu == "live" %}
+                <a href="{{ url_for('auth.logout') }}" class="w3-bar-item w3-button" id='logoutbtn' onclick="openMenu('logoutbtn')">Log Out</a>
+                {% else %}
+                <a href="{{ url_for('auth.logout') }}" class="w3-bar-item w3-button" id='logoutbtn' onclick="openMenu('logoutbtn')">Log Out</a>
+                {% endif %}
                 {% else %}
                 <div>
-                    <a href="{{ url_for('auth.register') }}" class="w3-bar-item w3-button">Register</a>
-                    <a href="{{ url_for('auth.login') }}" class="w3-bar-item w3-button">Log In</a>
+                    {% if sc.curMenu == "register" %}
+                    <a href="{{ url_for('auth.register') }}" class="w3-bar-item w3-button w3-dark-grey" id='registerbtn' onclick="openMenu('registerbtn')">Register</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="w3-bar-item w3-button" id='registerbtn' onclick="openMenu('registerbtn')">Register</a>
+                    {% endif %}
+                    {% if sc.curMenu == "login" %}
+                    <a href="{{ url_for('auth.login') }}" class="w3-bar-item w3-button w3-dark-grey" id='loginbtn' onclick="openMenu('loginbtn')">Log In</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="w3-bar-item w3-button" id='loginbtn' onclick="openMenu('loginbtn')">Log In</a>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
@@ -38,5 +75,14 @@
                 {% endfor %}
             </div>
         </div>
+        <script>
+            function openMenu(menuButton) {
+                var b = document.getElementsByClassName("menubtns");
+                for (i = 0; i < b.length; i++) {
+                    b[i].classList = "w3-bar-item w3-button menubtns";
+                }
+                document.getElementById(menuButton).classList = "w3-bar-item w3-button menubtns w3-dark-grey";
+            }
+        </script>
     </body>
 </html>

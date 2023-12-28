@@ -20,11 +20,31 @@ RaspiCamSrv's Live page
             -->
             <div class="w3-bar w3-green">
                 <!-- Controls menue -->
-                <button class="w3-bar-item w3-button" onclick="openCtrlTab('focus')">Focus</button>
-                <button class="w3-bar-item w3-button" onclick="openCtrlTab('zoom')">Zoom</button>
-                <button class="w3-bar-item w3-button" onclick="openCtrlTab('autoexposure')">Auto-Exposure</button>
-                <button class="w3-bar-item w3-button" onclick="openCtrlTab('exposure')">Exposure</button>
-                <button class="w3-bar-item w3-button" onclick="openCtrlTab('image')">Image</button>
+                {% if sc.lastLiveTab == "focus" %}
+                <button class="w3-bar-item w3-button ctrlmenu w3-light-green" id="focusbtn" onclick="openCtrlTab('focus','focusbtn')">Focus</button>
+                {% else %}
+                <button class="w3-bar-item w3-button ctrlmenu" id="focusbtn" onclick="openCtrlTab('focus','focusbtn')">Focus</button>
+                {% endif %}
+                {% if sc.lastLiveTab == "zoom" %}
+                <button class="w3-bar-item w3-button ctrlmenu w3-light-green" id="zoombtn" onclick="openCtrlTab('zoom','zoombtn')">Zoom</button>
+                {% else %}
+                <button class="w3-bar-item w3-button ctrlmenu" id="zoombtn" onclick="openCtrlTab('zoom','zoombtn')">Zoom</button>
+                {% endif %}
+                {% if sc.lastLiveTab == "autoexposure" %}
+                <button class="w3-bar-item w3-button ctrlmenu w3-light-green" id="aebtn" onclick="openCtrlTab('autoexposure','aebtn')">Auto-Exposure</button>
+                {% else %}
+                <button class="w3-bar-item w3-button ctrlmenu" id="aebtn" onclick="openCtrlTab('autoexposure','aebtn')">Auto-Exposure</button>
+                {% endif %}
+                {% if sc.lastLiveTab == "exposure" %}
+                <button class="w3-bar-item w3-button ctrlmenu w3-light-green" id="expbtn" onclick="openCtrlTab('exposure','expbtn')">Exposure</button>
+                {% else %}
+                <button class="w3-bar-item w3-button ctrlmenu" id="expbtn" onclick="openCtrlTab('exposure','expbtn')">Exposure</button>
+                {% endif %}
+                {% if sc.lastLiveTab == "image" %}
+                <button class="w3-bar-item w3-button ctrlmenu w3-light-green" id="imagebtn" onclick="openCtrlTab('image','imagebtn')">Image</button>
+                {% else %}
+                <button class="w3-bar-item w3-button ctrlmenu" id="imagebtn" onclick="openCtrlTab('image','imagebtn')">Image</button>
+                {% endif %}
             </div>
             {% if sc.lastLiveTab == "focus" %}
             <div id="focus" class="w3-container controlgroup">
@@ -1277,13 +1297,19 @@ RaspiCamSrv's Live page
         </div>
     </div>
     <script>
-        function openCtrlTab(ctrlTabName) {
+        function openCtrlTab(ctrlTabName, ctrlTabBtn) {
             var i;
             var x = document.getElementsByClassName("controlgroup");
             for (i = 0; i < x.length; i++) {
                 x[i].style.display = "none";
             }
             document.getElementById(ctrlTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("ctrlmenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button ctrlmenu";
+            }
+            document.getElementById(ctrlTabBtn).classList = "w3-bar-item w3-button ctrlmenu w3-light-green";
         }
     </script>
     <script>

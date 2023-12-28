@@ -826,6 +826,7 @@ class ServerConfig():
         self._photoPath = None
         self._zoomFactor = 100
         self._zoomFactorStep = 10
+        self._curMenu = "live"
         self._lastLiveTab = "focus"
         self._lastInfoTab = "camprops"
         self._isDisplayHidden = True
@@ -879,6 +880,18 @@ class ServerConfig():
     @zoomFactorStep.deleter
     def zoomFactorStep(self):
         del self._zoomFactorStep
+
+    @property
+    def curMenu(self) -> str:
+        return self._curMenu
+
+    @curMenu.setter
+    def curMenu(self, value: str):
+        self._curMenu = value
+
+    @curMenu.deleter
+    def curMenu(self):
+        del self._curMenu
 
     @property
     def lastLiveTab(self):

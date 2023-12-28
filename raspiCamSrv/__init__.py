@@ -56,6 +56,9 @@ def create_app(test_config=None):
 
     from . import info
     app.register_blueprint(info.bp)
+
+    from . import settings
+    app.register_blueprint(settings.bp)
     
     # Configure loggers
     filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")

@@ -11,14 +11,21 @@ from flask import (
     url_for,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
+from raspiCamSrv.camCfg import CameraCfg
 
 from raspiCamSrv.db import get_db
+import logging
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+logger = logging.getLogger(__name__)
 
 @bp.route("/register", methods=("GET", "POST"))
 def register():
+    g.hostname = request.host
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    sc.curMenu = "register"
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
@@ -44,11 +51,15 @@ def register():
 
         flash(error)
 
-    return render_template("auth/register.html")
+    return render_template("auth/register.html", sc=sc)
 
 
 @bp.route("/login", methods=("GET", "POST"))
 def login():
+    g.hostname = request.host
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    sc.curMenu = "login"
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
@@ -70,7 +81,7 @@ def login():
 
         flash(error)
 
-    return render_template("auth/login.html")
+    return render_template("auth/login.html", sc=sc)
 
 
 @bp.before_app_request
