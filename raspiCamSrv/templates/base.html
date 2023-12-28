@@ -33,15 +33,20 @@
                 {% else %}
                 <a href="{{ url_for('config.main') }}" class="w3-bar-item w3-button" id='cfgbtn' onclick="openMenu('cfgbtn')">Config</a>
                 {% endif %}
+                {% if sc.curMenu == "info" %}
+                <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='infobtn' onclick="openMenu('infobtn')">Info</a>
+                {% else %}
+                <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button" id='infobtn' onclick="openMenu('infobtn')">Info</a>
+                {% endif %}
                 {% if sc.curMenu == "images" %}
                 <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='imagesbtn' onclick="openMenu('imagesbtn')">Images</a>
                 {% else %}
                 <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button" id='imagesbtn' onclick="openMenu('imagesbtn')">Images</a>
                 {% endif %}
-                {% if sc.curMenu == "info" %}
-                <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='infobtn' onclick="openMenu('infobtn')">Info</a>
+                {% if sc.curMenu == "timelapse" %}
+                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Timelapse</a>
                 {% else %}
-                <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button" id='infobtn' onclick="openMenu('infobtn')">Info</a>
+                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Timelapse</a>
                 {% endif %}
                 {% if sc.curMenu == "settings" %}
                 <a href="{{ url_for('settings.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='settingsbtn' onclick="openMenu('settingsbtn')">Settings</a>
