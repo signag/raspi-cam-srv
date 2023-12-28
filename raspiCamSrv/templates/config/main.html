@@ -1,9 +1,259 @@
 {% extends 'base.html' %}
 
 {% block header %}
-    {% block title %}Config{% endblock %}
+    {% block title %}Camera Configurations{% endblock %}
 {% endblock %}
 
 {% block content %}
-<h3>Config</h3>
+    <div class="w3-bar w3-green">
+        <!-- Config menue -->
+        {% if sc.lastConfigTab == "cfglive" %}
+        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfglivebtn" onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
+        {% else %}
+        <button class="w3-bar-item w3-button configmenu" id="cfglivebtn" onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
+        {% endif %}
+        {% if sc.lastConfigTab == "cfgphoto" %}
+        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgphotobtn" onclick="openCfgTab('cfgphoto', 'cfgphotobtn')">Photo</button>
+        {% else %}
+        <button class="w3-bar-item w3-button configmenu" id="cfgphotobtn" onclick="openCfgTab('cfgphoto', 'cfgphotobtn')">Photo</button>
+        {% endif %}
+        {% for cfg in cfgs %}
+        <button class="w3-bar-item w3-button configmenu" id="{{ cfg.tabButtonId }}"
+            onclick="openCfgTab('{{ cfg.tabId }}', '{{ cfg.tabButtonId }}')">{{ cfg.tabTitle }}</button>
+        {% endfor%}
+    </div>
+    <!-- Live View configuration -->
+    {% if sc.lastConfigTab == "cfglive" %}
+    <div id="cfglive" class="cfggroup">
+    {% else %}
+    <div id="cfglive" class="cfggroup" style="display:none">
+    {% endif %}
+        <h4>Configuration for Live View</h4>
+        {% set cfg = cfglive %}
+        <div>
+            <form method="post" action="{{ url_for('config.liveViewCfg') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                This is the unique ID of the configuration. It is only used to distinguish
+                                different configuration sets within this application. 
+                                It is not relevant for the camera system.
+                            </span>
+                            <label for="LIVE_id">ID:</label>
+                        </td>
+                        <td colspan="2">
+                            <input id="LIVE_id" name="livecfgid" value={{ cfg.id }}>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Usecase for this configuration.
+                            </span>
+                            <label for="LIVE_use_case">Use Case:</label>
+                        </td>
+                        <td colspan="2">
+                            <input id="LIVE_use_case" name="LIVE_use_case" value={{ cfg.use_case }}>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Whether camera images are horizontally or vertically mirrored, 
+                                or both (giving a 180 degree rotation).
+                            </span>
+                            <label for="LIVE_hflip">Transform (flip ↔ or ↕ ):</label>
+                        </td>
+                        <td style="width:5%">
+                            ↔
+                            {% if cfg.transform_hflip == True %}
+                            <input type="checkbox" id="LIVE_hflip" name="LIVE_hflip" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="LIVE_hflip" name="LIVE_hflip" value="0">
+                            {% endif %}
+                        </td>
+                        <td style="width:5%">
+                            ↕
+                            {% if cfg.transform_vflip == True %}
+                            <input type="checkbox" id="LIVE_vflip" name="LIVE_vflip" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="LIVE_vflip" name="LIVE_vflip" value="0">
+                            {% endif %}
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The colour space of the output images. 
+                                The main and lores streams must always share the same colour space.
+                                The raw stream is always in a camera-specific colour space.
+                            </span>
+                            <label for="LIVE_colour_space">Colour Space:</label>
+                        </td>
+                        <td colspan="2">
+                            <select name="LIVE_colour_space" id="LIVE_colour_space">
+                                {% if cfg.colour_space == "sYCC" %}
+                                <option value="sYCC" selected>sYCC</option>
+                                {% else %}
+                                <option value="sYCC">sYCC</option>
+                                {% endif %}
+                                {% if cfg.colour_space == "Smpte170m" %}
+                                <option value="Smpte170m" selected>Smpte170m</option>
+                                {% else %}
+                                <option value="Smpte170m">Smpte170m</option>
+                                {% endif %}
+                                {% if cfg.colour_space == "Rec709" %}
+                                <option value="Rec709" selected>Rec709</option>
+                                {% else %}
+                                <option value="Rec709">Rec709</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                the number of sets of buffers to allocate for the camera system. 
+                                A single set of buffers represents
+                                one buffer for each of the streams that have been requested.
+                            </span>
+                            <label for="LIVE_buffer_count">Buffer Count:</label>
+                        </td>
+                        <td colspan="2">
+                            <input type="number" id="LIVE_buffer_count" name="LIVE_buffer_count" min="1" max="6" value={{ cfg.buffer_count }}>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Whether the system is allowed to queue up a frame 
+                                ready for a capture request.
+                            </span>
+                            <label for="LIVE_queue">Queue:</label>
+                        </td>
+                        <td colspan="2">
+                            {% if cfg.queue == True %}
+                            <input type="checkbox" id="LIVE_queue" name="LIVE_queue" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="LIVE_queue" name="LIVE_queue" value="0">
+                            {% endif %}
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Sensor Mode to be used in this configuration<br>
+                                For details, see the available Sensor Modos under 'Info'
+                            </span>
+                            <label for="LIVE_sensor_mode">Sensor Mode:</label>
+                        </td>
+                        <td colspan="2">
+                            <select name="LIVE_sensor_mode" id="LIVE_sensor_mode">
+                                {% for mode in sm %}
+                                {% if cfg.sensor_mode == mode.id %}
+                                <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
+                                {% else %}
+                                <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
+                                {% endif %}
+                                {% endfor%}
+                            </select>
+                        </td>
+                        <td style="width:50%">
+                            {% for mode in sm %}
+                            {% if cfg.sensor_mode == mode.id %}
+                            Size: {{ mode.size }} FPS: {{ mode.fps }} Bit Depth: {{ mode.bit_depth }}
+                            {% endif %}
+                            {% endfor%}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                This names which (if any) of the camera streams are to be shown in the preview window. <br>
+                                Note: Preview view is not used within this applacation.
+                            </span>
+                            <label for="LIVE_display">Preview:</label>
+                        </td>
+                        <td colspan="2">
+                            <input id="LIVE_display" name="LIVE_display" value={{ cfg.display }} disabled>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                This names which (if any) of the streams are to be encoded if a video recording is started. 
+                            </span>
+                            <label for="LIVE_encode">Encode:</label>
+                        </td>
+                        <td colspan="2">
+                            <input id="LIVE_encode" name="LIVE_encode" value={{ cfg.encode }} disabled>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+
+    <!-- Photo configuration -->
+    {% if sc.lastConfigTab == "cfgphoto" %}
+    <div id="cfgphoto" class="cfggroup">
+    {% else %}
+    <div id="cfgphoto" class="cfggroup" style="display:none">
+    {% endif %}
+        <h4>Configuration for Photo Taking</h4>
+    </div>
+    {% for cfg in cfgs %}
+        <h4>Configuration {{ cfg.tabTitle }}</h4>
+    {% endfor%}
+    <script>
+        function openCfgTab(cfgTabName, cfgTabButton) {
+            var i;
+            var x = document.getElementsByClassName("cfggroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(cfgTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("configmenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button configmenu";
+            }
+            document.getElementById(cfgTabButton).classList = "w3-bar-item w3-button configmenu w3-light-green";
+        }
+    </script>
 {% endblock %}

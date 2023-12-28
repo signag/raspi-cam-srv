@@ -652,16 +652,130 @@ class SensorMode():
 
 class CameraConfig():
     def __init__(self):
-        self._transform = 0
-        self._colour_space = 0
-        self._buffer_count = 0
+        self._id = ""
+        self._use_case = ""
+        self._transform_hflip = False
+        self._transform_vflip = False
+        self._colour_space = "syCC"
+        self._buffer_count = 1
         self._queue = False
-        self._display = "main"
-        self._encode = "main"
-        self._sensor = None
-        self._format = None
-        self._size = None
+        self._display = None
+        self._encode = None
+        self._sensor_mode = "0"
+        self._controls = {}
 
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @id.setter
+    def id(self, value: str):
+        self._id = value
+
+    @property
+    def use_case(self) -> str:
+        return self._use_case
+
+    @use_case.setter
+    def use_case(self, value: str):
+        self._use_case = value
+
+    @property
+    def transform_hflip(self) -> bool:
+        return self._transform_hflip
+
+    @transform_hflip.setter
+    def transform(self, value: bool):
+        self._transform_hflip = value
+
+    @property
+    def transform_vflip(self) -> bool:
+        return self._transform_vflip
+
+    @transform_vflip.setter
+    def transform(self, value: bool):
+        self._transform_vflip = value
+
+    @property
+    def colour_space(self) -> str:
+        return self._colour_space
+
+    @colour_space.setter
+    def colour_space(self, value: str):
+        if value == "sYCC" \
+        or value == "Smpte170m" \
+        or value == "Rec709":
+            self._colour_space = value
+        else:
+            raise ValueError("Invalid value for colour_space: %s", value)
+        
+    @property
+    def buffer_count(self) -> int:
+        return self._buffer_count
+
+    @buffer_count.setter
+    def buffer_count(self, value: int):
+        self._buffer_count = value
+
+    @property
+    def queue(self) -> bool:
+        return self._queue
+
+    @queue.setter
+    def queue(self, value: bool):
+        self._queue = value
+
+    @property
+    def display(self) -> str:
+        return self._display
+
+    @display.setter
+    def display(self, value: str):
+        self._display = value
+
+    @property
+    def encode(self) -> str:
+        return self._encode
+
+    @encode.setter
+    def encode(self, value: str):
+        if value is None:
+            self._encode = value
+        else:
+            if value == "main" \
+            or value == "lores":
+                self._encode = value
+            else:
+                raise ValueError("Invalid value for encode: %s", value)
+
+    @property
+    def sensor_mode(self) -> str:
+        return self._sensor_mode
+
+    @sensor_mode.setter
+    def sensor_mode(self, value: str):
+        self._sensor_mode = value
+
+    @property
+    def controls(self) -> str:
+        return self._controls
+
+    @controls.setter
+    def controls(self, value: str):
+        self._controls = value
+
+    @property
+    def tabId(self) -> str:
+        return "cfg" + self.id
+
+    @property
+    def tabButtonId(self) -> str:
+        return "cfg" + self.id + "btn"
+
+    @property
+    def tabTitle(self) -> str:
+        return "Config " + self.id
+        
 class CameraProperties():
     def __init__(self):
         self._hasFocus = True
@@ -828,6 +942,7 @@ class ServerConfig():
         self._zoomFactorStep = 10
         self._curMenu = "live"
         self._lastLiveTab = "focus"
+        self._lastConfigTab = "cfglive"
         self._lastInfoTab = "camprops"
         self._isDisplayHidden = True
         self._displayPhoto = None
@@ -904,6 +1019,18 @@ class ServerConfig():
     @lastLiveTab.deleter
     def lastLiveTab(self):
         del self._lastLiveTab
+
+    @property
+    def lastConfigTab(self):
+        return self._lastConfigTab
+
+    @lastConfigTab.setter
+    def lastConfigTab(self, value: str):
+        self._lastConfigTab = value
+
+    @lastConfigTab.deleter
+    def lastConfigTab(self):
+        del self._lastConfigTab
 
     @property
     def lastInfoTab(self):
@@ -1181,6 +1308,18 @@ class CameraCfg():
             cls._controls = CameraControls()
             cls._cameraProperties = CameraProperties()
             cls._sensorModes = []
+            cls._liveViewConfig = CameraConfig()
+            cls._liveViewConfig.id = "LIVE"
+            cls._liveViewConfig.use_case = "Live view"
+            cls._liveViewConfig.buffer_count = 4
+            cls._stillConfig = CameraConfig()
+            cls._stillConfig.id = "FOTO"
+            cls._stillConfig.use_case = "Photo"
+            cls._videoConfig = CameraConfig()
+            cls._videoConfig.buffer_count = 6
+            cls._videoConfig.id = "VIDO"
+            cls._videoConfig.use_case = "Video"
+            cls._cameraConfigs = []
             cls._serverConfig = ServerConfig()
         return cls._instance
     
@@ -1201,5 +1340,21 @@ class CameraCfg():
         return len(self._sensorModes)
     
     @property
-    def serverConfig(self):
+    def liveViewConfig(self) -> dict:
+        return self._liveViewConfig
+    
+    @property
+    def stillConfig(self) -> dict:
+        return self._stillConfig
+    
+    @property
+    def videoConfig(self) -> dict:
+        return self._videoConfig
+    
+    @property
+    def cameraConfigs(self) -> list:
+        return self._cameraConfigs
+    
+    @property
+    def serverConfig(self) -> dict:
         return self._serverConfig

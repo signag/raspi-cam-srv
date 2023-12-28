@@ -14,6 +14,28 @@ logger = logging.getLogger(__name__)
 def main():
     g.hostname = request.host
     cfg = CameraCfg()
+    sm = cfg.sensorModes
     sc = cfg.serverConfig
     sc.curMenu = "config"
-    return render_template("config/main.html", sc=sc)
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.stillConfig
+    cfgvideo =cfg.videoConfig
+    return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgvideo=cfgvideo, cfgs=cfgs)
+
+@bp.route("/liveViewCfg", methods=("GET", "POST"))
+@login_required
+def liveViewCfg():
+    logger.info("In liveViewCfg")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    sm = cfg.sensorModes
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfglive"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.stillConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        pass
+    return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgvideo=cfgvideo, cfgs=cfgs)
