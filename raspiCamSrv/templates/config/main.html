@@ -45,7 +45,7 @@
                             <label for="LIVE_id">ID:</label>
                         </td>
                         <td colspan="2">
-                            <input id="LIVE_id" name="livecfgid" value={{ cfg.id }}>
+                            <input id="LIVE_id" name="LIVE_id" value={{ cfg.id }} disabled>
                         </td>
                         <td style="width:50%">
                         </td>
@@ -60,7 +60,7 @@
                             <label for="LIVE_use_case">Use Case:</label>
                         </td>
                         <td colspan="2">
-                            <input id="LIVE_use_case" name="LIVE_use_case" value={{ cfg.use_case }}>
+                            <input id="LIVE_use_case" name="LIVE_use_case" value={{ cfg.use_case }} disabled>
                         </td>
                         <td style="width:50%">
                         </td>
@@ -73,22 +73,22 @@
                                 Whether camera images are horizontally or vertically mirrored, 
                                 or both (giving a 180 degree rotation).
                             </span>
-                            <label for="LIVE_hflip">Transform (flip ↔ or ↕ ):</label>
+                            <label for="LIVE_transform_hflip">Transform (flip ↔ or ↕ ):</label>
                         </td>
                         <td style="width:5%">
                             ↔
-                            {% if cfg.transform_hflip == True %}
-                            <input type="checkbox" id="LIVE_hflip" name="LIVE_hflip" value="1" checked>
+                            {% if cfg.transform_hflip == true %}
+                            <input type="checkbox" id="LIVE_transform_hflip" name="LIVE_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="LIVE_hflip" name="LIVE_hflip" value="0">
+                            <input type="checkbox" id="LIVE_transform_hflip" name="LIVE_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:5%">
                             ↕
-                            {% if cfg.transform_vflip == True %}
-                            <input type="checkbox" id="LIVE_vflip" name="LIVE_vflip" value="1" checked>
+                            {% if cfg.transform_vflip == true %}
+                            <input type="checkbox" id="LIVE_transform_vflip" name="LIVE_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="LIVE_vflip" name="LIVE_vflip" value="0">
+                            <input type="checkbox" id="LIVE_transform_vflip" name="LIVE_transform_vflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:50%">
@@ -166,6 +166,10 @@
                     </tr>
                     <tr>
                         <td style="width:5%">
+                            <!-- This cell is used to store an invisible list of sensor mode data -->
+                            {% for mode in sm %}
+                            <p id="sensormode_ref{{ mode.id }}" style="display:none">Size: {{ mode.size }} FPS: {{ mode.fps }} Bit Depth: {{ mode.bit_depth }}</p>
+                            {% endfor%}
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -175,7 +179,7 @@
                             <label for="LIVE_sensor_mode">Sensor Mode:</label>
                         </td>
                         <td colspan="2">
-                            <select name="LIVE_sensor_mode" id="LIVE_sensor_mode">
+                            <select name="LIVE_sensor_mode" id="LIVE_sensor_mode" onchange="sensorModeChanged('LIVE_sensor_mode', 'LIVE_sensor_mode_data')">
                                 {% for mode in sm %}
                                 {% if cfg.sensor_mode == mode.id %}
                                 <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
@@ -185,7 +189,7 @@
                                 {% endfor%}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:50%" id="LIVE_sensor_mode_data">
                             {% for mode in sm %}
                             {% if cfg.sensor_mode == mode.id %}
                             Size: {{ mode.size }} FPS: {{ mode.fps }} Bit Depth: {{ mode.bit_depth }}
@@ -201,7 +205,7 @@
                                 This names which (if any) of the camera streams are to be shown in the preview window. <br>
                                 Note: Preview view is not used within this applacation.
                             </span>
-                            <label for="LIVE_display">Preview:</label>
+                            <label for="LIVE_display">Display:</label>
                         </td>
                         <td colspan="2">
                             <input id="LIVE_display" name="LIVE_display" value={{ cfg.display }} disabled>
@@ -225,6 +229,8 @@
                         </td>
                     </tr>
                 </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit & Apply">
             </form>
         </div>
     </div>
@@ -254,6 +260,15 @@
                 b[i].classList = "w3-bar-item w3-button configmenu";
             }
             document.getElementById(cfgTabButton).classList = "w3-bar-item w3-button configmenu w3-light-green";
+        }
+    </script>
+    <script>
+        function sensorModeChanged(srcId, tgtId) {
+            var src = document.getElementById(srcId);
+            var val = src.value;
+            var txt = document.getElementById("sensormode_ref" + val).innerText
+            var tgt = document.getElementById(tgtId);
+            tgt.innerText=txt
         }
     </script>
 {% endblock %}

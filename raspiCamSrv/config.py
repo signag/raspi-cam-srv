@@ -1,6 +1,7 @@
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
+from raspiCamSrv.camera_pi import Camera
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 @login_required
 def main():
     g.hostname = request.host
+    # Although not directly needed here, the camara needs to be initialized
+    # in order to load the camera-specific parameters into configuration
+    cam = Camera().cam
     cfg = CameraCfg()
     sm = cfg.sensorModes
     sc = cfg.serverConfig
@@ -37,5 +41,23 @@ def liveViewCfg():
     cfgphoto = cfg.stillConfig
     cfgvideo =cfg.videoConfig
     if request.method == "POST":
-        pass
+#        id = request.form["LIVE_id"]
+#        use_case = request.form["LIVE_use_case"]
+        transform_hflip = not request.form.get("LIVE_transform_hflip") is None
+        cfglive.transform_hflip = transform_hflip        
+        transform_vflip = not request.form.get("LIVE_transform_vflip") is None
+        cfglive.transform_vflip = transform_vflip
+        colour_space = request.form["LIVE_colour_space"]
+        cfglive.colour_space = colour_space
+        buffer_count = int(request.form["LIVE_buffer_count"])
+        cfglive.buffer_count = buffer_count
+        queue = not request.form.get("LIVE_queue") is None
+        cfglive.queue = queue
+        sensor_mode = int(request.form["LIVE_sensor_mode"])
+        cfglive.sensor_mode = str(sensor_mode)
+#        display = request.form["LIVE_display"]
+        cfglive.display = None
+#        encode = request.form["LIVE_encode"]
+        cfglive.encode = "main"
+
     return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgvideo=cfgvideo, cfgs=cfgs)

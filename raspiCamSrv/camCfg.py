@@ -685,7 +685,7 @@ class CameraConfig():
         return self._transform_hflip
 
     @transform_hflip.setter
-    def transform(self, value: bool):
+    def transform_hflip(self, value: bool):
         self._transform_hflip = value
 
     @property
@@ -693,7 +693,7 @@ class CameraConfig():
         return self._transform_vflip
 
     @transform_vflip.setter
-    def transform(self, value: bool):
+    def transform_vflip(self, value: bool):
         self._transform_vflip = value
 
     @property
@@ -1312,6 +1312,7 @@ class CameraCfg():
             cls._liveViewConfig.id = "LIVE"
             cls._liveViewConfig.use_case = "Live view"
             cls._liveViewConfig.buffer_count = 4
+            cls._liveViewConfig.encode = "main"
             cls._stillConfig = CameraConfig()
             cls._stillConfig.id = "FOTO"
             cls._stillConfig.use_case = "Photo"
@@ -1340,15 +1341,15 @@ class CameraCfg():
         return len(self._sensorModes)
     
     @property
-    def liveViewConfig(self) -> dict:
+    def liveViewConfig(self):
         return self._liveViewConfig
     
     @property
-    def stillConfig(self) -> dict:
+    def stillConfig(self):
         return self._stillConfig
     
     @property
-    def videoConfig(self) -> dict:
+    def videoConfig(self):
         return self._videoConfig
     
     @property
