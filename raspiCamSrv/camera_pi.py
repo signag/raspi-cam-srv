@@ -91,7 +91,12 @@ class Camera(BaseCamera):
                 cfgMode.exposure_limits = mode["exposure_limits"]
                 cfgSensorModes.append(cfgMode)
                 ind = ind + 1
-        logger.info("%s sensor modes found", len(cfg.sensorModes))
+            logger.info("%s sensor modes found", len(cfg.sensorModes))
+            maxMode = str(len(cfg.sensorModes) - 1)
+            cfg.photoConfig.sensor_mode = maxMode
+            cfg.rawConfig.sensor_mode = maxMode
+            cfg.videoConfig.sensor_mode = maxMode
+            logger.info("Photo and video sensor modes set to %s", maxMode)
     
     @staticmethod
     def configure(cfg, sensorModes):
@@ -198,7 +203,11 @@ class Camera(BaseCamera):
         with Camera.cam as cam:
             stillConfig = cam.create_still_configuration()
             logger.info("Camera.takeImage: Still config created: %s", stillConfig)
-            cam.configure(stillConfig)
+            srvCam = CameraCfg()
+            cfgSensorModes = srvCam.sensorModes
+            cfg = srvCam.photoConfig
+            photoConfig = Camera.configure(cfg, cfgSensorModes)
+            cam.configure(photoConfig)
             logger.info("Camera.takeImage: Camera configured for still")
             cam.start(show_preview=False)
             logger.info("Camera.takeImage: Camera started")
@@ -225,13 +234,6 @@ class Camera(BaseCamera):
     def frames():
         logger.debug("Camera.frames")
         with Camera.cam as cam:
-#            streamingConfig = cam.create_video_configuration(
-#                main={"size": (640, 480), "format": "YUV420"},
-#                lores=None,
-#                raw=None,
-#                display=None,
-#                encode="main",
-#            )
             srvCam = CameraCfg()
             cfgSensorModes = srvCam.sensorModes
             cfg = srvCam.liveViewConfig

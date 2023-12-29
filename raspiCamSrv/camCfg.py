@@ -745,7 +745,8 @@ class CameraConfig():
             self._encode = value
         else:
             if value == "main" \
-            or value == "lores":
+            or value == "lores" \
+            or value == "raw":
                 self._encode = value
             else:
                 raise ValueError("Invalid value for encode: %s", value)
@@ -1337,19 +1338,25 @@ class CameraCfg():
             cls._liveViewConfig.buffer_count = 4
             cls._liveViewConfig.encode = "main"
             cls._liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
-            cls._stillConfig = CameraConfig()
-            cls._stillConfig.id = "FOTO"
-            cls._stillConfig.use_case = "Photo"
-            cls._liveViewConfig.buffer_count = 1
-            cls._liveViewConfig.encode = "main"
-            cls._liveViewConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+            cls._photoConfig = CameraConfig()
+            cls._photoConfig.id = "FOTO"
+            cls._photoConfig.use_case = "Photo"
+            cls._photoConfig.buffer_count = 1
+            cls._photoConfig.encode = "main"
+            cls._photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+            cls._rawConfig = CameraConfig()
+            cls._rawConfig.id = "PRAW"
+            cls._rawConfig.use_case = "Raw Photo"
+            cls._rawConfig.buffer_count = 1
+            cls._rawConfig.encode = "raw"
+            cls._rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
             cls._videoConfig = CameraConfig()
             cls._videoConfig.buffer_count = 6
             cls._videoConfig.id = "VIDO"
             cls._videoConfig.use_case = "Video"
-            cls._liveViewConfig.buffer_count = 6
-            cls._liveViewConfig.encode = "main"
-            cls._liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
+            cls._videoConfig.buffer_count = 6
+            cls._videoConfig.encode = "main"
+            cls._videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
             cls._cameraConfigs = []
             cls._serverConfig = ServerConfig()
         return cls._instance
@@ -1375,8 +1382,12 @@ class CameraCfg():
         return self._liveViewConfig
     
     @property
-    def stillConfig(self):
-        return self._stillConfig
+    def photoConfig(self):
+        return self._photoConfig
+    
+    @property
+    def rawConfig(self):
+        return self._rawConfig
     
     @property
     def videoConfig(self):
