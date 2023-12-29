@@ -656,12 +656,14 @@ class CameraConfig():
         self._use_case = ""
         self._transform_hflip = False
         self._transform_vflip = False
-        self._colour_space = "syCC"
+        self._colour_space = "sYCC"
         self._buffer_count = 1
         self._queue = False
         self._display = None
         self._encode = None
         self._sensor_mode = "0"
+        self._stream = "main"
+        self._format = "BGR888"
         self._controls = {}
 
     @property
@@ -755,6 +757,27 @@ class CameraConfig():
     @sensor_mode.setter
     def sensor_mode(self, value: str):
         self._sensor_mode = value
+
+    @property
+    def stream(self) -> str:
+        return self._stream
+
+    @stream.setter
+    def stream(self, value: str):
+        if value == "main" \
+        or value == "lores" \
+        or value == "raw":
+            self._stream = value
+        else:
+            raise ValueError("Invalid value for stream: %s. Must be 'main', 'lores' or 'raw'", value)
+
+    @property
+    def format(self) -> str:
+        return self._format
+
+    @format.setter
+    def format(self, value: str):
+        self._format = value
 
     @property
     def controls(self) -> str:
@@ -1313,13 +1336,20 @@ class CameraCfg():
             cls._liveViewConfig.use_case = "Live view"
             cls._liveViewConfig.buffer_count = 4
             cls._liveViewConfig.encode = "main"
+            cls._liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
             cls._stillConfig = CameraConfig()
             cls._stillConfig.id = "FOTO"
             cls._stillConfig.use_case = "Photo"
+            cls._liveViewConfig.buffer_count = 1
+            cls._liveViewConfig.encode = "main"
+            cls._liveViewConfig.controls["FrameDurationLimits"] = (100, 1000000000)
             cls._videoConfig = CameraConfig()
             cls._videoConfig.buffer_count = 6
             cls._videoConfig.id = "VIDO"
             cls._videoConfig.use_case = "Video"
+            cls._liveViewConfig.buffer_count = 6
+            cls._liveViewConfig.encode = "main"
+            cls._liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
             cls._cameraConfigs = []
             cls._serverConfig = ServerConfig()
         return cls._instance

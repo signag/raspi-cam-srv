@@ -45,7 +45,7 @@
                             <label for="LIVE_id">ID:</label>
                         </td>
                         <td colspan="2">
-                            <input id="LIVE_id" name="LIVE_id" value={{ cfg.id }} disabled>
+                            <input id="LIVE_id" name="LIVE_id" value="{{ cfg.id }}" disabled>
                         </td>
                         <td style="width:50%">
                         </td>
@@ -60,7 +60,7 @@
                             <label for="LIVE_use_case">Use Case:</label>
                         </td>
                         <td colspan="2">
-                            <input id="LIVE_use_case" name="LIVE_use_case" value={{ cfg.use_case }} disabled>
+                            <input id="LIVE_use_case" name="LIVE_use_case" value="{{ cfg.use_case }}" disabled>
                         </td>
                         <td style="width:50%">
                         </td>
@@ -139,7 +139,7 @@
                             <label for="LIVE_buffer_count">Buffer Count:</label>
                         </td>
                         <td colspan="2">
-                            <input type="number" id="LIVE_buffer_count" name="LIVE_buffer_count" min="1" max="6" value={{ cfg.buffer_count }}>
+                            <input type="number" id="LIVE_buffer_count" name="LIVE_buffer_count" min="1" max="6" value="{{ cfg.buffer_count }}">
                         </td>
                         <td style="width:50%">
                         </td>
@@ -202,13 +202,85 @@
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Camera stream to use
+                            </span>
+                            <label for="LIVE_stream">Stream:</label>
+                        </td>
+                        <td colspan="2">
+                            <select name="LIVE_stream" id="LIVE_stream">
+                                {% if cfg.stream == "main" %}
+                                <option value="main" selected>main</option>
+                                {% else %}
+                                <option value="main">main</option>
+                                {% endif %}
+                                {% if cfg.stream == "lores" %}
+                                <option value="lores" selected>lores</option>
+                                {% else %}
+                                <option value="lores">lores</option>
+                                {% endif %}
+                                {% if cfg.stream == "raw" %}
+                                <option value="raw" selected>raw</option>
+                                {% else %}
+                                <option value="raw">raw</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Image format to be used
+                            </span>
+                            <label for="LIVE_format">Fornat:</label>
+                        </td>
+                        <td colspan="2">
+                            <select name="LIVE_format" id="LIVE_format">
+                                {% if cfg.format == "XBGR8888" %}
+                                <option value="XBGR8888" selected>XBGR8888</option>
+                                {% else %}
+                                <option value="XBGR8888">XBGR8888</option>
+                                {% endif %}
+                                {% if cfg.format == "XRGB8888" %}
+                                <option value="XRGB8888" selected>XRGB8888</option>
+                                {% else %}
+                                <option value="XRGB8888">XRGB8888</option>
+                                {% endif %}
+                                {% if cfg.format == "RGB888" %}
+                                <option value="RGB888" selected>RGB888</option>
+                                {% else %}
+                                <option value="RGB888">RGB888</option>
+                                {% endif %}
+                                {% if cfg.format == "BGR888" %}
+                                <option value="BGR888" selected>BGR888</option>
+                                {% else %}
+                                <option value="BGR888">BGR888</option>
+                                {% endif %}
+                                {% if cfg.format == "YUV420" %}
+                                <option value="YUV420" selected>YUV420</option>
+                                {% else %}
+                                <option value="YUV420">YUV420</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 This names which (if any) of the camera streams are to be shown in the preview window. <br>
                                 Note: Preview view is not used within this applacation.
                             </span>
                             <label for="LIVE_display">Display:</label>
                         </td>
                         <td colspan="2">
-                            <input id="LIVE_display" name="LIVE_display" value={{ cfg.display }} disabled>
+                            <input id="LIVE_display" name="LIVE_display" value="{{ cfg.display }}" disabled>
                         </td>
                         <td style="width:50%">
                         </td>
@@ -223,11 +295,30 @@
                             <label for="LIVE_encode">Encode:</label>
                         </td>
                         <td colspan="2">
-                            <input id="LIVE_encode" name="LIVE_encode" value={{ cfg.encode }} disabled>
+                            <input id="LIVE_encode" name="LIVE_encode" value="{{ cfg.encode }}" disabled>
                         </td>
                         <td style="width:50%">
                         </td>
                     </tr>
+                    <tr>
+                        <td colspan="5">
+                            Controls included in Configuration
+                        </td>
+                    </tr>
+                    {% for ctrl_key, ctrl_value in cfg.controls.items() %}
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <label for="LIVE_display">{{ ctrl_key }}:</label>
+                        </td>
+                        <td colspan="2">
+                            <input id="LIVE_display" name="LIVE_display" value="{{ ctrl_value }}" disabled>
+                        </td>
+                        <td style="width:50%">
+                        </td>
+                    </tr>
+                    {% endfor%}
                 </table>
                 <p style="margin-bottom: 0"></p>
                 <input class="w3-button w3-black" type="submit" value="Submit & Apply">

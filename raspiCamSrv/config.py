@@ -59,5 +59,5 @@ def liveViewCfg():
         cfglive.display = None
 #        encode = request.form["LIVE_encode"]
         cfglive.encode = "main"
-
+        Camera().restartLiveView()
     return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgvideo=cfgvideo, cfgs=cfgs)

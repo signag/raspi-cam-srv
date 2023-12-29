@@ -2,9 +2,8 @@ import io
 import time
 from raspiCamSrv.camera_base import BaseCamera, CameraEvent
 from raspiCamSrv.camCfg import CameraCfg, SensorMode
-import threading
-from threading import Condition
-from picamera2 import Picamera2
+from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
+from libcamera import Transform, Size, ColorSpace
 from picamera2.encoders import JpegEncoder, MJPEGEncoder
 from picamera2.outputs import FileOutput
 from threading import Condition, Lock
@@ -76,6 +75,7 @@ class Camera(BaseCamera):
             
             cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
             logger.info("Camera.loadCameraSpecifics loaded to config")
+
         if len(cfgSensorModes) == 0:
             sensorModes = Camera.cam.sensor_modes
             ind = 0
@@ -92,12 +92,96 @@ class Camera(BaseCamera):
                 cfgSensorModes.append(cfgMode)
                 ind = ind + 1
         logger.info("%s sensor modes found", len(cfg.sensorModes))
+    
+    @staticmethod
+    def configure(cfg, sensorModes):
+        """ The function creates and configures a CameraConfiguration
+            based on given configuration settings cfg.
+            
+            The fully configured configuration is returned
+        """
+        logger.info("Camera.configure")
+        # We start configuration with a new CameraConfiguration object
+        camCfg = CameraConfiguration()
+
+        camCfg.use_case = cfg.use_case
+        camCfg.transform = Transform(vflip=cfg.transform_vflip, hflip=cfg.transform_hflip)
+        camCfg.buffer_count = cfg.buffer_count
+        cosp = cfg.colour_space
+        if cosp == "sYCC":
+            colourSpace = ColorSpace.Sycc()
+        elif cosp == "Smpte170m":
+            colourSpace = ColorSpace.Smpte170m()
+        elif cosp == "Rec709":
+            colourSpace = ColorSpace.Rec709()
+        else:
+            colourSpace = ColorSpace.Sycc()
+        camCfg.colour_space = colourSpace
+        camCfg.queue = cfg.queue
+        camCfg.display = cfg.display
+        camCfg.encode = cfg.encode
+        stream = StreamConfiguration()
+        sm = int(cfg.sensor_mode)
+        sensorMode = sensorModes[sm]
+        stream.size = sensorMode.size
+        stream.format = cfg.format
+        if cfg.stream == "main":
+            camCfg.main = stream
+            camCfg.lores = None
+            camCfg.raw = None
+        if cfg.stream == "lores":
+            camCfg.main = None
+            camCfg.lores = stream
+            camCfg.raw = None
+        if cfg.stream == "raw":
+            camCfg.main = None
+            camCfg.lores = None
+            camCfg.raw = stream
+        ctrls = cfg.controls
+        if len(ctrls) == 0:
+            raise ValueError("controls in camera configuration must not be empty")
+        else:
+            camCfg.controls = ctrls
+
+        return camCfg
+
+    @staticmethod
+    def stopCameraSystem():
+        logger.info("Camera.stopCameraSystem")
+        logger.info("Camera.stopCameraSystem: Stopping thread")
+        BaseCamera.stopRequested = True
+        cnt = 0
+        while BaseCamera.thread:
+            time.sleep(0.01)
+            cnt += 1
+            if cnt > 200:
+                break
+        logger.info("Camera.stopCameraSystem: Thread has eventually stopped")
+        Camera.cam.stop_recording()
+        logger.info("Camera.stopCameraSystem: Recording stopped")
+        Camera().cam = None
+        logger.info("Camera.stopCameraSystem: Camara deinitialized")
+
+    @staticmethod
+    def restartLiveView():
+        logger.info("Camera.restartLiveView")
+        logger.info("Camera.restartLiveView: Stopping thread")
+        BaseCamera.stopRequested = True
+        cnt = 0
+        while BaseCamera.thread:
+            time.sleep(0.01)
+            cnt += 1
+            if cnt > 200:
+                raise TimeoutError("Background thread did not stop within 2 sec")
+        logger.info("Camera.restartLiveView: Thread has stopped")
+        Camera.cam.stop_recording()
+        logger.info("Camera.restartLiveView: Recording stopped")
 
     @staticmethod
     def takeImage(path: str, filename: str):
         logger.info("Camera.takeImage")
         cfg = CameraCfg()
-        sc = cfg.serverConfig        
+        sc = cfg.serverConfig
         logger.info("Camera.takeImage: Stopping thread")
         BaseCamera.stopRequested = True
         cnt = 0
@@ -136,17 +220,22 @@ class Camera(BaseCamera):
             logger.info("Camera.takeImage: Image metedata captured")
             request.release()
             logger.info("Camera.takeImage: Request released")
-
+    
     @staticmethod
     def frames():
         logger.debug("Camera.frames")
         with Camera.cam as cam:
-            streamingConfig = cam.create_video_configuration(
-                lores={"size": (640, 480), "format": "YUV420"},
-                raw=None,
-                display=None,
-                encode="lores",
-            )
+#            streamingConfig = cam.create_video_configuration(
+#                main={"size": (640, 480), "format": "YUV420"},
+#                lores=None,
+#                raw=None,
+#                display=None,
+#                encode="main",
+#            )
+            srvCam = CameraCfg()
+            cfgSensorModes = srvCam.sensorModes
+            cfg = srvCam.liveViewConfig
+            streamingConfig = Camera.configure(cfg, cfgSensorModes)
             cam.configure(streamingConfig)
             logger.debug("starting recording")
             output = StreamingOutput()

@@ -115,9 +115,9 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_lensPosition == True %}
-                                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value={{ cc.focalDistance }}>
+                                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value="{{ cc.focalDistance }}">
                                     {% else %}
-                                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value={{ cc.focalDistance }} disabled>
+                                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value="{{ cc.focalDistance }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -302,7 +302,7 @@ RaspiCamSrv's Live page
                                     <label for="zoomfactor">Current zoom factor in %:</label>
                                 </td>
                                 <td>
-                                    <input type="number" id="zoomfactor" name="zoomfactor" value={{ sc.zoomFactor }} disabled>
+                                    <input type="number" id="zoomfactor" name="zoomfactor" value="{{ sc.zoomFactor }}" disabled>
                                 </td>
                             </tr>
                             <tr>
@@ -313,7 +313,7 @@ RaspiCamSrv's Live page
                                     <label for="zoomfactorstep">Zoom & pan step in %:</label>
                                 </td>
                                 <td>
-                                    <input type="number" id="zoomfactorstep" name="zoomfactorstep" value={{ sc.zoomFactorStep }} min="2" max="20">
+                                    <input type="number" id="zoomfactorstep" name="zoomfactorstep" value="{{ sc.zoomFactorStep }}" min="2" max="20">
                                 </td>
                             </tr>
                             <tr>
@@ -326,7 +326,7 @@ RaspiCamSrv's Live page
                                     <label for="scalercrop">Current ScalerCrop:</label>
                                 </td>
                                 <td>
-                                    <input type="text" id="scalercrop" name="scalercrop" value={{ cc.scalerCropStr }} disabled>
+                                    <input type="text" id="scalercrop" name="scalercrop" value="{{ cc.scalerCropStr }}" disabled>
                                 </td>
                             </tr>
                         </table>
@@ -633,9 +633,9 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_aeFlickerPeriod == True %}
-                                    <input type="number" id="aeflickerperiod" name="aeflickerperiod" min="0" value={{ cc.aeFlickerPeriod }}>
+                                    <input type="number" id="aeflickerperiod" name="aeflickerperiod" min="0" value="{{ cc.aeFlickerPeriod }}">
                                     {% else %}
-                                    <input type="number" id="aeflickerperiod" name="aeflickerperiod" min="0" value={{ cc.aeFlickerPeriod }} disabled>
+                                    <input type="number" id="aeflickerperiod" name="aeflickerperiod" min="0" value="{{ cc.aeFlickerPeriod }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -675,10 +675,10 @@ RaspiCamSrv's Live page
                                 <td colspan="2">
                                     {% if cc.include_exposureTime == True %}
                                     <input type="number" id="exposuretimesec" name="exposuretimesec" min="0.0" max="999" step="0.000001" 
-                                        value={{ cc.exposureTimeSec }}>
+                                        value="{{ cc.exposureTimeSec }}">
                                     {% else %}
                                     <input type="number" id="exposuretimesec" name="exposuretimesec" min="0.0" max="999" step="0.000001" 
-                                        value={{ cc.exposureTimeSec }} disabled>
+                                        value="{{ cc.exposureTimeSec }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -705,10 +705,10 @@ RaspiCamSrv's Live page
                                 <td colspan="2">
                                     {% if cc.include_exposureValue == True %}
                                     <input type="number" id="exposurevalue" name="exposurevalue" min="-8.0" max="8.0" step="0.1" 
-                                        value={{ cc.exposureValue }}>
+                                        value="{{ cc.exposureValue }}">
                                     {% else %}
                                     <input type="number" id="exposurevalue" name="exposurevalue" min="-8.0" max="8.0" step="0.1" 
-                                        value={{ cc.exposureValue }} disabled>
+                                        value="{{ cc.exposureValue }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -731,10 +731,10 @@ RaspiCamSrv's Live page
                                 <td colspan="2">
                                     {% if cc.include_analogueGain == True %}
                                     <input type="number" id="analoguegain" name="analoguegain" min="1.0" max="99.0" step="0.1" 
-                                        value={{ cc.analogueGain }}>
+                                        value="{{ cc.analogueGain }}">
                                     {% else %}
                                     <input type="number" id="analoguegain" name="analoguegain" min="1.0" max="99.0" step="0.1" 
-                                        value={{ cc.analogueGain }} disabled>
+                                        value="{{ cc.analogueGain }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -758,19 +758,19 @@ RaspiCamSrv's Live page
                                 <td>
                                     {% if cc.include_colourGains == True %}
                                     <input type="number" id="colourgainred" name="colourgainred" min="0.0" max="32.0" step="0.1" 
-                                        value={{ cc.colourGainRed }}>
+                                        value="{{ cc.colourGainRed }}">
                                     {% else %}
                                     <input type="number" id="colourgainred" name="colourgainred" min="0.0" max="32.0" step="0.1" 
-                                        value={{ cc.colourGainRed }} disabled>
+                                        value="{{ cc.colourGainRed }}" disabled>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if cc.include_colourGains == True %}
                                     <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" 
-                                        value={{ cc.colourGainBlue }}>
+                                        value="{{ cc.colourGainBlue }}">
                                     {% else %}
                                     <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" 
-                                        value={{ cc.colourGainBlue }} disabled>
+                                        value="{{ cc.colourGainBlue }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -798,19 +798,19 @@ RaspiCamSrv's Live page
                                 <td>
                                     {% if cc.include_frameDurationLimits == True %}
                                     <input type="number" id="framedurationlimitmax" name="framedurationlimitmax" min="0" max="1000000" step="1" 
-                                        value={{ cc.frameDurationLimitMax }}>
+                                        value="{{ cc.frameDurationLimitMax }}">
                                     {% else %}
                                     <input type="number" id="framedurationlimitmax" name="framedurationlimitmax" min="0" max="1000000" step="1" 
-                                        value={{ cc.frameDurationLimitMax }} disabled>
+                                        value="{{ cc.frameDurationLimitMax }}" disabled>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if cc.include_frameDurationLimits == True %}
                                     <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" min="0" max="1000000" step="1" 
-                                        value={{ cc.frameDurationLimitMin }}>
+                                        value="{{ cc.frameDurationLimitMin }}">
                                     {% else %}
                                     <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" min="0" max="1000000" step="1" 
-                                        value={{ cc.frameDurationLimitMin }} disabled>
+                                        value="{{ cc.frameDurationLimitMin }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -1048,10 +1048,10 @@ RaspiCamSrv's Live page
                                 <td>
                                     {% if cc.include_sharpness == True %}
                                     <input type="number" id="sharpness" name="sharpness" min="0.0" max="16.0" step="0.1"
-                                        value={{ cc.sharpness }}>
+                                        value="{{ cc.sharpness }}">
                                     {% else %}
                                     <input type="number" id="sharpness" name="sharpness" min="0.0" max="16.0" step="0.1"
-                                        value={{ cc.sharpness}} disabled>
+                                        value="{{ cc.sharpness}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -1076,10 +1076,9 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_contrast == True %}
-                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value={{ cc.contrast }}>
+                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value="{{ cc.contrast }}">
                                     {% else %}
-                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value={{ cc.contrast}}
-                                        disabled>
+                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value="{{ cc.contrast}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -1104,10 +1103,9 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_saturation == True %}
-                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value={{ cc.saturation }}>
+                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value="{{ cc.saturation }}">
                                     {% else %}
-                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value={{ cc.saturation}}
-                                        disabled>
+                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value="{{ cc.saturation}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -1131,11 +1129,9 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_brightness == True %}
-                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value={{ cc.brightness
-                                        }}>
+                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value="{{ cc.brightness }}">
                                     {% else %}
-                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value={{ cc.brightness}}
-                                        disabled>
+                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value="{{ cc.brightness}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>

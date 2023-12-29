@@ -6,4 +6,10 @@
 
 {% block content %}
 <h3>Settings</h3>
+<br>
+<form method="post" action="{{ url_for('settings.resetServer') }}">
+    <p style="margin-bottom: 0"></p>
+    <input class="w3-button w3-black" type="submit" value="Reset Server">
+</form>
+
 {% endblock %}
