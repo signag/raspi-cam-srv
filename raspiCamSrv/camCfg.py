@@ -607,11 +607,11 @@ class SensorMode():
         self._bit_depth = value
 
     @property
-    def size(self) -> tuple:
+    def size(self) -> tuple[int, int]:
         return self._size
 
     @size.setter
-    def size(self, value: tuple):
+    def size(self, value: tuple[int, int]):
         self._size = value
 
     @property

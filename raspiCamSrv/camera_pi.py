@@ -106,7 +106,7 @@ class Camera(BaseCamera):
             The fully configured configuration is returned
         """
         logger.info("Camera.configure")
-        # We start configuration with a new CameraConfiguration object
+        # We start configuration with a new blank CameraConfiguration object
         camCfg = CameraConfiguration()
 
         camCfg.use_case = cfg.use_case
