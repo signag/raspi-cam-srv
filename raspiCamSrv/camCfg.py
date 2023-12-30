@@ -663,6 +663,8 @@ class CameraConfig():
         self._encode = None
         self._sensor_mode = "0"
         self._stream = "main"
+        self._stream_size = None
+        self._stream_size_align = True
         self._format = "RGB888"
         self._controls = {}
 
@@ -771,6 +773,22 @@ class CameraConfig():
             self._stream = value
         else:
             raise ValueError("Invalid value for stream: %s. Must be 'main', 'lores' or 'raw'", value)
+
+    @property
+    def stream_size(self) -> tuple[int, int]:
+        return self._stream_size
+
+    @stream_size.setter
+    def stream_size(self, value: tuple[int, int]):
+        self._stream_size = value
+
+    @property
+    def stream_size_align(self) -> bool:
+        return self._stream_size_align
+
+    @stream_size_align.setter
+    def stream_size_align(self, value: bool):
+        self._stream_size_align = value
 
     @property
     def format(self) -> str:

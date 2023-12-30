@@ -57,7 +57,7 @@
                         <td colspan="2">
                             <input id="LIVE_id" name="LIVE_id" value="{{ cfg.id }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -72,7 +72,7 @@
                         <td colspan="2">
                             <input id="LIVE_use_case" name="LIVE_use_case" value="{{ cfg.use_case }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -101,7 +101,7 @@
                             <input type="checkbox" id="LIVE_transform_vflip" name="LIVE_transform_vflip" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -134,7 +134,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -151,7 +151,7 @@
                         <td colspan="2">
                             <input type="number" id="LIVE_buffer_count" name="LIVE_buffer_count" min="1" max="6" value="{{ cfg.buffer_count }}">
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -171,7 +171,7 @@
                             <input type="checkbox" id="LIVE_queue" name="LIVE_queue" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -189,7 +189,8 @@
                             <label for="LIVE_sensor_mode">Sensor Mode:</label>
                         </td>
                         <td colspan="2">
-                            <select name="LIVE_sensor_mode" id="LIVE_sensor_mode" onchange="sensorModeChanged('LIVE_sensor_mode', 'LIVE_sensor_mode_data')">
+                            <select name="LIVE_sensor_mode" id="LIVE_sensor_mode" 
+                                onchange="sensorModeChanged('LIVE_sensor_mode', 'LIVE_sensor_mode_data', 'LIVE_stream_size_width', 'LIVE_stream_size_height', 'LIVE_stream_size_align')">
                                 {% for mode in sm %}
                                 {% if cfg.sensor_mode == mode.id %}
                                 <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
@@ -197,9 +198,14 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if cfg.sensor_mode == "custom" %}
+                                <option value="custom" selected>Custom</option>
+                                {% else %}
+                                <option value="custom">Custom</option>
+                                {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%" id="LIVE_sensor_mode_data">
+                        <td style="width:45%" id="LIVE_sensor_mode_data">
                             {% for mode in sm %}
                             {% if cfg.sensor_mode == mode.id %}
                             Size: {{ mode.size }} FPS: {{ mode.fps }} Bit Depth: {{ mode.bit_depth }}
@@ -235,7 +241,65 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Output size of the stream. Required if 'Custom' has been chosen for Sensor Mode
+                            </span>
+                            <label for="LIVE_stream_size_width">Stream Size (width, height) </label>
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="LIVE_stream_size_width" name="LIVE_stream_size_width" min="1" max={{ cp.pixelArraySize[0] }} 
+                                value="{{ cfg.stream_size[0] }}">
+                            {% else %}
+                            <input type="number" id="LIVE_stream_size_width" name="LIVE_stream_size_width" min="1" max={{ cp.pixelArraySize[0] }} 
+                                value="{{ cfg.stream_size[0] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="LIVE_stream_size_height" name="LIVE_stream_size_height" min="1" max={{ cp.pixelArraySize[1] }} 
+                                value="{{ cfg.stream_size[1] }}">
+                            {% else %}
+                            <input type="number" id="LIVE_stream_size_height" name="LIVE_stream_size_height" min="1" max={{ cp.pixelArraySize[1] }}
+                                value="{{ cfg.stream_size[1] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Whether the system is requested to align the custom output size
+                                with available Sensor Modes.
+                            </span>
+                            <label for="LIVE_stream_size_align">Stream size aligned with Sensor Modes:</label>
+                        </td>
+                        <td colspan="2">
+                            {% if cfg.sensor_mode == "custom" %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="0">
+                            {% endif %}
+                            {% else %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="0" disabled>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -245,7 +309,7 @@
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Image format to be used
                             </span>
-                            <label for="LIVE_format">Format:</label>
+                            <label for="LIVE_format">Stream Format:</label>
                         </td>
                         <td colspan="2">
                             <select name="LIVE_format" id="LIVE_format">
@@ -276,7 +340,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -292,7 +356,7 @@
                         <td colspan="2">
                             <input id="LIVE_display" name="LIVE_display" value="{{ cfg.display }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -307,7 +371,7 @@
                         <td colspan="2">
                             <input id="LIVE_encode" name="LIVE_encode" value="{{ cfg.encode }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -325,7 +389,7 @@
                         <td colspan="2">
                             <input id="LIVE_display" name="LIVE_display" value="{{ ctrl_value }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     {% endfor%}
@@ -1284,12 +1348,31 @@
         }
     </script>
     <script>
-        function sensorModeChanged(srcId, tgtId) {
+        function sensorModeChanged(srcId, tgtId, ref1Id, ref2Id, ref3Id) {
+            // React on a value change of sensorMode
+            // srcId: id of source element (sensor mode selection)
+            // tgtId: id of field where details of sensor mode shall be shown
+            // refnId: IDs for fields which need to be enabled ar disabled
             var src = document.getElementById(srcId);
             var val = src.value;
-            var txt = document.getElementById("sensormode_ref" + val).innerText
             var tgt = document.getElementById(tgtId);
-            tgt.innerText=txt
+            if (val == "custom"){
+                tgt.innerText = ""
+                document.getElementById(ref1Id).disabled = false;
+                document.getElementById(ref2Id).disabled = false;
+                document.getElementById(ref3Id).disabled = false;
+            }else{
+                var txt = document.getElementById("sensormode_ref" + val).innerText;
+                tgt.innerText = txt
+                document.getElementById(ref1Id).value = "";
+                document.getElementById(ref2Id).value = "";
+                document.getElementById(ref1Id).disabled = true;
+                document.getElementById(ref2Id).disabled = true;
+                document.getElementById(ref3Id).disabled = true;
+                
+            }
+            
+            
         }
     </script>
 {% endblock %}

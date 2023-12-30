@@ -18,6 +18,7 @@ def main():
     # in order to load the camera-specific parameters into configuration
     cam = Camera().cam
     cfg = CameraCfg()
+    cp = cfg.cameraProperties
     sm = cfg.sensorModes
     sc = cfg.serverConfig
     sc.curMenu = "config"
@@ -26,7 +27,7 @@ def main():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
-    return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
 @login_required
@@ -34,6 +35,7 @@ def liveViewCfg():
     logger.info("In liveViewCfg")
     g.hostname = request.host
     cfg = CameraCfg()
+    cp = cfg.cameraProperties
     sm = cfg.sensorModes
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfglive"
@@ -55,14 +57,22 @@ def liveViewCfg():
         cfglive.buffer_count = buffer_count
         queue = not request.form.get("LIVE_queue") is None
         cfglive.queue = queue
-        sensor_mode = int(request.form["LIVE_sensor_mode"])
-        cfglive.sensor_mode = str(sensor_mode)
-#        display = request.form["LIVE_display"]
+        sensor_mode = request.form["LIVE_sensor_mode"]
+        cfglive.sensor_mode = sensor_mode
+        if sensor_mode == "custom":
+            size_width = int(request.form["LIVE_stream_size_width"])
+            size_height = int(request.form["LIVE_stream_size_height"])
+            cfglive.stream_size = (size_width, size_height)
+            cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
+        else:
+            mode = sm[int(sensor_mode)]
+            cfglive.stream_size = mode.size
+            cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
+            
         cfglive.display = None
-#        encode = request.form["LIVE_encode"]
         cfglive.encode = "main"
         Camera().restartLiveView()
-    return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/photoCfg", methods=("GET", "POST"))
 @login_required
@@ -70,6 +80,7 @@ def photoCfg():
     logger.info("In photoCfg")
     g.hostname = request.host
     cfg = CameraCfg()
+    cp = cfg.cameraProperties
     sm = cfg.sensorModes
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfgphoto"
@@ -93,7 +104,7 @@ def photoCfg():
         cfgphoto.sensor_mode = str(sensor_mode)
         cfgphoto.display = None
         cfgphoto.encode = "main"
-    return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/rawCfg", methods=("GET", "POST"))
 @login_required
@@ -101,6 +112,7 @@ def rawCfg():
     logger.info("In rawCfg")
     g.hostname = request.host
     cfg = CameraCfg()
+    cp = cfg.cameraProperties
     sm = cfg.sensorModes
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfgraw"
@@ -124,7 +136,7 @@ def rawCfg():
         cfgraw.sensor_mode = str(sensor_mode)
         cfgraw.display = None
         cfgraw.encode = "raw"
-    return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/videoCfg", methods=("GET", "POST"))
 @login_required
@@ -132,6 +144,7 @@ def videoCfg():
     logger.info("In videoCfg")
     g.hostname = request.host
     cfg = CameraCfg()
+    cp = cfg.cameraProperties
     sm = cfg.sensorModes
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfgvideo"
@@ -155,4 +168,4 @@ def videoCfg():
         cfgvideo.sensor_mode = str(sensor_mode)
         cfgvideo.display = None
         cfgvideo.encode = "main"
-    return render_template("config/main.html", sc=sc, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)

@@ -92,14 +92,19 @@ class Camera(BaseCamera):
                 cfgSensorModes.append(cfgMode)
                 ind = ind + 1
             logger.info("%s sensor modes found", len(cfg.sensorModes))
-            maxMode = str(len(cfg.sensorModes) - 1)
+            maxModei = len(cfg.sensorModes) - 1
+            maxMode = str(maxModei)
+            cfg.liveViewConfig.stream_size = cfgSensorModes[0].size
             cfg.photoConfig.sensor_mode = maxMode
+            cfg.photoConfig.stream_size = cfgSensorModes[maxModei].size
             cfg.rawConfig.sensor_mode = maxMode
+            cfg.rawConfig.stream_size = cfgSensorModes[maxModei].size
             cfg.videoConfig.sensor_mode = maxMode
+            cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
             logger.info("Photo and video sensor modes set to %s", maxMode)
     
     @staticmethod
-    def configure(cfg, sensorModes):
+    def configure(cfg):
         """ The function creates and configures a CameraConfiguration
             based on given configuration settings cfg.
             
@@ -126,9 +131,7 @@ class Camera(BaseCamera):
         camCfg.display = cfg.display
         camCfg.encode = cfg.encode
         stream = StreamConfiguration()
-        sm = int(cfg.sensor_mode)
-        sensorMode = sensorModes[sm]
-        stream.size = sensorMode.size
+        stream.size = cfg.stream_size
         stream.format = cfg.format
         if cfg.stream == "main":
             camCfg.main = stream
@@ -147,6 +150,13 @@ class Camera(BaseCamera):
             raise ValueError("controls in camera configuration must not be empty")
         else:
             camCfg.controls = ctrls
+        logger.info("Camera.configure: configuration completed")
+        if cfg.stream_size_align and cfg.sensor_mode == "custom" :
+            logger.info("Camera.configure: Aligning camera configuration. Old size: %s", cfg.stream_size)
+            camCfg.align()
+            logger.info("Camera.configure: Alignment successful. Adjusting stream size")
+            cfg.stream_size = camCfg.size
+            logger.info("Camera.configure: Stream size adjusted to %s", cfg.stream_size)
 
         return camCfg
 
@@ -206,7 +216,7 @@ class Camera(BaseCamera):
             srvCam = CameraCfg()
             cfgSensorModes = srvCam.sensorModes
             cfg = srvCam.photoConfig
-            photoConfig = Camera.configure(cfg, cfgSensorModes)
+            photoConfig = Camera.configure(cfg)
             cam.configure(photoConfig)
             logger.info("Camera.takeImage: Camera configured for still")
             cam.start(show_preview=False)
@@ -237,7 +247,7 @@ class Camera(BaseCamera):
             srvCam = CameraCfg()
             cfgSensorModes = srvCam.sensorModes
             cfg = srvCam.liveViewConfig
-            streamingConfig = Camera.configure(cfg, cfgSensorModes)
+            streamingConfig = Camera.configure(cfg)
             cam.configure(streamingConfig)
             logger.debug("starting recording")
             output = StreamingOutput()
