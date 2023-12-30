@@ -1,11 +1,59 @@
 {% extends 'base.html' %}
 
 {% block header %}
-    {% block title %}Settings{% endblock %}
+    {% block title %}Server Settings{% endblock %}
 {% endblock %}
 
 {% block content %}
-<h3>Settings</h3>
+    <h3>Settings</h3>
+    <div>
+        <form method="post" action="{{ url_for('settings.serverconfig') }}">
+            <table class="w3-table-all">
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The file format to be used for photos
+                        </span>
+                        <label for="phototype">Photo type:</label>
+                    </td>
+                    <td colspan="2">
+                        <select name="phototype" id="phototype">
+                            {% if sc.photoType == "jpeg" %}
+                            <option value="jpeg" selected>jpeg</option>
+                            {% else %}
+                            <option value="jpeg">jpeg</option>
+                            {% endif %}
+                            {% if sc.photoType == "jpg" %}
+                            <option value="jpg" selected>jpg</option>
+                            {% else %}
+                            <option value="jpg">jpg</option>
+                            {% endif %}
+                            {% if sc.photoType == "bmp" %}
+                            <option value="bmp" selected>bmp</option>
+                            {% else %}
+                            <option value="bmp">bmp</option>
+                            {% endif %}
+                            {% if sc.photoType == "png" %}
+                            <option value="png" selected>png</option>
+                            {% else %}
+                            <option value="png">png</option>
+                            {% endif %}
+                            {% if sc.photoType == "gif" %}
+                            <option value="gif" selected>gif</option>
+                            {% else %}
+                            <option value="gif">gif</option>
+                            {% endif %}
+                        </select>
+                    </td>
+                    <td style="width:45%">
+                    </td>
+                </tr>
+            </table>
+            <p style="margin-bottom: 0"></p>
+            <input class="w3-button w3-black" type="submit" value="Submit">
+        </form>
 <br>
 <form method="post" action="{{ url_for('settings.resetServer') }}">
     <p style="margin-bottom: 0"></p>

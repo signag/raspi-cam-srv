@@ -426,7 +426,7 @@
                         <td colspan="2">
                             <input id="{{ cfgId }}_id" name="{{ cfgId }}_id" value="{{ cfg.id }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -441,7 +441,7 @@
                         <td colspan="2">
                             <input id="{{ cfgId }}_use_case" name="{{ cfgId }}_use_case" value="{{ cfg.use_case }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -457,24 +457,20 @@
                         <td style="width:5%">
                             ↔
                             {% if cfg.transform_hflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="1"
-                                checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip"
-                                value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:5%">
                             ↕
                             {% if cfg.transform_vflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="1"
-                                checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip"
-                                value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -507,7 +503,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -525,7 +521,7 @@
                             <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="6"
                                 value="{{ cfg.buffer_count }}">
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -545,11 +541,16 @@
                             <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
                         <td style="width:5%">
+                            <!-- This cell is used to store an invisible list of sensor mode data -->
+                            {% for mode in sm %}
+                            <p id="sensormode_ref{{ mode.id }}" style="display:none">Size: {{ mode.size }} FPS: {{ mode.fps }} Bit
+                                Depth: {{ mode.bit_depth }}</p>
+                            {% endfor%}
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -560,7 +561,7 @@
                         </td>
                         <td colspan="2">
                             <select name="{{ cfgId }}_sensor_mode" id="{{ cfgId }}_sensor_mode"
-                                onchange="sensorModeChanged('{{ cfgId }}_sensor_mode', '{{ cfgId }}_sensor_mode_data')">
+                                onchange="sensorModeChanged('{{ cfgId }}_sensor_mode', '{{ cfgId }}_sensor_mode_data', '{{ cfgId }}_stream_size_width', '{{ cfgId }}_stream_size_height', '{{ cfgId }}_stream_size_align')">
                                 {% for mode in sm %}
                                 {% if cfg.sensor_mode == mode.id %}
                                 <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
@@ -568,9 +569,14 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if cfg.sensor_mode == "custom" %}
+                                <option value="custom" selected>Custom</option>
+                                {% else %}
+                                <option value="custom">Custom</option>
+                                {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%" id="{{ cfgId }}_sensor_mode_data">
+                        <td style="width:45%" id="{{ cfgId }}_sensor_mode_data">
                             {% for mode in sm %}
                             {% if cfg.sensor_mode == mode.id %}
                             Size: {{ mode.size }} FPS: {{ mode.fps }} Bit Depth: {{ mode.bit_depth }}
@@ -606,7 +612,65 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Output size of the stream. Required if 'Custom' has been chosen for Sensor Mode
+                            </span>
+                            <label for="{{ cfgId }}_stream_size_width">Stream Size (width, height) </label>
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
+                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}">
+                            {% else %}
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
+                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
+                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}">
+                            {% else %}
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
+                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Whether the system is requested to align the custom output size
+                                with available Sensor Modes.
+                            </span>
+                            <label for="{{ cfgId }}_stream_size_align">Stream size aligned with Sensor Modes:</label>
+                        </td>
+                        <td colspan="2">
+                            {% if cfg.sensor_mode == "custom" %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0">
+                            {% endif %}
+                            {% else %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0" disabled>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -616,7 +680,7 @@
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Image format to be used
                             </span>
-                            <label for="{{ cfgId }}_format">Format:</label>
+                            <label for="{{ cfgId }}_format">Stream Format:</label>
                         </td>
                         <td colspan="2">
                             <select name="{{ cfgId }}_format" id="{{ cfgId }}_format">
@@ -647,7 +711,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -663,7 +727,7 @@
                         <td colspan="2">
                             <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ cfg.display }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -678,7 +742,7 @@
                         <td colspan="2">
                             <input id="{{ cfgId }}_encode" name="{{ cfgId }}_encode" value="{{ cfg.encode }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -696,7 +760,7 @@
                         <td colspan="2">
                             <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     {% endfor%}
@@ -733,7 +797,7 @@
                         <td colspan="2">
                             <input id="{{ cfgId }}_id" name="{{ cfgId }}_id" value="{{ cfg.id }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -746,10 +810,9 @@
                             <label for="{{ cfgId }}_use_case">Use Case:</label>
                         </td>
                         <td colspan="2">
-                            <input id="{{ cfgId }}_use_case" name="{{ cfgId }}_use_case" value="{{ cfg.use_case }}"
-                                disabled>
+                            <input id="{{ cfgId }}_use_case" name="{{ cfgId }}_use_case" value="{{ cfg.use_case }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -765,24 +828,20 @@
                         <td style="width:5%">
                             ↔
                             {% if cfg.transform_hflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip"
-                                value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip"
-                                value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:5%">
                             ↕
                             {% if cfg.transform_vflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip"
-                                value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip"
-                                value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -815,7 +874,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -830,10 +889,10 @@
                             <label for="{{ cfgId }}_buffer_count">Buffer Count:</label>
                         </td>
                         <td colspan="2">
-                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1"
-                                max="6" value="{{ cfg.buffer_count }}">
+                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="6"
+                                value="{{ cfg.buffer_count }}">
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -853,11 +912,16 @@
                             <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
                         <td style="width:5%">
+                            <!-- This cell is used to store an invisible list of sensor mode data -->
+                            {% for mode in sm %}
+                            <p id="sensormode_ref{{ mode.id }}" style="display:none">Size: {{ mode.size }} FPS: {{ mode.fps }} Bit
+                                Depth: {{ mode.bit_depth }}</p>
+                            {% endfor%}
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -868,7 +932,7 @@
                         </td>
                         <td colspan="2">
                             <select name="{{ cfgId }}_sensor_mode" id="{{ cfgId }}_sensor_mode"
-                                onchange="sensorModeChanged('{{ cfgId }}_sensor_mode', '{{ cfgId }}_sensor_mode_data')">
+                                onchange="sensorModeChanged('{{ cfgId }}_sensor_mode', '{{ cfgId }}_sensor_mode_data', '{{ cfgId }}_stream_size_width', '{{ cfgId }}_stream_size_height', '{{ cfgId }}_stream_size_align')">
                                 {% for mode in sm %}
                                 {% if cfg.sensor_mode == mode.id %}
                                 <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
@@ -876,9 +940,14 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if cfg.sensor_mode == "custom" %}
+                                <option value="custom" selected>Custom</option>
+                                {% else %}
+                                <option value="custom">Custom</option>
+                                {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%" id="{{ cfgId }}_sensor_mode_data">
+                        <td style="width:45%" id="{{ cfgId }}_sensor_mode_data">
                             {% for mode in sm %}
                             {% if cfg.sensor_mode == mode.id %}
                             Size: {{ mode.size }} FPS: {{ mode.fps }} Bit Depth: {{ mode.bit_depth }}
@@ -914,7 +983,65 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Output size of the stream. Required if 'Custom' has been chosen for Sensor Mode
+                            </span>
+                            <label for="{{ cfgId }}_stream_size_width">Stream Size (width, height) </label>
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
+                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}">
+                            {% else %}
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
+                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
+                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}">
+                            {% else %}
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
+                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Whether the system is requested to align the custom output size
+                                with available Sensor Modes.
+                            </span>
+                            <label for="{{ cfgId }}_stream_size_align">Stream size aligned with Sensor Modes:</label>
+                        </td>
+                        <td colspan="2">
+                            {% if cfg.sensor_mode == "custom" %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0">
+                            {% endif %}
+                            {% else %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0" disabled>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -924,7 +1051,7 @@
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Image format to be used
                             </span>
-                            <label for="{{ cfgId }}_format">Format:</label>
+                            <label for="{{ cfgId }}_format">Stream Format:</label>
                         </td>
                         <td colspan="2">
                             <select name="{{ cfgId }}_format" id="{{ cfgId }}_format">
@@ -955,7 +1082,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -963,17 +1090,15 @@
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                This names which (if any) of the camera streams are to be shown in the preview window.
-                                <br>
+                                This names which (if any) of the camera streams are to be shown in the preview window. <br>
                                 Note: Preview view is not used within this applacation.
                             </span>
                             <label for="{{ cfgId }}_display">Display:</label>
                         </td>
                         <td colspan="2">
-                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ cfg.display }}"
-                                disabled>
+                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ cfg.display }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -981,15 +1106,14 @@
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                This names which (if any) of the streams are to be encoded if a video recording is
-                                started.
+                                This names which (if any) of the streams are to be encoded if a video recording is started.
                             </span>
                             <label for="{{ cfgId }}_encode">Encode:</label>
                         </td>
                         <td colspan="2">
                             <input id="{{ cfgId }}_encode" name="{{ cfgId }}_encode" value="{{ cfg.encode }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1005,10 +1129,9 @@
                             <label for="{{ cfgId }}_display">{{ ctrl_key }}:</label>
                         </td>
                         <td colspan="2">
-                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}"
-                                disabled>
+                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     {% endfor%}
@@ -1045,7 +1168,7 @@
                         <td colspan="2">
                             <input id="{{ cfgId }}_id" name="{{ cfgId }}_id" value="{{ cfg.id }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1058,10 +1181,9 @@
                             <label for="{{ cfgId }}_use_case">Use Case:</label>
                         </td>
                         <td colspan="2">
-                            <input id="{{ cfgId }}_use_case" name="{{ cfgId }}_use_case" value="{{ cfg.use_case }}"
-                                disabled>
+                            <input id="{{ cfgId }}_use_case" name="{{ cfgId }}_use_case" value="{{ cfg.use_case }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1077,24 +1199,20 @@
                         <td style="width:5%">
                             ↔
                             {% if cfg.transform_hflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip"
-                                value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip"
-                                value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:5%">
                             ↕
                             {% if cfg.transform_vflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip"
-                                value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip"
-                                value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1127,7 +1245,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1142,10 +1260,10 @@
                             <label for="{{ cfgId }}_buffer_count">Buffer Count:</label>
                         </td>
                         <td colspan="2">
-                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1"
-                                max="6" value="{{ cfg.buffer_count }}">
+                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="6"
+                                value="{{ cfg.buffer_count }}">
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1165,11 +1283,16 @@
                             <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
                         <td style="width:5%">
+                            <!-- This cell is used to store an invisible list of sensor mode data -->
+                            {% for mode in sm %}
+                            <p id="sensormode_ref{{ mode.id }}" style="display:none">Size: {{ mode.size }} FPS: {{ mode.fps }} Bit
+                                Depth: {{ mode.bit_depth }}</p>
+                            {% endfor%}
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -1180,7 +1303,7 @@
                         </td>
                         <td colspan="2">
                             <select name="{{ cfgId }}_sensor_mode" id="{{ cfgId }}_sensor_mode"
-                                onchange="sensorModeChanged('{{ cfgId }}_sensor_mode', '{{ cfgId }}_sensor_mode_data')">
+                                onchange="sensorModeChanged('{{ cfgId }}_sensor_mode', '{{ cfgId }}_sensor_mode_data', '{{ cfgId }}_stream_size_width', '{{ cfgId }}_stream_size_height', '{{ cfgId }}_stream_size_align')">
                                 {% for mode in sm %}
                                 {% if cfg.sensor_mode == mode.id %}
                                 <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
@@ -1188,9 +1311,14 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if cfg.sensor_mode == "custom" %}
+                                <option value="custom" selected>Custom</option>
+                                {% else %}
+                                <option value="custom">Custom</option>
+                                {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%" id="{{ cfgId }}_sensor_mode_data">
+                        <td style="width:45%" id="{{ cfgId }}_sensor_mode_data">
                             {% for mode in sm %}
                             {% if cfg.sensor_mode == mode.id %}
                             Size: {{ mode.size }} FPS: {{ mode.fps }} Bit Depth: {{ mode.bit_depth }}
@@ -1226,7 +1354,65 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Output size of the stream. Required if 'Custom' has been chosen for Sensor Mode
+                            </span>
+                            <label for="{{ cfgId }}_stream_size_width">Stream Size (width, height) </label>
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
+                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}">
+                            {% else %}
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
+                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cfg.sensor_mode == "custom" %}
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
+                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}">
+                            {% else %}
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
+                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Whether the system is requested to align the custom output size
+                                with available Sensor Modes.
+                            </span>
+                            <label for="{{ cfgId }}_stream_size_align">Stream size aligned with Sensor Modes:</label>
+                        </td>
+                        <td colspan="2">
+                            {% if cfg.sensor_mode == "custom" %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0">
+                            {% endif %}
+                            {% else %}
+                            {% if cfg.stream_size_align == True %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0" disabled>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1236,7 +1422,7 @@
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Image format to be used
                             </span>
-                            <label for="{{ cfgId }}_format">Format:</label>
+                            <label for="{{ cfgId }}_format">Stream Format:</label>
                         </td>
                         <td colspan="2">
                             <select name="{{ cfgId }}_format" id="{{ cfgId }}_format">
@@ -1267,7 +1453,7 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1275,17 +1461,15 @@
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                This names which (if any) of the camera streams are to be shown in the preview window.
-                                <br>
+                                This names which (if any) of the camera streams are to be shown in the preview window. <br>
                                 Note: Preview view is not used within this applacation.
                             </span>
                             <label for="{{ cfgId }}_display">Display:</label>
                         </td>
                         <td colspan="2">
-                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ cfg.display }}"
-                                disabled>
+                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ cfg.display }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1293,15 +1477,14 @@
                         </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                This names which (if any) of the streams are to be encoded if a video recording is
-                                started.
+                                This names which (if any) of the streams are to be encoded if a video recording is started.
                             </span>
                             <label for="{{ cfgId }}_encode">Encode:</label>
                         </td>
                         <td colspan="2">
                             <input id="{{ cfgId }}_encode" name="{{ cfgId }}_encode" value="{{ cfg.encode }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     <tr>
@@ -1317,10 +1500,9 @@
                             <label for="{{ cfgId }}_display">{{ ctrl_key }}:</label>
                         </td>
                         <td colspan="2">
-                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}"
-                                disabled>
+                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}" disabled>
                         </td>
-                        <td style="width:50%">
+                        <td style="width:45%">
                         </td>
                     </tr>
                     {% endfor%}

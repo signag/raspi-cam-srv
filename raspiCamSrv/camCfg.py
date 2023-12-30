@@ -980,6 +980,9 @@ class CameraProperties():
 class ServerConfig():
     def __init__(self):
         self._photoPath = None
+        self._photoType = "jpg"
+        self._rawPhotoType = "dng"
+        self._videoType = "h264"
         self._zoomFactor = 100
         self._zoomFactorStep = 10
         self._curMenu = "live"
@@ -1002,9 +1005,31 @@ class ServerConfig():
     def photoPath(self, value: str):
         self._photoPath = value
 
-    @photoPath.deleter
-    def photoPath(self):
-        del self._photoPath
+    @property
+    def photoType(self) -> str:
+        return self._photoType
+
+    @photoType.setter
+    def photoType(self, value: str):
+        if value.lower() == "jpg" \
+        or value.lower() == "jpeg" \
+        or value.lower() == "png" \
+        or value.lower() == "gif" \
+        or value.lower() == "bmp":
+            self._photoType = value
+        else:
+            raise ValueError("Invalid photo format")
+
+    @property
+    def rawPhotoType(self) -> str:
+        return self._rawPhotoType
+
+    @rawPhotoType.setter
+    def rawPhotoType(self, value: str):
+        if value.lower() == "dng":
+            self._rawPhotoType = value
+        else:
+            raise ValueError("Invalid raw photo format")
         
     @property
     def zoomFactor(self):
@@ -1018,10 +1043,6 @@ class ServerConfig():
             value = self.zoomFactorStep
         self._zoomFactor = value
 
-    @zoomFactor.deleter
-    def zoomFactor(self):
-        del self._zoomFactor
-
     @property
     def zoomFactorStep(self):
         return self._zoomFactorStep
@@ -1034,10 +1055,6 @@ class ServerConfig():
             value = 2
         self._zoomFactorStep = value
 
-    @zoomFactorStep.deleter
-    def zoomFactorStep(self):
-        del self._zoomFactorStep
-
     @property
     def curMenu(self) -> str:
         return self._curMenu
@@ -1045,10 +1062,6 @@ class ServerConfig():
     @curMenu.setter
     def curMenu(self, value: str):
         self._curMenu = value
-
-    @curMenu.deleter
-    def curMenu(self):
-        del self._curMenu
 
     @property
     def lastLiveTab(self):
@@ -1058,10 +1071,6 @@ class ServerConfig():
     def lastLiveTab(self, value: str):
         self._lastLiveTab = value
 
-    @lastLiveTab.deleter
-    def lastLiveTab(self):
-        del self._lastLiveTab
-
     @property
     def lastConfigTab(self):
         return self._lastConfigTab
@@ -1070,10 +1079,6 @@ class ServerConfig():
     def lastConfigTab(self, value: str):
         self._lastConfigTab = value
 
-    @lastConfigTab.deleter
-    def lastConfigTab(self):
-        del self._lastConfigTab
-
     @property
     def lastInfoTab(self):
         return self._lastInfoTab
@@ -1081,10 +1086,6 @@ class ServerConfig():
     @lastInfoTab.setter
     def lastInfoTab(self, value: str):
         self._lastInfoTab = value
-
-    @lastInfoTab.deleter
-    def lastInfoTab(self):
-        del self._lastInfoTab
 
     @property
     def isDisplayHidden(self) -> bool:
@@ -1106,10 +1107,6 @@ class ServerConfig():
     def displayPhoto(self, value: str):
         self._displayPhoto = value
 
-    @displayPhoto.deleter
-    def displayPhoto(self):
-        del self._displayPhoto
-
     @property
     def displayFile(self):
         return self._displayFile
@@ -1117,10 +1114,6 @@ class ServerConfig():
     @displayFile.setter
     def displayFile(self, value: str):
         self._displayFile = value
-
-    @displayFile.deleter
-    def displayFile(self):
-        del self.displayFile
 
     @property
     def displayMeta(self):
@@ -1130,10 +1123,6 @@ class ServerConfig():
     def displayMeta(self, value: str):
         self._displayMeta = value
 
-    @displayMeta.deleter
-    def displayMeta(self):
-        del self._displayMeta
-
     @property
     def displayMetaFirst(self):
         return self._displayMetaFirst
@@ -1142,10 +1131,6 @@ class ServerConfig():
     def displayMetaFirst(self, value: int):
         self._displayMetaFirst = value
 
-    @displayMetaFirst.deleter
-    def displayMetaFirst(self):
-        del self._displayMetaFirst
-
     @property
     def displayMetaLast(self):
         return self._displayMetaLast
@@ -1153,10 +1138,6 @@ class ServerConfig():
     @displayMetaLast.setter
     def displayMetaLast(self, value: int):
         self._displayMetaLast = value
-
-    @displayMetaLast.deleter
-    def displayMetaLast(self):
-        del self._displayMetaLast
     
     @property
     def displayBufferCount(self) -> int:

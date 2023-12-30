@@ -45,8 +45,6 @@ def liveViewCfg():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     if request.method == "POST":
-#        id = request.form["LIVE_id"]
-#        use_case = request.form["LIVE_use_case"]
         transform_hflip = not request.form.get("LIVE_transform_hflip") is None
         cfglive.transform_hflip = transform_hflip        
         transform_vflip = not request.form.get("LIVE_transform_vflip") is None
@@ -68,7 +66,6 @@ def liveViewCfg():
             mode = sm[int(sensor_mode)]
             cfglive.stream_size = mode.size
             cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
-            
         cfglive.display = None
         cfglive.encode = "main"
         Camera().restartLiveView()
@@ -100,8 +97,17 @@ def photoCfg():
         cfgphoto.buffer_count = buffer_count
         queue = not request.form.get("FOTO_queue") is None
         cfgphoto.queue = queue
-        sensor_mode = int(request.form["FOTO_sensor_mode"])
-        cfgphoto.sensor_mode = str(sensor_mode)
+        sensor_mode = request.form["FOTO_sensor_mode"]
+        cfgphoto.sensor_mode = sensor_mode
+        if sensor_mode == "custom":
+            size_width = int(request.form["FOTO_stream_size_width"])
+            size_height = int(request.form["FOTO_stream_size_height"])
+            cfgphoto.stream_size = (size_width, size_height)
+            cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
+        else:
+            mode = sm[int(sensor_mode)]
+            cfgphoto.stream_size = mode.size
+            cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
         cfgphoto.display = None
         cfgphoto.encode = "main"
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
@@ -132,8 +138,17 @@ def rawCfg():
         cfgraw.buffer_count = buffer_count
         queue = not request.form.get("PRAW_queue") is None
         cfgraw.queue = queue
-        sensor_mode = int(request.form["PRAW_sensor_mode"])
-        cfgraw.sensor_mode = str(sensor_mode)
+        sensor_mode = request.form["PRAW_sensor_mode"]
+        cfgraw.sensor_mode = sensor_mode
+        if sensor_mode == "custom":
+            size_width = int(request.form["PRAW_stream_size_width"])
+            size_height = int(request.form["PRAW_stream_size_height"])
+            cfgraw.stream_size = (size_width, size_height)
+            cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
+        else:
+            mode = sm[int(sensor_mode)]
+            cfgraw.stream_size = mode.size
+            cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
         cfgraw.display = None
         cfgraw.encode = "raw"
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
@@ -164,8 +179,17 @@ def videoCfg():
         cfgvideo.buffer_count = buffer_count
         queue = not request.form.get("VIDO_queue") is None
         cfgvideo.queue = queue
-        sensor_mode = int(request.form["VIDO_sensor_mode"])
-        cfgvideo.sensor_mode = str(sensor_mode)
+        sensor_mode = request.form["VIDO_sensor_mode"]
+        cfgvideo.sensor_mode = sensor_mode
+        if sensor_mode == "custom":
+            size_width = int(request.form["VIDO_stream_size_width"])
+            size_height = int(request.form["VIDO_stream_size_height"])
+            cfgvideo.stream_size = (size_width, size_height)
+            cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
+        else:
+            mode = sm[int(sensor_mode)]
+            cfgvideo.stream_size = mode.size
+            cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
         cfgvideo.display = None
         cfgvideo.encode = "main"
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)

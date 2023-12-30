@@ -19,6 +19,20 @@ def main():
     sc.curMenu = "settings"
     return render_template("settings/main.html", sc=sc)
 
+@bp.route("/serverconfig", methods=("GET", "POST"))
+@login_required
+def serverconfig():
+    logger.info("serverconfig")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    sc.curMenu = "settings"
+    if request.method == "POST":
+        photoType = request.form["phototype"]
+        sc.photoType = photoType
+    
+    return render_template("settings/main.html", sc=sc)
+
 @bp.route("/resetServer", methods=("GET", "POST"))
 @login_required
 def resetServer():

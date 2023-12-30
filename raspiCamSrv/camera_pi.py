@@ -57,6 +57,8 @@ class Camera(BaseCamera):
         cfgProps = cfg.cameraProperties
         cfgCtrls = cfg.controls
         cfgSensorModes = cfg.sensorModes
+        
+        # Load Camera Properties
         if cfgProps.model is None:
             camPprops = Camera.cam.camera_properties
             cfgProps.model = camPprops["Model"]
@@ -76,6 +78,7 @@ class Camera(BaseCamera):
             cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
             logger.info("Camera.loadCameraSpecifics loaded to config")
 
+        # Load Sensor Modes
         if len(cfgSensorModes) == 0:
             sensorModes = Camera.cam.sensor_modes
             ind = 0
@@ -92,13 +95,26 @@ class Camera(BaseCamera):
                 cfgSensorModes.append(cfgMode)
                 ind = ind + 1
             logger.info("%s sensor modes found", len(cfg.sensorModes))
+            
+            # Set some Sensor Mode specific parameters for standard configurations
             maxModei = len(cfg.sensorModes) - 1
             maxMode = str(maxModei)
-            cfg.liveViewConfig.stream_size = cfgSensorModes[0].size
+            # For Live View
+            # Initially set the stream size to (640, 4800). Use Sensor Mode, if possible
+            cfg.liveViewConfig.stream_size = (640, 480)
+            cfg.liveViewConfig.stream_size_align = False
+            if cfgSensorModes[0].size[0] == 640 \
+            and cfgSensorModes[0].size[1] == 480:
+                cfg.liveViewConfig.sensor_mode = "0"
+            else:
+                cfg.liveViewConfig.sensor_mode = "custom"
+            # For photo
             cfg.photoConfig.sensor_mode = maxMode
             cfg.photoConfig.stream_size = cfgSensorModes[maxModei].size
+            # For raw photo
             cfg.rawConfig.sensor_mode = maxMode
             cfg.rawConfig.stream_size = cfgSensorModes[maxModei].size
+            # For Video
             cfg.videoConfig.sensor_mode = maxMode
             cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
             logger.info("Photo and video sensor modes set to %s", maxMode)
@@ -151,6 +167,8 @@ class Camera(BaseCamera):
         else:
             camCfg.controls = ctrls
         logger.info("Camera.configure: configuration completed")
+        
+        #Automatically align the stream size, if selected
         if cfg.stream_size_align and cfg.sensor_mode == "custom" :
             logger.info("Camera.configure: Aligning camera configuration. Old size: %s", cfg.stream_size)
             camCfg.align()
@@ -214,7 +232,6 @@ class Camera(BaseCamera):
             stillConfig = cam.create_still_configuration()
             logger.info("Camera.takeImage: Still config created: %s", stillConfig)
             srvCam = CameraCfg()
-            cfgSensorModes = srvCam.sensorModes
             cfg = srvCam.photoConfig
             photoConfig = Camera.configure(cfg)
             cam.configure(photoConfig)

@@ -633,7 +633,7 @@ def take_photo():
     if request.method == "POST":
         path =sc.photoPath
         timeImg = datetime.datetime.now()
-        filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + ".jpg"
+        filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         fp = path + "/" + filename
         logger.debug("Saving image to %s", fp)
         Camera().takeImage(path, filename)
