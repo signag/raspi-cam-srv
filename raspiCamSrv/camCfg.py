@@ -989,6 +989,7 @@ class ServerConfig():
         self._lastLiveTab = "focus"
         self._lastConfigTab = "cfglive"
         self._lastInfoTab = "camprops"
+        self._isVideoRecording = False
         self._isDisplayHidden = True
         self._displayPhoto = None
         self._displayFile = None
@@ -1094,6 +1095,14 @@ class ServerConfig():
     @isDisplayHidden.setter
     def isDisplayHidden(self, value: bool):
         self._isDisplayHidden = value
+
+    @property
+    def isVideoRecording(self) -> bool:
+        return self._isVideoRecording
+
+    @isVideoRecording.setter
+    def isVideoRecording(self, value: bool):
+        self._isVideoRecording = value
 
     @property
     def buttonClear(self) -> str:

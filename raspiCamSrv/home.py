@@ -731,3 +731,42 @@ def clear_buffer():
     if request.method == "POST":
         sc.displayBufferClear()        
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/take_raw_photo", methods=("GET", "POST"))
+@login_required
+def take_raw_photo():
+    logger.debug("In take_raw_photo")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        pass        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/record_video", methods=("GET", "POST"))
+@login_required
+def record_video():
+    logger.debug("In record_video")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        pass        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/stop_recording", methods=("GET", "POST"))
+@login_required
+def stop_recording():
+    logger.debug("In stop_recording")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        pass        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        

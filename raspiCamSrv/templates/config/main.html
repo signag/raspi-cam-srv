@@ -8,27 +8,31 @@
     <div class="w3-bar w3-green">
         <!-- Config menue -->
         {% if sc.lastConfigTab == "cfglive" %}
-        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfglivebtn" onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
+        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfglivebtn" 
+            onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
         {% else %}
-        <button class="w3-bar-item w3-button configmenu" id="cfglivebtn" onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
+        <button class="w3-bar-item w3-button configmenu" id="cfglivebtn" 
+            onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
         {% endif %}
         {% if sc.lastConfigTab == "cfgphoto" %}
-        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgphotobtn" onclick="openCfgTab('cfgphoto', 'cfgphotobtn')">Photo</button>
+        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgphotobtn" 
+            onclick="openCfgTab('cfgphoto', 'cfgphotobtn')">Photo</button>
         {% else %}
-        <button class="w3-bar-item w3-button configmenu" id="cfgphotobtn" onclick="openCfgTab('cfgphoto', 'cfgphotobtn')">Photo</button>
+        <button class="w3-bar-item w3-button configmenu" id="cfgphotobtn" 
+            onclick="openCfgTab('cfgphoto', 'cfgphotobtn')">Photo</button>
         {% endif %}
         {% if sc.lastConfigTab == "cfgraw" %}
         <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgrawbtn"
             onclick="openCfgTab('cfgraw', 'cfgrawbtn')">Raw Photo</button>
         {% else %}
-        <button class="w3-bar-item w3-button configmenu" id="cfgphotobtn"
+        <button class="w3-bar-item w3-button configmenu" id="cfgrawbtn"
             onclick="openCfgTab('cfgraw', 'cfgrawbtn')">Raw Photo</button>
         {% endif %}
         {% if sc.lastConfigTab == "cfgvideo" %}
         <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgvideobtn"
             onclick="openCfgTab('cfgvideo', 'cfgvideobtn')">Video</button>
         {% else %}
-        <button class="w3-bar-item w3-button configmenu" id="cfgphotobtn" 
+        <button class="w3-bar-item w3-button configmenu" id="cfgvideobtn" 
             onclick="openCfgTab('cfgvideo', 'cfgvideobtn')">Video</button>
         {% endif %}
     </div>
@@ -1148,7 +1152,7 @@
     {% else %}
     <div id="cfgvideo" class="cfggroup" style="display:none">
     {% endif %}
-        <h4>Configuration for Raw Photo Taking</h4>
+        <h4>Configuration for Video Recording</h4>
         {% set cfg = cfgvideo %}
         {% set cfgId = "VIDO" %}
         <div>
