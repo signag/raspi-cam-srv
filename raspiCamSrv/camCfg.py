@@ -663,7 +663,7 @@ class CameraConfig():
         self._encode = None
         self._sensor_mode = "0"
         self._stream = "main"
-        self._format = "BGR888"
+        self._format = "RGB888"
         self._controls = {}
 
     @property
