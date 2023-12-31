@@ -122,7 +122,7 @@ class Camera(BaseCamera):
             # For raw photo
             cfg.rawConfig.sensor_mode = maxMode
             cfg.rawConfig.stream_size = cfgSensorModes[maxModei].size
-            cfg.rawConfig.format = cfgSensorModes[maxModei].format
+            cfg.rawConfig.format = str(cfgSensorModes[maxModei].format)
             # For Video
             cfg.videoConfig.sensor_mode = maxMode
             cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
