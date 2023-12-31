@@ -57,6 +57,7 @@ class Camera(BaseCamera):
         cfgProps = cfg.cameraProperties
         cfgCtrls = cfg.controls
         cfgSensorModes = cfg.sensorModes
+        cfgRawFormats = cfg.rawFormats
         
         # Load Camera Properties
         if cfgProps.model is None:
@@ -83,6 +84,12 @@ class Camera(BaseCamera):
             sensorModes = Camera.cam.sensor_modes
             ind = 0
             for mode in sensorModes:
+                fmt = str(mode["format"])
+                if not fmt in cfgRawFormats:
+                    cfgRawFormats.append(fmt)
+                fmt = str(mode["unpacked"])
+                if not fmt in cfgRawFormats:
+                    cfgRawFormats.append(fmt)
                 cfgMode = SensorMode()
                 cfgMode.id = str(ind)
                 cfgMode.format = mode["format"]
@@ -95,6 +102,7 @@ class Camera(BaseCamera):
                 cfgSensorModes.append(cfgMode)
                 ind = ind + 1
             logger.info("%s sensor modes found", len(cfg.sensorModes))
+            logger.info("%s raw formats found", len(cfg.rawFormats))
             
             # Set some Sensor Mode specific parameters for standard configurations
             maxModei = len(cfg.sensorModes) - 1
@@ -114,13 +122,14 @@ class Camera(BaseCamera):
             # For raw photo
             cfg.rawConfig.sensor_mode = maxMode
             cfg.rawConfig.stream_size = cfgSensorModes[maxModei].size
+            cfg.rawConfig.format = cfgSensorModes[maxModei].format
             # For Video
             cfg.videoConfig.sensor_mode = maxMode
             cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
             logger.info("Photo and video sensor modes set to %s", maxMode)
     
     @staticmethod
-    def configure(cfg):
+    def configure(cfg, cfgPhoto):
         """ The function creates and configures a CameraConfiguration
             based on given configuration settings cfg.
             
@@ -146,6 +155,13 @@ class Camera(BaseCamera):
         camCfg.queue = cfg.queue
         camCfg.display = cfg.display
         camCfg.encode = cfg.encode
+        # The mainStream is configured here from the photo configuration (e.g. jpg)
+        # to allow for a jpeg in addition to a dng from the raw stream
+        mainStream = StreamConfiguration()
+        mainStream.format = cfgPhoto.format
+        # However the size shall be that of the target configuration
+        # so that the formats of both, jpg and dng are the same
+        mainStream.size = cfg.stream_size
         stream = StreamConfiguration()
         stream.size = cfg.stream_size
         stream.format = cfg.format
@@ -154,11 +170,11 @@ class Camera(BaseCamera):
             camCfg.lores = None
             camCfg.raw = None
         if cfg.stream == "lores":
-            camCfg.main = None
+            camCfg.main = mainStream
             camCfg.lores = stream
             camCfg.raw = None
         if cfg.stream == "raw":
-            camCfg.main = None
+            camCfg.main = mainStream
             camCfg.lores = None
             camCfg.raw = stream
         ctrls = cfg.controls
@@ -229,11 +245,9 @@ class Camera(BaseCamera):
         Camera.cam = Picamera2()
         logger.info("Camera.takeImage: Camera reinitialized")
         with Camera.cam as cam:
-            stillConfig = cam.create_still_configuration()
-            logger.info("Camera.takeImage: Still config created: %s", stillConfig)
             srvCam = CameraCfg()
             cfg = srvCam.photoConfig
-            photoConfig = Camera.configure(cfg)
+            photoConfig = Camera.configure(cfg, srvCam.photoConfig)
             cam.configure(photoConfig)
             logger.info("Camera.takeImage: Camera configured for still")
             cam.start(show_preview=False)
@@ -256,6 +270,50 @@ class Camera(BaseCamera):
             logger.info("Camera.takeImage: Image metedata captured")
             request.release()
             logger.info("Camera.takeImage: Request released")
+
+    @staticmethod
+    def takeRawImage(path: str, filenameRaw: str, filename: str):
+        logger.info("Camera.takeRawImage")
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        BaseCamera.stopRequested = True
+        cnt = 0
+        while BaseCamera.thread:
+            time.sleep(0.01)
+            cnt += 1
+            if cnt > 200:
+                raise TimeoutError("Background thread did not stop within 2 sec")
+        Camera.cam.stop_recording()
+        Camera.cam = Picamera2()
+        with Camera.cam as cam:
+            srvCam = CameraCfg()
+            cfg = srvCam.rawConfig
+            rawConfig = Camera.configure(cfg, srvCam.photoConfig)
+            logger.info("rawConfig:%s", rawConfig)
+            cam.configure(rawConfig)
+            logger.info("Camera.takeImage: Camera configured for raw")
+            cam.start(show_preview=False)
+            logger.info("Camera.takeImage: Camera started")
+            request = cam.capture_request()
+            logger.info("Camera.takeImage: Request started")
+            fp = path + "/" + filename
+            request.save("main", fp)
+            fpr = path + "/" + filenameRaw
+            request.save_dng(fpr)
+            sc.displayFile = filenameRaw
+            sc.displayPhoto = "photos/" + filename
+            sc.isDisplayHidden = False
+            logger.info("Camera.takeImage: Raw Image saved as %s", fpr)
+            metadata = request.get_metadata()
+            sc.displayMeta = metadata
+            sc.displayMetaFirst = 0
+            if len(metadata) < 11:
+                sc._displayMetaLast = 999
+            else:
+                sc.displayMetaLast = 10
+            logger.info("Camera.takeRawImage: Raw Image metedata captured")
+            request.release()
+            logger.info("Camera.takeRawImage: Request released")
     
     @staticmethod
     def frames():
@@ -264,7 +322,7 @@ class Camera(BaseCamera):
             srvCam = CameraCfg()
             cfgSensorModes = srvCam.sensorModes
             cfg = srvCam.liveViewConfig
-            streamingConfig = Camera.configure(cfg)
+            streamingConfig = Camera.configure(cfg, srvCam.photoConfig)
             cam.configure(streamingConfig)
             logger.debug("starting recording")
             output = StreamingOutput()

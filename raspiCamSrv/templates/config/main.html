@@ -969,7 +969,7 @@
                             <label for="{{ cfgId }}_stream">Stream:</label>
                         </td>
                         <td colspan="2">
-                            <select name="{{ cfgId }}_stream" id="{{ cfgId }}_stream">
+                            <select name="{{ cfgId }}_stream" id="{{ cfgId }}_stream" disabled>
                                 {% if cfg.stream == "main" %}
                                 <option value="main" selected>main</option>
                                 {% else %}
@@ -1059,31 +1059,13 @@
                         </td>
                         <td colspan="2">
                             <select name="{{ cfgId }}_format" id="{{ cfgId }}_format">
-                                {% if cfg.format == "XBGR8888" %}
-                                <option value="XBGR8888" selected>XBGR8888</option>
+                                {% for frm in rf %}
+                                {% if cfg.format == frm %}
+                                <option value="{{ frm }}" selected>{{ frm }}</option>
                                 {% else %}
-                                <option value="XBGR8888">XBGR8888</option>
+                                <option value="{{ frm }}">{{ frm }}</option>
                                 {% endif %}
-                                {% if cfg.format == "XRGB8888" %}
-                                <option value="XRGB8888" selected>XRGB8888</option>
-                                {% else %}
-                                <option value="XRGB8888">XRGB8888</option>
-                                {% endif %}
-                                {% if cfg.format == "RGB888" %}
-                                <option value="RGB888" selected>RGB888</option>
-                                {% else %}
-                                <option value="RGB888">RGB888</option>
-                                {% endif %}
-                                {% if cfg.format == "BGR888" %}
-                                <option value="BGR888" selected>BGR888</option>
-                                {% else %}
-                                <option value="BGR888">BGR888</option>
-                                {% endif %}
-                                {% if cfg.format == "YUV420" %}
-                                <option value="YUV420" selected>YUV420</option>
-                                {% else %}
-                                <option value="YUV420">YUV420</option>
-                                {% endif %}
+                                {% endfor %}
                             </select>
                         </td>
                         <td style="width:45%">

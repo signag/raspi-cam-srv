@@ -1031,6 +1031,17 @@ class ServerConfig():
             self._rawPhotoType = value
         else:
             raise ValueError("Invalid raw photo format")
+
+    @property
+    def videoType(self) -> str:
+        return self._videoType
+
+    @videoType.setter
+    def videoType(self, value: str):
+        if value.lower() == "h264":
+            self._videoType = value
+        else:
+            raise ValueError("Invalid video format")
         
     @property
     def zoomFactor(self):
@@ -1340,6 +1351,7 @@ class CameraCfg():
             cls._controls = CameraControls()
             cls._cameraProperties = CameraProperties()
             cls._sensorModes = []
+            cls._rawFormats = []
             cls._liveViewConfig = CameraConfig()
             cls._liveViewConfig.id = "LIVE"
             cls._liveViewConfig.use_case = "Live view"
@@ -1350,13 +1362,12 @@ class CameraCfg():
             cls._photoConfig.id = "FOTO"
             cls._photoConfig.use_case = "Photo"
             cls._photoConfig.buffer_count = 1
-            cls._photoConfig.encode = "main"
             cls._photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
             cls._rawConfig = CameraConfig()
             cls._rawConfig.id = "PRAW"
             cls._rawConfig.use_case = "Raw Photo"
             cls._rawConfig.buffer_count = 1
-            cls._rawConfig.encode = "raw"
+            cls._rawConfig.stream = "raw"
             cls._rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
             cls._videoConfig = CameraConfig()
             cls._videoConfig.buffer_count = 6
@@ -1380,6 +1391,10 @@ class CameraCfg():
     @property
     def sensorModes(self) -> list:
         return self._sensorModes
+    
+    @property
+    def rawFormats(self) -> list:
+        return self._rawFormats
 
     @property
     def nrSensorModes(self) -> int:

@@ -50,6 +50,48 @@
                     <td style="width:45%">
                     </td>
                 </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The file format to be used for raw photos
+                        </span>
+                        <label for="rawphototype">Photo type:</label>
+                    </td>
+                    <td colspan="2">
+                        <select name="rawphototype" id="rawphototype">
+                            {% if sc.photoType == "dng" %}
+                            <option value="dng" selected>dng</option>
+                            {% else %}
+                            <option value="dng">dng</option>
+                            {% endif %}
+                        </select>
+                    </td>
+                    <td style="width:45%">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The file format to be used for videos
+                        </span>
+                        <label for="videotype">Photo type:</label>
+                    </td>
+                    <td colspan="2">
+                        <select name="videotype" id="videotype">
+                            {% if sc.photoType == "h264" %}
+                            <option value="h264" selected>h264</option>
+                            {% else %}
+                            <option value="h264">h264</option>
+                            {% endif %}
+                        </select>
+                    </td>
+                    <td style="width:45%">
+                    </td>
+                </tr>
             </table>
             <p style="margin-bottom: 0"></p>
             <input class="w3-button w3-black" type="submit" value="Submit">

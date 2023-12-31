@@ -20,6 +20,7 @@ def main():
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
+    rf = cfg.rawFormats
     sc = cfg.serverConfig
     sc.curMenu = "config"
     cfgs = cfg.cameraConfigs
@@ -27,7 +28,7 @@ def main():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
 @login_required
@@ -37,6 +38,7 @@ def liveViewCfg():
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
+    rf = cfg.rawFormats
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfglive"
     cfgs = cfg.cameraConfigs
@@ -66,10 +68,12 @@ def liveViewCfg():
             mode = sm[int(sensor_mode)]
             cfglive.stream_size = mode.size
             cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
+        format = request.form["LIVE_format"]
+        cfglive.format = format
         cfglive.display = None
         cfglive.encode = "main"
         Camera().restartLiveView()
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/photoCfg", methods=("GET", "POST"))
 @login_required
@@ -79,6 +83,7 @@ def photoCfg():
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
+    rf = cfg.rawFormats
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfgphoto"
     cfgs = cfg.cameraConfigs
@@ -108,9 +113,11 @@ def photoCfg():
             mode = sm[int(sensor_mode)]
             cfgphoto.stream_size = mode.size
             cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
+        format = request.form["FOTO_format"]
+        cfgphoto.format = format
         cfgphoto.display = None
         cfgphoto.encode = "main"
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/rawCfg", methods=("GET", "POST"))
 @login_required
@@ -120,6 +127,7 @@ def rawCfg():
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
+    rf = cfg.rawFormats
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfgraw"
     cfgs = cfg.cameraConfigs
@@ -149,9 +157,11 @@ def rawCfg():
             mode = sm[int(sensor_mode)]
             cfgraw.stream_size = mode.size
             cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
+        format = request.form["PRAW_format"]
+        cfgraw.format = format
         cfgraw.display = None
-        cfgraw.encode = "raw"
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+        cfgraw.encode = None
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/videoCfg", methods=("GET", "POST"))
 @login_required
@@ -161,6 +171,7 @@ def videoCfg():
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
+    rf = cfg.rawFormats
     sc = cfg.serverConfig
     sc.lastConfigTab = "cfgvideo"
     cfgs = cfg.cameraConfigs
@@ -190,6 +201,8 @@ def videoCfg():
             mode = sm[int(sensor_mode)]
             cfgvideo.stream_size = mode.size
             cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
+        format = request.form["VIDO_format"]
+        cfgvideo.format = format
         cfgvideo.display = None
         cfgvideo.encode = "main"
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
