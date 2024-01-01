@@ -894,7 +894,7 @@
                         </td>
                         <td colspan="2">
                             <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="6"
-                                value="{{ cfg.buffer_count }}">
+                                value="{{ cfg.buffer_count }}" disabled>
                         </td>
                         <td style="width:45%">
                         </td>
@@ -944,11 +944,6 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
-                                {% if cfg.sensor_mode == "custom" %}
-                                <option value="custom" selected>Custom</option>
-                                {% else %}
-                                <option value="custom">Custom</option>
-                                {% endif %}
                             </select>
                         </td>
                         <td style="width:45%" id="{{ cfgId }}_sensor_mode_data">
@@ -1001,17 +996,17 @@
                         </td>
                         <td>
                             {% if cfg.sensor_mode == "custom" %}
-                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
-                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}">
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" 
+                                min="1" max={{ cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}" disabled>
                             {% else %}
-                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" min="1" max={{
-                                cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}" disabled>
+                            <input type="number" id="{{ cfgId }}_stream_size_width" name="{{ cfgId }}_stream_size_width" 
+                                min="1" max={{ cp.pixelArraySize[0] }} value="{{ cfg.stream_size[0] }}" disabled>
                             {% endif %}
                         </td>
                         <td>
                             {% if cfg.sensor_mode == "custom" %}
                             <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
-                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}">
+                                cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>
                             {% else %}
                             <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" min="1" max={{
                                 cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>

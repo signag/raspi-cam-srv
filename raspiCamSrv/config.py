@@ -142,21 +142,13 @@ def rawCfg():
         cfgraw.transform_vflip = transform_vflip
         colour_space = request.form["PRAW_colour_space"]
         cfgraw.colour_space = colour_space
-        buffer_count = int(request.form["PRAW_buffer_count"])
-        cfgraw.buffer_count = buffer_count
         queue = not request.form.get("PRAW_queue") is None
         cfgraw.queue = queue
         sensor_mode = request.form["PRAW_sensor_mode"]
         cfgraw.sensor_mode = sensor_mode
-        if sensor_mode == "custom":
-            size_width = int(request.form["PRAW_stream_size_width"])
-            size_height = int(request.form["PRAW_stream_size_height"])
-            cfgraw.stream_size = (size_width, size_height)
-            cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
-        else:
-            mode = sm[int(sensor_mode)]
-            cfgraw.stream_size = mode.size
-            cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
+        mode = sm[int(sensor_mode)]
+        cfgraw.stream_size = mode.size
+        cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
         format = request.form["PRAW_format"]
         cfgraw.format = format
         cfgraw.display = None
