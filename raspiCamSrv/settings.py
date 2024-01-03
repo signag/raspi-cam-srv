@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
-from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.camera_pi import Camera, BaseCamera
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -30,6 +30,10 @@ def serverconfig():
     if request.method == "POST":
         photoType = request.form["phototype"]
         sc.photoType = photoType
+        rawPhotoType = request.form["rawphototype"]
+        sc.rawPhotoType = rawPhotoType
+        videoType = request.form["videotype"]
+        sc.videoType = videoType
     
     return render_template("settings/main.html", sc=sc)
 
@@ -44,6 +48,9 @@ def resetServer():
     if request.method == "POST":
         logger.info("Stopping camera system")
         Camera().stopCameraSystem()
+        BaseCamera.liveViewDeactivated = False
+        BaseCamera.thread = None
+        BaseCamera.videoThread = None
         logger.info("Resetting server configuration")
         del cfg
         cfg = CameraCfg()

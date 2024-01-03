@@ -19,7 +19,7 @@ def index():
     logger.info("In index")
     g.hostname = request.host
     cam = Camera()
-    logger.info("Camera instatntiated")
+    logger.info("Camera instantiated")
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -756,25 +756,40 @@ def take_raw_photo():
 @bp.route("/record_video", methods=("GET", "POST"))
 @login_required
 def record_video():
-    logger.debug("In record_video")
+    logger.info("In record_video")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        pass        
+        path =sc.photoPath
+        timeImg = datetime.datetime.now()
+        filename = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
+        fp = path + "/" + filename
+        logger.info("Saving video as %s", fp)
+        logger.info("Recording a video")
+        Camera.recordVideo(fp)
+        logger.info("Video recording started")
+        sc.isVideoRecording = True
+        msg="Video saved as " + fp
+        flash(msg)
+        time.sleep(2)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/stop_recording", methods=("GET", "POST"))
 @login_required
 def stop_recording():
-    logger.debug("In stop_recording")
+    logger.info("In stop_recording")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        pass        
+        logger.info("Requesting video recording to stop")
+        Camera().stopVideoRecording()
+        sc.isVideoRecording = False
+        msg="Video recording stopped"
+        flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        

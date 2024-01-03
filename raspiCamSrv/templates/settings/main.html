@@ -57,11 +57,11 @@
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The file format to be used for raw photos
                         </span>
-                        <label for="rawphototype">Photo type:</label>
+                        <label for="rawphototype">Raw type:</label>
                     </td>
                     <td colspan="2">
                         <select name="rawphototype" id="rawphototype">
-                            {% if sc.photoType == "dng" %}
+                            {% if sc.rawPhotoType == "dng" %}
                             <option value="dng" selected>dng</option>
                             {% else %}
                             <option value="dng">dng</option>
@@ -78,14 +78,19 @@
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The file format to be used for videos
                         </span>
-                        <label for="videotype">Photo type:</label>
+                        <label for="videotype">Video type:</label>
                     </td>
                     <td colspan="2">
                         <select name="videotype" id="videotype">
-                            {% if sc.photoType == "h264" %}
+                            {% if sc.videoType == "h264" %}
                             <option value="h264" selected>h264</option>
                             {% else %}
                             <option value="h264">h264</option>
+                            {% endif %}
+                            {% if sc.videoType == "mp4" %}
+                            <option value="mp4" selected>mp4</option>
+                            {% else %}
+                            <option value="mp4">mp4</option>
                             {% endif %}
                         </select>
                     </td>

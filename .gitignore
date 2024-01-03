@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 tests/
 raspiCamSrv/static/photos/*.*
+*.mp4
+*.h264
 
 # C extensions
 *.so

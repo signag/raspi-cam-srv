@@ -979,7 +979,7 @@ class CameraProperties():
 
 class ServerConfig():
     def __init__(self):
-        self._photoPath = None
+        self._photoPath = "."
         self._photoType = "jpg"
         self._rawPhotoType = "dng"
         self._videoType = "h264"
@@ -1038,7 +1038,8 @@ class ServerConfig():
 
     @videoType.setter
     def videoType(self, value: str):
-        if value.lower() == "h264":
+        if value.lower() == "h264" \
+        or value.lower() == "mp4":
             self._videoType = value
         else:
             raise ValueError("Invalid video format")
@@ -1381,11 +1382,11 @@ class CameraCfg():
         return cls._instance
     
     @property
-    def controls(self):
+    def controls(self) -> CameraControls:
         return self._controls
     
     @property
-    def cameraProperties(self):
+    def cameraProperties(self) -> CameraProperties:
         return self._cameraProperties
     
     @property
@@ -1401,19 +1402,19 @@ class CameraCfg():
         return len(self._sensorModes)
     
     @property
-    def liveViewConfig(self):
+    def liveViewConfig(self) -> CameraConfig:
         return self._liveViewConfig
     
     @property
-    def photoConfig(self):
+    def photoConfig(self) -> CameraConfig:
         return self._photoConfig
     
     @property
-    def rawConfig(self):
+    def rawConfig(self) -> CameraConfig:
         return self._rawConfig
     
     @property
-    def videoConfig(self):
+    def videoConfig(self) -> CameraConfig:
         return self._videoConfig
     
     @property
@@ -1421,5 +1422,5 @@ class CameraCfg():
         return self._cameraConfigs
     
     @property
-    def serverConfig(self) -> dict:
+    def serverConfig(self) -> ServerConfig:
         return self._serverConfig
