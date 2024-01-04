@@ -770,11 +770,18 @@ def record_video():
         logger.info("Saving video as %s", fp)
         logger.info("Recording a video")
         Camera.recordVideo(fp)
-        logger.info("Video recording started")
-        sc.isVideoRecording = True
-        msg="Video saved as " + fp
-        flash(msg)
-        time.sleep(2)
+        time.sleep(4)
+        # Check whether vido is being recorded
+        if Camera.isVideoRecording():
+            logger.info("Video recording started")
+            sc.isVideoRecording = True
+            msg="Video saved as " + fp
+            flash(msg)
+        else:
+            logger.info("Video recording did not start")
+            sc.isVideoRecording = False
+            msg="Video recording failed. Requested resolution too high "
+            flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/stop_recording", methods=("GET", "POST"))

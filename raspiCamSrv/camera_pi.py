@@ -398,16 +398,22 @@ class Camera(BaseCamera):
                 logger.info("Thread %s: _videoThread - h264 Video output to %s", get_ident(), output)
             cam.start()
             logger.info("Thread %s: _videoThread - Camera started", get_ident())
-            cam.start_encoder(encoder)
-            logger.info("Thread %s: _videoThread - Encoder started", get_ident())
-            while Camera.stopVideoRequested == False:
-                time.sleep(0.1)
-            logger.info("Thread %s: _videoThread - stop video requested", get_ident())
-            cam.stop_encoder()
-            logger.info("Thread %s: _videoThread - encoder stopped", get_ident())
-            cam.stop()
-            logger.info("Thread %s: _videoThread - camera stopped", get_ident())
+            try:
+                cam.start_encoder(encoder)
+                logger.info("Thread %s: _videoThread - Encoder started", get_ident())
+                while Camera.stopVideoRequested == False:
+                    time.sleep(0.1)
+                logger.info("Thread %s: _videoThread - stop video requested", get_ident())
+                cam.stop_encoder()
+                logger.info("Thread %s: _videoThread - encoder stopped", get_ident())
+                cam.stop()
+                logger.info("Thread %s: _videoThread - camera stopped", get_ident())
+            except ProcessLookupError:
+                logger.info("Thread %s: _videoThread - Encoder could not be started (requested resolution too high)", get_ident())
+                BaseCamera.liveViewDeactivated = False
+            
         BaseCamera.videoThread = None
+        logger.info("Thread %s: _videoThread - videoThread terminated", get_ident())
 
     @staticmethod
     def recordVideo(output: str):
@@ -422,7 +428,6 @@ class Camera(BaseCamera):
             BaseCamera.videoThread = threading.Thread(target=Camera._videoThread, daemon=True)
             BaseCamera.videoThread.start()
             logger.info("Thread %s: recordVideo - videoThread started", get_ident())
-            #time.sleep(2)
 
     @staticmethod
     def stopVideoRecording():
@@ -438,4 +443,8 @@ class Camera(BaseCamera):
         logger.info("Thread %s: stopVideoRecording: Thread has stopped", get_ident())
         Camera.cam = Picamera2()
         BaseCamera.liveViewDeactivated = False
+        
+    @staticmethod
+    def isVideoRecording() -> bool:
+        return BaseCamera.videoThread is not None
         
