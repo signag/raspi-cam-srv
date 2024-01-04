@@ -55,6 +55,7 @@ def resetServer():
         del cfg
         cfg = CameraCfg()
         sc = cfg.serverConfig
+        sc.isVideoRecording = False
         sc.curMenu = "settings"
     
     return render_template("settings/main.html", sc=sc)

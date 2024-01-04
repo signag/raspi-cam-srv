@@ -982,7 +982,7 @@ class ServerConfig():
         self._photoPath = "."
         self._photoType = "jpg"
         self._rawPhotoType = "dng"
-        self._videoType = "h264"
+        self._videoType = "mp4"
         self._zoomFactor = 100
         self._zoomFactorStep = 10
         self._curMenu = "live"

@@ -396,9 +396,9 @@ class Camera(BaseCamera):
             else:
                 encoder.output = FileOutput(output)
                 logger.info("Thread %s: _videoThread - h264 Video output to %s", get_ident(), output)
-            cam.start()
-            logger.info("Thread %s: _videoThread - Camera started", get_ident())
             try:
+                cam.start()
+                logger.info("Thread %s: _videoThread - Camera started", get_ident())
                 cam.start_encoder(encoder)
                 logger.info("Thread %s: _videoThread - Encoder started", get_ident())
                 while Camera.stopVideoRequested == False:
@@ -410,6 +410,9 @@ class Camera(BaseCamera):
                 logger.info("Thread %s: _videoThread - camera stopped", get_ident())
             except ProcessLookupError:
                 logger.info("Thread %s: _videoThread - Encoder could not be started (requested resolution too high)", get_ident())
+                BaseCamera.liveViewDeactivated = False
+            except RuntimeError:
+                logger.info("Thread %s: _videoThread - Encoder could not be started (not enough memory for requested resolution)", get_ident())
                 BaseCamera.liveViewDeactivated = False
             
         BaseCamera.videoThread = None
