@@ -422,7 +422,7 @@ class Camera(BaseCamera):
             BaseCamera.videoThread = threading.Thread(target=Camera._videoThread, daemon=True)
             BaseCamera.videoThread.start()
             logger.info("Thread %s: recordVideo - videoThread started", get_ident())
-            time.sleep(2)
+            #time.sleep(2)
 
     @staticmethod
     def stopVideoRecording():

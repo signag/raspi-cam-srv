@@ -12,7 +12,11 @@ RaspiCamSrv's Live page
         <!-- First row -->
         <div class="w3-half" style="min-height: 440px;">
             <!-- Live stream -->
+            {% if sc.isVideoRecording %}
+            <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image">
+            {% else %}
             <img src="{{ url_for('home.video_feed') }}" class="w3-image">
+            {% endif %}
         </div>
         <div class="w3-half">
             <!-- Camara control sections 
@@ -1150,13 +1154,26 @@ RaspiCamSrv's Live page
                 <tr>
                     <td style="width:44%">
                         <!-- Photo button -->
+                        {% if sc.isVideoRecording %}
+                        <form style="display:inline-block" method="post" action="{{ url_for('home.take_photo') }}">
+                            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo" disabled>
+                        </form>
+                        {% else %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.take_photo') }}">
                             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo">
                         </form>
+                        {% endif %}
+
                         <!-- raw button -->
+                        {% if sc.isVideoRecording %}
+                        <form style="display:inline-block" method="post" action="{{ url_for('home.take_raw_photo') }}">
+                            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Raw" disabled>
+                        </form>
+                        {% else %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.take_raw_photo') }}">
                             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Raw">
                         </form>
+                        {% endif %}
                         {% if sc.isVideoRecording == false %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.record_video') }}">
                             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Video">
