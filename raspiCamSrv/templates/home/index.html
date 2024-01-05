@@ -1395,7 +1395,8 @@ RaspiCamSrv's Live page
                         {% if prop|string() == "ExposureTime" %}
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Exposure time used for the sensor, measured
-                            in microseconds.
+                            in microseconds.<br>
+                            In brackets for exposure times < 1s: rounded reciprocal value
                         </span>
                         {% endif %}
                         {% if prop|string() == "AfState" %}
@@ -1430,7 +1431,8 @@ RaspiCamSrv's Live page
                         {% if prop|string() == "LensPosition" %}
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Position of the lens. The units are dioptres
-                            (reciprocal of the distance in metres).
+                            (reciprocal of the distance in metres).<br>
+                            In brackets: focal distance in m.
                         </span>
                         {% endif %}
                         {{ prop|string() }}
@@ -1464,7 +1466,7 @@ RaspiCamSrv's Live page
                     {% elif prop|string() == "ExposureTime" %}
                         {% if sc.displayMeta[prop] < 1000000 %}
                             {% set rt = (1000000/sc.displayMeta[prop])|int() %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (1/{{ rt|string() }} sec)</td>
+                            <td>{{ sc.displayMeta[prop]|string() }} (1/{{ rt|string() }} s)</td>
                         {% else %}
                             <td>{{ sc.displayMeta[prop]|string() }}</td>
                         {% endif %}
