@@ -136,6 +136,9 @@ def trigger_autofocus():
                 success = Camera().cam.autofocus_cycle()
                 if success:
                     msg = "Autofocus successful"
+                    lp = Camera().getLensPosition()
+                    if lp > 0:
+                        cc.lensPosition = lp
                 else:
                     msg = "Autofocus not successful"
             else:

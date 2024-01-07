@@ -274,13 +274,36 @@ class Camera(BaseCamera):
         if cfgCtrls.include_brightness and "Brightness" not in ctrls:
             ctrls["Brightness"] = cfgCtrls.brightness
             cnt += 1
-        # Image controls
+        # Scaler crop
         logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
         logger.info("Thread %s: Camera.applyControls - include_scalerCrop=%s", get_ident(), cfgCtrls.include_scalerCrop)
         if cfgCtrls.include_scalerCrop and "ScalerCrop" not in ctrls:
             ctrls["ScalerCrop"] = cfgCtrls.scalerCrop
             cnt += 1
         logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        # Focus
+        if cfg.cameraProperties.hasFocus:
+            if cfgCtrls.include_afMode and "AfMode" not in ctrls:
+                ctrls["AfMode"] = cfgCtrls.afMode
+                cnt += 1
+            if cfgCtrls.include_lensPosition and "LensPosition" not in ctrls:
+                ctrls["LensPosition"] = cfgCtrls.lensPosition
+                cnt += 1
+            if cfgCtrls.include_afMetering and "AfMetering" not in ctrls:
+                ctrls["AfMetering"] = cfgCtrls.afMetering
+                cnt += 1
+            if cfgCtrls.include_afPause and "AfPause" not in ctrls:
+                ctrls["AfPause"] = cfgCtrls.afPause
+                cnt += 1
+            if cfgCtrls.include_afRange and "AfRange" not in ctrls:
+                ctrls["AfRange"] = cfgCtrls.afRange
+                cnt += 1
+            if cfgCtrls.include_afSpeed and "AfSpeed" not in ctrls:
+                ctrls["AfSpeed"] = cfgCtrls.afSpeed
+                cnt += 1
+            if cfgCtrls.include_afTrigger and "AfTrigger" not in ctrls:
+                ctrls["AfTrigger"] = cfgCtrls.afTrigger
+                cnt += 1
             
         logger.info("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
         camCtrls = Controls(Camera.cam)
@@ -547,4 +570,11 @@ class Camera(BaseCamera):
     @staticmethod
     def isVideoRecording() -> bool:
         return BaseCamera.videoThread is not None
-        
+
+    @staticmethod
+    def getLensPosition() -> float:
+        metadata = Camera.cam.capture_metadata()
+        if "LensPosition" in metadata:
+            return metadata["LensPosition"]
+        else:
+            return 0.0
