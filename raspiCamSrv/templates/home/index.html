@@ -945,11 +945,6 @@ RaspiCamSrv's Live page
                                             {% else %}
                                             <option value="0">Auto</option>
                                             {% endif %}
-                                            {% if cc.awbMode == 1 %}
-                                            <option value="1" selected>Incandescent</option>
-                                            {% else %}
-                                            <option value="1">Incandescent</option>
-                                            {% endif %}
                                             {% if cc.awbMode == 2 %}
                                             <option value="2" selected>Tungsten</option>
                                             {% else %}
@@ -965,17 +960,17 @@ RaspiCamSrv's Live page
                                             {% else %}
                                             <option value="4">Indoor</option>
                                             {% endif %}
-                                            {% if cc.awbMode == 3 %}
+                                            {% if cc.awbMode == 5 %}
                                             <option value="5" selected>Daylight</option>
                                             {% else %}
                                             <option value="5">Daylight</option>
                                             {% endif %}
-                                            {% if cc.awbMode == 3 %}
+                                            {% if cc.awbMode == 6 %}
                                             <option value="6" selected>Cloudy</option>
                                             {% else %}
                                             <option value="6">Cloudy</option>
                                             {% endif %}
-                                            {% if cc.awbMode == 3 %}
+                                            {% if cc.awbMode == 7 %}
                                             <option value="7" selected>Custom</option>
                                             {% else %}
                                             <option value="7">Custom</option>
