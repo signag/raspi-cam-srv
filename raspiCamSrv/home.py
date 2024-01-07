@@ -117,8 +117,7 @@ def focus_control():
                 cc.afSpeed = afSpeed
                 ctrls["AfSpeed"] = afSpeed
 
-        if len(ctrls) > 0:
-            Camera().cam.set_controls(ctrls)
+            Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/trigger_autofocus", methods=("GET", "POST"))
@@ -166,6 +165,7 @@ def zoom_in():
     logger.info("In zoom_in")
     g.hostname = request.host
     cfg = CameraCfg()
+    logger.info("cfg.liveViewConfig.controls=%s",cfg.liveViewConfig.controls)
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
@@ -184,8 +184,12 @@ def zoom_in():
         sccrop = (int(xCenter - width/2), int(yCenter - height/2), width, height)
         sc.zoomFactor = zfNext
         cc.scalerCrop = sccrop
+        if zfNext < 100:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
         logger.info("ScalerCrop new: %s", cc.scalerCrop)
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_out", methods=("GET", "POST"))
@@ -227,7 +231,11 @@ def zoom_out():
             sccrop = (xOffset, yOffset, width, height)
         sc.zoomFactor = zfNext
         cc.scalerCrop = sccrop
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        if zfNext < 100:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_full", methods=("GET", "POST"))
@@ -244,7 +252,8 @@ def zoom_full():
         sc.zoomFactor = 100
         sccrop = (0, 0, cp.pixelArraySize[0], cp.pixelArraySize[1])
         cc.scalerCrop = sccrop
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        cc.include_scalerCrop = False
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_up", methods=("GET", "POST"))
@@ -266,7 +275,11 @@ def pan_up():
             flash(msg)
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        if sc.zoomFactor < 100:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_left", methods=("GET", "POST"))
@@ -288,7 +301,11 @@ def pan_left():
             flash(msg)
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        if sc.zoomFactor < 100:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_center", methods=("GET", "POST"))
@@ -310,7 +327,11 @@ def pan_center():
             yOffset = 0
         sccrop = (xOffset, yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        if sc.zoomFactor < 100:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_right", methods=("GET", "POST"))
@@ -332,7 +353,11 @@ def pan_right():
             flash(msg)
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        if sc.zoomFactor < 100:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/pan_down", methods=("GET", "POST"))
@@ -354,7 +379,11 @@ def pan_down():
             flash(msg)
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         cc.scalerCrop = sccrop
-        Camera().cam.set_controls({"ScalerCrop": sccrop})
+        if sc.zoomFactor < 100:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/ae_control", methods=("GET", "POST"))
@@ -368,7 +397,6 @@ def ae_control():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "autoexposure"
     if request.method == "POST":
-        ctrls = {}
         if request.form.get("include_aeconstraintmode") is None:
             cc.include_aeConstraintMode = False
             logger.info("AeConstraintMode excluded")
@@ -377,7 +405,6 @@ def ae_control():
             cc.include_aeConstraintMode = True
             aeConstraintMode = int(request.form["aeconstraintmode"])
             cc.aeConstraintMode = aeConstraintMode
-            ctrls["AeConstraintMode"] = aeConstraintMode
             
         if request.form.get("include_aeenable") is None:
             cc.include_aeEnable = False
@@ -385,7 +412,6 @@ def ae_control():
             cc.include_aeEnable = True
             aeEnable = not request.form.get("aeenable") is None
             cc.aeEnable = aeEnable
-            ctrls["AeEnable"] = aeEnable
 
         if request.form.get("include_aeexposuremode") is None:
             cc.include_aeExposureMode = False
@@ -393,7 +419,6 @@ def ae_control():
             cc.include_aeExposureMode = True
             aeExposureMode = int(request.form["aeexposuremode"])
             cc.aeExposureMode = aeExposureMode
-            ctrls["AeExposureMode"] = aeExposureMode
 
         if request.form.get("include_aemeteringmode") is None:
             cc.include_aeMeteringMode = False
@@ -403,7 +428,6 @@ def ae_control():
             cc.include_aeMeteringMode = True
             aeMeteringMode = int(request.form["aemeteringmode"])
             cc.aeMeteringMode = aeMeteringMode
-            ctrls["AeMeteringMode"] = aeMeteringMode
 
         if cp.hasFlicker:
             if request.form.get("include_aeflickermode") is None:
@@ -412,7 +436,6 @@ def ae_control():
                 cc.include_aeFlickerMode = True
                 aeFlickerMode = int(request.form["aeflickermode"])
                 cc.aeFlickerMode = aeFlickerMode
-                ctrls["AeFlickerMode"] = aeFlickerMode
 
             if request.form.get("include_aeflickerperiod") is None:
                 cc.include_aeFlickerPeriod = False
@@ -420,10 +443,8 @@ def ae_control():
                 cc.include_aeFlickerPeriod = True
                 aeFlickerPeriod = int(request.form["aeflickerperiod"])
                 cc.aeFlickerPeriod = aeFlickerPeriod
-                ctrls["AeFlickerPeriod"] = aeFlickerPeriod
 
-        if len(ctrls) > 0:
-            Camera().cam.set_controls(ctrls)
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/exposure_control", methods=("GET", "POST"))
@@ -437,14 +458,12 @@ def exposure_control():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "exposure"
     if request.method == "POST":
-        ctrls = {}
         if request.form.get("include_analoguegain") is None:
             cc.include_analogueGain = False
         else:
             cc.include_analogueGain = True
             analogueGain = float(request.form["analoguegain"])
             cc.analogueGain = analogueGain
-            ctrls["AnalogueGain"] = analogueGain
         
         if request.form.get("include_colourgains") is None:
             cc.include_colourGains = False
@@ -454,7 +473,6 @@ def exposure_control():
             colourGainBlue = float(request.form["colourgainblue"])
             colourGains = (colourGainRed, colourGainBlue)
             cc.colourGains = colourGains
-            ctrls["ColourGains"] = colourGains
         
         if request.form.get("include_exposuretime") is None:
             cc.include_exposureTime = False
@@ -463,7 +481,6 @@ def exposure_control():
             exposureTimeSec = float(request.form["exposuretimesec"])
             cc.exposureTimeSec = exposureTimeSec
             exposureTime = cc.exposureTime
-            ctrls["ExposureTime"] = exposureTime
         
         if request.form.get("include_exposurevalue") is None:
             cc.include_exposureValue = False
@@ -471,7 +488,6 @@ def exposure_control():
             cc.include_exposureValue = True
             exposureValue = float(request.form["exposurevalue"])
             cc.exposureValue = exposureValue
-            ctrls["ExposureValue"] = exposureValue
 
         if request.form.get("include_framedurationlimits") is None:
             cc.include_frameDurationLimits = False
@@ -481,7 +497,6 @@ def exposure_control():
             frameDurationLimitMin = int(request.form["framedurationlimitmin"])
             frameDurationLimits = (frameDurationLimitMax, frameDurationLimitMin)
             cc.frameDurationLimits = frameDurationLimits
-            ctrls["FrameDurationLimits"] = frameDurationLimits
 
         if cp.hasHdr:
             if request.form.get("include_hdrmode") is None:
@@ -490,10 +505,8 @@ def exposure_control():
                 cc.include_hdrMode = True
                 hdrMode = int(request.form["hdrmode"])
                 cc.hdrMode = hdrMode
-                ctrls["HdrMode"] = hdrMode
 
-        if len(ctrls) > 0:
-            Camera().cam.set_controls(ctrls)
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/image_control", methods=("GET", "POST"))
@@ -507,14 +520,12 @@ def image_control():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "image"
     if request.method == "POST":
-        ctrls = {}
         if request.form.get("include_noisereductionmode") is None:
             cc.include_noiseReductionMode = False
         else:
             cc.include_noiseReductionMode = True
             noiseReductionMode = int(request.form["noisereductionmode"])
             cc.noiseReductionMode = noiseReductionMode
-            ctrls["NoiseReductionMode"] = noiseReductionMode
         
         if request.form.get("include_saturation") is None:
             cc.include_saturation = False
@@ -522,7 +533,6 @@ def image_control():
             cc.include_saturation = True
             saturation = float(request.form["saturation"])
             cc.saturation = saturation
-            ctrls["Saturation"] = saturation
         
         if request.form.get("include_sharpness") is None:
             cc.include_sharpness = False
@@ -530,7 +540,6 @@ def image_control():
             cc.include_sharpness = True
             sharpness = float(request.form["sharpness"])
             cc.sharpness = sharpness
-            ctrls["Sharpness"] = sharpness
             
         if request.form.get("include_awbenable") is None:
             cc.include_awbEnable = False
@@ -538,15 +547,13 @@ def image_control():
             cc.include_awbEnable = True
             awbEnable = not request.form.get("awbenable") is None
             cc.awbEnable = awbEnable
-            ctrls["AwbEnable"] = awbEnable
         
         if request.form.get("include_awbmode") is None:
             cc.include_awbMode = False
         else:
             cc.include_awbMode = True
-            awbMode = float(request.form["awbmode"])
+            awbMode = int(request.form["awbmode"])
             cc.awbMode = awbMode
-            ctrls["AwbMode"] = awbMode
         
         if request.form.get("include_contrast") is None:
             cc.include_contrast = False
@@ -554,7 +561,6 @@ def image_control():
             cc.include_contrast = True
             contrast = float(request.form["contrast"])
             cc.contrast = contrast
-            ctrls["Contrast"] = contrast
 
         if request.form.get("include_brightness") is None:
             cc.include_brightness = False
@@ -562,10 +568,8 @@ def image_control():
             cc.include_brightness = True
             brightness = float(request.form["brightness"])
             cc.brightness = brightness
-            ctrls["Brightness"] = brightness
 
-        if len(ctrls) > 0:
-            Camera().cam.set_controls(ctrls)
+        Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
         
 @bp.route("/meta_clear", methods=("GET", "POST"))

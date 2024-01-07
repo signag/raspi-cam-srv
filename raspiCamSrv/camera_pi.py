@@ -4,13 +4,14 @@ import datetime
 import threading
 from _thread import get_ident
 from raspiCamSrv.camera_base import BaseCamera, CameraEvent
-from raspiCamSrv.camCfg import CameraCfg, SensorMode
+from raspiCamSrv.camCfg import CameraCfg, SensorMode, CameraConfig
 from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
-from libcamera import Transform, Size, ColorSpace
+from libcamera import Transform, Size, ColorSpace, controls
 from picamera2.encoders import JpegEncoder, MJPEGEncoder
 from picamera2.outputs import FileOutput, FfmpegOutput
 from picamera2.encoders import H264Encoder
 from threading import Condition, Lock
+import copy
 import logging
 
 logger = logging.getLogger(__name__)
@@ -133,7 +134,7 @@ class Camera(BaseCamera):
             cfg.videoConfig.stream_size = cfgSensorModes[0].size
     
     @staticmethod
-    def configure(cfg, cfgPhoto):
+    def configure(cfg: CameraConfig, cfgPhoto: CameraConfig):
         """ The function creates and configures a CameraConfiguration
             based on given configuration settings cfg.
             
@@ -197,6 +198,96 @@ class Camera(BaseCamera):
             logger.info("Thread %s: Camera.configure: Stream size adjusted to %s", get_ident(), cfg.stream_size)
 
         return camCfg
+
+    @staticmethod
+    def applyControls(camCfg: CameraConfig):
+        """Apply the currently selected camera controls"""
+        logger.info("Thread %s: Camera.applyControls", get_ident())
+
+        cfg = CameraCfg()
+        cfgCtrls = cfg.controls
+        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+
+        # Initialize controls dict with controls included in configuration
+        ctrls = copy.deepcopy(camCfg.controls)
+        logger.info("Thread %s: Camera.applyControls - camCfg.controls=%s", get_ident(), ctrls)
+        cnt = 0
+        
+        # Apply selected controls with precedence of controls from configuration
+        # Auto exposure controls
+        if cfgCtrls.include_aeEnable and "AeEnable" not in ctrls:
+            ctrls["AeEnable"] = cfgCtrls.aeEnable
+            cnt += 1
+        if cfgCtrls.include_aeMeteringMode and "AeMeteringMode" not in ctrls:
+            ctrls["AeMeteringMode"] = cfgCtrls.aeMeteringMode
+            cnt += 1
+        if cfgCtrls.include_aeExposureMode and "AeExposureMode" not in ctrls:
+            ctrls["AeExposureMode"] = cfgCtrls.aeExposureMode
+            cnt += 1
+        if cfgCtrls.include_aeConstraintMode and "AeConstraintMode" not in ctrls:
+            ctrls["AeConstraintMode"] = cfgCtrls.aeConstraintMode
+            cnt += 1
+        if cfgCtrls.include_aeFlickerMode and "AeFlickerMode" not in ctrls:
+            ctrls["AeFlickerMode"] = cfgCtrls.aeFlickerMode
+            cnt += 1
+        if cfgCtrls.include_aeFlickerPeriod and "AeFlickerPeriod" not in ctrls:
+            ctrls["AeFlickerPeriod"] = cfgCtrls.aeFlickerPeriod
+            cnt += 1
+        # Exposure controls
+        if cfgCtrls.include_exposureTime and "ExposureTime" not in ctrls:
+            ctrls["ExposureTime"] = cfgCtrls.exposureTime
+            cnt += 1
+        if cfgCtrls.include_exposureValue and "ExposureValue" not in ctrls:
+            ctrls["ExposureValue"] = cfgCtrls.exposureValue
+            cnt += 1
+        if cfgCtrls.include_analogueGain and "AnalogueGain" not in ctrls:
+            ctrls["AnalogueGain"] = cfgCtrls.analogueGain
+            cnt += 1
+        if cfgCtrls.include_colourGains and "ColourGains" not in ctrls:
+            ctrls["ColourGains"] = (cfgCtrls.colourGainRed, cfgCtrls.colourGainBlue)
+            cnt += 1
+        if cfgCtrls.include_frameDurationLimits and "FrameDurationLimits" not in ctrls:
+            ctrls["FrameDurationLimits"] = (cfgCtrls.frameDurationLimitMax, cfgCtrls.frameDurationLimitMin)
+            cnt += 1
+        if cfgCtrls.include_hdrMode and "HdrMode" not in ctrls:
+            ctrls["HdrMode"] = cfgCtrls.hdrMode
+            cnt += 1
+        # Image controls
+        if cfgCtrls.include_awbEnable and "AwbEnable" not in ctrls:
+            ctrls["AwbEnable"] = cfgCtrls.awbEnable
+            cnt += 1
+        if cfgCtrls.include_awbMode and "AwbMode" not in ctrls:
+            ctrls["AwbMode"] = cfgCtrls.awbMode
+            cnt += 1
+        if cfgCtrls.include_noiseReductionMode and "NoiseReductionMode" not in ctrls:
+            ctrls["NoiseReductionMode"] = cfgCtrls.noiseReductionMode
+            cnt += 1
+        if cfgCtrls.include_sharpness and "Sharpness" not in ctrls:
+            ctrls["Sharpness"] = cfgCtrls.sharpness
+            cnt += 1
+        if cfgCtrls.include_contrast and "Contrast" not in ctrls:
+            ctrls["Contrast"] = cfgCtrls.contrast
+            cnt += 1
+        if cfgCtrls.include_saturation and "Saturation" not in ctrls:
+            ctrls["Saturation"] = cfgCtrls.saturation
+            cnt += 1
+        if cfgCtrls.include_brightness and "Brightness" not in ctrls:
+            ctrls["Brightness"] = cfgCtrls.brightness
+            cnt += 1
+        # Image controls
+        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        logger.info("Thread %s: Camera.applyControls - include_scalerCrop=%s", get_ident(), cfgCtrls.include_scalerCrop)
+        if cfgCtrls.include_scalerCrop and "ScalerCrop" not in ctrls:
+            ctrls["ScalerCrop"] = cfgCtrls.scalerCrop
+            cnt += 1
+        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+            
+        logger.info("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
+        camCtrls = Controls(Camera.cam)
+        camCtrls.set_controls(ctrls)
+        Camera.cam.controls = camCtrls
+        logger.info("Thread %s: Camera.applyControls - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
+        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
 
     @staticmethod
     def stopCameraSystem():
@@ -276,12 +367,15 @@ class Camera(BaseCamera):
         logger.info("Camera.takeImage: Recording stopped")
         Camera.cam = Picamera2()
         logger.info("Camera.takeImage: Camera reinitialized")
+        logger.info("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
         with Camera.cam as cam:
-            srvCam = CameraCfg()
-            cfg = srvCam.photoConfig
-            photoConfig = Camera.configure(cfg, srvCam.photoConfig)
+            photoConfig = Camera.configure(cfg.photoConfig, cfg.photoConfig)
             cam.configure(photoConfig)
-            logger.info("Camera.takeImage: Camera configured for still")
+            logger.info("Camera.takeImage: Camera configured for photo")
+            logger.info("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
+            Camera.applyControls(cfg.photoConfig)
+            logger.info("Camera.takeImage: Selected controls applied")
+            logger.info("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
             cam.start(show_preview=False)
             logger.info("Camera.takeImage: Camera started")
             request = cam.capture_request()
@@ -318,16 +412,15 @@ class Camera(BaseCamera):
         Camera.cam.stop_recording()
         Camera.cam = Picamera2()
         with Camera.cam as cam:
-            srvCam = CameraCfg()
-            cfg = srvCam.rawConfig
-            rawConfig = Camera.configure(cfg, srvCam.photoConfig)
-            logger.info("rawConfig:%s", rawConfig)
+            rawConfig = Camera.configure(cfg.rawConfig, cfg.photoConfig)
             cam.configure(rawConfig)
-            logger.info("Camera.takeImage: Camera configured for raw")
+            logger.info("Camera.takeRawImage: Camera configured for raw")
+            Camera.applyControls(cfg.rawConfig)
+            logger.info("Camera.takeRawImage: Selected controls applied")
             cam.start(show_preview=False)
-            logger.info("Camera.takeImage: Camera started")
+            logger.info("Camera.takeRawImage: Camera started")
             request = cam.capture_request()
-            logger.info("Camera.takeImage: Request started")
+            logger.info("Camera.takeRawImage: Request started")
             fp = path + "/" + filename
             request.save("main", fp)
             fpr = path + "/" + filenameRaw
@@ -335,7 +428,7 @@ class Camera(BaseCamera):
             sc.displayFile = filenameRaw
             sc.displayPhoto = "photos/" + filename
             sc.isDisplayHidden = False
-            logger.info("Camera.takeImage: Raw Image saved as %s", fpr)
+            logger.info("Camera.takeRawImage: Raw Image saved as %s", fpr)
             metadata = request.get_metadata()
             sc.displayMeta = metadata
             sc.displayMetaFirst = 0
@@ -349,27 +442,29 @@ class Camera(BaseCamera):
     
     @staticmethod
     def frames():
-        logger.debug("Camera.frames")
+        logger.info("Thread %s: Camera.frames", get_ident())
         with Camera.cam as cam:
             srvCam = CameraCfg()
             cfg = srvCam.liveViewConfig
             streamingConfig = Camera.configure(cfg, srvCam.photoConfig)
             cam.configure(streamingConfig)
-            logger.debug("starting recording")
+            logger.info("Thread %s: Camera.frames - starting recording", get_ident())
             output = StreamingOutput()
             cam.start_recording(MJPEGEncoder(), FileOutput(output))
-            logger.debug("recording started")
+            logger.info("Thread %s: Camera.frames - recording started", get_ident())
             # let camera warm up
             time.sleep(2)
+            Camera.applyControls(cfg)
+            logger.info("Thread %s: Camera.frames - controls applied", get_ident())
             while True:
-                logger.debug("Receiving camera stream")
+                logger.debug("Thread %s: Camera.frames - Receiving camera stream", get_ident())
                 with output.condition:
-                    logger.debug("waiting")
+                    logger.debug("Thread %s: Camera.frames - waiting", get_ident())
                     output.condition.wait()
-                    logger.debug("waiting done")
+                    logger.debug("Thread %s: Camera.frames - waiting done", get_ident())
                     frame = output.frame
                     l = len(frame)
-                logger.debug("got frame with length %s", l)
+                logger.debug("Thread %s: Camera.frames - got frame with length %s", get_ident(), l)
                 yield frame
     
     @staticmethod
@@ -388,6 +483,8 @@ class Camera(BaseCamera):
             videoConfig = Camera.configure(cfg, srvCam.photoConfig)
             cam.configure(videoConfig)
             logger.info("Thread %s: _videoThread - Video configuration done", get_ident())
+            Camera.applyControls(cfg)
+            logger.info("Thread %s: _videoThread - selected controls applied", get_ident())
             encoder = H264Encoder(10000000)
             output = Camera.videoOutput
             if output.lower().endswith(".mp4"):
