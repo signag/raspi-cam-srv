@@ -229,7 +229,9 @@ class CameraControls():
         if self._lensPosition == 0:
             return 9999.9
         else:
-            return 1.0 / self._lensPosition
+            fd = 1.0 / self._lensPosition
+            fd = int(1000 * fd)/1000
+            return fd
     @focalDistance.setter
     def focalDistance(self, value: float):
         if value > 0:

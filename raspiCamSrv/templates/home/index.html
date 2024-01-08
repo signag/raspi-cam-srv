@@ -119,9 +119,9 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_lensPosition == True %}
-                                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value="{{ cc.focalDistance }}">
+                                    <input type="number" id="fdist" name="fdist" min="0.001" max="999" step="0.001" value="{{ cc.focalDistance }}">
                                     {% else %}
-                                    <input type="number" id="fdist" name="fdist" min="0.01" max="999" step="0.01" value="{{ cc.focalDistance }}" disabled>
+                                    <input type="number" id="fdist" name="fdist" min="0.001" max="999" step="0.001" value="{{ cc.focalDistance }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>

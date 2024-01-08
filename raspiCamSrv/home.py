@@ -145,7 +145,7 @@ def trigger_autofocus():
                 success = Camera().cam.autofocus_cycle()
                 if success:
                     lp = Camera().getLensPosition()
-                    lp = int(100 * lp) / 100
+                    #lp = int(100 * lp) / 100
                     if lp > 0:
                         cc.lensPosition = lp
                         cc.include_lensPosition = True
