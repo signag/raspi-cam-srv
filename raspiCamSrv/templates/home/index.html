@@ -57,9 +57,9 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Focus handling -->
                 <h4>Focus handling</h4>
-                {% if cp.hasFocus %}
+                {% if not cp.hasFocus %}
                 <div>
-                    <form method="post" action="{{ url_for('home.focus_control') }}">
+                    <form method="post" id="formfocuscontrol" action="{{ url_for('home.focus_control') }}">
                         <table class="w3-table-all">
                             <tr>
                                 <td style="width:5%">
@@ -305,13 +305,19 @@ RaspiCamSrv's Live page
                                 </td>
                             </tr>
                         </table>
-                        <p style="margin-bottom: 0"></p>
-                        <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                     <p style="margin-bottom: 0"></p>
-                    <form method="post" action="{{ url_for('home.trigger_autofocus') }}">
-                        <input class="w3-button w3-black" type="submit" value="Trigger Autofocus">
-                    </form>
+                    <table>
+                        <tr>
+                            <td style="width: 50%">
+                                <input class="w3-button w3-black" form="formfocuscontrol" type="submit" value="Submit">
+                            <td style="width: 50%">
+                                <form method="post" action="{{ url_for('home.trigger_autofocus') }}">
+                                    <input class="w3-button w3-black" type="submit" value="Trigger Autofocus">
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
                 {% else %}
                 <p>Not available for this camera</p>

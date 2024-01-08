@@ -31,7 +31,7 @@ class CameraControls():
         self.include_afSpeed = False
         self._afTrigger = controls.AfTriggerEnum.Start
         self.include_afTrigger = False
-        self._afWindows = (0, 0, 0, 0)
+        self._afWindows = ()
         self.include_afWindows = False
         self._analogueGain = 1.0
         self.include_analogueGain = False
@@ -354,6 +354,8 @@ class CameraControls():
     def afWindowsStr(self) -> str:
         res = "("
         for win in self.afWindows:
+            if len(res) > 1:
+                res = res + ","
             res = res + "(" + str(win[0]) + "," + str(win[1]) + "," + str(win[2]) + "," + str(win[3]) + ")"
         res = res + ")"
         return res
