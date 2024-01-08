@@ -117,6 +117,15 @@ def focus_control():
                 cc.afSpeed = afSpeed
                 ctrls["AfSpeed"] = afSpeed
 
+            if request.form.get("include_afwindows") is None:
+                cc.include_afWindows = False
+            else:
+                cc.include_afWindows = True
+                # To be implemented
+                afWindows = cp.scalerCropMaximum
+                cc.afWindows = afWindows
+                ctrls["AfWindows"] = afWindows
+
             Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
@@ -135,11 +144,13 @@ def trigger_autofocus():
             if cc.afMode == controls.AfModeEnum.Auto:
                 success = Camera().cam.autofocus_cycle()
                 if success:
-                    msg = "Autofocus successful"
                     lp = Camera().getLensPosition()
                     lp = int(100 * lp) / 100
                     if lp > 0:
                         cc.lensPosition = lp
+                        cc.include_lensPosition = True
+                        cc.afMode = 0
+                        msg = "Autofocus successful. See Focal Distance. Autofocus Mode set to 'Manual'."
                 else:
                     msg = "Autofocus not successful"
             else:

@@ -349,6 +349,14 @@ class CameraControls():
     @afWindows.deleter
     def afWindows(self):
         del self._afWindows
+        
+    @property
+    def afWindowsStr(self) -> str:
+        res = "("
+        for win in self.afWindows:
+            res = res + "(" + str(win[0]) + "," + str(win[1]) + "," + str(win[2]) + "," + str(win[3]) + ")"
+        res = res + ")"
+        return res
 
     @property
     def analogueGain(self) -> float:

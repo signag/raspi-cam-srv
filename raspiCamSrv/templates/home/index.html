@@ -275,6 +275,35 @@ RaspiCamSrv's Live page
                                     </select>
                                 </td>
                             </tr>
+                            <tr>
+                                <td style="width:5%">
+                                    {% if cc.include_afWindows == True %}
+                                    <input type="checkbox" id="include_afwindows" name="include_afwindows"
+                                        onclick="includeCtrl('include_afwindows', 'afwindows')" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="include_afwindows" name="include_afwindows"
+                                        onclick="includeCtrl('include_afwindows', 'afwindows')" value="0">
+                                    {% endif %}
+                                </td>
+                                <td class="w3-tooltip">
+                                    <label for="afwindows">Autofocus Windows:</label>
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Location of the windows in the image to use to
+                                        measure focus.<br>
+                                        A list of rectangles (tuples of 4 numbers
+                                        denoting x_offset, y_offset, width and
+                                        height). The rectangle units refer to the
+                                        maximum scaler crop window.
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if cc.include_afWindows == True %}
+                                    <input type="text" id="afwindows" name="afwindows" value="{{ cc.afWindowsStr }}" disabled>
+                                    {% else %}
+                                    <input type="text" id="afwindows" name="afwindows" value="{{ cc.afWindowsStr }}" disabled>
+                                    {% endif %}
+                                </td>
+                            </tr>
                         </table>
                         <p style="margin-bottom: 0"></p>
                         <input class="w3-button w3-black" type="submit" value="Submit">
