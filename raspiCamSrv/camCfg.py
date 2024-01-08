@@ -61,6 +61,38 @@ class CameraControls():
         self.include_scalerCrop = False
         self._sharpness = 1.0
         self.include_sharpness = False
+
+    def dict(self) -> dict:
+        dict={}
+        dict["AeConstraintMode"] = [self.include_aeConstraintMode, self._aeConstraintMode]
+        dict["AeEnable"] = [self.include_aeEnable, self._aeEnable ]
+        dict["AeExposureMode"] = [self.include_aeExposureMode, self._aeExposureMode]
+        dict["AeFlickerMode"] = [self.include_aeFlickerMode, self._aeFlickerMode]
+        dict["AeFlickerPeriod"] = [self.include_aeFlickerPeriod, self._aeFlickerPeriod]
+        dict["AeMeteringMode"] = [self.include_aeMeteringMode, self._aeMeteringMode]
+        dict["AfMode"] = [self.include_afMode, self._afMode]
+        dict["LensPosition"] = [self.include_lensPosition, self._lensPosition]
+        dict["AfMetering"] = [self.include_afMetering, self._afMetering]
+        dict["AfPause"] = [self.include_afPause, self._afPause]
+        dict["AfRange"] = [self.include_afRange, self._afRange]
+        dict["AfSpeed"] = [self.include_afSpeed, self._afSpeed]
+        dict["AfTrigger"] = [self.include_afTrigger, self._afTrigger]
+        dict["AfWindows"] = [self.include_afWindows, self._afWindows]
+        dict["AnalogueGain"] = [self.include_analogueGain, self._analogueGain]
+        dict["AwbEnable"] = [self.include_awbEnable, self._awbEnable]
+        dict["AwbMode"] = [self.include_awbMode, self._awbMode]
+        dict["Brightness"] = [self.include_brightness, self._brightness]
+        dict["ColourGains"] = [self.include_colourGains, self._colourGains]
+        dict["Contrast"] = [self.include_contrast, self._contrast]
+        dict["ExposureTime"] = [self.include_exposureTime, self._exposureTime]
+        dict["ExposureValue"] = [self.include_exposureValue, self._exposureValue]
+        dict["FrameDurationLimits"] = [self.include_frameDurationLimits, self._frameDurationLimits]
+        dict["HdrMode"] = [self.include_hdrMode, self._hdrMode]
+        dict["NoiseReductionMode"] = [self.include_noiseReductionMode, self._noiseReductionMode]
+        dict["Saturation"] = [self.include_saturation, self._saturation]
+        dict["ScalerCrop"] = [self.include_scalerCrop, self._scalerCrop]
+        dict["Sharpness"] = [self.include_sharpness, self._sharpness]
+        return dict
         
     @property
     def aeConstraintMode(self) -> int:

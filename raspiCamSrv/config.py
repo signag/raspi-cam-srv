@@ -75,6 +75,72 @@ def liveViewCfg():
         Camera().restartLiveView()
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
+@bp.route("/addLiveViewControls", methods=("GET", "POST"))
+@login_required
+def addLiveViewControls():
+    logger.info("In addLiveViewControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfglive"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        for key, value in cc.dict().items():
+            if value[0] == True:
+                if key not in cfg.liveViewConfig.controls:
+                    cfg.liveViewConfig.controls[key] = value[1]
+        Camera().restartLiveView()
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
+@bp.route("/remLiveViewControls", methods=("GET", "POST"))
+@login_required
+def remLiveViewControls():
+    logger.info("In remLiveViewControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfglive"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        cnt = 0
+        for ctrl in cfg.liveViewConfig.controls:
+            logger.info("Checking checkbox ID:" + "sel_LIVE_" + ctrl)
+            if request.form.get("sel_LIVE_" + ctrl) is not None:
+                cnt += 1
+        logger.info("Nr controls: %s - selected: %s", len(cfg.liveViewConfig.controls), cnt)
+        if cnt > 0:
+            if cnt < len(cfg.liveViewConfig.controls):
+                while cnt > 0:
+                    for ctrl in cfg.liveViewConfig.controls:
+                        if request.form.get("sel_LIVE_" + ctrl) is not None:
+                            ctrlDel = ctrl
+                            break
+                    del cfg.liveViewConfig.controls[ctrlDel]
+                    cnt -= 1
+                Camera().restartLiveView()
+            else:
+                msg="At least one control must remain in the configuration"
+                flash(msg)
+        else:
+            msg="No controls were selected"
+            flash(msg)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
 @bp.route("/photoCfg", methods=("GET", "POST"))
 @login_required
 def photoCfg():
@@ -119,6 +185,68 @@ def photoCfg():
         cfgphoto.encode = "main"
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
+@bp.route("/addPhotoControls", methods=("GET", "POST"))
+@login_required
+def addPhotoControls():
+    logger.info("In addPhotoControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfgphoto"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        for key, value in cc.dict().items():
+            if value[0] == True:
+                if key not in cfg.photoConfig.controls:
+                    cfg.photoConfig.controls[key] = value[1]
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
+@bp.route("/remPhotoControls", methods=("GET", "POST"))
+@login_required
+def remPhotoControls():
+    logger.info("In remPhotoControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfgphoto"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        cnt = 0
+        for ctrl in cfg.photoConfig.controls:
+            if request.form.get("sel_FOTO_" + ctrl) is not None:
+                cnt += 1
+        if cnt > 0:
+            if cnt < len(cfg.photoConfig.controls):
+                while cnt > 0:
+                    for ctrl in cfg.photoConfig.controls:
+                        if request.form.get("sel_FOTO_" + ctrl) is not None:
+                            ctrlDel = ctrl
+                            break
+                    del cfg.photoConfig.controls[ctrlDel]
+                    cnt -= 1
+            else:
+                msg="At least one control must remain in the configuration"
+                flash(msg)
+        else:
+            msg="No controls were selected"
+            flash(msg)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
 @bp.route("/rawCfg", methods=("GET", "POST"))
 @login_required
 def rawCfg():
@@ -153,6 +281,68 @@ def rawCfg():
         cfgraw.format = format
         cfgraw.display = None
         cfgraw.encode = None
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
+@bp.route("/addRawControls", methods=("GET", "POST"))
+@login_required
+def addRawControls():
+    logger.info("In addRawControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfgraw"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        for key, value in cc.dict().items():
+            if value[0] == True:
+                if key not in cfg.rawConfig.controls:
+                    cfg.rawConfig.controls[key] = value[1]
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
+@bp.route("/remRawControls", methods=("GET", "POST"))
+@login_required
+def remRawControls():
+    logger.info("In remRawControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfgraw"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        cnt = 0
+        for ctrl in cfg.rawConfig.controls:
+            if request.form.get("sel_PRAW_" + ctrl) is not None:
+                cnt += 1
+        if cnt > 0:
+            if cnt < len(cfg.rawConfig.controls):
+                while cnt > 0:
+                    for ctrl in cfg.rawConfig.controls:
+                        if request.form.get("sel_PRAW_" + ctrl) is not None:
+                            ctrlDel = ctrl
+                            break
+                    del cfg.rawConfig.controls[ctrlDel]
+                    cnt -= 1
+            else:
+                msg="At least one control must remain in the configuration"
+                flash(msg)
+        else:
+            msg="No controls were selected"
+            flash(msg)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
 
 @bp.route("/videoCfg", methods=("GET", "POST"))
@@ -197,4 +387,66 @@ def videoCfg():
         cfgvideo.format = format
         cfgvideo.display = None
         cfgvideo.encode = "main"
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
+@bp.route("/addVideoControls", methods=("GET", "POST"))
+@login_required
+def addVideoControls():
+    logger.info("In addVideoControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfgvideo"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        for key, value in cc.dict().items():
+            if value[0] == True:
+                if key not in cfg.videoConfig.controls:
+                    cfg.videoConfig.controls[key] = value[1]
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+
+@bp.route("/remVideoControls", methods=("GET", "POST"))
+@login_required
+def remVideoControls():
+    logger.info("In remVideoControls")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfgvideo"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    if request.method == "POST":
+        cnt = 0
+        for ctrl in cfg.videoConfig.controls:
+            if request.form.get("sel_VIDO_" + ctrl) is not None:
+                cnt += 1
+        if cnt > 0:
+            if cnt < len(cfg.videoConfig.controls):
+                while cnt > 0:
+                    for ctrl in cfg.videoConfig.controls:
+                        if request.form.get("sel_VIDO_" + ctrl) is not None:
+                            ctrlDel = ctrl
+                            break
+                    del cfg.videoConfig.controls[ctrlDel]
+                    cnt -= 1
+            else:
+                msg="At least one control must remain in the configuration"
+                flash(msg)
+        else:
+            msg="No controls were selected"
+            flash(msg)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)

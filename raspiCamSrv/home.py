@@ -137,6 +137,7 @@ def trigger_autofocus():
                 if success:
                     msg = "Autofocus successful"
                     lp = Camera().getLensPosition()
+                    lp = int(100 * lp) / 100
                     if lp > 0:
                         cc.lensPosition = lp
                 else:
