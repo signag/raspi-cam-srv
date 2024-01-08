@@ -1490,8 +1490,8 @@ RaspiCamSrv's Live page
                             <td>{{ sc.displayMeta[prop]|string() }}</td>
                         {% endif %}
                     {% elif prop|string() == "LensPosition" %}
-                        {% set fdr = (10.0/sc.displayMeta[prop])|int() %}
-                        {% set fd = fdr/10.0 %}
+                        {% set fdr = (1000.0/sc.displayMeta[prop])|int() %}
+                        {% set fd = fdr/1000.0 %}
                         <td>{{ sc.displayMeta[prop]|string() }} ({{ fd|string() }} m)</td>
                     {% elif prop|string() == "ExposureTime" %}
                         {% if sc.displayMeta[prop] < 1000000 %}
