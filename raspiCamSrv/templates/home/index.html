@@ -1577,6 +1577,7 @@ RaspiCamSrv's Live page
 
             if (ctrlTabName == "focus") {
                 drawAfWindow("include_afwindows", "afwindows", '{{ sc.scalerCropLiveView }}')
+                drawAllAfWindows()
             } else {
                 removeAfWindowCanvas()
             }
@@ -1672,6 +1673,29 @@ RaspiCamSrv's Live page
             return resa;
         }
 
+        function drawCnvWindow(win, index, winlist) {
+            /*  Draw the given window on the canvas
+            */
+            console.log("drawCnvWindow win:", win);
+            // Parse the window spec for the AF Window
+            var afWina = parseRectTuple(win);
+            var afWinXOffset = afWina[0];
+            var afWinYOffset = afWina[1];
+            var afWinWidth = afWina[2];
+            var afWinHeight = afWina[3];
+            console.log("cnv: ", liveCanvasOffsetX, liveCanvasOffsetY, liveCanvas.width, liveCanvas.height)
+            console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
+            console.log("afw: ", afWinXOffset, afWinYOffset, afWinWidth, afWinHeight)
+            // Scale to canvas
+            var winWidth = Math.round(afWinWidth * liveCanvas.width / camWidth);
+            var winHeight = Math.round(afWinHeight * liveCanvas.height / camHeight);
+            var winXOffset = Math.round((afWinXOffset - camXOffset) * liveCanvas.width / camWidth);
+            var winYOffset = Math.round((afWinYOffset - camYOffset) * liveCanvas.height / camHeight);
+            console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+            // Draw
+            liveCanvasCtx.strokeRect(winXOffset, winYOffset, winWidth, winHeight);
+        }
+
         function drawAllAfWindows() {
             /*  Parses the windows entry in the target element
                 and draws all resulting windows
@@ -1681,6 +1705,10 @@ RaspiCamSrv's Live page
             console.log("afWindows:", afWindows)
             var winlist = parseWindows(afWindows)
             console.log("winlist:", winlist)
+            // Clear canvas
+            liveCanvasCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
+            // Draw all windows
+            winlist.forEach(drawCnvWindow)
         }
 
         function addNewAfWindow() {
