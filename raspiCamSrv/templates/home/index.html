@@ -13,9 +13,9 @@ RaspiCamSrv's Live page
         <div class="w3-half" style="min-height: 440px;">
             <!-- Live stream -->
             {% if sc.isVideoRecording %}
-            <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image">
+            <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" id="liveviewimage">
             {% else %}
-            <img src="{{ url_for('home.video_feed') }}" class="w3-image">
+            <img src="{{ url_for('home.video_feed') }}" class="w3-image" id="liveviewimage">
             {% endif %}
         </div>
         <div class="w3-half">
@@ -57,7 +57,7 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Focus handling -->
                 <h4>Focus handling</h4>
-                {% if cp.hasFocus %}
+                {% if not cp.hasFocus %}
                 <div>
                     <form method="post" id="formfocuscontrol" action="{{ url_for('home.focus_control') }}">
                         <table class="w3-table-all">
@@ -278,10 +278,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afWindows == True %}
-                                    <input type="checkbox" id="include_afwindows" name="include_afwindows"
+                                    <input type="checkbox" id="include_afwindows" onclick="drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" name="include_afwindows"
                                         onclick="includeCtrl('include_afwindows', 'afwindows')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_afwindows" name="include_afwindows"
+                                    <input type="checkbox" id="include_afwindows" onclick="drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" name="include_afwindows"
                                         onclick="includeCtrl('include_afwindows', 'afwindows')" value="0">
                                     {% endif %}
                                 </td>
@@ -306,7 +306,7 @@ RaspiCamSrv's Live page
                             </tr>
                         </table>
                     </form>
-                    <p style="margin-bottom: 0"></p>
+                    <p style="margin-bottom: 0; margin-top: 5px"></p>
                     <table>
                         <tr>
                             <td style="width: 50%">
@@ -360,18 +360,32 @@ RaspiCamSrv's Live page
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                         The scaler crop rectangle determines which part of the image received from the sensor is
                                         cropped and then scaled to produce an output image of the correct size.
+                                        This value refers to the maximum sensor resolution.<br>
                                         (x_offset, y_offset, width, height)
                                     </span>
-                                    <label for="scalercrop">Current ScalerCrop:</label>
+                                    <label for="scalercrop">Current ScalerCrop (Zoom):</label>
                                 </td>
                                 <td>
                                     <input type="text" id="scalercrop" name="scalercrop" value="{{ cc.scalerCropStr }}" disabled>
                                 </td>
                             </tr>
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Scaler Crop for the live view from live view metadata. 
+                                        May be different from value for Zoom due to Sensor Mode restrictions<br>
+                                        (x_offset, y_offset, width, height)
+                                    </span>
+                                    <label for="scalercroplive">Current ScalerCrop (Live View):</label>
+                                </td>
+                                <td>
+                                    <input type="text" id="scalercroplive" name="scalercroplive" value="{{ sc.scalerCropLiveViewStr }}" disabled>
+                                </td>
+                            </tr>
                         </table>
                         <input class="w3-button w3-black" style ="display:none" type="submit" value="Submit">
                     </form>
-                    <br>
+                    <p style="margin-bottom: 0; margin-top: 0"></p>
                     <table class="w3-table">
                         <tr>
                             <td>
@@ -1170,7 +1184,7 @@ RaspiCamSrv's Live page
                                 </td>
                             </tr>
                         </table>
-                        <p style="margin-bottom: 0"></p>
+                        <p style="margin-bottom: 0; margin-top: 5px"></p>
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
@@ -1544,6 +1558,10 @@ RaspiCamSrv's Live page
     </div>
     <script>
         function openCtrlTab(ctrlTabName, ctrlTabBtn) {
+            /*  Opens the selected Tab for camera controls
+                ctrlTabName:    Name of the tab to be opened
+                ctrlTabBtn:     Button in the button-bar to be highlighted
+            */
             var i;
             var x = document.getElementsByClassName("controlgroup");
             for (i = 0; i < x.length; i++) {
@@ -1556,11 +1574,17 @@ RaspiCamSrv's Live page
                 b[i].classList = "w3-bar-item w3-button ctrlmenu";
             }
             document.getElementById(ctrlTabBtn).classList = "w3-bar-item w3-button ctrlmenu w3-light-green";
+
+            if (ctrlTabName == "focus") {
+                drawAfWindow("include_afwindows", "afwindows", '{{ sc.scalerCropLiveView }}')
+            } else {
+                removeAfWindowCanvas()
+            }
         }
     </script>
     <script>
         function includeCtrl(cbId, ctrlId, ctrlId2) {
-            cb = document.getElementById(cbId)
+            var cb = document.getElementById(cbId);
             if (cb.checked == true) {
                 document.getElementById(ctrlId).disabled = false;
                 if (ctrlId2 !== undefined) {
@@ -1574,5 +1598,311 @@ RaspiCamSrv's Live page
             }
         }
     </script>
+    <script>
+        var afWinTarget;
+        var liveCanvas;
+        var liveCanvasCtx;
+        var liveCanvasOffsetX;
+        var liveCanvasOffsetY;
+        var mouseIsDown;
+        var mouseStartX;
+        var mouseStartY;
+        var camXOffset;
+        var camYOffset;
+        var camWidth;
+        var camHeight;
+        var winXOffset;
+        var winYOffset;
+        var winWidth;
+        var winHeight;
+
+        function removeAfWindowCanvas(){
+            /*  Removes the canvas for AF Windows
+            */
+            var cnvEl = document.getElementById("livecanvas");
+            if (cnvEl) {
+                // Unregister event listeners
+                document.getElementById('livecanvas').removeEventListener('mousedown', function (e) {
+                    handleMouseDown(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('mousemove', function (e) {
+                    handleMouseMove(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('mouseup', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('mouseout', function (e) {
+                    handleMouseOut(e);
+                });   
+                // Remove canvas             
+                document.body.removeChild(cnvEl);
+                liveCanvas = null;
+                liveCanvasCtx = null;
+            }
+        }
+
+        function parseWindows(wins) {
+            /*  Parses the tuple of one or multiple rectangles
+                ((x,x,x,x),(x,x,x,x))
+                and returns an array of rectangles as strings
+            */
+            var resa = [];
+            var cnt = 0;
+            if (wins[0] == "(") {
+                var wns = wins.slice(1);
+                if (wns[wns.length - 1] == ")") {
+                    wns = wns.slice(0, wns.length - 1);
+                    while (wns.length > 0) {
+                        var i = wns.indexOf(")");
+                        if ( i > 0) {
+                            wn = wns.slice(0, i + 1);
+                            resa[cnt] = wn;
+                            cnt = cnt + 1;
+                            if (i < wns.length) {
+                                wns = wns.slice(i + 2);
+                            } else {
+                                wns = "";
+                            }
+                        } else {
+                            wns = "";
+                        }
+                    }
+                }
+            }
+            return resa;
+        }
+
+        function drawAllAfWindows() {
+            /*  Parses the windows entry in the target element
+                and draws all resulting windows
+            */
+            console.log("drawAllAfWindows")
+            var afWindows = afWinTarget.value;
+            console.log("afWindows:", afWindows)
+            var winlist = parseWindows(afWindows)
+            console.log("winlist:", winlist)
+        }
+
+        function addNewAfWindow() {
+            /*  add a new AF Window to the tuple of windows available in the target element
+            */
+            // Scale
+            console.log('addNewAfWindow');
+            console.log("cnv: ", liveCanvasOffsetX, liveCanvasOffsetY, liveCanvas.width, liveCanvas.height)
+            console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
+            console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+            var afWinWidth = Math.round(winWidth * camWidth / liveCanvas.width);
+            var afWinHeight = Math.round(winHeight * camHeight / liveCanvas.height);
+            var afWinXOffset = Math.round(camXOffset + winXOffset * camWidth / liveCanvas.width);
+            var afWinYOffset = Math.round(camYOffset + winYOffset * camHeight / liveCanvas.height);
+            var afWindows = afWinTarget.value;
+            console.log("afWindows old:", afWindows);
+            afWindows = afWindows.slice(0, afWindows.length - 1);
+            if (afWindows.length > 1) {
+                afWindows = afWindows + ","
+            }
+            afWindows = afWindows 
+                + "(" 
+                + afWinXOffset.toString() + "," 
+                + afWinYOffset.toString() + ","
+                + afWinWidth.toString() + ","
+                + afWinHeight.toString()
+                + ")";
+            afWindows = afWindows + ")";
+            console.log("afWindows new:", afWindows);
+            afWinTarget.value = afWindows;
+        }
+
+        function handleMouseDown(e) {
+            /*  In case of mouse down, memorize point as start of rectangle
+            */
+            // console.log('handleMouseDown')
+            // console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // save the starting x/y of the rectangle
+            mouseStartX = parseInt(e.clientX - liveCanvasOffsetX);
+            mouseStartY = parseInt(e.clientY - liveCanvasOffsetY);
+
+            // set a flag indicating the drag has begun
+            mouseIsDown = true;
+        }
+
+        function handleMouseUp(e) {
+            /*  In case of mouse up, register end of drawing
+            */
+            console.log('handleMouseUp');
+            // console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // the drag is over, clear the dragging flag
+            mouseIsDown = false;
+
+            // Add new window
+            addNewAfWindow();
+        }
+
+        function handleMouseOut(e) {
+            // console.log('handleMouseOut')
+            // console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // the drag is over, clear the dragging flag
+            mouseIsDown = false;
+            // Draw all windows
+            drawAllAfWindows()
+        }
+
+        function handleMouseMove(e) {
+            // console.log('handleMouseMove')
+            // console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // if we're not dragging, just return
+            if (!mouseIsDown) {
+                return;
+            }
+
+            // get the current mouse position
+            mouseX = parseInt(e.clientX - liveCanvasOffsetX);
+            mouseY = parseInt(e.clientY - liveCanvasOffsetY);
+
+            // clear the canvas
+            liveCanvasCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
+
+            // calculate the rectangle width/height based
+            // on starting vs current mouse position
+            var width = mouseX - mouseStartX;
+            var height = mouseY - mouseStartY;
+
+            // draw a new rect from the start position 
+            // to the current mouse position
+            liveCanvasCtx.strokeRect(mouseStartX, mouseStartY, width, height);
+            if (width >= 0) {
+                winXOffset = mouseStartX;
+                winWidth = width;
+            } else {
+                winXOffset = mouseX;
+                winWidth = -1 * width;
+            }
+            if (height >= 0) {
+                winYOffset = mouseStartY;
+                winHeight = height;
+            } else {
+                winYOffset = mouseY;
+                winHeight = -1 * height;
+            }
+        }
+
+        function parseRectTuple(tuple) {
+            /*  Parse a Python tuple for libcamera.Rectangle
+                (xOffset, yOffset, width, height)
+            */
+            resn = [0, 0, 0, 0]
+            if (tuple[0] == "(") {
+                var tpl = tuple.slice(1)
+                if (tpl[tpl.length - 1] == ")") {
+                    tpl = tpl.slice(0, tpl.length - 1)
+                    var res = tpl.split(",")
+                    if (res.length == 4) {
+                        resn = [parseInt(res[0]), parseInt(res[1]), parseInt(res[2]), parseInt(res[3])]
+                    }
+                }
+            }
+            return resn
+        }
+
+        function drawAfWindow(trg, tgt, camRef) {
+            /*  Creates canvas over live view image and allows drawing of AF Windows
+                trg: Trigger (checkbox)
+                     If checked, canvas and AF Windows are drawn
+                     If unchecked, canvas is removed
+                tgt: Target element taking windows
+            */
+            console.log("drawAfWindow trg:", trg, " tgt:", tgt, " camRef", camRef);
+            var trgEl = document.getElementById(trg);
+            afWinTarget = document.getElementById(tgt);
+            // calculate camera crop window params
+            var camCrop = parseRectTuple(camRef);
+            camXOffset = camCrop[0];
+            camYOffset = camCrop[1];
+            camWidth = camCrop[2];
+            camHeight = camCrop[3];
+            console.log(camXOffset, camYOffset, camWidth, camHeight);
+
+            if (trgEl.checked == true) {
+                // Trigger active -> prepare canvas
+                var img = document.getElementById("liveviewimage");
+                // Craete the canvas
+                liveCanvas = document.createElement('canvas');
+                liveCanvas.id = "livecanvas";
+                document.body.appendChild(liveCanvas);
+                // Position and size the canvas
+                bRect = img.getBoundingClientRect();
+                //console.log("img top:", bRect.top, " left:", bRect.left, " width:", bRect.width, " height:", bRect.height)
+                liveCanvas.style.position = "absolute";
+                liveCanvas.style.top = bRect.top + "px";
+                liveCanvas.style.left = bRect.left + "px";
+                liveCanvas.width = bRect.width;
+                liveCanvas.height = bRect.height;
+                // Set context
+                liveCanvasCtx = liveCanvas.getContext("2d");
+                liveCanvasCtx.strokeStyle = "red";
+                liveCanvasCtx.lineWidth = 2;
+                // Determine canvas position
+                liveCanvasOffset = liveCanvas.getBoundingClientRect();
+                liveCanvasOffsetX = liveCanvasOffset.left
+                liveCanvasOffsetY = liveCanvasOffset.top
+                // Initialize mouse down
+                mouseIsDown = false;
+                // Register event listeners
+                document.getElementById('livecanvas').addEventListener('mousedown', function (e) {
+                    handleMouseDown(e);
+                });
+                document.getElementById('livecanvas').addEventListener('mousemove', function (e) {
+                    handleMouseMove(e);
+                });
+                document.getElementById('livecanvas').addEventListener('mouseup', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('livecanvas').addEventListener('mouseout', function (e) {
+                    handleMouseOut(e);
+                });                
+            } else {
+                // Trigger inactive -> destroy canvas and clear AFWindows
+                var cnvEl = document.getElementById("livecanvas");
+                if (cnvEl) {
+                    // Unregister event listeners
+                    document.getElementById('livecanvas').removeEventListener('mousedown', function (e) {
+                        handleMouseDown(e);
+                    });
+                    document.getElementById('livecanvas').removeEventListener('mousemove', function (e) {
+                        handleMouseMove(e);
+                    });
+                    document.getElementById('livecanvas').removeEventListener('mouseup', function (e) {
+                        handleMouseUp(e);
+                    });
+                    document.getElementById('livecanvas').removeEventListener('mouseout', function (e) {
+                        handleMouseOut(e);
+                    });
+                    // Remove canvas             
+                    document.body.removeChild(cnvEl);
+                    liveCanvas = null;
+                    liveCanvasCtx = null;
+                    // Clear afWindows field
+                    afWinTarget.value = "()"
+                }
+            }
+        }
+    </script>
+    <style>
+        canvas {
+            border: 1px solid red;
+        }
+    </style>
 
 {% endblock %}

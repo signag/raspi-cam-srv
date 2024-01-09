@@ -476,9 +476,13 @@ class Camera(BaseCamera):
             cam.start_recording(MJPEGEncoder(), FileOutput(output))
             logger.info("Thread %s: Camera.frames - recording started", get_ident())
             # let camera warm up
-            time.sleep(2)
+            time.sleep(1.5)
             Camera.applyControls(cfg)
             logger.info("Thread %s: Camera.frames - controls applied", get_ident())
+            # Get the live view scaler crop
+            time.sleep(0.5)
+            metadata = Camera.cam.capture_metadata()
+            srvCam.serverConfig.scalerCropLiveView = metadata["ScalerCrop"]
             while True:
                 logger.debug("Thread %s: Camera.frames - Receiving camera stream", get_ident())
                 with output.condition:
@@ -578,3 +582,7 @@ class Camera(BaseCamera):
             return metadata["LensPosition"]
         else:
             return 0.0
+
+    @staticmethod
+    def getMetaData() -> dict:
+        return Camera.cam.capture_metadata()

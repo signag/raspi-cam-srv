@@ -1029,6 +1029,7 @@ class ServerConfig():
         self._videoType = "mp4"
         self._zoomFactor = 100
         self._zoomFactorStep = 10
+        self._scalerCropLiveView = (0, 0, 4608, 2592)
         self._curMenu = "live"
         self._lastLiveTab = "focus"
         self._lastConfigTab = "cfglive"
@@ -1111,6 +1112,18 @@ class ServerConfig():
         if value < 2:
             value = 2
         self._zoomFactorStep = value
+
+    @property
+    def scalerCropLiveView(self) -> tuple:
+        return self._scalerCropLiveView
+
+    @scalerCropLiveView.setter
+    def scalerCropLiveView(self, value: tuple):
+        self._scalerCropLiveView = value
+        
+    @property
+    def scalerCropLiveViewStr(self) -> str:
+        return "(" + str(self._scalerCropLiveView[0]) + "," + str(self._scalerCropLiveView[1]) + "," + str(self._scalerCropLiveView[2]) + "," + str(self._scalerCropLiveView[3]) + ")"
 
     @property
     def curMenu(self) -> str:

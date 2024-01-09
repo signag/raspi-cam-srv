@@ -205,6 +205,9 @@ def zoom_in():
             cc.include_scalerCrop = False
         logger.info("ScalerCrop new: %s", cc.scalerCrop)
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_out", methods=("GET", "POST"))
@@ -251,6 +254,9 @@ def zoom_out():
         else:
             cc.include_scalerCrop = False
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_full", methods=("GET", "POST"))
@@ -267,8 +273,11 @@ def zoom_full():
         sc.zoomFactor = 100
         sccrop = (0, 0, cp.pixelArraySize[0], cp.pixelArraySize[1])
         cc.scalerCrop = sccrop
-        cc.include_scalerCrop = False
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
+        cc.include_scalerCrop = False
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_up", methods=("GET", "POST"))
@@ -295,6 +304,9 @@ def pan_up():
         else:
             cc.include_scalerCrop = False
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_left", methods=("GET", "POST"))
@@ -321,6 +333,9 @@ def pan_left():
         else:
             cc.include_scalerCrop = False
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_center", methods=("GET", "POST"))
@@ -347,6 +362,9 @@ def pan_center():
         else:
             cc.include_scalerCrop = False
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_right", methods=("GET", "POST"))
@@ -373,6 +391,9 @@ def pan_right():
         else:
             cc.include_scalerCrop = False
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/pan_down", methods=("GET", "POST"))
@@ -399,6 +420,9 @@ def pan_down():
         else:
             cc.include_scalerCrop = False
         Camera().applyControls(cfg.liveViewConfig)
+        time.sleep(0.5)
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/ae_control", methods=("GET", "POST"))
