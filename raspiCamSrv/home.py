@@ -141,6 +141,7 @@ def trigger_autofocus():
     if request.method == "POST":
         if cp.hasFocus:
             if cc.afMode == controls.AfModeEnum.Auto:
+                Camera().applyControlsForAfCycle()
                 success = Camera().cam.autofocus_cycle()
                 if success:
                     lp = Camera().getLensPosition()

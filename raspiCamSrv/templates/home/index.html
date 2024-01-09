@@ -1623,6 +1623,7 @@ RaspiCamSrv's Live page
                 tgt:            Target element taking windows
                 canRef:         Current scaler crop
             */
+            console.log("showAfWindows - tabselected:", tabSelected)
             if (tabSelected == "focus") {
                 drawAfWindow(trg, tgt, camRef)
             }
@@ -1898,7 +1899,7 @@ RaspiCamSrv's Live page
                      If unchecked, canvas is removed
                 tgt: Target element taking windows
             */
-            //console.log("drawAfWindow trg:", trg, " tgt:", tgt, " camRef", camRef);
+            console.log("drawAfWindow trg:", trg, " tgt:", tgt, " camRef", camRef);
             var trgEl = document.getElementById(trg);
             afWinTarget = document.getElementById(tgt);
             // calculate camera crop window params

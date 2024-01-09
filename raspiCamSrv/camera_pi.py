@@ -304,6 +304,9 @@ class Camera(BaseCamera):
             if cfgCtrls.include_afTrigger and "AfTrigger" not in ctrls:
                 ctrls["AfTrigger"] = cfgCtrls.afTrigger
                 cnt += 1
+            if cfgCtrls.include_afWindows and "AfWindows" not in ctrls:
+                ctrls["AfWindows"] = cfgCtrls.afWindows
+                cnt += 1
             
         logger.info("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
         camCtrls = Controls(Camera.cam)
@@ -311,6 +314,44 @@ class Camera(BaseCamera):
         Camera.cam.controls = camCtrls
         logger.info("Thread %s: Camera.applyControls - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
         logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+
+    @staticmethod
+    def applyControlsForAfCycle(camCfg: CameraConfig):
+        """Apply camera controls required for AF cycle"""
+        logger.info("Thread %s: Camera.applyControlsForAfCycle", get_ident())
+
+        cfg = CameraCfg()
+        cfgCtrls = cfg.controls
+
+        # Initialize controls dict with controls included in configuration
+        ctrls = copy.deepcopy(camCfg.controls)
+        cnt = 0
+        # Focus
+        if cfg.cameraProperties.hasFocus:
+            if cfgCtrls.include_afMode and "AfMode" not in ctrls:
+                ctrls["AfMode"] = cfgCtrls.afMode
+                cnt += 1
+            if cfgCtrls.include_afMetering and "AfMetering" not in ctrls:
+                ctrls["AfMetering"] = cfgCtrls.afMetering
+                cnt += 1
+            if cfgCtrls.include_afPause and "AfPause" not in ctrls:
+                ctrls["AfPause"] = cfgCtrls.afPause
+                cnt += 1
+            if cfgCtrls.include_afRange and "AfRange" not in ctrls:
+                ctrls["AfRange"] = cfgCtrls.afRange
+                cnt += 1
+            if cfgCtrls.include_afSpeed and "AfSpeed" not in ctrls:
+                ctrls["AfSpeed"] = cfgCtrls.afSpeed
+                cnt += 1
+            if cfgCtrls.include_afWindows and "AfWindows" not in ctrls:
+                ctrls["AfWindows"] = cfgCtrls.afWindows
+                cnt += 1
+            
+        logger.info("Thread %s: Camera.applyControlsForAfCycle - Applying %s controls", get_ident(), cnt)
+        camCtrls = Controls(Camera.cam)
+        camCtrls.set_controls(ctrls)
+        Camera.cam.controls = camCtrls
+        logger.info("Thread %s: Camera.applyControlsForAfCycle - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
 
     @staticmethod
     def stopCameraSystem():
