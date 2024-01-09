@@ -18,7 +18,11 @@ RaspiCamSrv's Live page
             <img src="{{ url_for('home.video_feed') }}" class="w3-image" id="liveviewimage">
             {% endif %}
         </div>
+        {% if cp.hasFocus %}
+        <div class="w3-half" onload="showAfWindows('{{ sc.lastLiveTab }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')">
+        {% else %}
         <div class="w3-half">
+        {% endif %}
             <!-- Camara control sections 
                 Settings changed here are applied to the camera while the live stream is active
             -->
@@ -1605,6 +1609,25 @@ RaspiCamSrv's Live page
             */
             document.getElementById("afwindows").disabled = false
         }
+    </script>
+    <script>
+        function showAfWindows(tabSelected, trg, tgt, camRef) {
+            /*  If camera has focus and if focus tab is selected,
+                show th AF Windows
+                This function is called after the page finished loading
+                in order to assure initial visibility of AF windows
+                tabSelected:    name of the initially selected tab
+                trg:            Trigger (checkbox)
+                                If checked, canvas and AF Windows are drawn
+                                If unchecked, canvas is removed
+                tgt:            Target element taking windows
+                canRef:         Current scaler crop
+            */
+            if (tabSelected == "focus") {
+                drawAfWindow(trg, tgt, camRef)
+            }
+        }
+
     </script>
     <script>
         var afWinTarget;
