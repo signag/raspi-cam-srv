@@ -362,6 +362,19 @@ class CameraControls():
         res = res + ")"
         return res
 
+    @afWindowsStr.setter
+    def afWindowsStr(self, value: str):
+        """Parse the string representation for afWindows
+        """
+        self._afWindows = ()
+        # Get the list of windows
+        winlist = CameraControls._parseWindows(value)
+        for win in winlist:
+            awin = CameraControls._parseRectTuple(win)
+            # Add window from list to _afWindows tuple
+            awin = (awin,)
+            self._afWindows += awin
+
     @property
     def analogueGain(self) -> float:
         return self._analogueGain
@@ -604,6 +617,45 @@ class CameraControls():
     @sharpness.deleter
     def sharpness(self):
         del self._sharpness
+    
+    @staticmethod    
+    def _parseWindows(wins: str) -> list:
+        """  Parses the tuple-string of one or multiple rectangles
+            "((x,x,x,x),(x,x,x,x))"
+            and returns an array of rectangles as strings
+        """
+        resa = []
+        if wins.startswith("("):
+            wns = wins[1:]
+            if wns.endswith(")"):
+                wns = wns[0: len(wns) - 1]
+                while len(wns) > 0:
+                    i = wns.find(")")
+                    if i > 0:
+                        wn = wns[0: i + 1]
+                        resa.append(wn)
+                        if i < len(wns):
+                            wns = wns[i + 2:].strip()
+                        else:
+                            wns = ""
+                    else:
+                        wns = ""
+        return resa
+
+    @staticmethod    
+    def _parseRectTuple(stuple: str) -> tuple:
+        """  Parse a Python tuple string for libcamera.Rectangle
+             "(xOffset, yOffset, width, height)"
+        """
+        rest = (0, 0, 0, 0)
+        if stuple.startswith("("):
+            tpl = stuple[1:]
+            if tpl.endswith(")"):
+                tpl = tpl[0: len(tpl) - 1]
+                res = tpl.rsplit(",")
+                if len(res) == 4:
+                    rest = (int(res[0]), int(res[1]), int(res[2]), int(res[3]))
+        return rest
 
 class SensorMode():
     """ The class represents a specific sensor mode of the camera

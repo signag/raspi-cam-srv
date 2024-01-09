@@ -121,10 +121,9 @@ def focus_control():
                 cc.include_afWindows = False
             else:
                 cc.include_afWindows = True
-                # To be implemented
-                afWindows = cp.scalerCropMaximum
-                cc.afWindows = afWindows
-                ctrls["AfWindows"] = afWindows
+                afWindowsStr = request.form["afwindows"]
+                cc.afWindowsStr = afWindowsStr
+                ctrls["AfWindows"] = cc.afWindows
 
             Camera().applyControls(cfg.liveViewConfig)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)

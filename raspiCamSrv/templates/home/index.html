@@ -57,7 +57,7 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Focus handling -->
                 <h4>Focus handling</h4>
-                {% if not cp.hasFocus %}
+                {% if cp.hasFocus %}
                 <div>
                     <form method="post" id="formfocuscontrol" action="{{ url_for('home.focus_control') }}">
                         <table class="w3-table-all">
@@ -1676,22 +1676,25 @@ RaspiCamSrv's Live page
         function drawCnvWindow(win, index, winlist) {
             /*  Draw the given window on the canvas
             */
-            console.log("drawCnvWindow win:", win);
+            //console.log("drawCnvWindow win:", win);
+
             // Parse the window spec for the AF Window
             var afWina = parseRectTuple(win);
             var afWinXOffset = afWina[0];
             var afWinYOffset = afWina[1];
             var afWinWidth = afWina[2];
             var afWinHeight = afWina[3];
-            console.log("cnv: ", liveCanvasOffsetX, liveCanvasOffsetY, liveCanvas.width, liveCanvas.height)
-            console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
-            console.log("afw: ", afWinXOffset, afWinYOffset, afWinWidth, afWinHeight)
+            //console.log("cnv: ", liveCanvasOffsetX, liveCanvasOffsetY, liveCanvas.width, liveCanvas.height)
+            //console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
+            //console.log("afw: ", afWinXOffset, afWinYOffset, afWinWidth, afWinHeight)
+
             // Scale to canvas
             var winWidth = Math.round(afWinWidth * liveCanvas.width / camWidth);
             var winHeight = Math.round(afWinHeight * liveCanvas.height / camHeight);
             var winXOffset = Math.round((afWinXOffset - camXOffset) * liveCanvas.width / camWidth);
             var winYOffset = Math.round((afWinYOffset - camYOffset) * liveCanvas.height / camHeight);
-            console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+            //console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+
             // Draw
             liveCanvasCtx.strokeRect(winXOffset, winYOffset, winWidth, winHeight);
         }
@@ -1700,13 +1703,15 @@ RaspiCamSrv's Live page
             /*  Parses the windows entry in the target element
                 and draws all resulting windows
             */
-            console.log("drawAllAfWindows")
+            //console.log("drawAllAfWindows")
             var afWindows = afWinTarget.value;
-            console.log("afWindows:", afWindows)
+            //console.log("afWindows:", afWindows)
             var winlist = parseWindows(afWindows)
-            console.log("winlist:", winlist)
+            //console.log("winlist:", winlist)
+
             // Clear canvas
             liveCanvasCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
+
             // Draw all windows
             winlist.forEach(drawCnvWindow)
         }
@@ -1715,16 +1720,18 @@ RaspiCamSrv's Live page
             /*  add a new AF Window to the tuple of windows available in the target element
             */
             // Scale
-            console.log('addNewAfWindow');
-            console.log("cnv: ", liveCanvasOffsetX, liveCanvasOffsetY, liveCanvas.width, liveCanvas.height)
-            console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
-            console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+            //console.log('addNewAfWindow');
+            //console.log("cnv: ", liveCanvasOffsetX, liveCanvasOffsetY, liveCanvas.width, liveCanvas.height)
+            //console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
+            //console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
             var afWinWidth = Math.round(winWidth * camWidth / liveCanvas.width);
             var afWinHeight = Math.round(winHeight * camHeight / liveCanvas.height);
             var afWinXOffset = Math.round(camXOffset + winXOffset * camWidth / liveCanvas.width);
             var afWinYOffset = Math.round(camYOffset + winYOffset * camHeight / liveCanvas.height);
             var afWindows = afWinTarget.value;
-            console.log("afWindows old:", afWindows);
+            //console.log("afWindows old:", afWindows);
+
+            // Convatenate to afWindows
             afWindows = afWindows.slice(0, afWindows.length - 1);
             if (afWindows.length > 1) {
                 afWindows = afWindows + ","
@@ -1737,15 +1744,17 @@ RaspiCamSrv's Live page
                 + afWinHeight.toString()
                 + ")";
             afWindows = afWindows + ")";
-            console.log("afWindows new:", afWindows);
+            //console.log("afWindows new:", afWindows);
+
+            // Store in target
             afWinTarget.value = afWindows;
         }
 
         function handleMouseDown(e) {
             /*  In case of mouse down, memorize point as start of rectangle
             */
-            // console.log('handleMouseDown')
-            // console.log(e)
+            //console.log('handleMouseDown')
+            //console.log(e)
             e.preventDefault();
             e.stopPropagation();
 
@@ -1760,8 +1769,8 @@ RaspiCamSrv's Live page
         function handleMouseUp(e) {
             /*  In case of mouse up, register end of drawing
             */
-            console.log('handleMouseUp');
-            // console.log(e)
+            //console.log('handleMouseUp');
+            //console.log(e)
             e.preventDefault();
             e.stopPropagation();
 
@@ -1773,8 +1782,11 @@ RaspiCamSrv's Live page
         }
 
         function handleMouseOut(e) {
-            // console.log('handleMouseOut')
-            // console.log(e)
+            /*  In case of mouse leaving the canvas,
+                Draw all windows
+            */
+            //console.log('handleMouseOut')
+            //console.log(e)
             e.preventDefault();
             e.stopPropagation();
 
@@ -1785,8 +1797,13 @@ RaspiCamSrv's Live page
         }
 
         function handleMouseMove(e) {
-            // console.log('handleMouseMove')
-            // console.log(e)
+            /*  While mouse is moving with mouse down,
+                Clear canvas from previous rectangle
+                and draw rectangle with new coordinates.
+                Memorize rectangla parameters.
+            */
+            //console.log('handleMouseMove')
+            //console.log(e)
             e.preventDefault();
             e.stopPropagation();
 
@@ -1851,7 +1868,7 @@ RaspiCamSrv's Live page
                      If unchecked, canvas is removed
                 tgt: Target element taking windows
             */
-            console.log("drawAfWindow trg:", trg, " tgt:", tgt, " camRef", camRef);
+            //console.log("drawAfWindow trg:", trg, " tgt:", tgt, " camRef", camRef);
             var trgEl = document.getElementById(trg);
             afWinTarget = document.getElementById(tgt);
             // calculate camera crop window params
@@ -1860,7 +1877,7 @@ RaspiCamSrv's Live page
             camYOffset = camCrop[1];
             camWidth = camCrop[2];
             camHeight = camCrop[3];
-            console.log(camXOffset, camYOffset, camWidth, camHeight);
+            //console.log(camXOffset, camYOffset, camWidth, camHeight);
 
             if (trgEl.checked == true) {
                 // Trigger active -> prepare canvas
