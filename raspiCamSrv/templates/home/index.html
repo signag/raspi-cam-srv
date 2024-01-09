@@ -310,7 +310,7 @@ RaspiCamSrv's Live page
                     <table>
                         <tr>
                             <td style="width: 50%">
-                                <input class="w3-button w3-black" form="formfocuscontrol" type="submit" value="Submit">
+                                <input class="w3-button w3-black" onclick="enableAfWindows()" form="formfocuscontrol" type="submit" value="Submit">
                             <td style="width: 50%">
                                 <form method="post" action="{{ url_for('home.trigger_autofocus') }}">
                                     <input class="w3-button w3-black" type="submit" value="Trigger Autofocus">
@@ -1597,6 +1597,13 @@ RaspiCamSrv's Live page
                     document.getElementById(ctrlId2).disabled = true;
                 }
             }
+        }
+    </script>
+    <script>
+        function enableAfWindows() {
+            /*  enable tha afwindows text field to allow Flask to request its content
+            */
+            document.getElementById("afwindows").disabled = false
         }
     </script>
     <script>
