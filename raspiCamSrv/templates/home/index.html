@@ -1620,9 +1620,13 @@ RaspiCamSrv's Live page
                 canRef:         Current scaler crop
             */
             console.log("showAfWindows - tabselected:", tabSelected)
+            var trgEl = document.getElementById(trg);
+
             if (tabSelected == "focus") {
-                drawAfWindow(trg, tgt, camRef)
-                drawAllAfWindows()
+                if (trgEl.checked == true) {
+                    drawAfWindow(trg, tgt, camRef)
+                    drawAllAfWindows()
+                }
             }
         }
 
