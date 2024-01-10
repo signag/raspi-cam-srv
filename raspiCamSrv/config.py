@@ -33,7 +33,7 @@ def main():
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
 @login_required
 def liveViewCfg():
-    logger.info("In liveViewCfg")
+    logger.debug("In liveViewCfg")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties
@@ -78,7 +78,7 @@ def liveViewCfg():
 @bp.route("/addLiveViewControls", methods=("GET", "POST"))
 @login_required
 def addLiveViewControls():
-    logger.info("In addLiveViewControls")
+    logger.debug("In addLiveViewControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -103,7 +103,7 @@ def addLiveViewControls():
 @bp.route("/remLiveViewControls", methods=("GET", "POST"))
 @login_required
 def remLiveViewControls():
-    logger.info("In remLiveViewControls")
+    logger.debug("In remLiveViewControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties
@@ -119,10 +119,10 @@ def remLiveViewControls():
     if request.method == "POST":
         cnt = 0
         for ctrl in cfg.liveViewConfig.controls:
-            logger.info("Checking checkbox ID:" + "sel_LIVE_" + ctrl)
+            logger.debug("Checking checkbox ID:" + "sel_LIVE_" + ctrl)
             if request.form.get("sel_LIVE_" + ctrl) is not None:
                 cnt += 1
-        logger.info("Nr controls: %s - selected: %s", len(cfg.liveViewConfig.controls), cnt)
+        logger.debug("Nr controls: %s - selected: %s", len(cfg.liveViewConfig.controls), cnt)
         if cnt > 0:
             if cnt < len(cfg.liveViewConfig.controls):
                 while cnt > 0:
@@ -144,7 +144,7 @@ def remLiveViewControls():
 @bp.route("/photoCfg", methods=("GET", "POST"))
 @login_required
 def photoCfg():
-    logger.info("In photoCfg")
+    logger.debug("In photoCfg")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties
@@ -188,7 +188,7 @@ def photoCfg():
 @bp.route("/addPhotoControls", methods=("GET", "POST"))
 @login_required
 def addPhotoControls():
-    logger.info("In addPhotoControls")
+    logger.debug("In addPhotoControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -212,7 +212,7 @@ def addPhotoControls():
 @bp.route("/remPhotoControls", methods=("GET", "POST"))
 @login_required
 def remPhotoControls():
-    logger.info("In remPhotoControls")
+    logger.debug("In remPhotoControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties
@@ -250,7 +250,7 @@ def remPhotoControls():
 @bp.route("/rawCfg", methods=("GET", "POST"))
 @login_required
 def rawCfg():
-    logger.info("In rawCfg")
+    logger.debug("In rawCfg")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties
@@ -286,7 +286,7 @@ def rawCfg():
 @bp.route("/addRawControls", methods=("GET", "POST"))
 @login_required
 def addRawControls():
-    logger.info("In addRawControls")
+    logger.debug("In addRawControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -310,7 +310,7 @@ def addRawControls():
 @bp.route("/remRawControls", methods=("GET", "POST"))
 @login_required
 def remRawControls():
-    logger.info("In remRawControls")
+    logger.debug("In remRawControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties
@@ -348,7 +348,7 @@ def remRawControls():
 @bp.route("/videoCfg", methods=("GET", "POST"))
 @login_required
 def videoCfg():
-    logger.info("In videoCfg")
+    logger.debug("In videoCfg")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties
@@ -392,7 +392,7 @@ def videoCfg():
 @bp.route("/addVideoControls", methods=("GET", "POST"))
 @login_required
 def addVideoControls():
-    logger.info("In addVideoControls")
+    logger.debug("In addVideoControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -416,7 +416,7 @@ def addVideoControls():
 @bp.route("/remVideoControls", methods=("GET", "POST"))
 @login_required
 def remVideoControls():
-    logger.info("In remVideoControls")
+    logger.debug("In remVideoControls")
     g.hostname = request.host
     cfg = CameraCfg()
     cp = cfg.cameraProperties

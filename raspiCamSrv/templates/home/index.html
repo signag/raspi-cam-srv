@@ -1222,12 +1222,12 @@ RaspiCamSrv's Live page
                         {% endif %}
                         {% if sc.isVideoRecording == false %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.record_video') }}">
-                            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Video">
+                            <input class="w3-button w3-black w3-round-xxlarge" onclick="removeAfWindow()" type="submit" value="Video">
                         </form>
                         {% endif %}
                         {% if sc.isVideoRecording == true %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.stop_recording') }}">
-                            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
+                            <input class="w3-button w3-black w3-round-xxlarge" onclick="showAfWindows('{{ sc.lastLiveTab }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" type="submit" value="Stop">
                         </form>
                         {% endif %}
                     </td>
