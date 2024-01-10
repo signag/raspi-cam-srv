@@ -821,10 +821,10 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_colourGains == True %}
-                                    <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" 
+                                    <input type="number" id="colourgainblue" name="colourgainblue" aria-label="colourgainblue" min="0.0" max="32.0" step="0.1" 
                                         value="{{ cc.colourGainBlue }}">
                                     {% else %}
-                                    <input type="number" id="colourgainblue" name="colourgainblue" min="0.0" max="32.0" step="0.1" 
+                                    <input type="number" id="colourgainblue" name="colourgainblue" aria-label="colourgainblue" min="0.0" max="32.0" step="0.1" 
                                         value="{{ cc.colourGainBlue }}" disabled>
                                     {% endif %}
                                 </td>
@@ -861,10 +861,10 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td>
                                     {% if cc.include_frameDurationLimits == True %}
-                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" min="0" max="1000000" step="1" 
+                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" aria-label="framedurationlimitmin" min="0" max="1000000" step="1" 
                                         value="{{ cc.frameDurationLimitMin }}">
                                     {% else %}
-                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" min="0" max="1000000" step="1" 
+                                    <input type="number" id="framedurationlimitmin" name="framedurationlimitmin" aria-label="framedurationlimitmin" min="0" max="1000000" step="1" 
                                         value="{{ cc.frameDurationLimitMin }}" disabled>
                                     {% endif %}
                                 </td>

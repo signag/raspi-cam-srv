@@ -268,10 +268,10 @@
                         </td>
                         <td style="width:10%">
                             {% if cfg.sensor_mode == "custom" %}
-                            <input type="number" id="LIVE_stream_size_height" name="LIVE_stream_size_height" min="1" max={{ cp.pixelArraySize[1] }} 
+                            <input type="number" id="LIVE_stream_size_height" name="LIVE_stream_size_height" aria-label="LIVE_stream_size_height" min="1" max={{ cp.pixelArraySize[1] }} 
                                 value="{{ cfg.stream_size[1] }}">
                             {% else %}
-                            <input type="number" id="LIVE_stream_size_height" name="LIVE_stream_size_height" min="1" max={{ cp.pixelArraySize[1] }}
+                            <input type="number" id="LIVE_stream_size_height" name="LIVE_stream_size_height" aria-label="LIVE_stream_size_height" min="1" max={{ cp.pixelArraySize[1] }}
                                 value="{{ cfg.stream_size[1] }}" disabled>
                             {% endif %}
                         </td>
@@ -647,10 +647,10 @@
                         </td>
                         <td style="width:10%">
                             {% if cfg.sensor_mode == "custom" %}
-                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" 
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" aria-label="{{ cfgId }}_stream_size_height" 
                                 min="1" max={{ cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}">
                             {% else %}
-                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" 
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" aria-label="{{ cfgId }}_stream_size_height" 
                                 min="1" max={{ cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>
                             {% endif %}
                         </td>
@@ -1026,10 +1026,10 @@
                         </td>
                         <td style="width:10%">
                             {% if cfg.sensor_mode == "custom" %}
-                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" 
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" aria-label="{{ cfgId }}_stream_size_height" 
                                 min="1" max={{ cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}">
                             {% else %}
-                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" 
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" aria-label="{{ cfgId }}_stream_size_height" 
                                 min="1" max={{ cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>
                             {% endif %}
                         </td>
@@ -1405,10 +1405,10 @@
                         </td>
                         <td style="width:10%">
                             {% if cfg.sensor_mode == "custom" %}
-                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" 
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" aria-label="{{ cfgId }}_stream_size_height" 
                                 min="1" max={{ cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}">
                             {% else %}
-                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" 
+                            <input type="number" id="{{ cfgId }}_stream_size_height" name="{{ cfgId }}_stream_size_height" aria-label="{{ cfgId }}_stream_size_height" 
                                 min="1" max={{ cp.pixelArraySize[1] }} value="{{ cfg.stream_size[1] }}" disabled>
                             {% endif %}
                         </td>
