@@ -92,17 +92,17 @@
                         <td style="width:10%">
                             ↔
                             {% if cfg.transform_hflip == true %}
-                            <input type="checkbox" id="LIVE_transform_hflip" name="LIVE_transform_hflip" value="1" checked>
+                            <input type="checkbox" id="LIVE_transform_hflip" name="LIVE_transform_hflip" aria-label="LIVE_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="LIVE_transform_hflip" name="LIVE_transform_hflip" value="0">
+                            <input type="checkbox" id="LIVE_transform_hflip" name="LIVE_transform_hflip" aria-label="LIVE_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:10%">
                             ↕
                             {% if cfg.transform_vflip == true %}
-                            <input type="checkbox" id="LIVE_transform_vflip" name="LIVE_transform_vflip" value="1" checked>
+                            <input type="checkbox" id="LIVE_transform_vflip" name="LIVE_transform_vflip" aria-label="LIVE_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="LIVE_transform_vflip" name="LIVE_transform_vflip" value="0">
+                            <input type="checkbox" id="LIVE_transform_vflip" name="LIVE_transform_vflip" aria-label="LIVE_transform_vflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -170,9 +170,9 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             {% if cfg.queue == True %}
-                            <input type="checkbox" id="LIVE_queue" name="LIVE_queue" value="1" checked>
+                            <input type="checkbox" id="LIVE_queue" name="LIVE_queue" aria-label="LIVE_queue" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="LIVE_queue" name="LIVE_queue" value="0">
+                            <input type="checkbox" id="LIVE_queue" name="LIVE_queue" aria-label="LIVE_queue" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -291,15 +291,15 @@
                         <td style="width:20%" colspan="2">
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="1" checked>
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" aria-label="LIVE_stream_size_align" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="0">
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" aria-label="LIVE_stream_size_align" value="0">
                             {% endif %}
                             {% else %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="1" checked disabled>
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" aria-label="LIVE_stream_size_align" value="1" checked disabled>
                             {% else %}
-                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" value="0" disabled>
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" aria-label="LIVE_stream_size_align" value="0" disabled>
                             {% endif %}
                             {% endif %}
                         </td>
@@ -389,13 +389,13 @@
                     {% for ctrl_key, ctrl_value in cfg.controls.items() %}
                     <tr>
                         <td style="width:5%">
-                            <input type="checkbox" id="sel_LIVE_{{ ctrl_key }}" name="sel_LIVE_{{ ctrl_key }}" value="0">
+                            <input type="checkbox" id="sel_LIVE_{{ ctrl_key }}" name="sel_LIVE_{{ ctrl_key }}" aria-label="sel_LIVE_{{ ctrl_key }}" value="0">
                         </td>
                         <td style="width:30%" class="w3-tooltip">
-                            <label for="LIVE_display">{{ ctrl_key }}:</label>
+                            <label for="LIVE_control">{{ ctrl_key }}:</label>
                         </td>
                         <td style="width:20%">
-                            <input id="LIVE_display" name="LIVE_display" value="{{ ctrl_value }}" disabled>
+                            <input id="LIVE_control" name="LIVE_control" value="{{ ctrl_value }}" disabled>
                         </td>
                         <td style="width:45%">
                         </td>
@@ -469,17 +469,17 @@
                         <td style="width:10%">
                             ↔
                             {% if cfg.transform_hflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:10%">
                             ↕
                             {% if cfg.transform_vflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" aria-label="{{ cfgId }}_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" aria-label="{{ cfgId }}_transform_vflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -548,9 +548,9 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             {% if cfg.queue == True %}
-                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" aria-label="{{ cfgId }}_queue" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" aria-label="{{ cfgId }}_queue" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -670,15 +670,15 @@
                         <td style="width:20%" colspan="2">
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0">
                             {% endif %}
                             {% else %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked disabled>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked disabled>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0" disabled>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
                             {% endif %}
                         </td>
@@ -768,13 +768,13 @@
                     {% for ctrl_key, ctrl_value in cfg.controls.items() %}
                     <tr>
                         <td style="width:5%">
-                            <input type="checkbox" id="sel_{{ cfgId }}_{{ ctrl_key }}" name="sel_{{ cfgId }}_{{ ctrl_key }}" value="0">
+                            <input type="checkbox" id="sel_{{ cfgId }}_{{ ctrl_key }}" name="sel_{{ cfgId }}_{{ ctrl_key }}" aria-label="sel_{{ cfgId }}_{{ ctrl_key }}" value="0">
                         </td>
                         <td style="width:30%" class="w3-tooltip">
-                            <label for="{{ cfgId }}_display">{{ ctrl_key }}:</label>
+                            <label for="{{ cfgId }}_control">{{ ctrl_key }}:</label>
                         </td>
                         <td style="width:20%">
-                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}" disabled>
+                            <input id="{{ cfgId }}_control" name="{{ cfgId }}_control" value="{{ ctrl_value }}" disabled>
                         </td>
                         <td style="width:45%">
                         </td>
@@ -848,17 +848,17 @@
                         <td style="width:10%">
                             ↔
                             {% if cfg.transform_hflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip value="0">
                             {% endif %}
                         </td>
                         <td style="width:10%">
                             ↕
                             {% if cfg.transform_vflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" aria-label="{{ cfgId }}_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" aria-label="{{ cfgId }}_transform_vflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -927,9 +927,9 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             {% if cfg.queue == True %}
-                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" aria-label="{{ cfgId }}_queue" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" aria-label="{{ cfgId }}_queue" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -1049,15 +1049,15 @@
                         <td style="width:20%" colspan="2">
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0">
                             {% endif %}
                             {% else %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked disabled>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked disabled>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0" disabled>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
                             {% endif %}
                         </td>
@@ -1147,13 +1147,13 @@
                     {% for ctrl_key, ctrl_value in cfg.controls.items() %}
                     <tr>
                         <td style="width:5%">
-                            <input type="checkbox" id="sel_{{ cfgId }}_{{ ctrl_key }}" name="sel_{{ cfgId }}_{{ ctrl_key }}" value="0">
+                            <input type="checkbox" id="sel_{{ cfgId }}_{{ ctrl_key }}" name="sel_{{ cfgId }}_{{ ctrl_key }}" aria-label="sel_{{ cfgId }}_{{ ctrl_key }}" value="0">
                         </td>
                         <td style="width:30%" class="w3-tooltip">
-                            <label for="{{ cfgId }}_display">{{ ctrl_key }}:</label>
+                            <label for="{{ cfgId }}_control">{{ ctrl_key }}:</label>
                         </td>
                         <td style="width:20%">
-                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}" disabled>
+                            <input id="{{ cfgId }}_control" name="{{ cfgId }}_control" value="{{ ctrl_value }}" disabled>
                         </td>
                         <td style="width:45%">
                         </td>
@@ -1227,17 +1227,17 @@
                         <td style="width:10%">
                             ↔
                             {% if cfg.transform_hflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:10%">
                             ↕
                             {% if cfg.transform_vflip == true %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" aria-label="{{ cfgId }}_transform_vflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_vflip" name="{{ cfgId }}_transform_vflip" aria-label="{{ cfgId }}_transform_vflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -1306,9 +1306,9 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             {% if cfg.queue == True %}
-                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" aria-label="{{ cfgId }}_queue" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_queue" name="{{ cfgId }}_queue" aria-label="{{ cfgId }}_queue" value="0">
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -1428,15 +1428,15 @@
                         <td style="width:20%" colspan="2">
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0">
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0">
                             {% endif %}
                             {% else %}
                             {% if cfg.stream_size_align == True %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="1" checked disabled>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked disabled>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" value="0" disabled>
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
                             {% endif %}
                         </td>
@@ -1526,13 +1526,13 @@
                     {% for ctrl_key, ctrl_value in cfg.controls.items() %}
                     <tr>
                         <td style="width:5%">
-                            <input type="checkbox" id="sel_{{ cfgId }}_{{ ctrl_key }}" name="sel_{{ cfgId }}_{{ ctrl_key }}" value="0">
+                            <input type="checkbox" id="sel_{{ cfgId }}_{{ ctrl_key }}" name="sel_{{ cfgId }}_{{ ctrl_key }}" aria-label="sel_{{ cfgId }}_{{ ctrl_key }}" value="0">
                         </td>
                         <td style="width:30%" class="w3-tooltip">
-                            <label for="{{ cfgId }}_display">{{ ctrl_key }}:</label>
+                            <label for="{{ cfgId }}_control">{{ ctrl_key }}:</label>
                         </td>
                         <td style="width:20%">
-                            <input id="{{ cfgId }}_display" name="{{ cfgId }}_display" value="{{ ctrl_value }}" disabled>
+                            <input id="{{ cfgId }}_control" name="{{ cfgId }}_control" value="{{ ctrl_value }}" disabled>
                         </td>
                         <td style="width:45%">
                         </td>

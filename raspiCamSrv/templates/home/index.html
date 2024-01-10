@@ -64,10 +64,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afMode == True %}
-                                    <input type="checkbox" id="include_afmode" name="include_afmode"
+                                    <input type="checkbox" id="include_afmode" name="include_afmode" aria-label="include_afmode"
                                         onclick="includeCtrl('include_afmode', 'afmode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_afmode" name="include_afmode"
+                                    <input type="checkbox" id="include_afmode" name="include_afmode" aria-label="include_afmode"
                                         onclick="includeCtrl('include_afmode', 'afmode')" value="0">
                                     {% endif %}
                                 </td>
@@ -104,10 +104,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_lensPosition == True %}
-                                    <input type="checkbox" id="include_lensposition" name="include_lensposition" 
+                                    <input type="checkbox" id="include_lensposition" name="include_lensposition" aria-label="include_lensposition"
                                         onclick="includeCtrl('include_lensposition', 'fdist')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_lensposition" name="include_lensposition" 
+                                    <input type="checkbox" id="include_lensposition" name="include_lensposition" aria-label="include_lensposition"
                                         onclick="includeCtrl('include_lensposition', 'fdist')" value="0">
                                     {% endif %}
                                 </td>
@@ -128,10 +128,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afMetering == True %}
-                                    <input type="checkbox" id="include_afmetering" name="include_afmetering"
+                                    <input type="checkbox" id="include_afmetering" name="include_afmetering" aria-label="include_afmetering"
                                         onclick="includeCtrl('include_afmetering', 'afmetering')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_afmetering" name="include_afmetering"
+                                    <input type="checkbox" id="include_afmetering" name="include_afmetering" aria-label="include_afmetering"
                                         onclick="includeCtrl('include_afmetering', 'afmetering')" value="0">
                                     {% endif %}
                                 </td>
@@ -163,10 +163,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afPause == True %}
-                                    <input type="checkbox" id="include_afpause" name="include_afpause"
+                                    <input type="checkbox" id="include_afpause" name="include_afpause" aria-label="include_afpause"
                                         onclick="includeCtrl('include_afpause', 'afpause')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_afpause" name="include_afpause"
+                                    <input type="checkbox" id="include_afpause" name="include_afpause" aria-label="include_afpause"
                                         onclick="includeCtrl('include_afpause', 'afpause')" value="0">
                                     {% endif %}
                                 </td>
@@ -203,10 +203,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afRange == True %}
-                                    <input type="checkbox" id="include_afrange" name="include_afrange"
+                                    <input type="checkbox" id="include_afrange" name="include_afrange" aria-label="include_afrange"
                                         onclick="includeCtrl('include_afrange', 'afrange')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_afrange" name="include_afrange"
+                                    <input type="checkbox" id="include_afrange" name="include_afrange" aria-label="include_afrange"
                                         onclick="includeCtrl('include_afrange', 'afrange')" value="0">
                                     {% endif %}
                                 </td>
@@ -243,10 +243,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afSpeed == True %}
-                                    <input type="checkbox" id="include_afspeed" name="include_afspeed"
+                                    <input type="checkbox" id="include_afspeed" name="include_afspeed" aria-label="include_afspeed"
                                         onclick="includeCtrl('include_afspeed', 'afspeed')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_afspeed" name="include_afspeed"
+                                    <input type="checkbox" id="include_afspeed" name="include_afspeed" aria-label="include_afspeed"
                                         onclick="includeCtrl('include_afspeed', 'afspeed')" value="0">
                                     {% endif %}
                                 </td>
@@ -278,10 +278,12 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afWindows == True %}
-                                    <input type="checkbox" id="include_afwindows" onclick="drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" name="include_afwindows"
+                                    <input type="checkbox" id="include_afwindows" name="include_afwindows" aria-label="include_afwindows"
+                                        onclick="drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')"
                                         onclick="includeCtrl('include_afwindows', 'afwindows')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_afwindows" onclick="drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" name="include_afwindows"
+                                    <input type="checkbox" id="include_afwindows"  name="include_afwindows" aria-label="include_afwindows"
+                                        onclick="drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')"
                                         onclick="includeCtrl('include_afwindows', 'afwindows')" value="0">
                                     {% endif %}
                                 </td>
@@ -457,10 +459,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_aeEnable == True %}
-                                    <input type="checkbox" id="include_aeenable" name="include_aeenable" 
+                                    <input type="checkbox" id="include_aeenable" name="include_aeenable" aria-label="include_aeenable"
                                         onclick="includeCtrl('include_aeenable', 'aeenable')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_aeenable" name="include_aeenable" 
+                                    <input type="checkbox" id="include_aeenable" name="include_aeenable" aria-label="include_aeenable" 
                                         onclick="includeCtrl('include_aeenable', 'aeenable')" value="0">
                                     {% endif %}
                                 </td>
@@ -489,10 +491,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_aeMeteringMode == True %}
-                                    <input type="checkbox" id="include_aemeteringmode" name="include_aemeteringmode" 
+                                    <input type="checkbox" id="include_aemeteringmode" name="include_aemeteringmode" aria-label="include_aemeteringmode" 
                                         onclick="includeCtrl('include_aemeteringmode', 'aemeteringmode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_aemeteringmode" name="include_aemeteringmode" 
+                                    <input type="checkbox" id="include_aemeteringmode" name="include_aemeteringmode" aria-label="include_aemeteringmode" 
                                         onclick="includeCtrl('include_aemeteringmode', 'aemeteringmode')" value="0">
                                     {% endif %}
                                 </td>
@@ -535,10 +537,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_aeExposureMode == True %}
-                                    <input type="checkbox" id="include_aeexposuremode" name="include_aeexposuremode"
+                                    <input type="checkbox" id="include_aeexposuremode" name="include_aeexposuremode" aria-label="include_aeexposuremode"
                                         onclick="includeCtrl('include_aeexposuremode', 'aeexposuremode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_aeexposuremode" name="include_aeexposuremode"
+                                    <input type="checkbox" id="include_aeexposuremode" name="include_aeexposuremode" aria-label="include_aeexposuremode"
                                         onclick="includeCtrl('include_aeexposuremode', 'aeexposuremode')" value="0">
                                     {% endif %}
                                 </td>
@@ -581,10 +583,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_aeConstraintMode == True %}
-                                    <input type="checkbox" id="include_aeconstraintmode" name="include_aeconstraintmode"
+                                    <input type="checkbox" id="include_aeconstraintmode" name="include_aeconstraintmode" aria-label="include_aeconstraintmode"
                                         onclick="includeCtrl('include_aeconstraintmode', 'aeconstraintmode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_aeconstraintmode" name="include_aeconstraintmode"
+                                    <input type="checkbox" id="include_aeconstraintmode" name="include_aeconstraintmode" aria-label="include_aeconstraintmode"
                                         onclick="includeCtrl('include_aeconstraintmode', 'aeconstraintmode')" value="0">
                                     {% endif %}
                                 </td>
@@ -628,10 +630,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_aeFlickerMode == True %}
-                                    <input type="checkbox" id="include_aeflickermode" name="include_aeflickermode"
+                                    <input type="checkbox" id="include_aeflickermode" name="include_aeflickermode" aria-label="include_aeflickermode"
                                         onclick="includeCtrl('include_aeflickermode', 'aeflickermode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_aeflickermode" name="include_aeflickermode"
+                                    <input type="checkbox" id="include_aeflickermode" name="include_aeflickermode" aria-label="include_aeflickermode"
                                         onclick="includeCtrl('include_aeflickermode', 'aeflickermode')" value="0">
                                     {% endif %}
                                 </td>
@@ -669,10 +671,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_aeFlickerPeriod == True %}
-                                    <input type="checkbox" id="include_aeflickerperiod" name="include_aeflickerperiod"
+                                    <input type="checkbox" id="include_aeflickerperiod" name="include_aeflickerperiod" aria-label="include_aeflickerperiod"
                                         onclick="includeCtrl('include_aeflickerperiod', 'aeflickerperiod')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_aeflickerperiod" name="include_aeflickerperiod"
+                                    <input type="checkbox" id="include_aeflickerperiod" name="include_aeflickerperiod" aria-label="include_aeflickerperiod"
                                         onclick="includeCtrl('include_aeflickerperiod', 'aeflickerperiod')" value="0">
                                     {% endif %}
                                 </td>
@@ -712,10 +714,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_exposureTime == True %}
-                                    <input type="checkbox" id="include_exposuretime" name="include_exposuretime"
+                                    <input type="checkbox" id="include_exposuretime" name="include_exposuretime" aria-label="include_exposuretime"
                                         onclick="includeCtrl('include_exposuretime', 'exposuretimesec')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_exposuretime" name="include_exposuretime"
+                                    <input type="checkbox" id="include_exposuretime" name="include_exposuretime" aria-label="include_exposuretime"
                                         onclick="includeCtrl('include_exposuretime', 'exposuretimesec')" value="0">
                                     {% endif %}
                                 </td>
@@ -738,10 +740,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_exposureValue == True %}
-                                    <input type="checkbox" id="include_exposurevalue" name="include_exposurevalue"
+                                    <input type="checkbox" id="include_exposurevalue" name="include_exposurevalue" aria-label="include_exposurevalue"
                                         onclick="includeCtrl('include_exposurevalue', 'exposurevalue')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_exposurevalue" name="include_exposurevalue"
+                                    <input type="checkbox" id="include_exposurevalue" name="include_exposurevalue" aria-label="include_exposurevalue"
                                         onclick="includeCtrl('include_exposurevalue', 'exposurevalue')" value="0">
                                     {% endif %}
                                 </td>
@@ -768,10 +770,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_analogueGain == True %}
-                                    <input type="checkbox" id="include_analoguegain" name="include_analoguegain"
+                                    <input type="checkbox" id="include_analoguegain" name="include_analoguegain" aria-label="include_analoguegain"
                                         onclick="includeCtrl('include_analoguegain', 'analoguegain')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_analoguegain" name="include_analoguegain"
+                                    <input type="checkbox" id="include_analoguegain" name="include_analoguegain" aria-label="include_analoguegain"
                                         onclick="includeCtrl('include_analoguegain', 'analoguegain')" value="0">
                                     {% endif %}
                                 </td>
@@ -794,10 +796,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_colourGains == True %}
-                                    <input type="checkbox" id="include_colourgains" name="include_colourgains"
+                                    <input type="checkbox" id="include_colourgains" name="include_colourgains" aria-label="include_colourgains"
                                         onclick="includeCtrl('include_colourgains', 'colourgainred', 'colourgainblue')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_colourgains" name="include_colourgains"
+                                    <input type="checkbox" id="include_colourgains" name="include_colourgains" aria-label="include_colourgains"
                                         onclick="includeCtrl('include_colourgains', 'colourgainred', 'colourgainblue')" value="0">
                                     {% endif %}
                                 </td>
@@ -830,10 +832,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_frameDurationLimits == True %}
-                                    <input type="checkbox" id="include_framedurationlimits" name="include_framedurationlimits"
+                                    <input type="checkbox" id="include_framedurationlimits" name="include_framedurationlimits" aria-label="include_framedurationlimits"
                                         onclick="includeCtrl('include_framedurationlimits', 'framedurationlimitmax', 'framedurationlimitmin')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_framedurationlimits" name="include_framedurationlimits"
+                                    <input type="checkbox" id="include_framedurationlimits" name="include_framedurationlimits" aria-label="include_framedurationlimits"
                                         onclick="includeCtrl('include_framedurationlimits', 'framedurationlimitmax', 'framedurationlimitmin')" value="0">
                                     {% endif %}
                                 </td>
@@ -871,10 +873,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_hdrMode == True %}
-                                    <input type="checkbox" id="include_hdrmode" name="include_hdrmode"
+                                    <input type="checkbox" id="include_hdrmode" name="include_hdrmode" aria-label="include_hdrmode"
                                         onclick="includeCtrl('include_hdrmode', 'hdrmode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_hdrmode" name="include_hdrmode"
+                                    <input type="checkbox" id="include_hdrmode" name="include_hdrmode" aria-label="include_hdrmode"
                                         onclick="includeCtrl('include_hdrmode', 'hdrmode')" value="0">
                                     {% endif %}
                                 </td>
@@ -936,10 +938,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_awbEnable == True %}
-                                    <input type="checkbox" id="include_awbenable" name="include_awbenable"
+                                    <input type="checkbox" id="include_awbenable" name="include_awbenable" aria-label="include_awbenable"
                                         onclick="includeCtrl('include_awbenable', 'awbenable')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_awbenable" name="include_awbenable"
+                                    <input type="checkbox" id="include_awbenable" name="include_awbenable" aria-label="include_awbenable"
                                         onclick="includeCtrl('include_awbenable', 'awbenable')" value="0">
                                     {% endif %}
                                 </td>
@@ -970,10 +972,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_awbMode == True %}
-                                    <input type="checkbox" id="include_awbmode" name="include_awbmode"
+                                    <input type="checkbox" id="include_awbmode" name="include_awbmode" aria-label="include_awbmode"
                                         onclick="includeCtrl('include_awbmode', 'awbmode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_awbmode" name="include_awbmode"
+                                    <input type="checkbox" id="include_awbmode" name="include_awbmode" aria-label="include_awbmode"
                                         onclick="includeCtrl('include_awbmode', 'awbmode')" value="0">
                                     {% endif %}
                                 </td>
@@ -1030,10 +1032,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_noiseReductionMode == True %}
-                                    <input type="checkbox" id="include_noisereductionmode" name="include_noisereductionmode"
+                                    <input type="checkbox" id="include_noisereductionmode" name="include_noisereductionmode" aria-label="include_noisereductionmode"
                                         onclick="includeCtrl('include_noisereductionmode', 'noisereductionmode')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_noisereductionmode" name="include_noisereductionmode"
+                                    <input type="checkbox" id="include_noisereductionmode" name="include_noisereductionmode" aria-label="include_noisereductionmode"
                                         onclick="includeCtrl('include_noisereductionmode', 'noisereductionmode')" value="0">
                                     {% endif %}
                                 </td>
@@ -1076,10 +1078,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_sharpness == True %}
-                                    <input type="checkbox" id="include_sharpness" name="include_sharpness"
+                                    <input type="checkbox" id="include_sharpness" name="include_sharpness" aria-label="include_sharpness"
                                         onclick="includeCtrl('include_sharpness', 'sharpness')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_sharpness" name="include_sharpness"
+                                    <input type="checkbox" id="include_sharpness" name="include_sharpness" aria-label="include_sharpness"
                                         onclick="includeCtrl('include_sharpness', 'sharpness')" value="0">
                                     {% endif %}
                                 </td>
@@ -1106,10 +1108,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_contrast == True %}
-                                    <input type="checkbox" id="include_contrast" name="include_contrast"
+                                    <input type="checkbox" id="include_contrast" name="include_contrast" aria-label="include_contrast"
                                         onclick="includeCtrl('include_contrast', 'contrast')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_contrast" name="include_contrast"
+                                    <input type="checkbox" id="include_contrast" name="include_contrast" aria-label="include_contrast"
                                         onclick="includeCtrl('include_contrast', 'contrast')" value="0">
                                     {% endif %}
                                 </td>
@@ -1133,10 +1135,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_saturation == True %}
-                                    <input type="checkbox" id="include_saturation" name="include_saturation"
+                                    <input type="checkbox" id="include_saturation" name="include_saturation" aria-label="include_saturation"
                                         onclick="includeCtrl('include_saturation', 'saturation')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_saturation" name="include_saturation"
+                                    <input type="checkbox" id="include_saturation" name="include_saturation" aria-label="include_saturation"
                                         onclick="includeCtrl('include_saturation', 'saturation')" value="0">
                                     {% endif %}
                                 </td>
@@ -1160,10 +1162,10 @@ RaspiCamSrv's Live page
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_brightness == True %}
-                                    <input type="checkbox" id="include_brightness" name="include_brightness"
+                                    <input type="checkbox" id="include_brightness" name="include_brightness" aria-label="include_brightness"
                                         onclick="includeCtrl('include_brightness', 'brightness')" value="1" checked>
                                     {% else %}
-                                    <input type="checkbox" id="include_brightness" name="include_brightness"
+                                    <input type="checkbox" id="include_brightness" name="include_brightness" aria-label="include_brightness"
                                         onclick="includeCtrl('include_brightness', 'brightness')" value="0">
                                     {% endif %}
                                 </td>
