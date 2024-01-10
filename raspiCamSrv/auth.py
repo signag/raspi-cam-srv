@@ -25,6 +25,7 @@ def register():
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.curMenu = "register"
     if request.method == "POST":
         username = request.form["username"]
@@ -51,7 +52,7 @@ def register():
 
         flash(error)
 
-    return render_template("auth/register.html", sc=sc)
+    return render_template("auth/register.html", sc=sc, cp=cp)
 
 
 @bp.route("/login", methods=("GET", "POST"))
@@ -59,6 +60,7 @@ def login():
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.curMenu = "login"
     if request.method == "POST":
         username = request.form["username"]
@@ -81,7 +83,7 @@ def login():
 
         flash(error)
 
-    return render_template("auth/login.html", sc=sc)
+    return render_template("auth/login.html", sc=sc, cp=cp)
 
 
 @bp.before_app_request

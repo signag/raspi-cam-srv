@@ -18,6 +18,7 @@ def main():
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sm = cfg.sensorModes
     sc.curMenu = "info"
-    return render_template("info/info.html", props=props, sm=sm, sc=sc, cfg=cfg)
+    return render_template("info/info.html", props=props, sm=sm, sc=sc, cp=cp, cfg=cfg)

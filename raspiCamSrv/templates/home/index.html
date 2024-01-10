@@ -18,11 +18,7 @@ RaspiCamSrv's Live page
             <img src="{{ url_for('home.video_feed') }}" class="w3-image" id="liveviewimage">
             {% endif %}
         </div>
-        {% if cp.hasFocus %}
-        <div class="w3-half" onload="showAfWindows('{{ sc.lastLiveTab }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')">
-        {% else %}
         <div class="w3-half">
-        {% endif %}
             <!-- Camara control sections 
                 Settings changed here are applied to the camera while the live stream is active
             -->

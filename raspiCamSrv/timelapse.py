@@ -15,5 +15,6 @@ def main():
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.curMenu = "timelapse"
-    return render_template("timelapse/main.html", sc=sc)
+    return render_template("timelapse/main.html", sc=sc, cp=cp)

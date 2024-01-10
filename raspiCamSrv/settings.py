@@ -16,8 +16,9 @@ def main():
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.curMenu = "settings"
-    return render_template("settings/main.html", sc=sc)
+    return render_template("settings/main.html", sc=sc, cp=cp)
 
 @bp.route("/serverconfig", methods=("GET", "POST"))
 @login_required
@@ -26,6 +27,7 @@ def serverconfig():
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.curMenu = "settings"
     if request.method == "POST":
         photoType = request.form["phototype"]
@@ -35,7 +37,7 @@ def serverconfig():
         videoType = request.form["videotype"]
         sc.videoType = videoType
     
-    return render_template("settings/main.html", sc=sc)
+    return render_template("settings/main.html", sc=sc, cp=cp)
 
 @bp.route("/resetServer", methods=("GET", "POST"))
 @login_required
@@ -44,6 +46,7 @@ def resetServer():
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    cp = cfg.cameraProperties
     sc.curMenu = "settings"
     if request.method == "POST":
         logger.info("Stopping camera system")
@@ -58,4 +61,4 @@ def resetServer():
         sc.isVideoRecording = False
         sc.curMenu = "settings"
     
-    return render_template("settings/main.html", sc=sc)
+    return render_template("settings/main.html", sc=sc, cp=cp)

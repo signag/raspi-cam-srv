@@ -4,7 +4,15 @@
     <title>{% block title %}{% endblock %} - Raspi Camera</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='w3.css') }}">
+    {% if cp.hasFocus %}
+    {% if sc.curMenu == "live" %}
+    <body onload="showAfWindows('{{ sc.lastLiveTab }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')">
+    {% else %}
     <body>
+    {% endif %}
+    {% else %}
+    <body>
+    {% endif %}
         <div class="w3-container">
             <div class="w3-bar w3-blue w3-large">
                 <div class="w3-bar-item w3-left">raspiCamSrv</div>
