@@ -1624,7 +1624,11 @@ RaspiCamSrv's Live page
 
             if (tabSelected == "focus") {
                 if (trgEl.checked == true) {
+                    // First remove the existing canvas, which is required for resize
+                    removeAfWindow()
+                    // Then create a new canvas
                     drawAfWindow(trg, tgt, camRef)
+                    // ... and draw the windows
                     drawAllAfWindows()
                 }
             }
@@ -1951,29 +1955,36 @@ RaspiCamSrv's Live page
                 });                
             } else {
                 // Trigger inactive -> destroy canvas and clear AFWindows
-                var cnvEl = document.getElementById("livecanvas");
-                if (cnvEl) {
-                    // Unregister event listeners
-                    document.getElementById('livecanvas').removeEventListener('mousedown', function (e) {
-                        handleMouseDown(e);
-                    });
-                    document.getElementById('livecanvas').removeEventListener('mousemove', function (e) {
-                        handleMouseMove(e);
-                    });
-                    document.getElementById('livecanvas').removeEventListener('mouseup', function (e) {
-                        handleMouseUp(e);
-                    });
-                    document.getElementById('livecanvas').removeEventListener('mouseout', function (e) {
-                        handleMouseOut(e);
-                    });
-                    // Remove canvas             
-                    document.body.removeChild(cnvEl);
-                    liveCanvas = null;
-                    liveCanvasCtx = null;
-                    // Clear afWindows field
-                    afWinTarget.value = "()"
-                }
+                removeAfWindow()
+                // Clear afWindows field
+                afWinTarget.value = "()"
             }
+        }
+
+        function removeAfWindow() {
+            /*  Remove AfWindow canvas infrastructure
+            */
+            var cnvEl = document.getElementById("livecanvas");
+            if (cnvEl) {
+                // Unregister event listeners
+                document.getElementById('livecanvas').removeEventListener('mousedown', function (e) {
+                    handleMouseDown(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('mousemove', function (e) {
+                    handleMouseMove(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('mouseup', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('mouseout', function (e) {
+                    handleMouseOut(e);
+                });
+                // Remove canvas             
+                document.body.removeChild(cnvEl);
+                liveCanvas = null;
+                liveCanvasCtx = null;
+            }
+            
         }
     </script>
     <style>
