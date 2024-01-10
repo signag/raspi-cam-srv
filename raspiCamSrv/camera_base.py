@@ -70,30 +70,30 @@ class BaseCamera(object):
 
     def __init__(self):
         """Start the background camera thread if it isn't running yet."""
-        logger.info("Thread %s: BaseCamera.__init__", get_ident())
+        logger.debug("Thread %s: BaseCamera.__init__", get_ident())
         #Only start the background thread for live view if the video thread is not running
         if BaseCamera.videoThread or BaseCamera.liveViewDeactivated:
-            logger.info("Thread %s: Not starting Live View thread. Video thread running or Live View deactivated")
+            logger.debug("Thread %s: Not starting Live View thread. Video thread running or Live View deactivated")
         else:
             if BaseCamera.thread is None:
-                logger.info("Thread %s: BaseCamera.__init__: Starting new thread", get_ident())
+                logger.debug("Thread %s: BaseCamera.__init__: Starting new thread", get_ident())
                 BaseCamera.last_access = time.time()
 
                 # start background frame thread
                 BaseCamera.thread = threading.Thread(target=self._thread)
                 BaseCamera.thread.start()
-                logger.info("Thread %s: BaseCamera.__init__ - Thread started", get_ident())
+                logger.debug("Thread %s: BaseCamera.__init__ - Thread started", get_ident())
 
                 # wait until first frame is available
-                logger.info("Thread %s: BaseCamera.__init__ - waiting for frame", get_ident())
+                logger.debug("Thread %s: BaseCamera.__init__ - waiting for frame", get_ident())
                 BaseCamera.event.wait()
             else:
-                logger.info("Thread %s: BaseCamera.__init__ - Thread exists", get_ident())
+                logger.debug("Thread %s: BaseCamera.__init__ - Thread exists", get_ident())
                 if not BaseCamera.thread.is_alive:
-                    logger.info("Thread %s: BaseCamera.__init__ - Thread is not alive", get_ident())
+                    logger.debug("Thread %s: BaseCamera.__init__ - Thread is not alive", get_ident())
                     BaseCamera.thread = threading.Thread(target=self._thread)
                     BaseCamera.thread.start()
-                    logger.info("Thread %s: BaseCamera.__init__ - Thread started", get_ident())
+                    logger.debug("Thread %s: BaseCamera.__init__ - Thread started", get_ident())
                 
 
     def get_frame(self):
@@ -118,9 +118,9 @@ class BaseCamera(object):
     @classmethod
     def _thread(cls):
         """Camera background thread."""
-        logger.info("Thread %s: BaseCamera._thread", get_ident())
+        logger.debug("Thread %s: BaseCamera._thread", get_ident())
         frames_iterator = cls.frames()
-        logger.info("Thread %s: BaseCamera._thread - frames_iterator instantiated", get_ident())
+        logger.debug("Thread %s: BaseCamera._thread - frames_iterator instantiated", get_ident())
         for frame in frames_iterator:
             BaseCamera.frame = frame
             logger.debug("Thread %s: BaseCamera._thread - received frame from camera", get_ident())
@@ -131,13 +131,13 @@ class BaseCamera(object):
             if BaseCamera.stopRequested:
                 frames_iterator.close()
                 BaseCamera.stopRequested = False
-                logger.info("Thread %s: BaseCamera._thread - Thread is requested to stop.", get_ident())
+                logger.debug("Thread %s: BaseCamera._thread - Thread is requested to stop.", get_ident())
                 break
 
             # if there hasn't been any clients asking for frames in
             # the last 10 seconds then stop the thread
             if time.time() - BaseCamera.last_access > 10:
                 frames_iterator.close()
-                logger.info("Thread %s: BaseCamera._thread - Stopping camera thread due to inactivity.", get_ident())
+                logger.debug("Thread %s: BaseCamera._thread - Stopping camera thread due to inactivity.", get_ident())
                 break
         BaseCamera.thread = None

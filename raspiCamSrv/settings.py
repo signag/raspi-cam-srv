@@ -23,7 +23,7 @@ def main():
 @bp.route("/serverconfig", methods=("GET", "POST"))
 @login_required
 def serverconfig():
-    logger.info("serverconfig")
+    logger.debug("serverconfig")
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -42,19 +42,19 @@ def serverconfig():
 @bp.route("/resetServer", methods=("GET", "POST"))
 @login_required
 def resetServer():
-    logger.info("resetServer")
+    logger.debug("resetServer")
     g.hostname = request.host
     cfg = CameraCfg()
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
     if request.method == "POST":
-        logger.info("Stopping camera system")
+        logger.debug("Stopping camera system")
         Camera().stopCameraSystem()
         BaseCamera.liveViewDeactivated = False
         BaseCamera.thread = None
         BaseCamera.videoThread = None
-        logger.info("Resetting server configuration")
+        logger.debug("Resetting server configuration")
         del cfg
         cfg = CameraCfg()
         sc = cfg.serverConfig

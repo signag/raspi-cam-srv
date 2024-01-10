@@ -16,16 +16,16 @@ logger = logging.getLogger(__name__)
 @bp.route("/")
 @login_required
 def index():
-    logger.info("In index")
+    logger.debug("In index")
     g.hostname = request.host
     cam = Camera()
-    logger.info("Camera instantiated")
+    logger.debug("Camera instantiated")
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.curMenu = "live"
-    logger.info("cp.hasFocus is %s", cp.hasFocus)
+    logger.debug("cp.hasFocus is %s", cp.hasFocus)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 def gen(camera):
@@ -48,17 +48,17 @@ def video_feed():
 @bp.route("/photos/<photo>")
 @login_required
 def displayImage(photo: str):
-    logger.info("In displayImage")
-    logger.info("photo=%s", photo)
-    logger.info("current_app.root_path=%s", current_app.root_path)
+    logger.debug("In displayImage")
+    logger.debug("photo=%s", photo)
+    logger.debug("current_app.root_path=%s", current_app.root_path)
     fp = current_app.root_path + "/photos/" + photo
-    logger.info("fp = %s", fp)
+    logger.debug("fp = %s", fp)
     return Response(fp, mimetype='image/jpg')
 
 @bp.route("/focus_control", methods=("GET", "POST"))
 @login_required
 def focus_control():
-    logger.info("In focus_control")
+    logger.debug("In focus_control")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -161,7 +161,7 @@ def trigger_autofocus():
 @bp.route("/set_zoom", methods=("GET", "POST"))
 @login_required
 def set_zoom():
-    logger.info("In set_zoom")
+    logger.debug("In set_zoom")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -171,22 +171,22 @@ def set_zoom():
     if request.method == "POST":
         step = int(request.form["zoomfactorstep"])
         sc.zoomFactorStep = step
-        logger.info("sc.zoomFactorStep set to %s", step)
+        logger.debug("sc.zoomFactorStep set to %s", step)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_in", methods=("GET", "POST"))
 @login_required
 def zoom_in():
-    logger.info("In zoom_in")
+    logger.debug("In zoom_in")
     g.hostname = request.host
     cfg = CameraCfg()
-    logger.info("cfg.liveViewConfig.controls=%s",cfg.liveViewConfig.controls)
+    logger.debug("cfg.liveViewConfig.controls=%s",cfg.liveViewConfig.controls)
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        logger.info("ScalerCrop old: %s", cc.scalerCrop)
+        logger.debug("ScalerCrop old: %s", cc.scalerCrop)
         xCenter = int((cc.scalerCrop[0] + cc.scalerCrop[2])/2)
         yCenter = int((cc.scalerCrop[1] + cc.scalerCrop[3])/2)
         zfNext = sc.zoomFactor - sc.zoomFactorStep
@@ -203,7 +203,7 @@ def zoom_in():
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        logger.info("ScalerCrop new: %s", cc.scalerCrop)
+        logger.debug("ScalerCrop new: %s", cc.scalerCrop)
         Camera().applyControls(cfg.liveViewConfig)
         time.sleep(0.5)
         metadata = Camera().getMetaData()
@@ -428,7 +428,7 @@ def pan_down():
 @bp.route("/ae_control", methods=("GET", "POST"))
 @login_required
 def ae_control():
-    logger.info("In ae_control")
+    logger.debug("In ae_control")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -438,9 +438,9 @@ def ae_control():
     if request.method == "POST":
         if request.form.get("include_aeconstraintmode") is None:
             cc.include_aeConstraintMode = False
-            logger.info("AeConstraintMode excluded")
+            logger.debug("AeConstraintMode excluded")
         else:
-            logger.info("AeConstraintMode included")
+            logger.debug("AeConstraintMode included")
             cc.include_aeConstraintMode = True
             aeConstraintMode = int(request.form["aeconstraintmode"])
             cc.aeConstraintMode = aeConstraintMode
@@ -461,9 +461,9 @@ def ae_control():
 
         if request.form.get("include_aemeteringmode") is None:
             cc.include_aeMeteringMode = False
-            logger.info("AeMeteringMode excluded")
+            logger.debug("AeMeteringMode excluded")
         else:
-            logger.info("AeMeteringMode included")
+            logger.debug("AeMeteringMode included")
             cc.include_aeMeteringMode = True
             aeMeteringMode = int(request.form["aemeteringmode"])
             cc.aeMeteringMode = aeMeteringMode
@@ -489,7 +489,7 @@ def ae_control():
 @bp.route("/exposure_control", methods=("GET", "POST"))
 @login_required
 def exposure_control():
-    logger.info("In exposure_control")
+    logger.debug("In exposure_control")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -551,7 +551,7 @@ def exposure_control():
 @bp.route("/image_control", methods=("GET", "POST"))
 @login_required
 def image_control():
-    logger.info("In image_control")
+    logger.debug("In image_control")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -799,7 +799,7 @@ def take_raw_photo():
 @bp.route("/record_video", methods=("GET", "POST"))
 @login_required
 def record_video():
-    logger.info("In record_video")
+    logger.debug("In record_video")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -810,18 +810,18 @@ def record_video():
         timeImg = datetime.datetime.now()
         filename = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
         fp = path + "/" + filename
-        logger.info("Saving video as %s", fp)
-        logger.info("Recording a video")
+        logger.debug("Saving video as %s", fp)
+        logger.debug("Recording a video")
         Camera.recordVideo(fp)
         time.sleep(4)
         # Check whether vido is being recorded
         if Camera.isVideoRecording():
-            logger.info("Video recording started")
+            logger.debug("Video recording started")
             sc.isVideoRecording = True
             msg="Video saved as " + fp
             flash(msg)
         else:
-            logger.info("Video recording did not start")
+            logger.debug("Video recording did not start")
             sc.isVideoRecording = False
             msg="Video recording failed. Requested resolution too high "
             flash(msg)
@@ -830,14 +830,14 @@ def record_video():
 @bp.route("/stop_recording", methods=("GET", "POST"))
 @login_required
 def stop_recording():
-    logger.info("In stop_recording")
+    logger.debug("In stop_recording")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        logger.info("Requesting video recording to stop")
+        logger.debug("Requesting video recording to stop")
         Camera().stopVideoRecording()
         sc.isVideoRecording = False
         msg="Video recording stopped"

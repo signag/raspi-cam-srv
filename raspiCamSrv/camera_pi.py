@@ -39,18 +39,18 @@ class Camera(BaseCamera):
     videoOutput = None
 
     def __init__(self):
-        logger.info("Thread %s: Camera.__init__", get_ident())
+        logger.debug("Thread %s: Camera.__init__", get_ident())
         if Camera.cam is None:
-            logger.info("Thread %s: Camera.__init__: Camera instantiated", get_ident())
+            logger.debug("Thread %s: Camera.__init__: Camera instantiated", get_ident())
             Camera.cam = Picamera2()
         else:
-            logger.info("Thread %s: Camera.__init__: Camera was already instantiated", get_ident())
+            logger.debug("Thread %s: Camera.__init__: Camera was already instantiated", get_ident())
             if not Camera.cam.is_open:
-                logger.info("Thread %s: Camera.__init__: Camera was not open", get_ident())
+                logger.debug("Thread %s: Camera.__init__: Camera was not open", get_ident())
                 Camera.cam = None
-                logger.info("Thread %s: Camera.__init__: Camera destroyed", get_ident())
+                logger.debug("Thread %s: Camera.__init__: Camera destroyed", get_ident())
                 Camera.cam = Picamera2()
-                logger.info("Thread %s: Camera.__init__: Camera instantiated", get_ident())
+                logger.debug("Thread %s: Camera.__init__: Camera instantiated", get_ident())
         self.loadCameraSpecifics()
         super().__init__()
         
@@ -58,7 +58,7 @@ class Camera(BaseCamera):
     def loadCameraSpecifics():
         """ Load camera specific parameters into configuration, if not already done
         """
-        logger.info("Thread %s: Camera.loadCameraSpecifics", get_ident())
+        logger.debug("Thread %s: Camera.loadCameraSpecifics", get_ident())
         cfg = CameraCfg()
         cfgProps = cfg.cameraProperties
         cfgCtrls = cfg.controls
@@ -83,7 +83,7 @@ class Camera(BaseCamera):
             cfgProps.hasHdr = "HdrMode" in Camera.cam.camera_controls
             
             cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
-            logger.info("Thread %s: Camera.loadCameraSpecifics loaded to config", get_ident())
+            logger.debug("Thread %s: Camera.loadCameraSpecifics loaded to config", get_ident())
 
         # Load Sensor Modes
         if len(cfgSensorModes) == 0:
@@ -107,8 +107,8 @@ class Camera(BaseCamera):
                 cfgMode.exposure_limits = mode["exposure_limits"]
                 cfgSensorModes.append(cfgMode)
                 ind = ind + 1
-            logger.info("Thread %s: %s sensor modes found", get_ident(), len(cfg.sensorModes))
-            logger.info("Thread %s: %s raw formats found", get_ident(), len(cfg.rawFormats))
+            logger.debug("Thread %s: %s sensor modes found", get_ident(), len(cfg.sensorModes))
+            logger.debug("Thread %s: %s raw formats found", get_ident(), len(cfg.rawFormats))
             
             # Set some Sensor Mode specific parameters for standard configurations
             maxModei = len(cfg.sensorModes) - 1
@@ -140,7 +140,7 @@ class Camera(BaseCamera):
             
             The fully configured configuration is returned
         """
-        logger.info("Thread %s: Camera.configure", get_ident())
+        logger.debug("Thread %s: Camera.configure", get_ident())
         # We start configuration with a new blank CameraConfiguration object
         camCfg = CameraConfiguration()
 
@@ -187,30 +187,30 @@ class Camera(BaseCamera):
             raise ValueError("controls in camera configuration must not be empty")
         else:
             camCfg.controls = ctrls
-        logger.info("Thread %s: Camera.configure: configuration completed", get_ident())
+        logger.debug("Thread %s: Camera.configure: configuration completed", get_ident())
         
         #Automatically align the stream size, if selected
         if cfg.stream_size_align and cfg.sensor_mode == "custom" :
-            logger.info("Thread %s: Camera.configure: Aligning camera configuration. Old size: %s", get_ident(), cfg.stream_size)
+            logger.debug("Thread %s: Camera.configure: Aligning camera configuration. Old size: %s", get_ident(), cfg.stream_size)
             camCfg.align()
-            logger.info("Thread %s: Camera.configure: Alignment successful. Adjusting stream size", get_ident())
+            logger.debug("Thread %s: Camera.configure: Alignment successful. Adjusting stream size", get_ident())
             cfg.stream_size = camCfg.size
-            logger.info("Thread %s: Camera.configure: Stream size adjusted to %s", get_ident(), cfg.stream_size)
+            logger.debug("Thread %s: Camera.configure: Stream size adjusted to %s", get_ident(), cfg.stream_size)
 
         return camCfg
 
     @staticmethod
     def applyControls(camCfg: CameraConfig):
         """Apply the currently selected camera controls"""
-        logger.info("Thread %s: Camera.applyControls", get_ident())
+        logger.debug("Thread %s: Camera.applyControls", get_ident())
 
         cfg = CameraCfg()
         cfgCtrls = cfg.controls
-        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
 
         # Initialize controls dict with controls included in configuration
         ctrls = copy.deepcopy(camCfg.controls)
-        logger.info("Thread %s: Camera.applyControls - camCfg.controls=%s", get_ident(), ctrls)
+        logger.debug("Thread %s: Camera.applyControls - camCfg.controls=%s", get_ident(), ctrls)
         cnt = 0
         
         # Apply selected controls with precedence of controls from configuration
@@ -275,12 +275,12 @@ class Camera(BaseCamera):
             ctrls["Brightness"] = cfgCtrls.brightness
             cnt += 1
         # Scaler crop
-        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
-        logger.info("Thread %s: Camera.applyControls - include_scalerCrop=%s", get_ident(), cfgCtrls.include_scalerCrop)
+        logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        logger.debug("Thread %s: Camera.applyControls - include_scalerCrop=%s", get_ident(), cfgCtrls.include_scalerCrop)
         if cfgCtrls.include_scalerCrop and "ScalerCrop" not in ctrls:
             ctrls["ScalerCrop"] = cfgCtrls.scalerCrop
             cnt += 1
-        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
         # Focus
         if cfg.cameraProperties.hasFocus:
             if cfgCtrls.include_afMode and "AfMode" not in ctrls:
@@ -308,17 +308,17 @@ class Camera(BaseCamera):
                 ctrls["AfWindows"] = cfgCtrls.afWindows
                 cnt += 1
             
-        logger.info("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
+        logger.debug("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
         camCtrls = Controls(Camera.cam)
         camCtrls.set_controls(ctrls)
         Camera.cam.controls = camCtrls
-        logger.info("Thread %s: Camera.applyControls - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
-        logger.info("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        logger.debug("Thread %s: Camera.applyControls - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
+        logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
 
     @staticmethod
     def applyControlsForAfCycle(camCfg: CameraConfig):
         """Apply camera controls required for AF cycle"""
-        logger.info("Thread %s: Camera.applyControlsForAfCycle", get_ident())
+        logger.debug("Thread %s: Camera.applyControlsForAfCycle", get_ident())
 
         cfg = CameraCfg()
         cfgCtrls = cfg.controls
@@ -347,16 +347,16 @@ class Camera(BaseCamera):
                 ctrls["AfWindows"] = cfgCtrls.afWindows
                 cnt += 1
             
-        logger.info("Thread %s: Camera.applyControlsForAfCycle - Applying %s controls", get_ident(), cnt)
+        logger.debug("Thread %s: Camera.applyControlsForAfCycle - Applying %s controls", get_ident(), cnt)
         camCtrls = Controls(Camera.cam)
         camCtrls.set_controls(ctrls)
         Camera.cam.controls = camCtrls
-        logger.info("Thread %s: Camera.applyControlsForAfCycle - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
+        logger.debug("Thread %s: Camera.applyControlsForAfCycle - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
 
     @staticmethod
     def stopCameraSystem():
-        logger.info("Thread %s: Camera.stopCameraSystem", get_ident())
-        logger.info("Thread %s: Camera.stopCameraSystem: Stopping Live view thread", get_ident())
+        logger.debug("Thread %s: Camera.stopCameraSystem", get_ident())
+        logger.debug("Thread %s: Camera.stopCameraSystem: Stopping Live view thread", get_ident())
         BaseCamera.stopRequested = True
         if BaseCamera.thread:
             cnt = 0
@@ -366,14 +366,14 @@ class Camera(BaseCamera):
                 if cnt > 200:
                     break
             if BaseCamera.thread:
-                logger.info("Thread %s: Camera.stopCameraSystem: Live view thread did not stop within 2 sec", get_ident())
+                logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread did not stop within 2 sec", get_ident())
             else:
-                logger.info("Thread %s: Camera.stopCameraSystem: Live view thread successfully stopped", get_ident())
+                logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread successfully stopped", get_ident())
         else:
-            logger.info("Thread %s: Camera.stopCameraSystem: Live view thread was not active", get_ident())
+            logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread was not active", get_ident())
         BaseCamera.stopRequested = False
         
-        logger.info("Thread %s: Camera.stopCameraSystem: Stopping Video thread", get_ident())
+        logger.debug("Thread %s: Camera.stopCameraSystem: Stopping Video thread", get_ident())
         BaseCamera.stopVideoRequested = True        
         if BaseCamera.videoThread:
             cnt = 0
@@ -383,25 +383,25 @@ class Camera(BaseCamera):
                 if cnt > 200:
                     break
             if BaseCamera.videoThread:
-                logger.info("Thread %s: Camera.stopCameraSystem: Video thread did not stop within 2 sec", get_ident())
+                logger.debug("Thread %s: Camera.stopCameraSystem: Video thread did not stop within 2 sec", get_ident())
             else:
-                logger.info("Thread %s: Camera.stopCameraSystem: Video thread successfully stopped", get_ident())
+                logger.debug("Thread %s: Camera.stopCameraSystem: Video thread successfully stopped", get_ident())
         else:
-            logger.info("Thread %s: Camera.stopCameraSystem: Video thread was not active", get_ident())
+            logger.debug("Thread %s: Camera.stopCameraSystem: Video thread was not active", get_ident())
         BaseCamera.stopVideoRequested = False        
             
         Camera.cam.stop_recording()
-        logger.info("Thread %s: Camera.stopCameraSystem: Recording stopped", get_ident())
+        logger.debug("Thread %s: Camera.stopCameraSystem: Recording stopped", get_ident())
         Camera.cam.stop()
-        logger.info("Thread %s: Camera.stopCameraSystem: Camara stopped", get_ident())
+        logger.debug("Thread %s: Camera.stopCameraSystem: Camara stopped", get_ident())
         Camera.cam.close()
-        logger.info("Thread %s: Camera.stopCameraSystem: Camara closed", get_ident())
+        logger.debug("Thread %s: Camera.stopCameraSystem: Camara closed", get_ident())
         
 
     @staticmethod
     def restartLiveView():
-        logger.info("Camera.restartLiveView")
-        logger.info("Camera.restartLiveView: Stopping thread")
+        logger.debug("Camera.restartLiveView")
+        logger.debug("Camera.restartLiveView: Stopping thread")
         BaseCamera.stopRequested = True
         cnt = 0
         while BaseCamera.thread:
@@ -409,16 +409,16 @@ class Camera(BaseCamera):
             cnt += 1
             if cnt > 200:
                 raise TimeoutError("Background thread did not stop within 2 sec")
-        logger.info("Camera.restartLiveView: Thread has stopped")
+        logger.debug("Camera.restartLiveView: Thread has stopped")
         Camera.cam.stop_recording()
-        logger.info("Camera.restartLiveView: Recording stopped")
+        logger.debug("Camera.restartLiveView: Recording stopped")
 
     @staticmethod
     def takeImage(path: str, filename: str):
-        logger.info("Camera.takeImage")
+        logger.debug("Camera.takeImage")
         cfg = CameraCfg()
         sc = cfg.serverConfig
-        logger.info("Camera.takeImage: Stopping thread")
+        logger.debug("Camera.takeImage: Stopping thread")
         BaseCamera.stopRequested = True
         cnt = 0
         while BaseCamera.thread:
@@ -426,30 +426,30 @@ class Camera(BaseCamera):
             cnt += 1
             if cnt > 200:
                 raise TimeoutError("Background thread did not stop within 2 sec")
-        logger.info("Camera.takeImage: Thread has stopped")
+        logger.debug("Camera.takeImage: Thread has stopped")
         Camera.cam.stop_recording()
-        logger.info("Camera.takeImage: Recording stopped")
+        logger.debug("Camera.takeImage: Recording stopped")
         Camera.cam = Picamera2()
-        logger.info("Camera.takeImage: Camera reinitialized")
-        logger.info("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
+        logger.debug("Camera.takeImage: Camera reinitialized")
+        logger.debug("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
         with Camera.cam as cam:
             photoConfig = Camera.configure(cfg.photoConfig, cfg.photoConfig)
             cam.configure(photoConfig)
-            logger.info("Camera.takeImage: Camera configured for photo")
-            logger.info("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
+            logger.debug("Camera.takeImage: Camera configured for photo")
+            logger.debug("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
             Camera.applyControls(cfg.photoConfig)
-            logger.info("Camera.takeImage: Selected controls applied")
-            logger.info("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
+            logger.debug("Camera.takeImage: Selected controls applied")
+            logger.debug("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
             cam.start(show_preview=False)
-            logger.info("Camera.takeImage: Camera started")
+            logger.debug("Camera.takeImage: Camera started")
             request = cam.capture_request()
-            logger.info("Camera.takeImage: Request started")
+            logger.debug("Camera.takeImage: Request started")
             fp = path + "/" + filename
             request.save("main", fp)
             sc.displayFile = filename
             sc.displayPhoto = "photos/" + filename
             sc.isDisplayHidden = False
-            logger.info("Camera.takeImage: Image saved as %s", fp)
+            logger.debug("Camera.takeImage: Image saved as %s", fp)
             metadata = request.get_metadata()
             sc.displayMeta = metadata
             sc.displayMetaFirst = 0
@@ -457,13 +457,13 @@ class Camera(BaseCamera):
                 sc._displayMetaLast = 999
             else:
                 sc.displayMetaLast = 10
-            logger.info("Camera.takeImage: Image metedata captured")
+            logger.debug("Camera.takeImage: Image metedata captured")
             request.release()
-            logger.info("Camera.takeImage: Request released")
+            logger.debug("Camera.takeImage: Request released")
 
     @staticmethod
     def takeRawImage(path: str, filenameRaw: str, filename: str):
-        logger.info("Camera.takeRawImage")
+        logger.debug("Camera.takeRawImage")
         cfg = CameraCfg()
         sc = cfg.serverConfig
         BaseCamera.stopRequested = True
@@ -478,13 +478,13 @@ class Camera(BaseCamera):
         with Camera.cam as cam:
             rawConfig = Camera.configure(cfg.rawConfig, cfg.photoConfig)
             cam.configure(rawConfig)
-            logger.info("Camera.takeRawImage: Camera configured for raw")
+            logger.debug("Camera.takeRawImage: Camera configured for raw")
             Camera.applyControls(cfg.rawConfig)
-            logger.info("Camera.takeRawImage: Selected controls applied")
+            logger.debug("Camera.takeRawImage: Selected controls applied")
             cam.start(show_preview=False)
-            logger.info("Camera.takeRawImage: Camera started")
+            logger.debug("Camera.takeRawImage: Camera started")
             request = cam.capture_request()
-            logger.info("Camera.takeRawImage: Request started")
+            logger.debug("Camera.takeRawImage: Request started")
             fp = path + "/" + filename
             request.save("main", fp)
             fpr = path + "/" + filenameRaw
@@ -492,7 +492,7 @@ class Camera(BaseCamera):
             sc.displayFile = filenameRaw
             sc.displayPhoto = "photos/" + filename
             sc.isDisplayHidden = False
-            logger.info("Camera.takeRawImage: Raw Image saved as %s", fpr)
+            logger.debug("Camera.takeRawImage: Raw Image saved as %s", fpr)
             metadata = request.get_metadata()
             sc.displayMeta = metadata
             sc.displayMetaFirst = 0
@@ -500,26 +500,26 @@ class Camera(BaseCamera):
                 sc._displayMetaLast = 999
             else:
                 sc.displayMetaLast = 10
-            logger.info("Camera.takeRawImage: Raw Image metedata captured")
+            logger.debug("Camera.takeRawImage: Raw Image metedata captured")
             request.release()
-            logger.info("Camera.takeRawImage: Request released")
+            logger.debug("Camera.takeRawImage: Request released")
     
     @staticmethod
     def frames():
-        logger.info("Thread %s: Camera.frames", get_ident())
+        logger.debug("Thread %s: Camera.frames", get_ident())
         with Camera.cam as cam:
             srvCam = CameraCfg()
             cfg = srvCam.liveViewConfig
             streamingConfig = Camera.configure(cfg, srvCam.photoConfig)
             cam.configure(streamingConfig)
-            logger.info("Thread %s: Camera.frames - starting recording", get_ident())
+            logger.debug("Thread %s: Camera.frames - starting recording", get_ident())
             output = StreamingOutput()
             cam.start_recording(MJPEGEncoder(), FileOutput(output))
-            logger.info("Thread %s: Camera.frames - recording started", get_ident())
+            logger.debug("Thread %s: Camera.frames - recording started", get_ident())
             # let camera warm up
             time.sleep(1.5)
             Camera.applyControls(cfg)
-            logger.info("Thread %s: Camera.frames - controls applied", get_ident())
+            logger.debug("Thread %s: Camera.frames - controls applied", get_ident())
             # Get the live view scaler crop
             time.sleep(0.5)
             metadata = Camera.cam.capture_metadata()
@@ -537,70 +537,70 @@ class Camera(BaseCamera):
     
     @staticmethod
     def _videoThread():
-        logger.info("Thread %s: _videoThread", get_ident())
+        logger.debug("Thread %s: _videoThread", get_ident())
         # First, stop the camera system
         Camera.stopCameraSystem()
         # Deactivate Live View to avoid the Live View thread to start
         
         Camera.cam = Picamera2()
-        logger.info("Thread %s: _videoThread - Camera reassigned", get_ident())
-        logger.info("Thread %s: _videoThread - Camera isOpen=%s started=%s", get_ident(), Camera.cam.is_open, Camera.cam.started)
+        logger.debug("Thread %s: _videoThread - Camera reassigned", get_ident())
+        logger.debug("Thread %s: _videoThread - Camera isOpen=%s started=%s", get_ident(), Camera.cam.is_open, Camera.cam.started)
         with Camera.cam as cam:
             srvCam = CameraCfg()
             cfg = srvCam.videoConfig
             videoConfig = Camera.configure(cfg, srvCam.photoConfig)
             cam.configure(videoConfig)
-            logger.info("Thread %s: _videoThread - Video configuration done", get_ident())
+            logger.debug("Thread %s: _videoThread - Video configuration done", get_ident())
             Camera.applyControls(cfg)
-            logger.info("Thread %s: _videoThread - selected controls applied", get_ident())
+            logger.debug("Thread %s: _videoThread - selected controls applied", get_ident())
             encoder = H264Encoder(10000000)
             output = Camera.videoOutput
             if output.lower().endswith(".mp4"):
                 encoder.output = FfmpegOutput(output, audio=False)
-                logger.info("Thread %s: _videoThread - mp4 Video output to %s", get_ident(), output)
+                logger.debug("Thread %s: _videoThread - mp4 Video output to %s", get_ident(), output)
             else:
                 encoder.output = FileOutput(output)
-                logger.info("Thread %s: _videoThread - h264 Video output to %s", get_ident(), output)
+                logger.debug("Thread %s: _videoThread - h264 Video output to %s", get_ident(), output)
             try:
                 cam.start()
-                logger.info("Thread %s: _videoThread - Camera started", get_ident())
+                logger.debug("Thread %s: _videoThread - Camera started", get_ident())
                 cam.start_encoder(encoder)
-                logger.info("Thread %s: _videoThread - Encoder started", get_ident())
+                logger.debug("Thread %s: _videoThread - Encoder started", get_ident())
                 while Camera.stopVideoRequested == False:
                     time.sleep(0.1)
-                logger.info("Thread %s: _videoThread - stop video requested", get_ident())
+                logger.debug("Thread %s: _videoThread - stop video requested", get_ident())
                 cam.stop_encoder()
-                logger.info("Thread %s: _videoThread - encoder stopped", get_ident())
+                logger.debug("Thread %s: _videoThread - encoder stopped", get_ident())
                 cam.stop()
-                logger.info("Thread %s: _videoThread - camera stopped", get_ident())
+                logger.debug("Thread %s: _videoThread - camera stopped", get_ident())
             except ProcessLookupError:
-                logger.info("Thread %s: _videoThread - Encoder could not be started (requested resolution too high)", get_ident())
+                logger.debug("Thread %s: _videoThread - Encoder could not be started (requested resolution too high)", get_ident())
                 BaseCamera.liveViewDeactivated = False
             except RuntimeError:
-                logger.info("Thread %s: _videoThread - Encoder could not be started (not enough memory for requested resolution)", get_ident())
+                logger.debug("Thread %s: _videoThread - Encoder could not be started (not enough memory for requested resolution)", get_ident())
                 BaseCamera.liveViewDeactivated = False
             
         BaseCamera.videoThread = None
-        logger.info("Thread %s: _videoThread - videoThread terminated", get_ident())
+        logger.debug("Thread %s: _videoThread - videoThread terminated", get_ident())
 
     @staticmethod
     def recordVideo(output: str):
         """Record a video in an own thread"""
-        logger.info("Thread %s: recordVideo. output=%s", get_ident(), output)
+        logger.debug("Thread %s: recordVideo. output=%s", get_ident(), output)
         BaseCamera.liveViewDeactivated = True
-        logger.info("Thread %s: recordVideo - Live view deactivated", get_ident())
+        logger.debug("Thread %s: recordVideo - Live view deactivated", get_ident())
         
         if BaseCamera.videoThread is None:
             Camera.videoOutput = output
-            logger.info("Thread %s: recordVideo - Starting new videoThread", get_ident())
+            logger.debug("Thread %s: recordVideo - Starting new videoThread", get_ident())
             BaseCamera.videoThread = threading.Thread(target=Camera._videoThread, daemon=True)
             BaseCamera.videoThread.start()
-            logger.info("Thread %s: recordVideo - videoThread started", get_ident())
+            logger.debug("Thread %s: recordVideo - videoThread started", get_ident())
 
     @staticmethod
     def stopVideoRecording():
         """stops the video recording"""
-        logger.info("Thread %s: stopVideoRecording", get_ident())
+        logger.debug("Thread %s: stopVideoRecording", get_ident())
         BaseCamera.stopVideoRequested = True
         cnt = 0
         while BaseCamera.videoThread:
@@ -608,7 +608,7 @@ class Camera(BaseCamera):
             cnt += 1
             if cnt > 200:
                 raise TimeoutError("Video thread did not stop within 2 sec")
-        logger.info("Thread %s: stopVideoRecording: Thread has stopped", get_ident())
+        logger.debug("Thread %s: stopVideoRecording: Thread has stopped", get_ident())
         Camera.cam = Picamera2()
         BaseCamera.liveViewDeactivated = False
         
