@@ -1227,7 +1227,7 @@ RaspiCamSrv's Live page
                         {% endif %}
                         {% if sc.isVideoRecording == true %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.stop_recording') }}">
-                            <input class="w3-button w3-black w3-round-xxlarge" onclick="showAfWindows('{{ sc.lastLiveTab }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" type="submit" value="Stop">
+                            <input class="w3-button w3-black w3-round-xxlarge" onclick="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" type="submit" value="Stop">
                         </form>
                         {% endif %}
                     </td>
@@ -1609,12 +1609,13 @@ RaspiCamSrv's Live page
         }
     </script>
     <script>
-        function showAfWindows(tabSelected, trg, tgt, camRef) {
+        function showAfWindows(tabSelected, vrActive, trg, tgt, camRef) {
             /*  If camera has focus and if focus tab is selected,
                 show th AF Windows
                 This function is called after the page finished loading
                 in order to assure initial visibility of AF windows
                 tabSelected:    name of the initially selected tab
+                vrActive:       true if video recording is active
                 trg:            Trigger (checkbox)
                                 If checked, canvas and AF Windows are drawn
                                 If unchecked, canvas is removed
@@ -1628,10 +1629,12 @@ RaspiCamSrv's Live page
                 if (trgEl.checked == true) {
                     // First remove the existing canvas, which is required for resize
                     removeAfWindow()
-                    // Then create a new canvas
-                    drawAfWindow(trg, tgt, camRef)
-                    // ... and draw the windows
-                    drawAllAfWindows()
+                    if (vrActive == false) {
+                        // Then create a new canvas
+                        drawAfWindow(trg, tgt, camRef)
+                        // ... and draw the windows
+                        drawAllAfWindows()
+                    }
                 }
             }
         }
