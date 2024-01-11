@@ -7,12 +7,73 @@
 {% block content %}
     <div class="w3-bar w3-green">
         <!-- Info menue -->
-        <button class="w3-bar-item w3-button infomenu w3-light-green" id="campropbtn" onclick="openInfoTab('camprops', 'campropbtn')">Camera Properties</button>
+        <button class="w3-bar-item w3-button infomenu w3-light-green" id="camerasbtn" onclick="openInfoTab('cameras', 'camerasbtn')">Installed Cameras</button>
+        <button class="w3-bar-item w3-button infomenu" id="campropbtn" onclick="openInfoTab('camprops', 'campropbtn')">Camera Properties</button>
         {% for mode in sm %}
         <button class="w3-bar-item w3-button infomenu" id="{{ mode.tabButtonId }}" onclick="openInfoTab('{{ mode.tabId }}', '{{ mode.tabButtonId }}')">{{ mode.tabTitle}}</button>
         {% endfor%}
     </div>
-    <div id="camprops" class="infogroup">
+    <div id="cameras" class="infogroup">
+        {% for cam in cs %}
+        {% if cam.num == sc.activeCamera %}
+        <h4>Camera {{ cam.num }} (currently active)</h4>
+        {% else%}
+        <h4>Camera {{ cam.num }}</h4>
+        {% endif%}
+        <table class="w3-table-all">
+            <tr>
+                <th>Property</th>
+                <th>Value</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>
+                    Model
+                </td>
+                <td>
+                    {{ cam.model }}
+                </td>
+                <td>
+                    Model name of the camera
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Location
+                </td>
+                <td>
+                    {{ cam.location }}
+                </td>
+                <td>
+                    Location of the camera
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Rotation
+                </td>
+                <td>
+                    {{ cam.rotation }}
+                </td>
+                <td>
+                    Rotation of the camera
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Id
+                </td>
+                <td>
+                    {{ cam.id }}
+                </td>
+                <td>
+                    ID of the camera
+                </td>
+            </tr>
+        </table>
+        {% endfor%}
+    </div>
+    <div id="camprops" class="infogroup" style="display:none">
         <h4>Camera Properties</h4>
         <table class="w3-table-all">
             <tr>
