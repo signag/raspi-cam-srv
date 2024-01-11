@@ -91,7 +91,11 @@ class Camera(BaseCamera):
                 cfgCam.location = camera["Location"]
                 cfgCam.rotation = camera["Rotation"]
                 cfgCam.id = camera["Id"]
-                cfgCam.num = camera["Num"]
+                # On devices with a single camera, "Num" is not in the dict
+                if "Num" in camera:
+                    cfgCam.num = camera["Num"]
+                else:
+                    cfgCam.num = 0
                 cfgCams.append(cfgCam)
             cfg.cameras = cfgCams
             logger.info("Thread %s: Camera.loadGlobalCameraInfo - %s cameras found", get_ident(), len(cfg.cameras))
