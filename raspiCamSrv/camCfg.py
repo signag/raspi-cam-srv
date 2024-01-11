@@ -3,6 +3,54 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+class CameraInfo():
+    def __init__(self):
+        self._model = ""
+        self._location = 0
+        self._rotation = 0
+        self._id = ""
+        self._num = 0
+
+    @property
+    def model(self) -> str:
+        return self._model
+
+    @model.setter
+    def model(self, value: str):
+        self._model = value
+
+    @property
+    def location(self) -> int:
+        return self._location
+
+    @location.setter
+    def location(self, value: int):
+        self._location = value
+
+    @property
+    def rotation(self) -> int:
+        return self._rotation
+
+    @rotation.setter
+    def rotation(self, value: int):
+        self._rotation = value
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @id.setter
+    def id(self, value: str):
+        self._id = value
+
+    @property
+    def num(self) -> int:
+        return self._num
+
+    @num.setter
+    def num(self, value: int):
+        self._num = value
+
 class CameraControls():
     def __init__(self):
         self._aeConstraintMode = controls.AeConstraintModeEnum.Normal
@@ -111,7 +159,7 @@ class CameraControls():
     @aeConstraintMode.deleter
     def aeConstraintMode(self):
         del self._aeConstraintMode
-        
+
     @property
     def aeEnable(self) -> bool:
         return self._aeEnable
@@ -1075,6 +1123,8 @@ class CameraProperties():
 
 class ServerConfig():
     def __init__(self):
+        self._activeCamera = 0
+        self._activeCameraInfo = ""
         self._photoPath = "."
         self._photoType = "jpg"
         self._rawPhotoType = "dng"
@@ -1094,6 +1144,22 @@ class ServerConfig():
         self._displayMetaFirst = 0
         self._displayMetaLast = 999
         self._displayBuffer = {}
+
+    @property
+    def activeCamera(self) -> int:
+        return self._activeCamera
+
+    @activeCamera.setter
+    def activeCamera(self, value: int):
+        self._activeCamera = value
+
+    @property
+    def activeCameraInfo(self) -> str:
+        return self._activeCameraInfo
+
+    @activeCameraInfo.setter
+    def activeCameraInfo(self, value: str):
+        self._activeCameraInfo = value
 
     @property
     def photoPath(self):
@@ -1458,6 +1524,7 @@ class CameraCfg():
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(CameraCfg, cls).__new__(cls)
+            cls._cameras = []
             cls._controls = CameraControls()
             cls._cameraProperties = CameraProperties()
             cls._sensorModes = []
@@ -1491,6 +1558,14 @@ class CameraCfg():
         return cls._instance
     
     @property
+    def cameras(self) -> list:
+        return self._cameras
+
+    @cameras.setter
+    def cameras(self, value: list):
+        self._cameras = value
+    
+    @property
     def controls(self) -> CameraControls:
         return self._controls
     
@@ -1501,10 +1576,18 @@ class CameraCfg():
     @property
     def sensorModes(self) -> list:
         return self._sensorModes
+
+    @sensorModes.setter
+    def sensorModes(self, value: list):
+        self._sensorModes = value
     
     @property
     def rawFormats(self) -> list:
         return self._rawFormats
+
+    @rawFormats.setter
+    def rawFormats(self, value: list):
+        self._rawFormats = value
 
     @property
     def nrSensorModes(self) -> int:

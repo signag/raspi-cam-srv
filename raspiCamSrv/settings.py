@@ -15,17 +15,19 @@ logger = logging.getLogger(__name__)
 def main():
     g.hostname = request.host
     cfg = CameraCfg()
+    cs = cfg.cameras
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
-    return render_template("settings/main.html", sc=sc, cp=cp)
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
 
 @bp.route("/serverconfig", methods=("GET", "POST"))
 @login_required
 def serverconfig():
-    logger.debug("serverconfig")
+    logger.info("serverconfig")
     g.hostname = request.host
     cfg = CameraCfg()
+    cs = cfg.cameras
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
@@ -36,8 +38,14 @@ def serverconfig():
         sc.rawPhotoType = rawPhotoType
         videoType = request.form["videotype"]
         sc.videoType = videoType
-    
-    return render_template("settings/main.html", sc=sc, cp=cp)
+        activeCam = int(request.form["activecamera"])
+        sc.activeCamera = activeCam
+        for cam in cs:
+            if activeCam == cam.num:
+                sc.activeCameraInfo = "Camera " + str(cam.num) + " (" + cam.model + ")"
+                break
+        logger.info("serverconfig - active camera set to %s", sc.activeCamera)
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
 
 @bp.route("/resetServer", methods=("GET", "POST"))
 @login_required
@@ -45,6 +53,7 @@ def resetServer():
     logger.debug("resetServer")
     g.hostname = request.host
     cfg = CameraCfg()
+    cs = cfg.cameras
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
@@ -61,4 +70,4 @@ def resetServer():
         sc.isVideoRecording = False
         sc.curMenu = "settings"
     
-    return render_template("settings/main.html", sc=sc, cp=cp)
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)

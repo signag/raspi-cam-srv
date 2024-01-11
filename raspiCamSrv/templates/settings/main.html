@@ -14,6 +14,31 @@
                     </td>
                     <td class="w3-tooltip">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The camera used by the server.<br>
+                            In case that multiple cameras are connected to the server device,
+                            the active camera can be selected here
+                        </span>
+                        <label for="activecamera">Active Camera:</label>
+                    </td>
+                    <td colspan="2">
+                        <select name="activecamera" id="activecamera">
+                        {% for cam in cs %}
+                            {% if sc.activeCamera == cam.num %}
+                            <option value="{{ cam.num }}" selected>{{ cam.num }}: {{ cam.model }}</option>
+                            {% else %}
+                            <option value="{{ cam.num }}">{{ cam.num }}: {{ cam.model }}</option>
+                            {% endif %}
+                        {% endfor %}
+                        </select>
+                    </td>
+                    <td style="width:45%">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The file format to be used for photos
                         </span>
                         <label for="phototype">Photo type:</label>

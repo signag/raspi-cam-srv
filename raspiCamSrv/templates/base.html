@@ -24,10 +24,14 @@
                 <div class="w3-bar-item w3-right">
                     {{ g.user['username'] }}
                      | 
+                    {{ sc.activeCameraInfo}}
+                     |
                     {{ g.hostname }}
                 </div>
                 {% else%}
                 <div class="w3-bar-item w3-right">
+                    {{ sc.activeCameraInfo}}
+                    |
                     {{ g.hostname }}
                 </div>
                 {% endif %}
