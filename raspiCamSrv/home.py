@@ -803,9 +803,10 @@ def record_video():
     cp = cfg.cameraProperties
     if request.method == "POST":
         timeImg = datetime.datetime.now()
-        filename = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
-        logger.debug("Recording a video %s", filename)
-        fp = Camera.recordVideo(filename)
+        filenameVid = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
+        filename = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        logger.debug("Recording a video %s", filenameVid)
+        fp = Camera.recordVideo(filenameVid, filename)
         time.sleep(4)
         # Check whether vido is being recorded
         if Camera.isVideoRecording():

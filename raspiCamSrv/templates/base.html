@@ -53,10 +53,10 @@
                 {% else %}
                 <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button" id='infobtn' onclick="openMenu('infobtn')">Info</a>
                 {% endif %}
-                {% if sc.curMenu == "images" %}
-                <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='imagesbtn' onclick="openMenu('imagesbtn')">Images</a>
+                {% if sc.curMenu == "photos" %}
+                <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='imagesbtn' onclick="openMenu('imagesbtn')">Photos</a>
                 {% else %}
-                <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button" id='imagesbtn' onclick="openMenu('imagesbtn')">Images</a>
+                <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button" id='imagesbtn' onclick="openMenu('imagesbtn')">Photos</a>
                 {% endif %}
                 {% if sc.curMenu == "timelapse" %}
                 <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Timelapse</a>

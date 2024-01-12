@@ -24,7 +24,7 @@ def main():
 @bp.route("/serverconfig", methods=("GET", "POST"))
 @login_required
 def serverconfig():
-    logger.info("serverconfig")
+    logger.debug("serverconfig")
     g.hostname = request.host
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -44,7 +44,7 @@ def serverconfig():
             if activeCam == cam.num:
                 sc.activeCameraInfo = "Camera " + str(cam.num) + " (" + cam.model + ")"
                 break
-        logger.info("serverconfig - active camera set to %s", sc.activeCamera)
+        logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
 
 @bp.route("/resetServer", methods=("GET", "POST"))
