@@ -1125,7 +1125,8 @@ class ServerConfig():
     def __init__(self):
         self._activeCamera = 0
         self._activeCameraInfo = ""
-        self._photoPath = "."
+        self._photoRoot = "."
+        self._cameraPhotoSubPath = "."
         self._photoType = "jpg"
         self._rawPhotoType = "dng"
         self._videoType = "mp4"
@@ -1162,12 +1163,20 @@ class ServerConfig():
         self._activeCameraInfo = value
 
     @property
-    def photoPath(self):
-        return self._photoPath
+    def photoRoot(self):
+        return self._photoRoot
 
-    @photoPath.setter
-    def photoPath(self, value: str):
-        self._photoPath = value
+    @photoRoot.setter
+    def photoRoot(self, value: str):
+        self._photoRoot = value
+
+    @property
+    def cameraPhotoSubPath(self):
+        return self._cameraPhotoSubPath
+
+    @cameraPhotoSubPath.setter
+    def cameraPhotoSubPath(self, value: str):
+        self._cameraPhotoSubPath = value
 
     @property
     def photoType(self) -> str:

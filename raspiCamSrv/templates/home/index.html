@@ -1329,6 +1329,12 @@ RaspiCamSrv's Live page
                 {% if loop.index >= sc.displayMetaFirst and loop.index < sc.displayMetaLast %}
                 <tr>
                     <td class="w3-tooltip">
+                        {% if prop|string() == "Camera" %}
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Camera by which the photo was taken.<br>
+                            This information is not contained in the metadata provided by Picamera2.
+                        </span>
+                        {% endif %}
                         {% if prop|string() == "SensorTimestamp" %}
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The time this frame was produced by the

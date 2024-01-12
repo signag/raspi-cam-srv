@@ -19,7 +19,8 @@ def main():
     cp = cfg.cameraProperties
     sc.curMenu = "images"
     # Get the filelist
-    fl = os.listdir(sc.photoPath)
+    fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath
+    fl = os.listdir(fp)
     # Sort reverse
     fl.sort(reverse=True)
     # Create displaylist

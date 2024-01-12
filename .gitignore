@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 tests/
-raspiCamSrv/static/photos/*.*
+raspiCamSrv/static/photos/
 *.mp4
 *.h264
 

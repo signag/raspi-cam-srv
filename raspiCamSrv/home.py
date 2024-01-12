@@ -765,12 +765,10 @@ def take_photo():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        path =sc.photoPath
         timeImg = datetime.datetime.now()
         filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
-        fp = path + "/" + filename
-        logger.debug("Saving image to %s", fp)
-        Camera().takeImage(path, filename)
+        logger.debug("Saving image %s", filename)
+        fp = Camera().takeImage(filename)
         msg="Image saved as " + fp
         flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
@@ -785,13 +783,11 @@ def take_raw_photo():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        path =sc.photoPath
         timeImg = datetime.datetime.now()
         filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         filenameRaw = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
-        fp = path + "/" + filenameRaw
-        logger.debug("Saving raw image to %s", fp)
-        Camera().takeRawImage(path, filenameRaw, filename)
+        logger.debug("Saving raw image %s", filenameRaw)
+        fp = Camera().takeRawImage(filenameRaw, filename)
         msg="Image saved as " + fp
         flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
@@ -806,13 +802,10 @@ def record_video():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        path =sc.photoPath
         timeImg = datetime.datetime.now()
         filename = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
-        fp = path + "/" + filename
-        logger.debug("Saving video as %s", fp)
-        logger.debug("Recording a video")
-        Camera.recordVideo(fp)
+        logger.debug("Recording a video %s", filename)
+        fp = Camera.recordVideo(filename)
         time.sleep(4)
         # Check whether vido is being recorded
         if Camera.isVideoRecording():

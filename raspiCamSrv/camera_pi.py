@@ -12,6 +12,7 @@ from picamera2.outputs import FileOutput, FfmpegOutput
 from picamera2.encoders import H264Encoder
 from threading import Condition, Lock
 import copy
+import os
 import logging
 
 logger = logging.getLogger(__name__)
@@ -101,18 +102,25 @@ class Camera(BaseCamera):
             logger.info("Thread %s: Camera.loadGlobalCameraInfo - %s cameras found", get_ident(), len(cfg.cameras))
         
         # Check that active camera is within the list of cameras
+        sc = cfg.serverConfig
         activeCamOK = False
-        activeCam = cfg.serverConfig.activeCamera
+        activeCam = sc.activeCamera
         for cfgCam in cfg.cameras:
             if cfgCam.num == activeCam:
                 activeCamOK = True
-                cfg.serverConfig.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
+                sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
                 break
-        # If config for acrive camera is not in the list, set it to the first camera
+        # If config for active camera is not in the list, set it to the first camera
         if activeCamOK == False:
-            cfg.serverConfig.activeCamera = cfg.cameras[0].num
-            cfg.serverConfig.activeCameraInfo = "Camera " + str(cfg.cameras[0].num) + " (" + cfg.cameras[0].model + ")"
-            logger.info("Thread %s: Camera.loadGlobalCameraInfo - active camera reset to %s", get_ident(), cfg.serverConfig.activeCamera)
+            sc.activeCamera = cfg.cameras[0].num
+            sc.activeCameraInfo = "Camera " + str(cfg.cameras[0].num) + " (" + cfg.cameras[0].model + ")"
+            logger.info("Thread %s: Camera.loadGlobalCameraInfo - active camera reset to %s", get_ident(), sc.activeCamera)
+        # Make sure that folder for photos exists
+        sc.cameraPhotoSubPath = "photos/" + "camera_" + str(sc.activeCamera)
+        fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath
+        if not os.path.exists(fp):
+            os.makedirs(fp)
+            logger.info("Thread %s: Camera.loadGlobalCameraInfo - Photo directory created %s", get_ident(), fp)
         
         return cfg.serverConfig.activeCamera
         
@@ -476,8 +484,12 @@ class Camera(BaseCamera):
         logger.debug("Camera.restartLiveView: Recording stopped")
 
     @staticmethod
-    def takeImage(path: str, filename: str):
+    def takeImage(filename: str):
+        """ Takes a photo with the specified file name and returns the path
+            filename: file name for the photo
+        """
         logger.debug("Camera.takeImage")
+        fp = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
         logger.debug("Camera.takeImage: Stopping thread")
@@ -491,7 +503,7 @@ class Camera(BaseCamera):
         logger.debug("Camera.takeImage: Thread has stopped")
         Camera.cam.stop_recording()
         logger.debug("Camera.takeImage: Recording stopped")
-        Camera.cam = Picamera2()
+        Camera.cam = Picamera2(sc.activeCamera)
         logger.debug("Camera.takeImage: Camera reinitialized")
         logger.debug("Camera.takeImage: Camera controls: %s", Camera.cam.controls)
         with Camera.cam as cam:
@@ -506,14 +518,15 @@ class Camera(BaseCamera):
             logger.debug("Camera.takeImage: Camera started")
             request = cam.capture_request()
             logger.debug("Camera.takeImage: Request started")
-            fp = path + "/" + filename
+            fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filename
             request.save("main", fp)
             sc.displayFile = filename
-            sc.displayPhoto = "photos/" + filename
+            sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
             sc.isDisplayHidden = False
             logger.debug("Camera.takeImage: Image saved as %s", fp)
             metadata = request.get_metadata()
-            sc.displayMeta = metadata
+            sc.displayMeta = {"Camera": sc.activeCameraInfo}
+            sc.displayMeta.update(metadata)
             sc.displayMetaFirst = 0
             if len(metadata) < 11:
                 sc._displayMetaLast = 999
@@ -522,10 +535,17 @@ class Camera(BaseCamera):
             logger.debug("Camera.takeImage: Image metedata captured")
             request.release()
             logger.debug("Camera.takeImage: Request released")
+        return fp
 
     @staticmethod
-    def takeRawImage(path: str, filenameRaw: str, filename: str):
+    def takeRawImage(filenameRaw: str, filename: str):
+        """ Takes a photo as well as a raw image with the specified file names 
+            and returns the path for the raw photo
+            filenameRaw: file name for the raw image
+            filename:    file name for the photo   
+        """
         logger.debug("Camera.takeRawImage")
+        fpr = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
         BaseCamera.stopRequested = True
@@ -536,7 +556,7 @@ class Camera(BaseCamera):
             if cnt > 200:
                 raise TimeoutError("Background thread did not stop within 2 sec")
         Camera.cam.stop_recording()
-        Camera.cam = Picamera2()
+        Camera.cam = Picamera2(sc.activeCamera)
         with Camera.cam as cam:
             rawConfig = Camera.configure(cfg.rawConfig, cfg.photoConfig)
             cam.configure(rawConfig)
@@ -547,16 +567,17 @@ class Camera(BaseCamera):
             logger.debug("Camera.takeRawImage: Camera started")
             request = cam.capture_request()
             logger.debug("Camera.takeRawImage: Request started")
-            fp = path + "/" + filename
+            fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filename
             request.save("main", fp)
-            fpr = path + "/" + filenameRaw
+            fpr = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filenameRaw
             request.save_dng(fpr)
             sc.displayFile = filenameRaw
-            sc.displayPhoto = "photos/" + filename
+            sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
             sc.isDisplayHidden = False
             logger.debug("Camera.takeRawImage: Raw Image saved as %s", fpr)
             metadata = request.get_metadata()
-            sc.displayMeta = metadata
+            sc.displayMeta = {"Camera": sc.activeCameraInfo}
+            sc.displayMeta.update(metadata)
             sc.displayMetaFirst = 0
             if len(metadata) < 11:
                 sc._displayMetaLast = 999
@@ -565,7 +586,8 @@ class Camera(BaseCamera):
             logger.debug("Camera.takeRawImage: Raw Image metedata captured")
             request.release()
             logger.debug("Camera.takeRawImage: Request released")
-    
+        return fpr
+
     @staticmethod
     def frames():
         logger.debug("Thread %s: Camera.frames", get_ident())
@@ -600,11 +622,13 @@ class Camera(BaseCamera):
     @staticmethod
     def _videoThread():
         logger.debug("Thread %s: _videoThread", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
         # First, stop the camera system
         Camera.stopCameraSystem()
         # Deactivate Live View to avoid the Live View thread to start
         
-        Camera.cam = Picamera2()
+        Camera.cam = Picamera2(sc.activeCamera)
         logger.debug("Thread %s: _videoThread - Camera reassigned", get_ident())
         logger.debug("Thread %s: _videoThread - Camera isOpen=%s started=%s", get_ident(), Camera.cam.is_open, Camera.cam.started)
         with Camera.cam as cam:
@@ -646,9 +670,13 @@ class Camera(BaseCamera):
         logger.debug("Thread %s: _videoThread - videoThread terminated", get_ident())
 
     @staticmethod
-    def recordVideo(output: str):
+    def recordVideo(filename: str):
         """Record a video in an own thread"""
-        logger.debug("Thread %s: recordVideo. output=%s", get_ident(), output)
+        logger.debug("Thread %s: recordVideo. filename=%s", get_ident(), filename)
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        output = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filename
+
         BaseCamera.liveViewDeactivated = True
         logger.debug("Thread %s: recordVideo - Live view deactivated", get_ident())
         
@@ -658,11 +686,14 @@ class Camera(BaseCamera):
             BaseCamera.videoThread = threading.Thread(target=Camera._videoThread, daemon=True)
             BaseCamera.videoThread.start()
             logger.debug("Thread %s: recordVideo - videoThread started", get_ident())
+        return output
 
     @staticmethod
     def stopVideoRecording():
         """stops the video recording"""
         logger.debug("Thread %s: stopVideoRecording", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
         BaseCamera.stopVideoRequested = True
         cnt = 0
         while BaseCamera.videoThread:
@@ -671,7 +702,7 @@ class Camera(BaseCamera):
             if cnt > 200:
                 raise TimeoutError("Video thread did not stop within 2 sec")
         logger.debug("Thread %s: stopVideoRecording: Thread has stopped", get_ident())
-        Camera.cam = Picamera2()
+        Camera.cam = Picamera2(sc.activeCamera)
         BaseCamera.liveViewDeactivated = False
         
     @staticmethod
