@@ -12,7 +12,7 @@
                 <tr>
                     <td style="width:5%">
                     </td>
-                    <td class="w3-tooltip">
+                    <td style="width:25%" class="w3-tooltip">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The camera used by the server.<br>
                             In case that multiple cameras are connected to the server device,
@@ -20,7 +20,7 @@
                         </span>
                         <label for="activecamera">Active Camera:</label>
                     </td>
-                    <td colspan="2">
+                    <td style="width:70%">
                         <select name="activecamera" id="activecamera">
                         {% for cam in cs %}
                             {% if sc.activeCamera == cam.num %}
@@ -31,19 +31,30 @@
                         {% endfor %}
                         </select>
                     </td>
-                    <td style="width:45%">
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The system path where photos and videos will be stored.
+                        </span>
+                        <label for="photopath">Path for Photos/Videos:</label>
+                    </td>
+                    <td style="width:70%">
+                        <input style="width:70%" type="text" id="photopath" name="photopath" value="{{ sc.photoPath }}" disabled>
                     </td>
                 </tr>
                 <tr>
                     <td style="width:5%">
                     </td>
-                    <td class="w3-tooltip">
+                    <td style="width:25%" class="w3-tooltip">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The file format to be used for photos
                         </span>
                         <label for="phototype">Photo type:</label>
                     </td>
-                    <td colspan="2">
+                    <td style="width:70%">
                         <select name="phototype" id="phototype">
                             {% if sc.photoType == "jpeg" %}
                             <option value="jpeg" selected>jpeg</option>
@@ -72,19 +83,17 @@
                             {% endif %}
                         </select>
                     </td>
-                    <td style="width:45%">
-                    </td>
                 </tr>
                 <tr>
                     <td style="width:5%">
                     </td>
-                    <td class="w3-tooltip">
+                    <td style="width:25%" class="w3-tooltip">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The file format to be used for raw photos
                         </span>
                         <label for="rawphototype">Raw type:</label>
                     </td>
-                    <td colspan="2">
+                    <td style="width:70%">
                         <select name="rawphototype" id="rawphototype">
                             {% if sc.rawPhotoType == "dng" %}
                             <option value="dng" selected>dng</option>
@@ -93,19 +102,17 @@
                             {% endif %}
                         </select>
                     </td>
-                    <td style="width:45%">
-                    </td>
                 </tr>
                 <tr>
                     <td style="width:5%">
                     </td>
-                    <td class="w3-tooltip">
+                    <td style="width:25%" class="w3-tooltip">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The file format to be used for videos
                         </span>
                         <label for="videotype">Video type:</label>
                     </td>
-                    <td colspan="2">
+                    <td style="width:70%">
                         <select name="videotype" id="videotype">
                             {% if sc.videoType == "h264" %}
                             <option value="h264" selected>h264</option>
@@ -118,8 +125,6 @@
                             <option value="mp4">mp4</option>
                             {% endif %}
                         </select>
-                    </td>
-                    <td style="width:45%">
                     </td>
                 </tr>
             </table>
