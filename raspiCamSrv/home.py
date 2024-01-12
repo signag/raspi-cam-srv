@@ -766,7 +766,7 @@ def take_photo():
     cp = cfg.cameraProperties
     if request.method == "POST":
         timeImg = datetime.datetime.now()
-        filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Saving image %s", filename)
         fp = Camera().takeImage(filename)
         msg="Image saved as " + fp
@@ -784,8 +784,8 @@ def take_raw_photo():
     cp = cfg.cameraProperties
     if request.method == "POST":
         timeImg = datetime.datetime.now()
-        filename = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
-        filenameRaw = "photo_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
         logger.debug("Saving raw image %s", filenameRaw)
         fp = Camera().takeRawImage(filenameRaw, filename)
         msg="Image saved as " + fp
@@ -803,8 +803,8 @@ def record_video():
     cp = cfg.cameraProperties
     if request.method == "POST":
         timeImg = datetime.datetime.now()
-        filenameVid = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
-        filename = "video_" + timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        filenameVid = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Recording a video %s", filenameVid)
         fp = Camera.recordVideo(filenameVid, filename)
         time.sleep(4)

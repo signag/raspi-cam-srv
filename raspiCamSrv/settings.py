@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def main():
     g.hostname = request.host
+    cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
     sc = cfg.serverConfig
@@ -26,6 +27,7 @@ def main():
 def serverconfig():
     logger.debug("serverconfig")
     g.hostname = request.host
+    cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
     sc = cfg.serverConfig
@@ -45,6 +47,8 @@ def serverconfig():
                 sc.activeCameraInfo = "Camera " + str(cam.num) + " (" + cam.model + ")"
                 break
         logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
+        chnk = int(request.form["chunkSizePhoto"])
+        sc.chunkSizePhoto = chnk
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
 
 @bp.route("/resetServer", methods=("GET", "POST"))
@@ -52,6 +56,7 @@ def serverconfig():
 def resetServer():
     logger.debug("resetServer")
     g.hostname = request.host
+    cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
     sc = cfg.serverConfig

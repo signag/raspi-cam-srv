@@ -1145,6 +1145,12 @@ class ServerConfig():
         self._displayMetaFirst = 0
         self._displayMetaLast = 999
         self._displayBuffer = {}
+        self._chunkSizePhoto = 9
+        self._firstPagePhoto = 1
+        self._lastPagePhoto = 4
+        self._curPagePhoto = 1
+        self._nrPagesPhoto = 0
+        self._nrEntriesPhoto = 0
 
     @property
     def activeCamera(self) -> int:
@@ -1343,6 +1349,63 @@ class ServerConfig():
     @displayMetaLast.setter
     def displayMetaLast(self, value: int):
         self._displayMetaLast = value
+
+    @property
+    def chunkSizePhoto(self) -> int:
+        return self._chunkSizePhoto
+
+    @chunkSizePhoto.setter
+    def chunkSizePhoto(self, value: int):
+        self._chunkSizePhoto = value
+
+    @property
+    def firstPagePhoto(self) -> int:
+        return self._firstPagePhoto
+
+    @firstPagePhoto.setter
+    def firstPagePhoto(self, value: int):
+        self._firstPagePhoto = value
+
+    @property
+    def lastPagePhoto(self) -> int:
+        return self._lastPagePhoto
+
+    @lastPagePhoto.setter
+    def lastPagePhoto(self, value: int):
+        self._lastPagePhoto = value
+
+    @property
+    def curPagePhoto(self) -> int:
+        return self._curPagePhoto
+
+    @curPagePhoto.setter
+    def curPagePhoto(self, value: int):
+        self._curPagePhoto = value
+
+    @property
+    def nrPagesPhoto(self) -> int:
+        return self._nrPagesPhoto
+
+    @nrPagesPhoto.setter
+    def nrPagesPhoto(self, value: int):
+        self._nrPagesPhoto = value
+
+    @property
+    def nrEntriesPhoto(self) -> int:
+        return self._nrEntriesPhoto
+
+    @nrEntriesPhoto.setter
+    def nrEntriesPhoto(self, value: int):
+        self._nrEntriesPhoto = value
+
+    @property
+    def paginationPagesPhoto(self) -> list:
+        if self.lastPagePhoto > self.nrPagesPhoto:
+            self.lastPagePhoto = self.nrPagesPhoto
+        res = []
+        for i in range(self.firstPagePhoto, self.lastPagePhoto + 1):
+            res.append(i)
+        return res
     
     @property
     def displayBufferCount(self) -> int:

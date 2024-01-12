@@ -673,12 +673,13 @@ class Camera(BaseCamera):
     def recordVideo(filenameVid: str, filename: str):
         """Record a video in an own thread"""
         logger.debug("Thread %s: recordVideo. filename=%s", get_ident(), filename)
-        # First take a normal photo as placeholder
-        Camera.takeImage(filename)
-        
-        # Configure output for video file
         cfg = CameraCfg()
         sc = cfg.serverConfig
+        # First take a normal photo as placeholder
+        Camera.takeImage(filename)
+        sc.displayFile = filenameVid
+        
+        # Configure output for video file
         output = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filenameVid
 
         BaseCamera.liveViewDeactivated = True
