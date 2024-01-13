@@ -953,6 +953,7 @@
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_sensor_mode" id="{{ cfgId }}_sensor_mode"
                                 onchange="sensorModeChanged('{{ cfgId }}_sensor_mode', '{{ cfgId }}_sensor_mode_data', '{{ cfgId }}_stream_size_width', '{{ cfgId }}_stream_size_height', '{{ cfgId }}_stream_size_align')">
+                                <!-- A T T E N T I O N : Specific for raw -->
                                 {% for mode in sm %}
                                 {% if cfg.sensor_mode == mode.id %}
                                 <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
@@ -960,11 +961,6 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
-                                {% if cfg.sensor_mode == "custom" %}
-                                <option value="custom" selected>Custom</option>
-                                {% else %}
-                                <option value="custom">Custom</option>
-                                {% endif %}
                             </select>
                         </td>
                         <td style="width:45%" id="{{ cfgId }}_sensor_mode_data">

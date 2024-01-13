@@ -12,7 +12,7 @@ bp = Blueprint("images", __name__)
 logger = logging.getLogger(__name__)
 
 def getFileList() -> list:
-    logger.info("In images/getFileList")
+    logger.debug("In images/getFileList")
     cfg = CameraCfg()
     sc = cfg.serverConfig
     # Get the filelist
@@ -20,7 +20,7 @@ def getFileList() -> list:
     fl = os.listdir(fp)
     # Sort reverse
     fl.sort(reverse=True)
-    logger.info("%s files found in %s", len(fl), fp)
+    logger.debug("%s files found in %s", len(fl), fp)
 
     cnt = 0
     for file in fl:
@@ -40,7 +40,7 @@ def getFileList() -> list:
         sc.lastPagePhoto = 4
         if sc.lastPagePhoto > sc.nrPagesPhoto:
             sc.lastPagePhoto = sc.nrPagesPhoto
-    logger.info("Pagination uses %s pages with a chunk size of %s", sc.nrPagesPhoto, sc.chunkSizePhoto)
+    logger.debug("Pagination uses %s pages with a chunk size of %s", sc.nrPagesPhoto, sc.chunkSizePhoto)
     
     dl = []
     p = 1
@@ -90,7 +90,7 @@ def getFileList() -> list:
 @bp.route("/images")
 @login_required
 def main():
-    logger.info("In images/main")
+    logger.debug("In images/main")
     g.hostname = request.host
     cam = Camera()
     cfg = CameraCfg()
@@ -105,9 +105,9 @@ def main():
 @bp.route("/page/<int:pagenr>", methods=("GET",))
 @login_required
 def page(pagenr):
-    logger.info("In images/page")
-    logger.info("request.method: %s", request.method)
-    logger.info("pagenr: %s", pagenr)
+    logger.debug("In images/page")
+    logger.debug("request.method: %s", request.method)
+    logger.debug("pagenr: %s", pagenr)
     g.hostname = request.host
     cam = Camera()
     cfg = CameraCfg()
@@ -115,7 +115,7 @@ def page(pagenr):
     cp = cfg.cameraProperties
     sc.curMenu = "photos"
     sc.curPagePhoto = pagenr
-    logger.info("sc.curPagePhoto set to %s", pagenr)
+    logger.debug("sc.curPagePhoto set to %s", pagenr)
     dl = getFileList()
             
     return render_template("images/main.html", sc=sc, cp=cp, dl=dl)
@@ -123,7 +123,7 @@ def page(pagenr):
 @bp.route("/backwards", methods=("GET",))
 @login_required
 def backwards():
-    logger.info("In images/backwards")
+    logger.debug("In images/backwards")
     g.hostname = request.host
     cam = Camera()
     cfg = CameraCfg()
@@ -144,7 +144,7 @@ def backwards():
 @bp.route("/forwards", methods=("GET",))
 @login_required
 def forwards():
-    logger.info("In images/forwards")
+    logger.debug("In images/forwards")
     g.hostname = request.host
     cam = Camera()
     cfg = CameraCfg()
