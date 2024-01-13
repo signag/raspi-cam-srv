@@ -28,7 +28,8 @@ def main():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    cfgrf = cfg.rawFormats
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
 @login_required
@@ -46,6 +47,7 @@ def liveViewCfg():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         transform_hflip = not request.form.get("LIVE_transform_hflip") is None
         cfglive.transform_hflip = transform_hflip        
@@ -73,7 +75,7 @@ def liveViewCfg():
         cfglive.display = None
         cfglive.encode = "main"
         Camera().restartLiveView()
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addLiveViewControls", methods=("GET", "POST"))
 @login_required
@@ -92,13 +94,14 @@ def addLiveViewControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         for key, value in cc.dict().items():
             if value[0] == True:
                 if key not in cfg.liveViewConfig.controls:
                     cfg.liveViewConfig.controls[key] = value[1]
         Camera().restartLiveView()
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/remLiveViewControls", methods=("GET", "POST"))
 @login_required
@@ -116,6 +119,7 @@ def remLiveViewControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         cnt = 0
         for ctrl in cfg.liveViewConfig.controls:
@@ -139,7 +143,7 @@ def remLiveViewControls():
         else:
             msg="No controls were selected"
             flash(msg)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/photoCfg", methods=("GET", "POST"))
 @login_required
@@ -157,6 +161,7 @@ def photoCfg():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         transform_hflip = not request.form.get("FOTO_transform_hflip") is None
         cfgphoto.transform_hflip = transform_hflip        
@@ -183,7 +188,7 @@ def photoCfg():
         cfgphoto.format = format
         cfgphoto.display = None
         cfgphoto.encode = "main"
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addPhotoControls", methods=("GET", "POST"))
 @login_required
@@ -202,12 +207,13 @@ def addPhotoControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         for key, value in cc.dict().items():
             if value[0] == True:
                 if key not in cfg.photoConfig.controls:
                     cfg.photoConfig.controls[key] = value[1]
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/remPhotoControls", methods=("GET", "POST"))
 @login_required
@@ -225,6 +231,7 @@ def remPhotoControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         cnt = 0
         for ctrl in cfg.photoConfig.controls:
@@ -245,7 +252,7 @@ def remPhotoControls():
         else:
             msg="No controls were selected"
             flash(msg)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/rawCfg", methods=("GET", "POST"))
 @login_required
@@ -261,8 +268,9 @@ def rawCfg():
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
-    cfgraw = cfg._rawConfig
+    cfgraw = cfg.rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         transform_hflip = not request.form.get("PRAW_transform_hflip") is None
         cfgraw.transform_hflip = transform_hflip        
@@ -287,7 +295,7 @@ def rawCfg():
         cfgraw.format = format
         cfgraw.display = None
         cfgraw.encode = None
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addRawControls", methods=("GET", "POST"))
 @login_required
@@ -306,12 +314,13 @@ def addRawControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         for key, value in cc.dict().items():
             if value[0] == True:
                 if key not in cfg.rawConfig.controls:
                     cfg.rawConfig.controls[key] = value[1]
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/remRawControls", methods=("GET", "POST"))
 @login_required
@@ -329,6 +338,7 @@ def remRawControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         cnt = 0
         for ctrl in cfg.rawConfig.controls:
@@ -349,7 +359,7 @@ def remRawControls():
         else:
             msg="No controls were selected"
             flash(msg)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/videoCfg", methods=("GET", "POST"))
 @login_required
@@ -367,6 +377,7 @@ def videoCfg():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         transform_hflip = not request.form.get("VIDO_transform_hflip") is None
         cfgvideo.transform_hflip = transform_hflip        
@@ -393,7 +404,7 @@ def videoCfg():
         cfgvideo.format = format
         cfgvideo.display = None
         cfgvideo.encode = "main"
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addVideoControls", methods=("GET", "POST"))
 @login_required
@@ -412,12 +423,13 @@ def addVideoControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         for key, value in cc.dict().items():
             if value[0] == True:
                 if key not in cfg.videoConfig.controls:
                     cfg.videoConfig.controls[key] = value[1]
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/remVideoControls", methods=("GET", "POST"))
 @login_required
@@ -435,6 +447,7 @@ def remVideoControls():
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
     if request.method == "POST":
         cnt = 0
         for ctrl in cfg.videoConfig.controls:
@@ -455,4 +468,4 @@ def remVideoControls():
         else:
             msg="No controls were selected"
             flash(msg)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
