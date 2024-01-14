@@ -41,19 +41,47 @@ The software is still being tested and extended.
 ## Setup / Getting Started
 
 ### Required
-- A Raspberry Pi ([Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/), [Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/), [Pi 1](https://www.raspberrypi.com/products/raspberry-pi-1-model-b-plus/), [Pi 3](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/), [Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/), [Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/))
+- A **Raspberry Pi** ([Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/), [Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/), [Pi 1](https://www.raspberrypi.com/products/raspberry-pi-1-model-b-plus/), [Pi 3](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/), [Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/), [Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/))
 - A [Raspberry Pi camera](https://www.raspberrypi.com/documentation/accessories/camera.html)
-- A suitable camera cable (Pi Zero and Pi 5 have the small CSI-2 camera port, requiring a special cable)
-- A microSD card
-- A suitable power supply
-- A Wifi network with internet access and known access credentials (SSID, password)
-- A PC with network access and SD card reader
+- A suitable **camera cable** <br>(Pi Zero W, Pi Zero 2 W and Pi 5 have the small CSI-2 camera port, requiring a special cable which is usually not shipped with the camera)
+- A **microSD card**
+- A suitable **power supply**<br>For Pi Zero W or Pi Zero 2 W, a normal mobile phone charger is sufficient as long as it has a Micro-USB connector
+- Optionally, a **case** for the specific model may ease handling.<br>For Pi Zero W or Zero 2 W, offerings for the official case (e.g. [here](https://www.reichelt.de/gehaeuse-fuer-raspberry-pi-zero-rot-weiss-rpiz-case-whrd-p223607.html?PROVID=2788&gclid=EAIaIQobChMI2JfM3vjcgwMVSxYGAB1pSQBOEAYYASABEgL_GPD_BwE)) should include a special short camera cable.<br>The cover for the camera is fine for camera models 1 and 2. For camera model 3, some handwork is necessary to enlarge the hole to a square for the camera body.
+- A **Wifi network** with internet access and known access credentials (**SSID**, **password**)
+- A **PC** with network access and **(micro)SD** card reader
+
+The setup description, below, assumes a completely autonomous or 'headless' setup, where the Raspberry Pi requires nothing but a power supply cable without any necessity to ever connect it to a display, keyboard or mouse.   
+![Pi Zero Cover](docs/img/pi_zero_cover.jpg)<br>Here, the camera model 2 is installed.
+
+The described steps were successfully executed with Raspberry Pi Imager version 1.8.4 and a Raspberry Pi Zero W.
 
 ### System Setup
-For system setup, follow the instructions of the [Raspberry Pi Getting Started Documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html)
+For system setup, follow the instructions of the [Raspberry Pi Getting Started Documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#install-using-imager) for OS installation using Imager.   
+Make sure that SSH is enabled on the Services tab.
 
-### 
+Once the SD card is written, insert it into the Raspberry Pi and power it up.   
+Initially, it will take several minutes until it is visible in the network.
+
+### RaspiCamSrv Installation
 
 |Step|Action
 |----|--------------------------------------------------
-|1.  | 
+|1.  | Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with user and host as specified during setup with Imager.
+|2.  | Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
+|3.  | Create a root directory under which you will install programs (e.g. 'prg')<br>```mkdir prg```<br>```cd prg```
+|4.  | Check that git is installed (which is usually the case in current Bullseye and Bookworm distributions)<br>```git --version```<br>If git is not installed, install it with<br>```sudo apt install git```
+|5.  | Clone the raspi-cam-srv repository:<br>```git clone https://github.com/signag/raspi-cam-srv```
+|6.  | Create a virtual environment ('.venv') on the 'raspi-cam-srv' folder:<br>```cd raspi-cam-srv```<br>```python -m venv --system-site-packages .venv```<br>For the reasoning to include system site packages, see the [picamera2-manual.pdf](./picamera2-manual.pdf), chapter 9.5.
+|7.  | Activate the virtual environment<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
+|8.  | Install Flask 3.0 within the virtual environment.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.0, which can be installed with<br>```pip install Flask==3.0.0```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.0.0'.
+|9.  | Initialize the database for Flask:<br>```flask --app raspiCamSrv init-db```
+|10. | Start the server:<br>```flask --app raspiCamSrv run --host=0.0.0.0```
+|11. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
+|12. | Before you can login, you first need to [register](docs/Authentication.md#registration).
+|13. | After successful log-in, the [Live](docs/LiveScreen.md) will be shown
+|14. | Done!
+
+
+When the Flask server starts up, it will show a warning that this is a development server.   
+This is, in general, fine for private environments.   
+How to deploy with a production WSGI server, is described in the [Flask documentation](https://flask.palletsprojects.com/en/3.0.x/deploying/)
