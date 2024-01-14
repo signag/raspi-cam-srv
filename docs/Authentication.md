@@ -1,5 +1,7 @@
 # raspiCamSrv Authorization
 
+[![Up](img/goup.gif)](./UserGuide.md)
+
 Access to the raspiCamSrv server requires login with Username and Password.
 
 Currently, the implementation uses just the solution from the Flask 3 tutorial, which is a starting point but not really secure.

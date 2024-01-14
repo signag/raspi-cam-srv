@@ -1,5 +1,7 @@
 # raspiCamSrv Camera Configuration
 
+[![Up](img/goup.gif)](./UserGuide.md)
+
 Configuration parameters are so basic that they need to be applied before the camera is started.
 
 Picamera2 provides three configuration bases which can be taken as is for a specific use case or they can be adjusted in one or several aspects.

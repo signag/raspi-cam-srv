@@ -1,5 +1,7 @@
 # raspiCamSrv Settings
 
+[![Up](img/goup.gif)](./UserGuide.md)
+
 This screen alloes for some basic configurations, such as selecting the standard file types for photos, raw photos and videos.
 
 ![Settings](img/Settings.jpg)

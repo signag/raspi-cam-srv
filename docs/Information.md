@@ -1,5 +1,7 @@
 # raspiCamSrv Information on Camera System
 
+[![Up](img/goup.gif)](./UserGuide.md)
+
 This screen contains several tabs with information on the camera system:
 
 ## Cameras

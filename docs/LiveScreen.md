@@ -1,6 +1,6 @@
 # raspiCamSrv Live Screen
 
-[](./UserGuide.md)
+[![Up](img/goup.gif)](./UserGuide.md)
 
 The **Live** screen is the central part of the application.   
 After photos or videos have been taken in the current session, its layout is as shown below:

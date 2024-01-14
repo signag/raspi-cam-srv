@@ -1,6 +1,8 @@
 # raspiCamSrv Zoom & Pan
 
-![ZoonAndPan](img/Zoom.jpg)
+[![Up](img/goup.gif)](./LiveScreen.md)
+
+![ZoomAndPan](img/Zoom.jpg)
 
 This tab allows zooming and panning the image area within the dimensions supported by the camera pixel array size.
 

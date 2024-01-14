@@ -1,5 +1,7 @@
 # raspiCamSrv Photo Taking
 
+[![Up](img/goup.gif)](./LiveScreen.md)
+
 The *Live* tab of **raspiCamSrv** provides functionality to take photos, raw photos and videos.
 
 In all cases, the predefined [Camara Configuration](./Configuration.md) for the specific use case is applied together with the currently activated [Camera Controls](./CameraControls.md).

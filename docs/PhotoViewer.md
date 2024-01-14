@@ -9,6 +9,8 @@ The current implementation of **raspiCamSrv** includes a very simple viewer whic
 
 ![Photos](img/Photos.jpg)
 
+[![Up](img/goup.gif)](./UserGuide.md)
+
 On the left side, a chunk of photos (placeholders for raw and video) are shown in reverse order with the newest one on top.
 
 The file name in the photo (or placeholder) shows the correct filename of the resource represented by the picture.
