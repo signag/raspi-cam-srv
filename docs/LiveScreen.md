@@ -1,6 +1,8 @@
-# raspiCamSrv Live Page
+# raspiCamSrv Live Screen
 
-The **Live** page is the central part of the application.   
+[](./UserGuide.md)
+
+The **Live** screen is the central part of the application.   
 After photos or videos have been taken in the current session, its layout is as shown below:
 
 ![Live Screen](img/Live0.jpg)

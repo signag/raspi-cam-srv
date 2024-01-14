@@ -5,9 +5,9 @@ The Raspberry Pi Camera Server (raspiCamSrv) is a web server which can be deploy
 It can be installed on all Raspberry Pi platforms which allow connection of one or multiple cameras and supports the currently existing camera types.
 Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2 and 3. On Pi 5, also parallel installation of two different cameras was tested.
 
-raspiCamSrv is built with [Flask 3.0](https://flask.palletsprojects.com/en/3.0.x/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
+**raspiCamSrv** is built with [Flask 3.0](https://flask.palletsprojects.com/en/3.0.x/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 
-Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), clients can be all modern browsers as well as mobile devices.
+Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
 ## Feature Overview
 For more details, see the [User Guide](docs/UserGuide.md)
