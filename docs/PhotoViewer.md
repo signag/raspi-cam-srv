@@ -1,4 +1,6 @@
-raspiCamSrv Photo Viewer
+# raspiCamSrv Photo Viewer
+
+[![Up](img/goup.gif)](./UserGuide.md)
 
 All photos, raw photos or videos taken wit **raspiCamSrv** are stored in a camera-specific folder on the server.
 
@@ -8,8 +10,6 @@ The full path of the folder for the active camera is shown in the [Settings](./S
 The current implementation of **raspiCamSrv** includes a very simple viewer which allows to inspect the available files:
 
 ![Photos](img/Photos.jpg)
-
-[![Up](img/goup.gif)](./UserGuide.md)
 
 On the left side, a chunk of photos (placeholders for raw and video) are shown in reverse order with the newest one on top.
 

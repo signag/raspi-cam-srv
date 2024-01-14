@@ -66,7 +66,7 @@ Initially, it will take several minutes until it is visible in the network.
 
 |Step|Action
 |----|--------------------------------------------------
-|1.  | Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with user and host as specified during setup with Imager.
+|1.  | Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with \<user> and \<host> as specified during setup with Imager.
 |2.  | Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
 |3.  | Create a root directory under which you will install programs (e.g. 'prg')<br>```mkdir prg```<br>```cd prg```
 |4.  | Check that git is installed (which is usually the case in current Bullseye and Bookworm distributions)<br>```git --version```<br>If git is not installed, install it with<br>```sudo apt install git```
@@ -78,7 +78,7 @@ Initially, it will take several minutes until it is visible in the network.
 |10. | Start the server:<br>```flask --app raspiCamSrv run --host=0.0.0.0```
 |11. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
 |12. | Before you can login, you first need to [register](docs/Authentication.md#registration).
-|13. | After successful log-in, the [Live](docs/LiveScreen.md) will be shown
+|13. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
 |14. | Done!
 
 

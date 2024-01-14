@@ -32,6 +32,7 @@ The main menu (black background) allows navigation to different screens
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
 - **Timelapse** opens the [Timelapes](./Timelapse.md) page for control of timelapse series.
 - **Settings** opens the [Settings](./Settings.md) page where some basic server parameters can be configured and where the active camera can be switched in case the Raspberry Pi device supprts multiple cameras (such as Pi 5).
+- **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
 
 #### Message Line
 At the bottom of the screen, there is a message line where application messages will be shown when necessary.
