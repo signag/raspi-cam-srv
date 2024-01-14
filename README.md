@@ -10,6 +10,8 @@ raspiCamSrv is built with Flask 3.0 and uses the Picamera2 library.
 Due to responsive layout from W3.CSS, clients can be all modern browsers as well as mobile devices.
 
 ## Feature Overview
+For more details, see the [User Guide](docs/UserGuide.md)
+
 ![Live Overview](docs/img/Live.jpg)
 
 - The **Live** tab shows a live stream of the active camera and allows individually selecting and setting all camera controls supported by Picamera2.
@@ -36,3 +38,4 @@ The software is still being tested and extended.
 - The detailed solution for the mjpeg_server is based on the example [mjpeg_server.py](https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py) of the [picamera2 repository](https://github.com/raspberrypi/picamera2)
 - The solution for drawing on the canvas for definition of AF Windows has been inspired by <https://codepen.io/AllenT871/pen/GVyXKp>
 
+## Setup / Getting Started
