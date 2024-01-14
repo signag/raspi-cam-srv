@@ -7,7 +7,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 raspiCamSrv is built with Flask 3.0 and uses the Picamera2 library.
 
-Due to responsive layout from W3.CSS, clients can be all modern browsers as well as mobile devices.
+Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), clients can be all modern browsers as well as mobile devices.
 
 ## Feature Overview
 For more details, see the [User Guide](docs/UserGuide.md)
@@ -85,3 +85,22 @@ Initially, it will take several minutes until it is visible in the network.
 When the Flask server starts up, it will show a warning that this is a development server.   
 This is, in general, fine for private environments.   
 How to deploy with a production WSGI server, is described in the [Flask documentation](https://flask.palletsprojects.com/en/3.0.x/deploying/)
+
+### Service Configuration
+
+When the Flask server is started in a SSH session as described in step 10, above, it will terminate with the SSH session.
+
+Instead, you may want the server to start up independently from any user sessions, restart after a failure and automatically start up when the device is powered up.
+
+In order to achieve this, the Flask server start can be configured as service under control of systemd.
+
+|Step|Action
+|----|-----------------------------------------------
+|1.  | Open a SSH session on the Raspberry Pi
+|2.  | Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
+|3.  | Adjust the service configuration:<br>```nano raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)
+|4.  | Stage the service configuration file to systemd:<br>```sudo cp raspiCamSrv.service /etc/systemd/system```
+|5.  | Start the service:<br>```sudo systemctl start raspiCamSrv.service```
+|6.  | Check that the Flask server has started as service:<br>```sudo journalctl -e```
+|7.  | Enable the service so that it automatically starts with system boot:<br>```sudo systemctl enable raspiCamSrv.service```
+|8.  | Reboot the system to test automatic server start:<br>```sudo reboot```
