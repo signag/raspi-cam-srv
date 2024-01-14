@@ -39,3 +39,21 @@ The software is still being tested and extended.
 - The solution for drawing on the canvas for definition of AF Windows has been inspired by <https://codepen.io/AllenT871/pen/GVyXKp>
 
 ## Setup / Getting Started
+
+### Required
+- A Raspberry Pi ([Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/), [Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/), [Pi 1](https://www.raspberrypi.com/products/raspberry-pi-1-model-b-plus/), [Pi 3](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/), [Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/), [Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/))
+- A [Raspberry Pi camera](https://www.raspberrypi.com/documentation/accessories/camera.html)
+- A suitable camera cable (Pi Zero and Pi 5 have the small CSI-2 camera port, requiring a special cable)
+- A microSD card
+- A suitable power supply
+- A Wifi network with internet access and known access credentials (SSID, password)
+- A PC with network access and SD card reader
+
+### System Setup
+For system setup, follow the instructions of the [Raspberry Pi Getting Started Documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html)
+
+### 
+
+|Step|Action
+|----|--------------------------------------------------
+|1.  | 

@@ -5,7 +5,7 @@ From these, 8 parameters are just part of the image metadata and cannot be appli
 
 In principle, the remaining 28 parameters can be applied to the camera at different times
 1. As part of the [Camera Configuration](./Configuration.md).    
-Here **raspiCamSrv** supports adding any of thes parameters to the configuration.   
+Here **raspiCamSrv** supports adding any of these parameters to the configuration.   
 Control parameters included in the configuration have precedence over parameters not in the configuration.
 2. After camera configuration before camera start.   
 In **raspiCamSrv**, this applies for all photos and videos taken in a raspiCamSrv session.
