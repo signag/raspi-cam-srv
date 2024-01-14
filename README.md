@@ -5,7 +5,7 @@ The Raspberry Pi Camera Server (raspiCamSrv) is a web server which can be deploy
 It can be installed on all Raspberry Pi platforms which allow connection of one or multiple cameras and supports the currently existing camera types.
 Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2 and 3. On Pi 5, also parallel installation of two different cameras was tested.
 
-raspiCamSrv is built with Flask 3.0 and uses the Picamera2 library.
+raspiCamSrv is built with [Flask 3.0](https://flask.palletsprojects.com/en/3.0.x/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), clients can be all modern browsers as well as mobile devices.
 
@@ -14,16 +14,16 @@ For more details, see the [User Guide](docs/UserGuide.md)
 
 ![Live Overview](docs/img/Live.jpg)
 
-- The **Live** tab shows a live stream of the active camera and allows individually selecting and setting all camera controls supported by Picamera2.
-- For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance.
-- Photos, raw photos and videos can be taken, which are shown in the lower part of the **Live** tab together with their metadata.
+- The [Live screen](docs/LiveScreen.md) shows a live stream of the active camera and allows individually selecting and setting all [camera controls](docs/CameraControls.md) supported by Picamera2.
+- For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance (see [Focus handling](docs/FocusHandling.md)).
+- Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](docs/LiveScreen.md) together with their metadata (see [Photo taking](docs/Phototaking.md)).
 - For raw photos and videos, a jpeg placeholder is shown
-- The photos taken may be added to a small buffer which can be navigated for comparison
-- On the **Config** tab, camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken.
-- The **Info** screen shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
-- The **Photos** tab allows scrolling through all available photos and videos with detail views of selected items.
-- The settings tab allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
-- Access to the server requires registration and authentification.
+- The photos taken may be added to a display buffer for inspection of photos and metadata and for comparison (see [Photo Display](docs/Phototaking.md#photo-display))
+- On the [Config screen](docs/Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
+- The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
+- The [Photos screen](docs/PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
+- The [Settings screen](docs/Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
+- Access to the server requires [registration and authentification](docs/Authentication.md).
 
 ## Limitations
 The software is still being tested and extended.
