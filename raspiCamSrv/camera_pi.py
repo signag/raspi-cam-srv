@@ -721,8 +721,8 @@ class Camera(BaseCamera):
         while BaseCamera.videoThread:
             time.sleep(0.01)
             cnt += 1
-            if cnt > 200:
-                raise TimeoutError("Video thread did not stop within 2 sec")
+            if cnt > 500:
+                raise TimeoutError("Video thread did not stop within 5 sec")
         logger.debug("Thread %s: stopVideoRecording: Thread has stopped", get_ident())
         Camera.cam = Picamera2(sc.activeCamera)
         BaseCamera.liveViewDeactivated = False
