@@ -79,7 +79,7 @@ class Camera(BaseCamera):
             
             Then check the active camera and return it
         """
-        logger.info("Thread %s: Camera.getActiveCamera", get_ident())
+        logger.debug("Thread %s: Camera.getActiveCamera", get_ident())
         cfg = CameraCfg()
         if len(cfg.cameras) == 0:
             cfgCams = []
@@ -100,7 +100,7 @@ class Camera(BaseCamera):
                     # Check for USB camera
                     if cfgCam.id.find("/usb@") > 0:
                         cfgCam.isUsb = True
-                        logger.info("Thread %s: Camera.getActiveCamera - USB camera found:  %s", get_ident(), cfgCam.id)
+                        logger.debug("Thread %s: Camera.getActiveCamera - USB camera found:  %s", get_ident(), cfgCam.id)
                 # On Bullseye systems, "Num" is not in the dict
                 if "Num" in camera:
                     cfgCam.num = camera["Num"]
@@ -109,7 +109,7 @@ class Camera(BaseCamera):
                     camNum += 1
                 cfgCams.append(cfgCam)
             cfg.cameras = cfgCams
-            logger.info("Thread %s: Camera.getActiveCamera - %s cameras found", get_ident(), len(cfg.cameras))
+            logger.debug("Thread %s: Camera.getActiveCamera - %s cameras found", get_ident(), len(cfg.cameras))
         
         # Check that active camera is within the list of cameras
         sc = cfg.serverConfig
@@ -122,7 +122,7 @@ class Camera(BaseCamera):
                     activeCamOK = True
                     sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
                 break
-        logger.info("Thread %s: Camera.getActiveCamera - Active camera:%s - activeCamOK:%s", get_ident(), activeCam, activeCamOK)
+        logger.debug("Thread %s: Camera.getActiveCamera - Active camera:%s - activeCamOK:%s", get_ident(), activeCam, activeCamOK)
         # If config for active camera is not in the list, or if it is a USB cam, 
         # set it to the first non-USB camera
         if activeCamOK == False:
@@ -131,7 +131,7 @@ class Camera(BaseCamera):
                     sc.activeCamera = cfgCam.num
                     sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
                     break
-            logger.info("Thread %s: Camera.getActiveCamera - active camera reset to %s", get_ident(), sc.activeCamera)
+            logger.debug("Thread %s: Camera.getActiveCamera - active camera reset to %s", get_ident(), sc.activeCamera)
         # Make sure that folder for photos exists
         sc.cameraPhotoSubPath = "photos/" + "camera_" + str(sc.activeCamera)
         fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath
