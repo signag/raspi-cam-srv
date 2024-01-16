@@ -28,6 +28,8 @@ For more details, see the [User Guide](docs/UserGuide.md)
 ## Limitations
 The software is still being tested and extended.
 
+- USB cameras are detected but currently not supported. One reason is that many USB cameras use the YUYV format whereas **raspiCamSrv** uses MJPEG for the Live stream and YUYV would require OpenCV for rendering.
+- **raspiCamSrv** will not automatically detect a changed setup, for example if cameras are plugged in and out while the Raspberry Pi is running (certainly, this would apply unly to USB cameras and nobody will unplug a Pi camera without shutting down the system). However, there is a **Reset Server** button on the [Settings](docs/Settings.md) screen, which, when pressed, will force the configuration to be updated.
 - Timelapse features are envisaged. <br>It was actually the starting point for this project to develop a Pi Zero + Camera solution, based on actual software and hardware, which can be used for long runnting time lapse series.
 - The entire configuration is still transient and will be reinitialized with server restart. It is intended to save the configuration in the database and restore it when the server is restarted.
 - Although the layout is responsive, it may not be "good-looking" with all sizes of browser windows

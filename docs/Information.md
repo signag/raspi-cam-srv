@@ -12,9 +12,11 @@ The tab lists all cameras currently connected to the system.
 
 Each camera has an identifying number (0, 1, ...) shown in the title above each parameter list.
 
-When the server starts up, the camera with number 0 is selected.
+**raspiCamSrv** detects also USB cameras, however, these are not supported, which is indicated in the title.
 
-You may later switch to another camera on the [Settings](./Settings.md) screen
+When the server starts up, the first camera, which is not a USB camera, is selected.
+
+You may later switch to another non-USB camera on the [Settings](./Settings.md) screen
 
 The active camera is indicated in the list.
 

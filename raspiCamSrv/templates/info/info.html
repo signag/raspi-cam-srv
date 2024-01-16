@@ -18,7 +18,11 @@
         {% if cam.num == sc.activeCamera %}
         <h4>Camera {{ cam.num }} (currently active)</h4>
         {% else%}
+        {% if cam.isUsb == true %}
+        <h4>Camera {{ cam.num }} (USB camera - Not supported)</h4>
+        {% else%}
         <h4>Camera {{ cam.num }}</h4>
+        {% endif%}
         {% endif%}
         <table class="w3-table-all">
             <tr>

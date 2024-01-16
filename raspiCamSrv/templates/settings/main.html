@@ -23,10 +23,12 @@
                     <td style="width:70%">
                         <select name="activecamera" id="activecamera">
                         {% for cam in cs %}
+                            {% if cam.isUsb == false %}
                             {% if sc.activeCamera == cam.num %}
                             <option value="{{ cam.num }}" selected>{{ cam.num }}: {{ cam.model }}</option>
                             {% else %}
                             <option value="{{ cam.num }}">{{ cam.num }}: {{ cam.model }}</option>
+                            {% endif %}
                             {% endif %}
                         {% endfor %}
                         </select>

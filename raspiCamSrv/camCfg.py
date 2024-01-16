@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 class CameraInfo():
     def __init__(self):
         self._model = ""
+        self._isUsb = False
         self._location = 0
         self._rotation = 0
         self._id = ""
@@ -19,6 +20,14 @@ class CameraInfo():
     def model(self, value: str):
         self._model = value
 
+    @property
+    def isUsb(self) -> bool:
+        return self._isUsb
+
+    @isUsb.setter
+    def isUsb(self, value: bool):
+        self._isUsb = value
+        
     @property
     def location(self) -> int:
         return self._location

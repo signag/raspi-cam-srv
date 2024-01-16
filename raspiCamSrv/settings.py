@@ -69,8 +69,10 @@ def resetServer():
         BaseCamera.thread = None
         BaseCamera.videoThread = None
         logger.debug("Resetting server configuration")
-        del cfg
         cfg = CameraCfg()
+        cfg.cameras = []
+        cfg.sensorModes = []
+        cfg.rawFormats = []
         sc = cfg.serverConfig
         sc.isVideoRecording = False
         sc.curMenu = "settings"

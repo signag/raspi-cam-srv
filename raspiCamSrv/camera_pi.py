@@ -79,27 +79,37 @@ class Camera(BaseCamera):
             
             Then check the active camera and return it
         """
-        logger.debug("Thread %s: Camera.loadGlobalCameraInfo", get_ident())
+        logger.info("Thread %s: Camera.getActiveCamera", get_ident())
         cfg = CameraCfg()
         if len(cfg.cameras) == 0:
             cfgCams = []
             cams = Picamera2.global_camera_info()
             if len(cams) == 0:
                 raise SystemError("No cameras were found on the server's device")
+            camNum = 0
             for camera in cams:
                 cfgCam = CameraInfo()
-                cfgCam.model = camera["Model"]
-                cfgCam.location = camera["Location"]
-                cfgCam.rotation = camera["Rotation"]
-                cfgCam.id = camera["Id"]
-                # On devices with a single camera, "Num" is not in the dict
+                if "Model" in camera:
+                    cfgCam.model = camera["Model"]
+                if "Location" in camera:
+                    cfgCam.location = camera["Location"]
+                if "Rotation" in camera:
+                    cfgCam.rotation = camera["Rotation"]
+                if "Id" in camera:
+                    cfgCam.id = camera["Id"]
+                    # Check for USB camera
+                    if cfgCam.id.find("/usb@") > 0:
+                        cfgCam.isUsb = True
+                        logger.info("Thread %s: Camera.getActiveCamera - USB camera found:  %s", get_ident(), cfgCam.id)
+                # On Bullseye systems, "Num" is not in the dict
                 if "Num" in camera:
                     cfgCam.num = camera["Num"]
                 else:
-                    cfgCam.num = 0
+                    cfgCam.num = camNum
+                    camNum += 1
                 cfgCams.append(cfgCam)
             cfg.cameras = cfgCams
-            logger.debug("Thread %s: Camera.loadGlobalCameraInfo - %s cameras found", get_ident(), len(cfg.cameras))
+            logger.info("Thread %s: Camera.getActiveCamera - %s cameras found", get_ident(), len(cfg.cameras))
         
         # Check that active camera is within the list of cameras
         sc = cfg.serverConfig
@@ -107,20 +117,27 @@ class Camera(BaseCamera):
         activeCam = sc.activeCamera
         for cfgCam in cfg.cameras:
             if cfgCam.num == activeCam:
-                activeCamOK = True
-                sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
+                # Accept the active camera only if it is not a USB camera
+                if cfgCam.isUsb == False:
+                    activeCamOK = True
+                    sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
                 break
-        # If config for active camera is not in the list, set it to the first camera
+        logger.info("Thread %s: Camera.getActiveCamera - Active camera:%s - activeCamOK:%s", get_ident(), activeCam, activeCamOK)
+        # If config for active camera is not in the list, or if it is a USB cam, 
+        # set it to the first non-USB camera
         if activeCamOK == False:
-            sc.activeCamera = cfg.cameras[0].num
-            sc.activeCameraInfo = "Camera " + str(cfg.cameras[0].num) + " (" + cfg.cameras[0].model + ")"
-            logger.debug("Thread %s: Camera.loadGlobalCameraInfo - active camera reset to %s", get_ident(), sc.activeCamera)
+            for cfgCam in cfg.cameras:
+                if cfgCam.isUsb == False:
+                    sc.activeCamera = cfgCam.num
+                    sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
+                    break
+            logger.info("Thread %s: Camera.getActiveCamera - active camera reset to %s", get_ident(), sc.activeCamera)
         # Make sure that folder for photos exists
         sc.cameraPhotoSubPath = "photos/" + "camera_" + str(sc.activeCamera)
         fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath
         if not os.path.exists(fp):
             os.makedirs(fp)
-            logger.debug("Thread %s: Camera.loadGlobalCameraInfo - Photo directory created %s", get_ident(), fp)
+            logger.debug("Thread %s: Camera.getActiveCamera - Photo directory created %s", get_ident(), fp)
         
         return cfg.serverConfig.activeCamera
         

@@ -14,7 +14,7 @@ The **Autofocus Mode** can be set to "Manual", "Auto" or "Continuous"
 
 When *Autofocus Mode* "Manual" is chosen, also the *Focal Distance* field must be activated and the distance must be set manually.
 
-Pressing **Submit** will apply the setting to the live stream and the canged focus will be immediately visible.
+Pressing **Submit** will apply the setting to the live stream and the changed focus will be immediately visible.
 
 ## Continuous Focus
 
@@ -58,7 +58,7 @@ As result, a canvas will be drawn over the live stream area which is visible as 
 Position the cursor at one corner of the intended rectangle,   
 press the left mouse button,    
 and drag with mouse button down to the opposite corner.
-3. When the mouse button is released, the rectangle coordinates will be scaled to the current scaler crop settings and entered in the *Autofocus Window* field.  
+3. When the mouse button is released, the rectangle coordinates will be scaled to the current scaler crop settings and entered in the *Autofocus Windows* field.  
 ![AfWindows2](img/AFWindows2.jpg)
 4. If required, you can draw additional rectangles in the same way.   
 While drawing rectangles, previously drawn rectangles will vanish without getting lost.
