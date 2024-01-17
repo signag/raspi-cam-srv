@@ -1680,6 +1680,20 @@ RaspiCamSrv's Live page
                 document.getElementById('livecanvas').removeEventListener('mouseout', function (e) {
                     handleMouseOut(e);
                 });   
+
+
+                document.getElementById('livecanvas').removeEventListener('touchstart', function (e) {
+                    handleTouchStart(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('touchmove', function (e) {
+                    handleTouchMove(e);
+                }, true);
+                document.getElementById('livecanvas').removeEventListener('touchend', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('touchcancel', function (e) {
+                    handleMouseOut(e);
+                });                
                 // Remove canvas             
                 document.body.removeChild(cnvEl);
                 liveCanvas = null;
@@ -1811,6 +1825,22 @@ RaspiCamSrv's Live page
             mouseIsDown = true;
         }
 
+        function handleTouchStart(e) {
+            /*  In case of mouse down, memorize point as start of rectangle
+            */
+            //console.log('handleMouseDown')
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // save the starting x/y of the rectangle
+            mouseStartX = parseInt(e.targetTouches[0].clientX - liveCanvasOffsetX);
+            mouseStartY = parseInt(e.targetTouches[0].clientY - liveCanvasOffsetY);
+
+            // set a flag indicating the drag has begun
+            mouseIsDown = true;
+        }
+
         function handleMouseUp(e) {
             /*  In case of mouse up, register end of drawing
             */
@@ -1860,6 +1890,53 @@ RaspiCamSrv's Live page
             // get the current mouse position
             mouseX = parseInt(e.clientX - liveCanvasOffsetX);
             mouseY = parseInt(e.clientY - liveCanvasOffsetY);
+
+            // clear the canvas
+            liveCanvasCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
+
+            // calculate the rectangle width/height based
+            // on starting vs current mouse position
+            var width = mouseX - mouseStartX;
+            var height = mouseY - mouseStartY;
+
+            // draw a new rect from the start position 
+            // to the current mouse position
+            liveCanvasCtx.strokeRect(mouseStartX, mouseStartY, width, height);
+            if (width >= 0) {
+                winXOffset = mouseStartX;
+                winWidth = width;
+            } else {
+                winXOffset = mouseX;
+                winWidth = -1 * width;
+            }
+            if (height >= 0) {
+                winYOffset = mouseStartY;
+                winHeight = height;
+            } else {
+                winYOffset = mouseY;
+                winHeight = -1 * height;
+            }
+        }
+
+        function handleTouchMove(e) {
+            /*  While mouse is moving with mouse down,
+                Clear canvas from previous rectangle
+                and draw rectangle with new coordinates.
+                Memorize rectangla parameters.
+            */
+            //console.log('handleMouseMove')
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // if we're not dragging, just return
+            if (!mouseIsDown) {
+                return;
+            }
+
+            // get the current mouse position
+            mouseX = parseInt(e.targetTouches[0].clientX - liveCanvasOffsetX);
+            mouseY = parseInt(e.targetTouches[0].clientY - liveCanvasOffsetY);
 
             // clear the canvas
             liveCanvasCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
@@ -1962,6 +2039,19 @@ RaspiCamSrv's Live page
                 document.getElementById('livecanvas').addEventListener('mouseout', function (e) {
                     handleMouseOut(e);
                 });                
+
+                document.getElementById('livecanvas').addEventListener('touchstart', function (e) {
+                    handleTouchStart(e);
+                });
+                document.getElementById('livecanvas').addEventListener('touchmove', function (e) {
+                    handleTouchMove(e);
+                }, true);
+                document.getElementById('livecanvas').addEventListener('touchend', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('livecanvas').addEventListener('touchcancel', function (e) {
+                    handleMouseOut(e);
+                });                
             } else {
                 // Trigger inactive -> destroy canvas and clear AFWindows
                 removeAfWindow()
@@ -1988,6 +2078,19 @@ RaspiCamSrv's Live page
                 document.getElementById('livecanvas').removeEventListener('mouseout', function (e) {
                     handleMouseOut(e);
                 });
+
+                document.getElementById('livecanvas').removeEventListener('touchstart', function (e) {
+                    handleTouchStart(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('touchmove', function (e) {
+                    handleTouchMove(e);
+                }, true);
+                document.getElementById('livecanvas').removeEventListener('touchend', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('livecanvas').removeEventListener('touchcancel', function (e) {
+                    handleMouseOut(e);
+                });                
                 // Remove canvas             
                 document.body.removeChild(cnvEl);
                 liveCanvas = null;

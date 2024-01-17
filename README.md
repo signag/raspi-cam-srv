@@ -25,6 +25,12 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - The [Settings screen](docs/Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
 - Access to the server requires [registration and authentification](docs/Authentication.md).
 
+## Known Issues
+
+- In **Safari** (e.g. on an iPad), there is still an issue with the Live Screen:    
+ Due to the specific timing of the onload event, [AF Windows](docs/FocusHandling.md#autofocus-windows) may not be visible immediately after the page has been loaded. If you just 'pull' the entire window down for a short time (don't touch the AF Windows canvas), they will show up.   
+ If the Live stream does not show up (e.g. after visiting another screen), take a photo and then push **Hide**/**Show**. This will show the live stream.
+
 ## Limitations
 The software is still being tested and extended.
 
