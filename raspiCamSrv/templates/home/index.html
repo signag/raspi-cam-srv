@@ -1198,7 +1198,7 @@ RaspiCamSrv's Live page
             <!-- Lower left area -->
             <table class="w3-table-all">
                 <tr>
-                    <td style="width:44%">
+                    <td style="width:56%">
                         <!-- Photo button -->
                         {% if sc.isVideoRecording %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.take_photo') }}">
@@ -1231,12 +1231,10 @@ RaspiCamSrv's Live page
                         </form>
                         {% endif %}
                     </td>
-                    <td style="width:14%">
+                    <td colspan="2" style="width:20%">
                         <p style="margin-bottom: 0;">{{ sc.displayBufferIndex }}</p>
                     </td>
-                    <td style="width:14%">
-                    </td>
-                    <td style="width:14%">
+                    <td style="width:12%">
                         <!-- Show button: shows photo and meta -->
                         {% if sc.isDisplayHidden == true and sc.displayPhoto != None %}
                         <form method="post" action="{{ url_for('home.show_photo') }}">
@@ -1249,7 +1247,7 @@ RaspiCamSrv's Live page
                         </form>
                         {% endif %}
                     </td>
-                    <td style="width:14%">
+                    <td style="width:12%">
                         <!-- Clear button: clears Photo buffer -->
                         {% if sc.displayBufferCount > 0 or sc.displayPhoto != None %}
                         <form method="post" action="{{ url_for('home.clear_buffer') }}">
