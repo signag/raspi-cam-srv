@@ -651,6 +651,8 @@ class Camera(BaseCamera):
         with Camera.cam as cam:
             srvCam = CameraCfg()
             cfg = srvCam.videoConfig
+            sc = srvCam.serverConfig
+            sc.checkMicrophone()
             videoConfig = Camera.configure(cfg, srvCam.photoConfig)
             cam.configure(videoConfig)
             logger.debug("Thread %s: _videoThread - Video configuration done", get_ident())
@@ -659,7 +661,10 @@ class Camera(BaseCamera):
             encoder = H264Encoder(10000000)
             output = Camera.videoOutput
             if output.lower().endswith(".mp4"):
-                encoder.output = FfmpegOutput(output, audio=False)
+                if sc.recordAudio == False:
+                    encoder.output = FfmpegOutput(output, audio=False)
+                else:
+                    encoder.output = FfmpegOutput(output, audio=True, audio_sync=sc.audioSync)
                 logger.debug("Thread %s: _videoThread - mp4 Video output to %s", get_ident(), output)
             else:
                 encoder.output = FileOutput(output)

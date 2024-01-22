@@ -17,6 +17,7 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - The [Live screen](docs/LiveScreen.md) shows a live stream of the active camera and allows individually selecting and setting all [camera controls](docs/CameraControls.md) supported by Picamera2.
 - For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance (see [Focus handling](docs/FocusHandling.md)).
 - Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](docs/LiveScreen.md) together with their metadata (see [Photo taking](docs/Phototaking.md)).
+- Videos can be recorded along with audio if a microphone (e.g. USB microphone) is connected to the Raspberry Pi (see [Recording Audio along with Video](docs/Settings.md#recording-audio-along-with-video))
 - For raw photos and videos, a jpeg placeholder is shown
 - The photos taken may be added to a display buffer for inspection of photos and metadata and for comparison (see [Photo Display](docs/Phototaking.md#photo-display))
 - On the [Config screen](docs/Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
@@ -36,6 +37,7 @@ The software is still being tested and extended.
 
 - USB cameras are detected but currently not supported. One reason is that many USB cameras use the YUYV format whereas **raspiCamSrv** uses MJPEG for the Live stream and YUYV would require OpenCV for rendering.
 - **raspiCamSrv** will not automatically detect a changed setup, for example if cameras are plugged in and out while the Raspberry Pi is running (certainly, this would apply unly to USB cameras and nobody will unplug a Pi camera without shutting down the system). However, there is a **Reset Server** button on the [Settings](docs/Settings.md) screen, which, when pressed, will force the configuration to be updated.
+- For Bullseye systems, [audio recording along with video](docs/Settings.md#recording-audio-along-with-video) will currently only be successful with the **0_3_12_next** branch of the [Picamera2 repository](https://github.com/raspberrypi/picamera2) (see [Issue #722](https://github.com/raspberrypi/picamera2/issues/722))
 - Timelapse features are envisaged. <br>It was actually the starting point for this project to develop a Pi Zero + Camera solution, based on actual software and hardware, which can be used for long runnting time lapse series.
 - The entire configuration is still transient and will be reinitialized with server restart. It is intended to save the configuration in the database and restore it when the server is restarted.
 - Although the layout is responsive, it may not be "good-looking" with all sizes of browser windows
@@ -102,13 +104,37 @@ Instead, you may want the server to start up independently from any user session
 
 In order to achieve this, the Flask server start can be configured as service under control of systemd.
 
+The following procedure is for the case where audio recording with video is **not** required. Otherwise, see [next](#service-configuration-for-audio-support) section.
+
 |Step|Action
 |----|-----------------------------------------------
 |1.  | Open a SSH session on the Raspberry Pi
 |2.  | Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-|3.  | Adjust the service configuration:<br>```nano raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)
-|4.  | Stage the service configuration file to systemd:<br>```sudo cp raspiCamSrv.service /etc/systemd/system```
+|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)
+|4.  | Stage the service configuration file to systemd:<br>```sudo cp ~/raspiCamSrv.service /etc/systemd/system```
 |5.  | Start the service:<br>```sudo systemctl start raspiCamSrv.service```
 |6.  | Check that the Flask server has started as service:<br>```sudo journalctl -e```
 |7.  | Enable the service so that it automatically starts with system boot:<br>```sudo systemctl enable raspiCamSrv.service```
 |8.  | Reboot the system to test automatic server start:<br>```sudo reboot```
+
+
+### Service Configuration for Audio Support
+
+If it is intended to record audio along with videos, a slightly different setup is required (see [Settings](docs/Settings.md#recording-audio-along-with-video)):   
+Instead of installing the service as a system unit, it needs to be installed as user unit (see [systemd/User](https://wiki.archlinux.org/title/Systemd/User)) in order to get access to [PulseAudio](https://wiki.archlinux.org/title/PulseAudio).
+
+
+|Step|Action
+|----|-----------------------------------------------
+|1.  | Open a SSH session on the Raspberry Pi
+|2.  | Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
+|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>Remove the entry User=\<user> from the [System] section<br>In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```
+|4.  | Create the directory for systemd user units<br>```mkdir -p ~/.config/systemd/user```
+|5.  | Stage the service configuration file to systemd for user units:<br>```cp ~/raspiCamSrv.service ~/.config/systemd/user```
+|6.  | Start the service:<br>```systemctl --user start raspiCamSrv.service```
+|7.  | Check that the Flask server has started as service:<br>```journalctl --user -e```
+|8.  | Enable the service so that it automatically starts with system boot:<br>```systemctl --user enable raspiCamSrv.service```
+|9.  | Enable lingering in order to start the unit right after boot and keep it running independently from a user session<br>```loginctl enable-linger```
+|10.  | Reboot the system to test automatic server start:<br>```sudo reboot```
+
+**Attention**: for Bullseye systems, audio recording will currently only be successful with the **0_3_12_next** branch of the [Picamera2 repository](https://github.com/raspberrypi/picamera2)

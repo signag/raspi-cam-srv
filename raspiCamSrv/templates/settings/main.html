@@ -20,7 +20,7 @@
                         </span>
                         <label for="activecamera">Active Camera:</label>
                     </td>
-                    <td style="width:70%">
+                    <td style="width:70%" colspan="2">
                         <select name="activecamera" id="activecamera">
                         {% for cam in cs %}
                             {% if cam.isUsb == false %}
@@ -39,11 +39,69 @@
                     </td>
                     <td style="width:25%" class="w3-tooltip">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            If one or multiple microphones are accessible through PulseAudio, 
+                            the description for the default microphone is shown.<br>
+                            This will be the microphone used for audio recording.
+                        </span>
+                        <label for="defaultmic">Default Microphone:</label>
+                    </td>
+                    <td style="width:35%">
+                        <input type="text" id="defaultmic" name="defaultmic" value="{{ sc.defaultMic }}" disabled>
+                    </td>
+                    <td style="width:35%">
+                        {% if sc.isMicMuted == True %}
+                        <input type="text" id="micmuted" name="micmuted" value="M U T E D" disabled>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Select whether audio shall be recorded along with videos.<br>
+                            This is only available for selection if a microphone is connected 
+                            and accessible through PulseAudio.
+                        </span>
+                        <label for="recordaudio">Record Audio along with Video:</label>
+                    </td>
+                    <td style="width:70%" colspan="2">
+                        {% if sc.hasMicrophone == True %}
+                        {% if sc.recordAudio == True %}
+                        <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="1"
+                            checked>
+                        {% else %}
+                        <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="0">
+                        {% endif %}
+                        {% else %}
+                        <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="0" disabled>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The time shift in seconds to apply between the audio and video streams.<br>
+                            This may need tweaking to improve the audio/video synchronisation.
+                        </span>
+                        <label for="audiosync">Audio Timeshift [sec]:</label>
+                    </td>
+                    <td style="width:70%" colspan="2">
+                        <input type="number" id="audiosync" name="audiosync" min="-2.00" max="2.00" step="0.01" value="{{ sc.audioSync }}">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             The system path where photos and videos will be stored.
                         </span>
                         <label for="photopath">Path for Photos/Videos:</label>
                     </td>
-                    <td style="width:70%">
+                    <td style="width:70%" colspan="2">
                         <input style="width:70%" type="text" id="photopath" name="photopath" value="{{ sc.photoRoot }}/{{ sc.cameraPhotoSubPath }}" disabled>
                     </td>
                 </tr>
@@ -56,7 +114,7 @@
                         </span>
                         <label for="phototype">Photo type:</label>
                     </td>
-                    <td style="width:70%">
+                    <td style="width:70%" colspan="2">
                         <select name="phototype" id="phototype">
                             {% if sc.photoType == "jpeg" %}
                             <option value="jpeg" selected>jpeg</option>
@@ -95,7 +153,7 @@
                         </span>
                         <label for="rawphototype">Raw type:</label>
                     </td>
-                    <td style="width:70%">
+                    <td style="width:70%" colspan="2">
                         <select name="rawphototype" id="rawphototype">
                             {% if sc.rawPhotoType == "dng" %}
                             <option value="dng" selected>dng</option>
@@ -114,7 +172,7 @@
                         </span>
                         <label for="videotype">Video type:</label>
                     </td>
-                    <td style="width:70%">
+                    <td style="width:70%" colspan="2">
                         <select name="videotype" id="videotype">
                             {% if sc.videoType == "h264" %}
                             <option value="h264" selected>h264</option>
@@ -138,7 +196,7 @@
                         </span>
                         <label for="chunkSizePhoto">Chunk size for Photo viewer:</label>
                     </td>
-                    <td>
+                    <td style="width:70%" colspan="2">
                         <input type="number" id="chunkSizePhoto" name="chunkSizePhoto" value="{{ sc.chunkSizePhoto }}" min="2" max="999">
                     </td>
                 </tr>

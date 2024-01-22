@@ -1,4 +1,7 @@
 from libcamera import controls, Transform
+import subprocess
+from subprocess import CalledProcessError
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -1134,6 +1137,11 @@ class ServerConfig():
     def __init__(self):
         self._activeCamera = 0
         self._activeCameraInfo = ""
+        self._hasMicrophone = False
+        self._defaultMic = ""
+        self._isMicMuted = False
+        self._recordAudio = False
+        self._audioSync = 0.3
         self._photoRoot = "."
         self._cameraPhotoSubPath = "."
         self._photoType = "jpg"
@@ -1160,6 +1168,9 @@ class ServerConfig():
         self._curPagePhoto = 1
         self._nrPagesPhoto = 0
         self._nrEntriesPhoto = 0
+        
+        # Check access of microphone
+        self.checkMicrophone()
 
     @property
     def activeCamera(self) -> int:
@@ -1176,6 +1187,46 @@ class ServerConfig():
     @activeCameraInfo.setter
     def activeCameraInfo(self, value: str):
         self._activeCameraInfo = value
+
+    @property
+    def hasMicrophone(self) -> bool:
+        return self._hasMicrophone
+
+    @hasMicrophone.setter
+    def hasMicrophone(self, value: bool):
+        self._hasMicrophone = value
+
+    @property
+    def defaultMic(self) -> str:
+        return self._defaultMic
+
+    @defaultMic.setter
+    def defaultMic(self, value: str):
+        self._defaultMic = value
+
+    @property
+    def isMicMuted(self) -> bool:
+        return self._isMicMuted
+
+    @isMicMuted.setter
+    def isMicMuted(self, value: bool):
+        self._isMicMuted = value
+
+    @property
+    def recordAudio(self) -> bool:
+        return self._recordAudio
+
+    @recordAudio.setter
+    def recordAudio(self, value: bool):
+        self._recordAudio = value
+
+    @property
+    def audioSync(self) -> float:
+        return self._audioSync
+
+    @audioSync.setter
+    def audioSync(self, value: float):
+        self._audioSync = value
 
     @property
     def photoRoot(self):
@@ -1599,6 +1650,63 @@ class ServerConfig():
             self.displayMeta = prevEl["displayMeta"]
             self.displayMetaFirst = prevEl["displayMetaFirst"]
             self.displayMetaLast = prevEl["displayMetaLast"]
+            
+    def checkMicrophone(self):
+        """Check whether a microphone is connected.
+           Update configuration with description of default configuration.
+           
+           This infomation is obtained by querying the PulseAudio server through pactl
+        """
+        hasMic = False
+        defMic = ""
+        isMute = True
+        try:
+            result = subprocess.run(["pactl", "-fjson", "list", "sources"], capture_output=True, text=True, check=True).stdout
+
+            sources=json.loads(result)
+
+            if len(sources) > 0:
+                definput  = subprocess.run(["pactl", "get-default-source"], capture_output=True, text=True, check=True).stdout
+                if definput.endswith("\n"):
+                    definput = definput[:len(definput) - 1]
+                for source in sources:
+                    if "name" in source:
+                        srcName = source["name"]
+                        if srcName == definput:
+                            if "ports" in source:
+                                ports = source["ports"]
+                                for port in ports:
+                                    if "type" in port:
+                                        type = port["type"]
+                                        if type.casefold() == "mic":
+                                            hasMic = True
+                                            break
+                            if hasMic == True:
+                                if "description" in source:
+                                    defMic = source["description"]
+                                if "mute" in source:
+                                    isMute = source["mute"]
+                                else:
+                                    isMute = False
+        except CalledProcessError as e:
+            # In case pactl cannot be run, ignore the exception
+            # And assume that no microphone is connected
+            pass
+        except Exception as e:
+            pass
+        
+        if hasMic == True:
+            self.hasMicrophone = True
+            if len(defMic) > 0:
+                self.defaultMic = defMic
+            else:
+                self._defaultMic = "Unknown description"
+            self.isMicMuted = isMute
+        else:
+            self.hasMicrophone = False
+            self.defaultMic = "No Microphone found"
+            self.recordAudio = False
+            self.isMicMuted = False
     
 class CameraCfg():
     _instance = None

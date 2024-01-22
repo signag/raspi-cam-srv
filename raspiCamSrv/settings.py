@@ -18,6 +18,8 @@ def main():
     cfg = CameraCfg()
     cs = cfg.cameras
     sc = cfg.serverConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
@@ -31,6 +33,8 @@ def serverconfig():
     cfg = CameraCfg()
     cs = cfg.cameras
     sc = cfg.serverConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
     if request.method == "POST":
@@ -49,6 +53,10 @@ def serverconfig():
         logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
         chnk = int(request.form["chunkSizePhoto"])
         sc.chunkSizePhoto = chnk
+        recordAudio = not request.form.get("recordaudio") is None
+        sc.recordAudio = recordAudio        
+        audioSync = request.form["audiosync"]
+        sc.audioSync = audioSync
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
 
 @bp.route("/resetServer", methods=("GET", "POST"))
@@ -60,6 +68,8 @@ def resetServer():
     cfg = CameraCfg()
     cs = cfg.cameras
     sc = cfg.serverConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
     if request.method == "POST":
@@ -76,5 +86,6 @@ def resetServer():
         sc = cfg.serverConfig
         sc.isVideoRecording = False
         sc.curMenu = "settings"
+        sc.checkMicrophone()
     
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
