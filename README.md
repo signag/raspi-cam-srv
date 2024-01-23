@@ -157,3 +157,22 @@ If your system is a bullseye system (```lsb_release -a```), which is currently s
 |9.  | Enable the service so that it automatically starts with a session for the active user:<br>```systemctl --user enable raspiCamSrv.service```
 |10.  | Enable lingering in order to start the unit right after boot and keep it running independently from a user session<br>```loginctl enable-linger```
 |10.  | Reboot the system to test automatic server start:<br>```sudo reboot```
+
+Below is an example .service specification for user "sn":
+```
+[Unit]
+Description=raspiCamSrv
+After=network.target
+
+[Service]
+ExecStart=/home/sn/prg/raspi-cam-srv/.venv/bin/flask --app raspiCamSrv run --host=0.0.0.0
+Environment="PATH=/home/sn/prg/raspi-cam-srv/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONPATH=/home/sn/prg/picamera2"
+WorkingDirectory=/home/sn/prg/raspi-cam-srv
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+
+[Install]
+WantedBy=default.target
+```
