@@ -1650,6 +1650,73 @@ class ServerConfig():
             self.displayMeta = prevEl["displayMeta"]
             self.displayMetaFirst = prevEl["displayMetaFirst"]
             self.displayMetaLast = prevEl["displayMetaLast"]
+
+    def _lineGen(self, s):
+        """Generator to yield lines of a text
+        """
+        while len(s) > 0:
+            p = s.find("\n")
+            if p > 0:
+                line = s[:p]
+                s = s[p+1:]
+            else:
+                line = s
+                s = ""
+            yield line
+
+    def _checkMicrophoneNoJson(self):
+        """Check connection of microphone for older PulseAudio versions where pactl has no -fjson option
+        """
+        logger.debug("ServerConfig._checkMicrophoneNoJson")
+        hasMic = False
+        defMic = ""
+        isMute = False
+        try:
+            result = subprocess.run(["pactl", "list", "sources"], capture_output=True, text=True, check=True).stdout
+            logger.debug("ServerConfig._checkMicrophoneNoJson - got result from 'pactl list sources: \n%s'", result)
+            
+            sourceId = ""
+            desc = ""
+            getPorts = False
+            for line in self._lineGen(result):
+                if line.startswith("Source"):
+                    # Start of a new source
+                    if sourceId == "":
+                        # First source
+                        sourceId = line[8:]
+                        desc = ""
+                        getPorts = False
+                    else:
+                        # Terminate last source (actually nothing specific)
+                        sourceId = line[8:]
+                        desc = ""
+                        getPorts = False
+                else:
+                    if line.startswith("\t"):
+                        line = line[1:]
+                        if line.startswith("Description:"):
+                            desc = line[13:]
+                        if getPorts:
+                            if line.find("type: Mic") > 0:
+                                # We stop if the first microphone has been found
+                                # This version of pactl does not allow to get the default mic.
+                                hasMic = True
+                                defMic = desc
+                                break
+                            getPorts = False
+                        else:
+                            if line.startswith("Ports:"):
+                                getPorts = True
+        
+        except CalledProcessError as e:
+            # In case pactl cannot be run, ignore the exception
+            # And assume that no microphone is connected
+            pass
+        except Exception as e:
+            pass
+        
+        logger.debug("ServerConfig._checkMicrophoneNoJson - hasMic=%s, defMic=%s'", hasMic, defMic)
+        return hasMic, defMic, isMute
             
     def checkMicrophone(self):
         """Check whether a microphone is connected.
@@ -1657,11 +1724,13 @@ class ServerConfig():
            
            This infomation is obtained by querying the PulseAudio server through pactl
         """
+        logger.debug("ServerConfig._checkMicrophone")
         hasMic = False
         defMic = ""
         isMute = True
         try:
             result = subprocess.run(["pactl", "-fjson", "list", "sources"], capture_output=True, text=True, check=True).stdout
+            logger.debug("ServerConfig._checkMicrophone - got result from 'pactl -fjson list sources'")
 
             sources=json.loads(result)
 
@@ -1689,9 +1758,9 @@ class ServerConfig():
                                 else:
                                     isMute = False
         except CalledProcessError as e:
-            # In case pactl cannot be run, ignore the exception
-            # And assume that no microphone is connected
-            pass
+            # In case pactl cannot be run successfully, assume an older PulseAudio version
+            # and try without -fjson option
+            hasMic, defMic, isMute = self._checkMicrophoneNoJson()
         except Exception as e:
             pass
         
@@ -1707,6 +1776,7 @@ class ServerConfig():
             self.defaultMic = "No Microphone found"
             self.recordAudio = False
             self.isMicMuted = False
+        logger.debug("ServerConfig._checkMicrophone - hasMicrophone=%s, defaultMic=%s", self.hasMicrophone, self.defaultMic)
     
 class CameraCfg():
     _instance = None

@@ -10,6 +10,24 @@ def create_app(test_config=None):
         SECRET_KEY="dev",
         DATABASE=os.path.join(app.instance_path, "raspiCamSrv.sqlite"),
     )
+    
+    # Configure loggers
+    filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
+    filehandler.setFormatter(app.logger.handlers[0].formatter)
+    for logger in(
+        app.logger,
+        logging.getLogger("raspiCamSrv.camCfg"),
+        logging.getLogger("raspiCamSrv.camera_base"),
+        logging.getLogger("raspiCamSrv.camera_pi"),
+        logging.getLogger("raspiCamSrv.config"),
+        logging.getLogger("raspiCamSrv.home"),
+        logging.getLogger("raspiCamSrv.images"),
+        logging.getLogger("raspiCamSrv.info"),
+        logging.getLogger("raspiCamSrv.settings"),
+        logging.getLogger("raspiCamSrv.timelapse"),
+    ):
+#        logger.addHandler(filehandler)
+        logger.setLevel(logging.INFO)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -56,21 +74,5 @@ def create_app(test_config=None):
 
     from . import timelapse
     app.register_blueprint(timelapse.bp)
-    
-    # Configure loggers
-    filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
-    filehandler.setFormatter(app.logger.handlers[0].formatter)
-    for logger in(
-        app.logger,
-        logging.getLogger("raspiCamSrv.home"),
-        logging.getLogger("raspiCamSrv.camera_base"),
-        logging.getLogger("raspiCamSrv.camera_pi"),
-        logging.getLogger("raspiCamSrv.config"),
-        logging.getLogger("raspiCamSrv.images"),
-    ):
-#        logger.addHandler(filehandler)
-        logger.setLevel(logging.INFO)
-#    logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO),
-#    app.logger.setLevel(logging.INFO)
-    app.logger.setLevel(logging.DEBUG)
+
     return app
