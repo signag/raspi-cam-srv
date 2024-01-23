@@ -1656,8 +1656,11 @@ class ServerConfig():
         """
         while len(s) > 0:
             p = s.find("\n")
-            if p > 0:
-                line = s[:p]
+            if p >= 0:
+                if p == 0:
+                    line = ""
+                else:
+                    line = s[:p]
                 s = s[p+1:]
             else:
                 line = s
