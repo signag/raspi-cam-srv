@@ -12,8 +12,8 @@ def create_app(test_config=None):
     )
     
     # Configure loggers
-    filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
-    filehandler.setFormatter(app.logger.handlers[0].formatter)
+    #filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
+    #filehandler.setFormatter(app.logger.handlers[0].formatter)
     for logger in(
         app.logger,
         logging.getLogger("raspiCamSrv.camCfg"),
