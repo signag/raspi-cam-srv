@@ -201,11 +201,15 @@ class Camera(BaseCamera):
             maxModei = len(cfg.sensorModes) - 1
             maxMode = str(maxModei)
             # For Live View
-            # Initially set the stream size to (640, 4800). Use Sensor Mode, if possible
-            cfg.liveViewConfig.stream_size = (640, 480)
+            # Initially set the stream size to (640, 480). Use Sensor Mode, if possible
+            sizeWidth = 640
+            sizeHeight =  int(sizeWidth * cfgProps.pixelArraySize[1] / cfgProps.pixelArraySize[0])
+            if (sizeHeight % 2) != 0:
+                sizeHeight += 1
+            cfg.liveViewConfig.stream_size = (sizeWidth, sizeHeight)
             cfg.liveViewConfig.stream_size_align = False
-            if cfgSensorModes[0].size[0] == 640 \
-            and cfgSensorModes[0].size[1] == 480:
+            if cfgSensorModes[0].size[0] == sizeWidth \
+            and cfgSensorModes[0].size[1] == sizeHeight:
                 cfg.liveViewConfig.sensor_mode = "0"
             else:
                 cfg.liveViewConfig.sensor_mode = "custom"
