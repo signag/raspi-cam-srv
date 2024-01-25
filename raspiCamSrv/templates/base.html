@@ -7,8 +7,8 @@
     {% if cp.hasFocus %}
     {% if sc.curMenu == "live" %}
     <body 
-        onload="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')"
-        onresize="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')"
+        onload="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')"
+        onresize="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')"
     >
     {% else %}
     <body>

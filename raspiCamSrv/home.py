@@ -4,6 +4,7 @@ from raspiCamSrv.auth import login_required
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg
 from libcamera import controls
+import math
 import os
 import datetime
 import time
@@ -166,7 +167,7 @@ def trigger_autofocus():
 @bp.route("/set_zoom", methods=("GET", "POST"))
 @login_required
 def set_zoom():
-    logger.debug("In set_zoom")
+    logger.info("In set_zoom")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -176,7 +177,24 @@ def set_zoom():
     if request.method == "POST":
         step = int(request.form["zoomfactorstep"])
         sc.zoomFactorStep = step
-        logger.debug("sc.zoomFactorStep set to %s", step)
+        logger.info("sc.zoomFactorStep set to %s", step)
+        if  sc.isZoomModeDraw == True:
+            sc.isZoomModeDraw = False
+            scalerCropStr = request.form["scalercrop"]
+            logger.info("Form scalerCrop: %s", scalerCropStr)
+            sc.scalerCropLiveViewStr = scalerCropStr
+            logger.info("sc.scalerCropLiveView: %s", sc.scalerCropLiveView)
+            cc.scalerCropStr = scalerCropStr
+            logger.info("cc.scalerCrop: %s", cc.scalerCrop)
+            cc.include_scalerCrop = True
+            Camera().applyControls(cfg.liveViewConfig)
+            time.sleep(0.5)
+            metadata = Camera().getMetaData()
+            sc.scalerCropLiveView = metadata["ScalerCrop"]
+            zoomFactor = sc.zoomFactorStep * math.floor((100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep)
+            if zoomFactor <= 0:
+                zoomFactor = sc.zoomFactorStep
+            sc.zoomFactor = zoomFactor
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_in", methods=("GET", "POST"))
@@ -275,6 +293,7 @@ def zoom_full():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
+        sc.isZoomModeDraw = False
         sc.zoomFactor = 100
         sccrop = (0, 0, cp.pixelArraySize[0], cp.pixelArraySize[1])
         cc.scalerCrop = sccrop
@@ -428,6 +447,20 @@ def pan_down():
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+    
+@bp.route("/zoom_draw", methods=("GET", "POST"))
+@login_required
+def zoom_draw():
+    logger.debug("In zoom_draw")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.lastLiveTab = "zoom"
+    if request.method == "POST":
+        sc.isZoomModeDraw = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/ae_control", methods=("GET", "POST"))

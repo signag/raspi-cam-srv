@@ -384,6 +384,10 @@ class CameraControls():
     def scalerCropStr(self) -> str:
         return "(" + str(self._scalerCrop[0]) + "," + str(self._scalerCrop[1]) + "," + str(self._scalerCrop[2]) + "," + str(self._scalerCrop[3]) + ")"
 
+    @scalerCropStr.setter
+    def scalerCropStr(self, value: str):
+        self._scalerCrop = CameraControls._parseRectTuple(value)
+
     @property
     def afTrigger(self) -> int:
         return self._afTrigger
@@ -1147,6 +1151,7 @@ class ServerConfig():
         self._photoType = "jpg"
         self._rawPhotoType = "dng"
         self._videoType = "mp4"
+        self._isZoomModeDraw = False
         self._zoomFactor = 100
         self._zoomFactorStep = 10
         self._scalerCropLiveView = (0, 0, 4608, 2592)
@@ -1281,6 +1286,14 @@ class ServerConfig():
             self._videoType = value
         else:
             raise ValueError("Invalid video format")
+
+    @property
+    def isZoomModeDraw(self) -> bool:
+        return self._isZoomModeDraw
+
+    @isZoomModeDraw.setter
+    def isZoomModeDraw(self, value: bool):
+        self._isZoomModeDraw = value
         
     @property
     def zoomFactor(self):
@@ -1317,6 +1330,10 @@ class ServerConfig():
     @property
     def scalerCropLiveViewStr(self) -> str:
         return "(" + str(self._scalerCropLiveView[0]) + "," + str(self._scalerCropLiveView[1]) + "," + str(self._scalerCropLiveView[2]) + "," + str(self._scalerCropLiveView[3]) + ")"
+
+    @scalerCropLiveViewStr.setter
+    def scalerCropLiveViewStr(self, value: str):
+        self._scalerCropLiveView = CameraControls._parseRectTuple(value)
 
     @property
     def curMenu(self) -> str:

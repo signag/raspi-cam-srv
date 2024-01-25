@@ -337,7 +337,7 @@ RaspiCamSrv's Live page
                 <!-- Zoom & Pan -->
                 <h4>Zoom and pan</h4>
                 <div>
-                    <form method="post" action="{{ url_for('home.set_zoom') }}">
+                    <form id="zoomform" method="post" action="{{ url_for('home.set_zoom') }}">
                         <table class="w3-table-all">
                             <tr>
                                 <td class="w3-tooltip">
@@ -394,57 +394,119 @@ RaspiCamSrv's Live page
                     <p style="margin-bottom: 0; margin-top: 0"></p>
                     <table class="w3-table">
                         <tr>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.zoom_in') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Zoom in">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Zoom in">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Zoom in" disabled>
+                                    {% endif %}
                                 </form>
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.pan_up') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan up">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan up">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan up" disabled>
+                                    {% endif %}
                                 </form>
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.zoom_out') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Zoom out">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Zoom out">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Zoom out" disabled>
+                                    {% endif %}
                                 </form>
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.pan_left') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan left">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan left">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan left" disabled>
+                                    {% endif %}
                                 </form>
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.pan_center') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Center">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Center">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Center" disabled>
+                                    {% endif %}
                                 </form>
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.pan_right') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan right">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan right">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan right" disabled>
+                                    {% endif %}
                                 </form>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.zoom_full') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Full">
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Full">
                                 </form>
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                                 <form method="post" action="{{ url_for('home.pan_down') }}">
-                                    <input class="w3-button w3-black" style="width:80%" type="submit" value="Pan down">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan down">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Pan down" disabled>
+                                    {% endif %}
                                 </form>
                             </td>
-                            <td>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                            </td>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                            </td>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                            </td>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                                {% if sc.isZoomModeDraw == False %}
+                                <form method="post" action="{{ url_for('home.zoom_draw') }}">
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" 
+                                        onclick="drawZoomWindow('{{ sc.isZoomModeDraw }}','scalercrop', '{{ sc.scalerCropLiveView }}')"
+                                        type="submit"
+                                        value="Draw">
+                                </form>
+                                {% else %}
+                                <button class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" 
+                                    onclick="enableScalerCrop()"
+                                    form="zoomform">
+                                    Submit
+                                </button>
+                                {% endif %}
+                            </td>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                            </td>
+                            <td style="padding-top:4px; padding-bottom:0px">
+                            </td>
+                            <td style="padding-top:4px; padding-bottom:0px">
                             </td>
                         </tr>
                     </table>
@@ -1231,7 +1293,7 @@ RaspiCamSrv's Live page
                         {% endif %}
                         {% if sc.isVideoRecording == true %}
                         <form style="display:inline-block" method="post" action="{{ url_for('home.stop_recording') }}">
-                            <input class="w3-button w3-black w3-round-xxlarge" onclick="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')" type="submit" value="Stop">
+                            <input class="w3-button w3-black w3-round-xxlarge" onclick="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')" type="submit" value="Stop">
                         </form>
                         {% endif %}
                     </td>
@@ -1585,9 +1647,18 @@ RaspiCamSrv's Live page
             }
             document.getElementById(ctrlTabBtn).classList = "w3-bar-item w3-button ctrlmenu w3-light-green";
 
-            if (ctrlTabName == "focus") {
-                drawAfWindow("include_afwindows", "afwindows", '{{ sc.scalerCropLiveView }}')
-                drawAllAfWindows()
+            if ('{{ sc.isVideoRecording }}' == "False") {
+                if (ctrlTabName == "focus") {
+                    removeAfWindowCanvas()
+                    drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')
+                    drawAllAfWindows()
+                } else if (ctrlTabName == "zoom") {
+                    removeAfWindowCanvas()
+                    drawZoomWindow('{{ sc.isZoomModeDraw }}', 'scalercrop', '{{ sc.scalerCropLiveView }}')
+                    drawAllAfWindows()
+                } else {
+                    removeAfWindowCanvas()
+                }
             } else {
                 removeAfWindowCanvas()
             }
@@ -1615,33 +1686,55 @@ RaspiCamSrv's Live page
             */
             document.getElementById("afwindows").disabled = false
         }
+
+        function enableScalerCrop() {
+            /*  enable tha scalercrop text field to allow Flask to request its content
+            */
+            document.getElementById("scalercrop").disabled = false
+            console.log("scalercrop enabled");
+        }
     </script>
     <script>
-        function showAfWindows(tabSelected, vrActive, trg, tgt, camRef) {
+        function showAfWindows(tabSelected, vrActive, trgAf, trgZoom, camRef) {
             /*  If camera has focus and if focus tab is selected,
+                or if zoom tab is selected and zoomModeDraw is active
                 show th AF Windows
                 This function is called after the page finished loading
                 in order to assure initial visibility of AF windows
                 tabSelected:    name of the initially selected tab
                 vrActive:       "True"/"False" if video recording is active
-                trg:            Trigger (checkbox)
+                trgAf:          Trigger for Autofocus (checkbox)
                                 If checked, canvas and AF Windows are drawn
                                 If unchecked, canvas is removed
-                tgt:            Target element taking windows
+                trgZoom:        Trigger for Zoom (ServerConfig.isZoomModeDraw)
+                                If true, canvas is drawn
+                                If false, canvas is removed
                 canRef:         Current scaler crop
             */
             //console.log("showAfWindows - tabselected:", tabSelected, " vrActive:", vrActive)
-            var trgEl = document.getElementById(trg);
 
             if (tabSelected == "focus") {
+                var trgEl = document.getElementById(trgAf);
                 if (trgEl.checked == true) {
                     // First remove the existing canvas, which is required for resize
-                    removeAfWindow()
+                    removeAfWindow();
                     if (vrActive == "False") {
                         // Then create a new canvas
-                        drawAfWindow(trg, tgt, camRef)
+                        drawAfWindow(trgAf, 'afwindows', camRef);
                         // ... and draw the windows
-                        drawAllAfWindows()
+                        drawAllAfWindows();
+                    }
+                }
+            }
+            if (tabSelected == "zoom") {
+                if (trgZoom == "True") {
+                    // First remove the existing canvas, which is required for resize
+                    removeAfWindow();
+                    if (vrActive == "False") {
+                        // Then create a new canvas
+                        drawZoomWindow('True', 'scalercrop', camRef);
+                        // ... and draw the window
+                        drawAllAfWindows();
                     }
                 }
             }
@@ -1649,6 +1742,8 @@ RaspiCamSrv's Live page
 
     </script>
     <script>
+        var useCase;
+        var doDraw;
         var afWinTarget;
         var liveCanvas;
         var liveCanvasCtx;
@@ -1736,6 +1831,16 @@ RaspiCamSrv's Live page
             return resa;
         }
 
+        function parseWindow(wins) {
+            /*  Parses the rectangle
+                (x,x,x,x)
+                and returns an array of one rectangle as string
+            */
+            var resa = [] 
+            resa[0]= wins;
+            return resa;
+        }
+
         function drawCnvWindow(win, index, winlist) {
             /*  Draw the given window on the canvas
             */
@@ -1769,14 +1874,22 @@ RaspiCamSrv's Live page
             //console.log("drawAllAfWindows")
             var afWindows = afWinTarget.value;
             //console.log("afWindows:", afWindows)
-            var winlist = parseWindows(afWindows)
+            if (useCase == "afwindows") {
+                var winlist = parseWindows(afWindows)
+            } else if (useCase == "zoom") {
+                var winlist = parseWindow(afWindows)
+            } else {
+                winlist = []
+            }
             //console.log("winlist:", winlist)
 
-            // Clear canvas
-            liveCanvasCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
+            if (liveCanvasCtx) {
+                // Clear canvas
+                liveCanvasCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
 
-            // Draw all windows
-            winlist.forEach(drawCnvWindow)
+                // Draw all windows
+                winlist.forEach(drawCnvWindow)
+            }
         }
 
         function addNewAfWindow() {
@@ -1794,7 +1907,7 @@ RaspiCamSrv's Live page
             var afWindows = afWinTarget.value;
             //console.log("afWindows old:", afWindows);
 
-            // Convatenate to afWindows
+            // Concatenate to afWindows
             afWindows = afWindows.slice(0, afWindows.length - 1);
             if (afWindows.length > 1) {
                 afWindows = afWindows + ","
@@ -1811,6 +1924,26 @@ RaspiCamSrv's Live page
 
             // Store in target
             afWinTarget.value = afWindows;
+        }
+
+        function setZoomWindow() {
+            /*  Set the window for zoom
+            */
+            // Scale
+            var zoomWinWidth = Math.round(winWidth * camWidth / liveCanvas.width);
+            var zoomWinHeight = Math.round(winHeight * camHeight / liveCanvas.height);
+            var zoomWinXOffset = Math.round(camXOffset + winXOffset * camWidth / liveCanvas.width);
+            var zoomWinYOffset = Math.round(camYOffset + winYOffset * camHeight / liveCanvas.height);
+
+            zoomWindow = "(" 
+                + zoomWinXOffset.toString() + "," 
+                + zoomWinYOffset.toString() + ","
+                + zoomWinWidth.toString() + ","
+                + zoomWinHeight.toString()
+                + ")";
+
+            // Store in target
+            afWinTarget.value = zoomWindow;
         }
 
         function handleMouseDown(e) {
@@ -1856,8 +1989,15 @@ RaspiCamSrv's Live page
             // the drag is over, clear the dragging flag
             mouseIsDown = false;
 
-            // Add new window
-            addNewAfWindow();
+            if (useCase == "afwindows") {
+                // Add new window
+                addNewAfWindow();
+            }
+
+            if (useCase == "zoom") {
+                // Add new window
+                setZoomWindow();
+            }
         }
 
         function handleMouseOut(e) {
@@ -1871,8 +2011,10 @@ RaspiCamSrv's Live page
 
             // the drag is over, clear the dragging flag
             mouseIsDown = false;
-            // Draw all windows
-            drawAllAfWindows()
+            if (useCase == "afwindows") {
+                // Draw all windows
+                drawAllAfWindows();
+            }
         }
 
         function handleMouseMove(e) {
@@ -1902,6 +2044,15 @@ RaspiCamSrv's Live page
             // on starting vs current mouse position
             var width = mouseX - mouseStartX;
             var height = mouseY - mouseStartY;
+
+            // For zoom preserve aspect ratio
+            if (useCase == "zoom") {
+                if (Math.abs(width) > Math.abs(height)) {
+                    height = Math.sign(width) * Math.sign(height) * Math.round(width * camHeight / camWidth)
+                } else {
+                    width = Math.sign(width) * Math.sign(height) * Math.round(height * camWidth / camHeight)
+                }
+            }
 
             // draw a new rect from the start position 
             // to the current mouse position
@@ -1950,6 +2101,15 @@ RaspiCamSrv's Live page
             var width = mouseX - mouseStartX;
             var height = mouseY - mouseStartY;
 
+            // For zoom preserve aspect ratio
+            if (useCase == "zoom") {
+                if (Math.abs(width) > Math.abs(height)) {
+                    height = Math.sign(width) * Math.sign(height) * Math.round(width * camHeight / camWidth)
+                } else {
+                    width = Math.sign(width) * Math.sign(height) * Math.round(height * camWidth / camHeight)
+                }
+            }
+
             // draw a new rect from the start position 
             // to the current mouse position
             liveCanvasCtx.strokeRect(mouseStartX, mouseStartY, width, height);
@@ -1987,15 +2147,45 @@ RaspiCamSrv's Live page
             return resn
         }
 
+        function drawZoomWindow(trg, tgt, camRef) {
+            /*  Initialize the drawing infrastructure for AF Windows
+                trg: Trigger (ServerConfig.isZoomModeDraw)
+                tgt: Target element taking zoom window
+                camRef: Scaler crop for Live View as base for scaling
+            */
+            useCase = "zoom";
+            if (trg == "True") {
+                doDraw = true;
+            } else {
+                doDraw = false;
+            }
+            drawWindow(tgt, camRef);
+        }
+
         function drawAfWindow(trg, tgt, camRef) {
-            /*  Creates canvas over live view image and allows drawing of AF Windows
+            /*  Initialize the drawing infrastructure for AF Windows
                 trg: Trigger (checkbox)
                      If checked, canvas and AF Windows are drawn
                      If unchecked, canvas is removed
-                tgt: Target element taking windows
+                tgt: Target element taking AF windows
+                camRef: Scaler crop for Live View as base for scaling
             */
-            //console.log("drawAfWindow trg:", trg, " tgt:", tgt, " camRef", camRef);
+            useCase = "afwindows";
             var trgEl = document.getElementById(trg);
+            if (trgEl.checked == true) {
+                doDraw = true;
+            } else {
+                doDraw = false;
+            }
+            drawWindow(tgt, camRef);
+        }
+
+        function drawWindow(tgt, camRef) {
+            /*  Creates canvas over live view image and allows drawing of AF Windows
+                tgt: Target element taking windows
+                camRef: Scaler crop for Live View as base for scaling
+            */
+            //console.log("drawWindow tgt:", tgt, " camRef", camRef);
             afWinTarget = document.getElementById(tgt);
             // calculate camera crop window params
             var camCrop = parseRectTuple(camRef);
@@ -2005,7 +2195,7 @@ RaspiCamSrv's Live page
             camHeight = camCrop[3];
             //console.log(camXOffset, camYOffset, camWidth, camHeight);
 
-            if (trgEl.checked == true) {
+            if (doDraw == true) {
                 // Trigger active -> prepare canvas
                 var img = document.getElementById("liveviewimage");
                 // Craete the canvas
@@ -2060,7 +2250,9 @@ RaspiCamSrv's Live page
                 // Trigger inactive -> destroy canvas and clear AFWindows
                 removeAfWindow()
                 // Clear afWindows field
-                afWinTarget.value = "()"
+                if (useCase == "afwindows") {
+                    afWinTarget.value = "()";
+                }
             }
         }
 
