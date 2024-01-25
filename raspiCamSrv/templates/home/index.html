@@ -1629,6 +1629,7 @@ RaspiCamSrv's Live page
         </div>
     </div>
     <script>
+        var activeTab = ""
         function openCtrlTab(ctrlTabName, ctrlTabBtn) {
             /*  Opens the selected Tab for camera controls
                 ctrlTabName:    Name of the tab to be opened
@@ -1646,6 +1647,8 @@ RaspiCamSrv's Live page
                 b[i].classList = "w3-bar-item w3-button ctrlmenu";
             }
             document.getElementById(ctrlTabBtn).classList = "w3-bar-item w3-button ctrlmenu w3-light-green";
+
+            activeTab = ctrlTabName
 
             if ('{{ sc.isVideoRecording }}' == "False") {
                 if (ctrlTabName == "focus") {
@@ -1668,6 +1671,8 @@ RaspiCamSrv's Live page
     </script>
     <script>
         function includeCtrl(cbId, ctrlId, ctrlId2) {
+            /*  The function enables one or two controls (ctrlId) associated with a checkbox (cbId)
+            */
             var cb = document.getElementById(cbId);
             if (cb.checked == true) {
                 document.getElementById(ctrlId).disabled = false;
@@ -1713,9 +1718,18 @@ RaspiCamSrv's Live page
                                 If false, canvas is removed
                 canRef:         Current scaler crop
             */
-            //console.log("showAfWindows - tabselected:", tabSelected, " vrActive:", vrActive)
+            //console.log("showAfWindows - tabselected:", tabSelected, " activeTab:", activeTab, " vrActive:", vrActive)
 
-            if (tabSelected == "focus") {
+            // We need to handle the case where a specific tab has been selected without posting.
+            // In this case, tabSelected is not the actually selected tab
+            // but the tab on which the last post has been made
+
+            currentTab = tabSelected
+            if (activeTab != "") {
+                currentTab = activeTab
+            }
+
+            if (currentTab == "focus") {
                 var trgEl = document.getElementById(trgAf);
                 // First remove the existing canvas, which is required for resize
                 removeAfWindow();
@@ -1730,7 +1744,7 @@ RaspiCamSrv's Live page
                     }
                 }
             }
-            if (tabSelected == "zoom") {
+            if (currentTab == "zoom") {
                 if (trgZoom == "True") {
                     // First remove the existing canvas, which is required for resize
                     removeAfWindow();
@@ -1875,7 +1889,7 @@ RaspiCamSrv's Live page
             /*  Parses the windows entry in the target element
                 and draws all resulting windows
             */
-            //console.log("drawAllAfWindows")
+            //console.log("drawAllAfWindows - useCase=" + useCase)
             var afWindows = afWinTarget.value;
             //console.log("afWindows:", afWindows)
             if (useCase == "afwindows") {
