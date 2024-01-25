@@ -4,15 +4,11 @@
     <title>{% block title %}{% endblock %} - Raspi Camera</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='w3.css') }}">
-    {% if cp.hasFocus %}
     {% if sc.curMenu == "live" %}
     <body 
         onload="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')"
         onresize="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')"
     >
-    {% else %}
-    <body>
-    {% endif %}
     {% else %}
     <body>
     {% endif %}

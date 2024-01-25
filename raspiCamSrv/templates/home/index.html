@@ -1650,8 +1650,10 @@ RaspiCamSrv's Live page
             if ('{{ sc.isVideoRecording }}' == "False") {
                 if (ctrlTabName == "focus") {
                     removeAfWindowCanvas()
-                    drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')
-                    drawAllAfWindows()
+                    if ('{{ cp.hasFocus }}' == "True") {
+                        drawAfWindow('include_afwindows', 'afwindows', '{{ sc.scalerCropLiveView }}')
+                        drawAllAfWindows()
+                    }
                 } else if (ctrlTabName == "zoom") {
                     removeAfWindowCanvas()
                     drawZoomWindow('{{ sc.isZoomModeDraw }}', 'scalercrop', '{{ sc.scalerCropLiveView }}')
@@ -1691,7 +1693,7 @@ RaspiCamSrv's Live page
             /*  enable tha scalercrop text field to allow Flask to request its content
             */
             document.getElementById("scalercrop").disabled = false
-            console.log("scalercrop enabled");
+            //console.log("scalercrop enabled");
         }
     </script>
     <script>
@@ -1715,14 +1717,16 @@ RaspiCamSrv's Live page
 
             if (tabSelected == "focus") {
                 var trgEl = document.getElementById(trgAf);
-                if (trgEl.checked == true) {
-                    // First remove the existing canvas, which is required for resize
-                    removeAfWindow();
-                    if (vrActive == "False") {
-                        // Then create a new canvas
-                        drawAfWindow(trgAf, 'afwindows', camRef);
-                        // ... and draw the windows
-                        drawAllAfWindows();
+                // First remove the existing canvas, which is required for resize
+                removeAfWindow();
+                if (trgEl) {
+                    if (trgEl.checked == true) {
+                        if (vrActive == "False") {
+                            // Then create a new canvas
+                            drawAfWindow(trgAf, 'afwindows', camRef);
+                            // ... and draw the windows
+                            drawAllAfWindows();
+                        }
                     }
                 }
             }
@@ -2172,12 +2176,14 @@ RaspiCamSrv's Live page
             */
             useCase = "afwindows";
             var trgEl = document.getElementById(trg);
-            if (trgEl.checked == true) {
-                doDraw = true;
-            } else {
-                doDraw = false;
+            if (trgEl) {
+                if (trgEl.checked == true) {
+                    doDraw = true;
+                } else {
+                    doDraw = false;
+                }
+                drawWindow(tgt, camRef);
             }
-            drawWindow(tgt, camRef);
         }
 
         function drawWindow(tgt, camRef) {
