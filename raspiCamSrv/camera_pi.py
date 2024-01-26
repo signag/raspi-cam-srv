@@ -20,19 +20,19 @@ logger = logging.getLogger(__name__)
 
 class StreamingOutput(io.BufferedIOBase):
     def __init__(self):
-        logger.debug("StreamingOutput.__init__")
+        #logger.debug("StreamingOutput.__init__")
         self.frame = None
         self.lock = Lock()
         self.condition = Condition(self.lock)
 
     def write(self, buf):
-        logger.debug("StreamingOutput.write")
+        #logger.debug("StreamingOutput.write")
         with self.condition:
             self.frame = buf
-            logger.debug("got buffer of length %s", len(buf))
+            #logger.debug("got buffer of length %s", len(buf))
             self.condition.notify_all()
-            logger.debug("notification done")
-        logger.debug("write done")
+            #logger.debug("notification done")
+        #logger.debug("write done")
 
 
 class Camera(BaseCamera):
@@ -499,10 +499,17 @@ class Camera(BaseCamera):
             time.sleep(0.01)
             cnt += 1
             if cnt > 200:
-                raise TimeoutError("Background thread did not stop within 2 sec")
-        logger.debug("Camera.restartLiveView: Thread has stopped")
+                # Assume thread dead
+                BaseCamera.thread = None
+                logger.debug("Camera.restartLiveView: Thread assumed dead")
+                break
+                #raise TimeoutError("Background thread did not stop within 2 sec")
+        if cnt < 200:
+            logger.debug("Camera.restartLiveView: Thread has stopped")
         Camera.cam.stop_recording()
         logger.debug("Camera.restartLiveView: Recording stopped")
+        Camera.cam.stop()
+        logger.debug("Camera.restartLiveView: Camera stopped")
 
     @staticmethod
     def takeImage(filename: str):
@@ -612,33 +619,39 @@ class Camera(BaseCamera):
     @staticmethod
     def frames():
         logger.debug("Thread %s: Camera.frames", get_ident())
-        with Camera.cam as cam:
-            srvCam = CameraCfg()
-            cfg = srvCam.liveViewConfig
-            streamingConfig = Camera.configure(cfg, srvCam.photoConfig)
-            cam.configure(streamingConfig)
-            logger.debug("Thread %s: Camera.frames - starting recording", get_ident())
-            output = StreamingOutput()
-            cam.start_recording(MJPEGEncoder(), FileOutput(output))
-            logger.debug("Thread %s: Camera.frames - recording started", get_ident())
-            # let camera warm up
-            time.sleep(1.5)
-            Camera.applyControls(cfg)
-            logger.debug("Thread %s: Camera.frames - controls applied", get_ident())
-            # Get the live view scaler crop
-            time.sleep(0.5)
-            metadata = Camera.cam.capture_metadata()
-            srvCam.serverConfig.scalerCropLiveView = metadata["ScalerCrop"]
-            while True:
-                logger.debug("Thread %s: Camera.frames - Receiving camera stream", get_ident())
-                with output.condition:
-                    logger.debug("Thread %s: Camera.frames - waiting", get_ident())
-                    output.condition.wait()
-                    logger.debug("Thread %s: Camera.frames - waiting done", get_ident())
-                    frame = output.frame
-                    l = len(frame)
-                logger.debug("Thread %s: Camera.frames - got frame with length %s", get_ident(), l)
-                yield frame
+        try:
+            with Camera.cam as cam:
+                srvCam = CameraCfg()
+                cfg = srvCam.liveViewConfig
+                streamingConfig = Camera.configure(cfg, srvCam.photoConfig)
+                cam.configure(streamingConfig)
+                logger.debug("Thread %s: Camera.frames - starting recording", get_ident())
+                output = StreamingOutput()
+                cam.start_recording(MJPEGEncoder(), FileOutput(output))
+                logger.debug("Thread %s: Camera.frames - recording started", get_ident())
+                # let camera warm up
+                time.sleep(1.5)
+                Camera.applyControls(cfg)
+                logger.debug("Thread %s: Camera.frames - controls applied", get_ident())
+                # Get the live view scaler crop
+                time.sleep(0.5)
+                metadata = Camera.cam.capture_metadata()
+                srvCam.serverConfig.scalerCropLiveView = metadata["ScalerCrop"]
+                while True:
+                    #logger.debug("Thread %s: Camera.frames - Receiving camera stream", get_ident())
+                    with output.condition:
+                        #logger.debug("Thread %s: Camera.frames - waiting", get_ident())
+                        output.condition.wait()
+                        #logger.debug("Thread %s: Camera.frames - waiting done", get_ident())
+                        frame = output.frame
+                        l = len(frame)
+                    #logger.debug("Thread %s: Camera.frames - got frame with length %s", get_ident(), l)
+                    yield frame
+        except TypeError:
+            logger.error("Thread %s: Camera.frames - Type error", get_ident())
+        except Exception:
+            logger.error("Thread %s: Camera.frames - Exception", get_ident())
+            
     
     @staticmethod
     def _videoThread():

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from flask import Flask
 import logging
 from flask.logging import default_handler
@@ -10,8 +11,15 @@ def create_app(test_config=None):
         SECRET_KEY="dev",
         DATABASE=os.path.join(app.instance_path, "raspiCamSrv.sqlite"),
     )
+
+    # ensure the instance folder exists
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
     
     # Configure loggers
+    Path(app.instance_path + "/raspiCamSrv.log").touch(exist_ok=True)
     #filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
     #filehandler.setFormatter(app.logger.handlers[0].formatter)
     for logger in(
@@ -26,7 +34,7 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.settings"),
         logging.getLogger("raspiCamSrv.timelapse"),
     ):
-#        logger.addHandler(filehandler)
+        #logger.addHandler(filehandler)
         logger.setLevel(logging.INFO)
 
     if test_config is None:
@@ -35,12 +43,6 @@ def create_app(test_config=None):
     else:
         # load the test config if passed in
         app.config.from_mapping(test_config)
-
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
 
     # Make database available in the application context
     from . import db

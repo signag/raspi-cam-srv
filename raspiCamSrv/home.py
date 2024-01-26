@@ -31,12 +31,12 @@ def index():
 
 def gen(camera):
     """Video streaming generator function."""
-    logger.debug("In gen")
+    #logger.debug("In gen")
     yield b'--frame\r\n'
     while True:
         frame = camera.get_frame()
         l = len(frame)
-        logger.debug("Got frame of length %s", l)
+        #logger.debug("Got frame of length %s", l)
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 @bp.route("/video_feed")
@@ -157,6 +157,8 @@ def trigger_autofocus():
                         cc.include_lensPosition = True
                         cc.afMode = 0
                         msg = "Autofocus successful. See Focal Distance. Autofocus Mode set to 'Manual'."
+                    else:
+                        msg = "Camera returned LensPosition 0. Ignored"
                 else:
                     msg = "Autofocus not successful"
             else:
@@ -167,7 +169,7 @@ def trigger_autofocus():
 @bp.route("/set_zoom", methods=("GET", "POST"))
 @login_required
 def set_zoom():
-    logger.info("In set_zoom")
+    logger.debug("In set_zoom")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls
@@ -177,15 +179,15 @@ def set_zoom():
     if request.method == "POST":
         step = int(request.form["zoomfactorstep"])
         sc.zoomFactorStep = step
-        logger.info("sc.zoomFactorStep set to %s", step)
+        logger.debug("sc.zoomFactorStep set to %s", step)
         if  sc.isZoomModeDraw == True:
             sc.isZoomModeDraw = False
             scalerCropStr = request.form["scalercrop"]
-            logger.info("Form scalerCrop: %s", scalerCropStr)
+            logger.debug("Form scalerCrop: %s", scalerCropStr)
             sc.scalerCropLiveViewStr = scalerCropStr
-            logger.info("sc.scalerCropLiveView: %s", sc.scalerCropLiveView)
+            logger.debug("sc.scalerCropLiveView: %s", sc.scalerCropLiveView)
             cc.scalerCropStr = scalerCropStr
-            logger.info("cc.scalerCrop: %s", cc.scalerCrop)
+            logger.debug("cc.scalerCrop: %s", cc.scalerCrop)
             cc.include_scalerCrop = True
             Camera().applyControls(cfg.liveViewConfig)
             time.sleep(0.5)

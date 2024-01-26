@@ -177,5 +177,3 @@ Restart=always
 [Install]
 WantedBy=default.target
 ```
-
-[Here](#service-configuration-for-audio-support)
