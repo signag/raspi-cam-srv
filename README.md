@@ -24,6 +24,8 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - On the [Config screen](docs/Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
 - The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
 - The [Photos screen](docs/PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
+- With the [Timelapse](docs/Timelapse.md) screen, timelapse series can be configured, executed and monitored during their progress.
+- The [Timelapse](docs/Timelapse.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
 - The [Settings screen](docs/Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
 - Access to the server requires [registration and authentification](docs/Authentication.md).
 
@@ -38,8 +40,8 @@ The software is still being tested and extended.
 
 - USB cameras are detected but currently not supported. One reason is that many USB cameras use the YUYV format whereas **raspiCamSrv** uses MJPEG for the Live stream and YUYV would require OpenCV for rendering.
 - **raspiCamSrv** will not automatically detect a changed camera setup, for example if cameras are plugged in and out while the Raspberry Pi is running (certainly, this would apply only to USB cameras and nobody will unplug a Pi camera without shutting down the system). However, there is a **Reset Server** button on the [Settings](docs/Settings.md) screen, which, when pressed, will force the configuration to be updated.
-- Timelapse features are envisaged. <br>It was actually the starting point for this project to develop a Pi Zero + Camera solution, based on actual software and hardware, which can be used for long runnting time lapse series.
-- The entire configuration is still transient and will be reinitialized with server restart. It is intended to save the configuration in the database and restore it when the server is restarted.
+- The entire configuration is still transient and will be reinitialized with server restart. It is intended to save the configuration in the database and restore it when the server is restarted.    
+(See the [Timelapse](docs/Timelapse.md#attaching-camara-configuration-to-a-timelapse-series) screen for manually persisting arbitrary configurations.)
 - Although the layout is responsive, it may not be "good-looking" with all sizes of browser windows
 
 ## Credits

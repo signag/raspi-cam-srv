@@ -1,4 +1,3 @@
-from libcamera import controls, Transform
 import subprocess
 from subprocess import CalledProcessError
 import json
@@ -65,31 +64,31 @@ class CameraInfo():
 
 class CameraControls():
     def __init__(self):
-        self._aeConstraintMode = controls.AeConstraintModeEnum.Normal
+        self._aeConstraintMode = 0
         self.include_aeConstraintMode = False
         self._aeEnable = True
         self.include_aeEnable = False
-        self._aeExposureMode = controls.AeExposureModeEnum.Normal
+        self._aeExposureMode = 0
         self.include_aeExposureMode = False
         self._aeFlickerMode = 0
         self.include_aeFlickerMode = False
         self._aeFlickerPeriod = 10000
         self.include_aeFlickerPeriod = False
-        self._aeMeteringMode = controls.AeMeteringModeEnum.CentreWeighted
+        self._aeMeteringMode = 0
         self.include_aeMeteringMode = False
-        self._afMode = controls.AfModeEnum.Manual
+        self._afMode = 0
         self.include_afMode = False
         self._lensPosition = 1.0
         self.include_lensPosition = False
-        self._afMetering = controls.AfMeteringEnum.Auto
+        self._afMetering = 0
         self.include_afMetering = False
-        self._afPause = controls.AfPauseEnum.Immediate
+        self._afPause = 0
         self.include_afPause = False
-        self._afRange = controls.AfRangeEnum.Normal
+        self._afRange = 0
         self.include_afRange = False
-        self._afSpeed = controls.AfSpeedEnum.Normal
+        self._afSpeed = 0
         self.include_afSpeed = False
-        self._afTrigger = controls.AfTriggerEnum.Start
+        self._afTrigger = 0
         self.include_afTrigger = False
         self._afWindows = ()
         self.include_afWindows = False
@@ -97,7 +96,7 @@ class CameraControls():
         self.include_analogueGain = False
         self._awbEnable = True
         self.include_awbEnable = False
-        self._awbMode = controls.AwbModeEnum.Auto
+        self._awbMode = 0
         self.include_awbMode = False
         self._brightness = 0.0
         self.include_brightness = False
@@ -160,10 +159,10 @@ class CameraControls():
 
     @aeConstraintMode.setter
     def aeConstraintMode(self, value: int):
-        if value == controls.AeConstraintModeEnum.Normal \
-        or value == controls.AeConstraintModeEnum.Highlight \
-        or value == controls.AeConstraintModeEnum.Shadows \
-        or value == controls.AeConstraintModeEnum.Custom:
+        if value == 0 \
+        or value == 1 \
+        or value == 2 \
+        or value == 3:
             self._aeConstraintMode = value
         else:
             raise ValueError("Invalid value for aeConstraintMode")
@@ -190,10 +189,10 @@ class CameraControls():
 
     @aeExposureMode.setter
     def aeExposureMode(self, value: int):
-        if value == controls.AeExposureModeEnum.Normal \
-        or value == controls.AeExposureModeEnum.Short \
-        or value == controls.AeExposureModeEnum.Long \
-        or value == controls.AeExposureModeEnum.Custom:
+        if value == 0 \
+        or value == 1 \
+        or value == 2 \
+        or value == 3:
             self._aeExposureMode = value
         else:
             raise ValueError("Invalid value for aeExposureMode")
@@ -208,9 +207,9 @@ class CameraControls():
 
     @aeFlickerMode.setter
     def aeFlickerMode(self, value: int):
-        if value == controls.AeFlickerModeEnum.Off \
-        or value == controls.AeFlickerModeEnum.Manual \
-        or value == controls.AeFlickerModeEnum.Auto:
+        if value == 0 \
+        or value == 1 \
+        or value == 2:
             self._aeFlickerMode = value
         else:
             raise ValueError("Invalid value for aeFlickerMode")
@@ -240,10 +239,10 @@ class CameraControls():
 
     @aeMeteringMode.setter
     def aeMeteringMode(self, value: int):
-        if value == controls.AeMeteringModeEnum.CentreWeighted \
-        or value == controls.AeMeteringModeEnum.Spot \
-        or value == controls.AeMeteringModeEnum.Matrix \
-        or value == controls.AeMeteringModeEnum.Custom:
+        if value == 0 \
+        or value == 1 \
+        or value == 2 \
+        or value == 3:
             self._aeMeteringMode = value
         else:
             raise ValueError("Invalid value for aeMeteringMode")
@@ -258,9 +257,9 @@ class CameraControls():
 
     @afMode.setter
     def afMode(self, value: int):
-        if value == controls.AfModeEnum.Manual \
-        or value == controls.AfModeEnum.Auto \
-        or value == controls.AfModeEnum.Continuous:
+        if value == 0 \
+        or value == 1 \
+        or value == 2:
             self._afMode = value
         else:
             raise ValueError("Invalid value for afMode")
@@ -308,8 +307,8 @@ class CameraControls():
 
     @afMetering.setter
     def afMetering(self, value: int):
-        if value == controls.AfMeteringEnum.Auto \
-        or value == controls.AfMeteringEnum.Windows:
+        if value == 0 \
+        or value == 1:
             self._afMetering = value
         else:
             raise ValueError("Invalid value for afMetering")
@@ -324,9 +323,9 @@ class CameraControls():
 
     @afPause.setter
     def afPause(self, value: int):
-        if value == controls.AfPauseEnum.Immediate \
-        or value == controls.AfPauseEnum.Deferred \
-        or value == controls.AfPauseEnum.Resume:
+        if value == 0 \
+        or value == 1 \
+        or value == 2:
             self._afPause = value
         else:
             raise ValueError("Invalid value for afPause")
@@ -341,9 +340,9 @@ class CameraControls():
 
     @afRange.setter
     def afRange(self, value: int):
-        if value == controls.AfRangeEnum.Normal \
-        or value == controls.AfRangeEnum.Macro \
-        or value == controls.AfRangeEnum.Full:
+        if value == 0 \
+        or value == 1 \
+        or value == 2:
             self._afRange = value
         else:
             raise ValueError("Invalid value for afRange")
@@ -358,8 +357,8 @@ class CameraControls():
 
     @afSpeed.setter
     def afSpeed(self, value: int):
-        if value == controls.AfSpeedEnum.Normal \
-        or value == controls.AfSpeedEnum.Fast:
+        if value == 0 \
+        or value == 1:
             self._afSpeed = value
         else:
             raise ValueError("Invalid value for afSpeed")
@@ -394,8 +393,8 @@ class CameraControls():
 
     @afTrigger.setter
     def afTrigger(self, value: int):
-        if value == controls.AfTriggerEnum.Start \
-        or value == controls.AfTriggerEnum.Cancel:
+        if value == 0 \
+        or value == 1:
             self._afTrigger = value
         else:
             raise ValueError("Invalid value for afTrigger")
@@ -472,13 +471,13 @@ class CameraControls():
 
     @awbMode.setter
     def awbMode(self, value: int):
-        if value == controls.AwbModeEnum.Auto \
-        or value == controls.AwbModeEnum.Tungsten \
-        or value == controls.AwbModeEnum.Fluorescent \
-        or value == controls.AwbModeEnum.Indoor \
-        or value == controls.AwbModeEnum.Daylight \
-        or value == controls.AwbModeEnum.Cloudy \
-        or value == controls.AwbModeEnum.Custom:
+        if value == 0 \
+        or value == 2 \
+        or value == 3 \
+        or value == 4 \
+        or value == 5 \
+        or value == 6 \
+        or value == 7:
             self._awbMode = value
         else:
             raise ValueError("Invalid value for awbMode")
@@ -620,11 +619,11 @@ class CameraControls():
 
     @hdrMode.setter
     def hdrMode(self, value: int):
-        if value == controls.HdrModeEnum.Off \
-        or value == controls.HdrModeEnum.MultiExposureUnmerged \
-        or value == controls.HdrModeEnum.MultiExposure \
-        or value == controls.HdrModeEnum.SingleExposure \
-        or value == controls.HdrModeEnum.Night:
+        if value == 0 \
+        or value == 1 \
+        or value == 2 \
+        or value == 3 \
+        or value == 4:
             self._hdrMode = value
         else:
             raise ValueError("Invalid value for hdrMode")
@@ -720,6 +719,13 @@ class CameraControls():
                 if len(res) == 4:
                     rest = (int(res[0]), int(res[1]), int(res[2]), int(res[3]))
         return rest
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        cc = CameraControls()
+        for key, value in dict.items():
+            setattr(cc, key, value)
+        return cc
 
 class SensorMode():
     """ The class represents a specific sensor mode of the camera
@@ -977,6 +983,13 @@ class CameraConfig():
     @property
     def tabTitle(self) -> str:
         return "Config " + self.id
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        cc = CameraConfig()
+        for key, value in dict.items():
+            setattr(cc, key, value)
+        return cc
         
 class CameraProperties():
     def __init__(self):
@@ -1160,6 +1173,7 @@ class ServerConfig():
         self._lastConfigTab = "cfglive"
         self._lastInfoTab = "camprops"
         self._isVideoRecording = False
+        self._isTimelapseRecording = False
         self._isDisplayHidden = True
         self._displayPhoto = None
         self._displayFile = None
@@ -1382,6 +1396,14 @@ class ServerConfig():
     @isVideoRecording.setter
     def isVideoRecording(self, value: bool):
         self._isVideoRecording = value
+
+    @property
+    def isTimelapseRecording(self) -> bool:
+        return self._isTimelapseRecording
+
+    @isTimelapseRecording.setter
+    def isTimelapseRecording(self, value: bool):
+        self._isTimelapseRecording = value
 
     @property
     def buttonClear(self) -> str:
@@ -1847,6 +1869,10 @@ class CameraCfg():
     @property
     def controls(self) -> CameraControls:
         return self._controls
+
+    @controls.setter
+    def controls(self, value: CameraControls):
+        self._controls = value
     
     @property
     def cameraProperties(self) -> CameraProperties:
@@ -1879,10 +1905,18 @@ class CameraCfg():
     @property
     def photoConfig(self) -> CameraConfig:
         return self._photoConfig
+
+    @photoConfig.setter
+    def photoConfig(self, value: CameraConfig):
+        self._photoConfig = value
     
     @property
     def rawConfig(self) -> CameraConfig:
         return self._rawConfig
+
+    @rawConfig.setter
+    def rawConfig(self, value: CameraConfig):
+        self._rawConfig = value
     
     @property
     def videoConfig(self) -> CameraConfig:

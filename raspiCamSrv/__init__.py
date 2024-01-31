@@ -33,6 +33,7 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.info"),
         logging.getLogger("raspiCamSrv.settings"),
         logging.getLogger("raspiCamSrv.timelapse"),
+        logging.getLogger("raspiCamSrv.timelapseCfg"),
     ):
         #logger.addHandler(filehandler)
         logger.setLevel(logging.INFO)
@@ -53,6 +54,14 @@ def create_app(test_config=None):
     cfg = camCfg.CameraCfg()
     sc = cfg.serverConfig
     sc.photoRoot = app.static_folder
+    
+    # Configure Timelapse
+    from . import timelapseCfg
+    tlRootPath = app.static_folder + "/timelapse"
+    os.makedirs(tlRootPath, exist_ok=True)
+    tlCfg = timelapseCfg.TimelapseCfg()
+    tlCfg.rootPath = tlRootPath
+    tlCfg.initFromTlFolder()
     
     # Register required blueprints
     from . import auth

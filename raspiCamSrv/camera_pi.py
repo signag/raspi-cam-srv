@@ -5,6 +5,7 @@ import threading
 from _thread import get_ident
 from raspiCamSrv.camera_base import BaseCamera, CameraEvent
 from raspiCamSrv.camCfg import CameraInfo, CameraCfg, SensorMode, CameraConfig
+from raspiCamSrv.timelapseCfg import Series
 from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
 from libcamera import Transform, Size, ColorSpace, controls
 from picamera2.encoders import JpegEncoder, MJPEGEncoder
@@ -39,6 +40,7 @@ class Camera(BaseCamera):
     cam = None
     camNum = -1
     videoOutput = None
+    timelapseSeries = None
 
     def __init__(self):
         logger.debug("Thread %s: Camera.__init__", get_ident())
@@ -480,6 +482,23 @@ class Camera(BaseCamera):
         else:
             logger.debug("Thread %s: Camera.stopCameraSystem: Video thread was not active", get_ident())
         BaseCamera.stopVideoRequested = False        
+        
+        logger.debug("Thread %s: Camera.stopCameraSystem: Stopping Timelapse thread", get_ident())
+        BaseCamera.stopTimelapseRequested = True        
+        if BaseCamera.timelapseThread:
+            cnt = 0
+            while BaseCamera.timelapseThread:
+                time.sleep(0.01)
+                cnt += 1
+                if cnt > 500:
+                    break
+            if BaseCamera.timelapseThread:
+                logger.debug("Thread %s: Camera.stopCameraSystem: Timelapse thread did not stop within 5 sec", get_ident())
+            else:
+                logger.debug("Thread %s: Camera.stopCameraSystem: Timelapse thread successfully stopped", get_ident())
+        else:
+            logger.debug("Thread %s: Camera.stopCameraSystem: Timelapse thread was not active", get_ident())
+        BaseCamera.stopTimelapseRequested = False        
             
         Camera.cam.stop_recording()
         logger.debug("Thread %s: Camera.stopCameraSystem: Recording stopped", get_ident())
@@ -487,7 +506,6 @@ class Camera(BaseCamera):
         logger.debug("Thread %s: Camera.stopCameraSystem: Camara stopped", get_ident())
         Camera.cam.close()
         logger.debug("Thread %s: Camera.stopCameraSystem: Camara closed", get_ident())
-        
 
     @staticmethod
     def restartLiveView():
@@ -651,7 +669,6 @@ class Camera(BaseCamera):
             logger.error("Thread %s: Camera.frames - Type error", get_ident())
         except Exception:
             logger.error("Thread %s: Camera.frames - Exception", get_ident())
-            
     
     @staticmethod
     def _videoThread():
@@ -660,7 +677,6 @@ class Camera(BaseCamera):
         sc = cfg.serverConfig
         # First, stop the camera system
         Camera.stopCameraSystem()
-        # Deactivate Live View to avoid the Live View thread to start
         
         Camera.cam = Picamera2(sc.activeCamera)
         logger.debug("Thread %s: _videoThread - Camera reassigned", get_ident())
@@ -764,3 +780,107 @@ class Camera(BaseCamera):
     @staticmethod
     def getMetaData() -> dict:
         return Camera.cam.capture_metadata()
+    
+    @staticmethod
+    def _timelapseThread():
+        logger.debug("Thread %s: _timelapseThread", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        # First, stop the camera system
+        Camera.stopCameraSystem()
+        sc.isTimelapseRecording = True
+                
+        Camera.cam = Picamera2(sc.activeCamera)
+        cam = Camera.cam
+        ser = Camera.timelapseSeries
+        srvCam = CameraCfg()
+        sc = srvCam.serverConfig
+        if ser.type == "jpg":
+            cfg = srvCam.photoConfig
+        else:
+            cfg = srvCam.rawConfig
+        tiemelapsCfg = Camera.configure(cfg, srvCam.photoConfig)
+        cam.configure(tiemelapsCfg)
+        logger.debug("Thread %s: _timelapseThread - configuration done", get_ident())
+        Camera.applyControls(cfg)
+        logger.debug("Thread %s: _timelapseThread - selected controls applied", get_ident())
+        cam.start(show_preview=False)
+        logger.debug("Thread %s: _timelapseThread - camera started", get_ident())
+
+        lastTime = None
+        stop = False
+        while not stop:
+            nextTime = ser.nextTime(lastTime)
+            nextPhoto = ser.nextPhoto
+            logger.debug("Thread %s: _timelapseThread - nextPhoto: %s nextTime %s", get_ident(), nextPhoto, str(nextTime))
+            if nextPhoto == "" or nextTime is None:
+                stop = True
+            else:
+                curTime = datetime.datetime.now()
+                timedif = nextTime - curTime
+                timedifSec = timedif.total_seconds()
+                logger.debug("Thread %s: _timelapseThread - Seconds to wait: %s", get_ident(), timedifSec)
+                while timedifSec > 2.0:
+                    time.sleep(2.0)
+                    curTime = datetime.datetime.now()
+                    timedif = nextTime - curTime
+                    timedifSec = timedif.total_seconds()
+                    if BaseCamera.stopTimelapseRequested:
+                        stop = True
+                        break
+                if stop == False and timedifSec > 0.0:
+                    time.sleep(timedifSec)
+            if BaseCamera.stopTimelapseRequested:
+                logger.debug("Thread %s: _timelapseThread - Stop requested", get_ident())
+                stop = True
+            if not stop:
+                logger.debug("Thread %s: _timelapseThread - Preparing request", get_ident())
+                request = cam.capture_request()
+                fpjpg = ser.path + "/" + nextPhoto + ".jpg"
+                fpraw = ser.path + "/" + nextPhoto + ".dng"
+                lastTime = datetime.datetime.now()
+                request.save("main", fpjpg)
+                if ser.type == "raw+jpg":
+                    request.save_dng(fpraw)
+                metadata = request.get_metadata()
+                request.release()
+                logger.debug("Thread %s: _timelapseThread - Request released", get_ident())
+                ser.logPhoto(nextPhoto, lastTime, metadata)
+            
+        BaseCamera.timelapseThread = None
+        BaseCamera.stopTimelapseRequested = False
+        BaseCamera.liveViewDeactivated = False
+        sc.isTimelapseRecording = False
+        Camera.stopCameraSystem()
+        logger.debug("Thread %s: _timelapseThread - timelapseThread terminated", get_ident())
+
+    @staticmethod
+    def startTimelapseSeries(ser: Series):
+        """Run timelapse series in an own thread"""
+        logger.debug("Thread %s: startTimelapseSeries. series=%s", get_ident(), ser.name)
+
+        # Deactivate live stream
+        BaseCamera.liveViewDeactivated = True
+        logger.debug("Thread %s: startTimelapseSeries - Live view deactivated", get_ident())
+        
+        if BaseCamera.timelapseThread is None:
+            logger.debug("Thread %s: startTimelapseSeries - Starting new timelapseThread", get_ident())
+            Camera.timelapseSeries = ser
+            BaseCamera.timelapseThread = threading.Thread(target=Camera._timelapseThread, daemon=True)
+            BaseCamera.timelapseThread.start()
+            logger.debug("Thread %s: startTimelapseSeries - timelapseThread started", get_ident())
+
+    @staticmethod
+    def stopTimelapseSeries():
+        """stops the timelapse series"""
+        logger.debug("Thread %s: stopTimelapseSeries", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        BaseCamera.stopTimelapseRequested = True
+        cnt = 0
+        while BaseCamera.timelapseThread:
+            time.sleep(0.01)
+            cnt += 1
+            if cnt > 500:
+                raise TimeoutError("Timelapse thread did not stop within 5 sec")
+        logger.debug("Thread %s: stopTimelapseSeries: Thread has stopped", get_ident())

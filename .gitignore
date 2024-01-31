@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 tests/
 raspiCamSrv/static/photos/
+raspiCamSrv/static/timelapse/
 *.mp4
 *.h264
 

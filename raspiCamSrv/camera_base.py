@@ -62,10 +62,12 @@ class BaseCamera(object):
     thread = None               # background thread that reads frames from camera
     liveViewDeactivated = False
     videoThread = None
-    frame = None                # current frame is stored here by background thread
-    last_access = 0             # time of last client access to the camera
-    stopRequested = False       # Request to stop the background thread
-    stopVideoRequested = False  # Request to stop the video thread
+    timelapseThread = None
+    frame = None                    # current frame is stored here by background thread
+    last_access = 0                 # time of last client access to the camera
+    stopRequested = False           # Request to stop the background thread
+    stopVideoRequested = False      # Request to stop the video thread
+    stopTimelapseRequested = False  # Request to stop the timelapse thread
     event = CameraEvent()
 
     def __init__(self):

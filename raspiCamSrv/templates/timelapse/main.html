@@ -5,8 +5,509 @@
 {% endblock %}
 
 {% block content %}
-<h3>Timelapse</h3>
+    <div class="w3-bar w3-green">
+        <!-- Info menue -->
+        <button class="w3-bar-item w3-button timelapsemenu w3-light-green" id="tlseriesbtn"
+            onclick="openTimelapseTab('tlseries', 'tlseriesbtn')">Series</button>
+        <button class="w3-bar-item w3-button timelapsemenu" id="tldetailsbtn"
+            onclick="openTimelapseTab('tldetails', 'tldetailsbtn')">Details</button>
+    </div>
+    <div id="tlseries" class="timelapsegroup">
+        <div class="w3-twothird">
+            <!-- Series configuration -->
+            <table>
+                <tr>
+                    <form method="post" id="newtlseries" action="{{ url_for('timelapse.new_series') }}">
+                        <td class="w3-tooltip" style="width:25%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                To create a new Timelapse series, enter a unique name for the series.<br>
+                                The name will be used as prefix for images.
+                            </span>
+                            <label for="tlnewseries">New Timelapse Series:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input type="text" id="tlnewseries" name="tlnewseries" value="" aria-label="Name for new series">
+                        </td>
+                        <td style="width:25%">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Create">
+                        </td>
+                    </form>
+                    <td style="width:25%">
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="padding-top: 0px; padding-bottom: 0px">
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="w3-border-top w3-border-black">
+                        &nbsp; 
+                    </td>
+                </tr>
+                <tr>
+                    {% if tl.hasCurSeries == True %}
+                    <form method="post" id="series" action="{{ url_for('timelapse.select_series') }}">
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                {% if sr.status == "NEW" %}
+                                The timelapse series is new and needs to be configured (see below).
+                                {% elif sr.status == "READY" %}
+                                The timelapse series has been configured and can be started.
+                                {% elif sr.status == "ACTIVE" %}
+                                The timelapse series is currently active.
+                                {% elif sr.status == "PAUSED" %}
+                                The timelapse series is paused.
+                                {% elif sr.status == "FINISHED" %}
+                                The timelapse series is finised.
+                                {% endif %}
+                            </span>
+                            <label for="series">Status: {{ sr.status }}</label>
+                        </td>
+                        <td style="width:25%">
+                            <select style="width:100%; height:28px" name="selectseries" id="selectseries">
+                                {% for sername in tl.seriesNames %}
+                                {% if sername == sr.name %}
+                                    <option value="{{ sername }}" selected>{{ sername }}</option>
+                                {% else %}
+                                    <option value="{{ sername }}">{{ sername }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </form>
+                    <td style="width:25%">
+                        {% for action in sr.nextActions %}
+                        {% if action == "start" %}
+                        <form method="post" id="startseries" action="{{ url_for('timelapse.start_series') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Start">
+                        </form>
+                        {% elif action == "pause" %}
+                        <form method="post" id="pauseseries" action="{{ url_for('timelapse.pause_series') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Pause">
+                        </form>
+                        {% elif action == "continue" %}
+                        <form method="post" id="continueseries" action="{{ url_for('timelapse.continue_series') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Continue">
+                        </form>
+                        {% elif action == "remove" and (sr.nextActions|length == 1 or sr.status == "NEW") %}
+                        <form method="post" id="removeseries" action="{{ url_for('timelapse.remove_series') }}">
+                            <input class="w3-button w3-black" style="width:95px" value="Remove" onclick="confirmRemove('removeseries')">
+                        </form>
+                        {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td style="width:25%">
+                        {% for action in sr.nextActions %}
+                        {% if (sr.status != "NEW" and action == "remove" and sr.nextActions|length > 1) %}
+                        <form method="post" id="removeseries2" action="{{ url_for('timelapse.remove_series') }}">
+                            <input class="w3-button w3-black" style="width:95px" value="Remove" onclick="confirmRemove('removeseries2')">
+                        </form>
+                        {% elif action == "finish" %}
+                        <form method="post" id="finishseries" action="{{ url_for('timelapse.finish_series') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Finish">
+                        </form>
+                        {% endif %}
+                        {% endfor %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% if tl.hasCurSeries == True %}
+                <form method="post" id="seriesprops" action="{{ url_for('timelapse.series_properties') }}">
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Name of the timelapse series.<br>
+                                Every series is identified by its unique name.
+                            </span>
+                            <label for="sername">Name:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="text" id="sername" name="sername" value="{{ sr.name }}" disabled>
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Path where series resources are stored.
+                            </span>
+                            <label for="serpath">Path:</label>
+                        </td>
+                        <td>
+                            <input style="width:100%" type="text" id="serpath" name="serpath" value="{{ sr.path }}" disabled>
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Name of the log file for the series.
+                            </span>
+                            <label for="serlog">Log File Name:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="text" id="serlog" name="serlog" value="{{ sr.logFileName }}" disabled>
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Name of the file with camera configuration & control data for the series.
+                            </span>
+                            <label for="sercfg">Configuration File Name:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="text" id="sercfg" name="sercfg" value="{{ sr.cfgFileName }}" disabled>
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Type of photos. Either 'jpg' or 'raw+jpg'
+                            </span>
+                            <label for="imgtype">Photo Type:</label>
+                        </td>
+                        <td style="width:25%">
+                            <select style="width:100%; height:28px" name="imgtype" id="imgtype">
+                                {% if sr.type == "jpg" %}
+                                <option value="jpg" selected>jpg</option>
+                                {% else %}
+                                <option value="jpg">jpg</option>
+                                {% endif %}
+                                {% if sr.type == "raw+jpg" %}
+                                <option value="raw+jpg" selected>raw+jpg</option>
+                                {% else %}
+                                <option value="raw+jpg">raw+jpg</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Date and time when the series shall start.<br>
+                                This will not be changed with other parameters.
+                            </span>
+                            <label for="serstart">Start:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="datetime-local" id="serstart" name="serstart" value="{{ sr.startIso }}">
+                        </td>
+                        {% if sr.startedIso is not none %}
+                        <td style="width:25%" class="w3-tooltip w3-right-align">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Date and time when the series has been started.
+                            </span>
+                            <label for="serstarted">Started:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="datetime-local" id="serstarted" name="serstarted" value="{{ sr.startedIso }}" disabled>
+                        </td>
+                        {% else %}
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Date and time when the series shall end.<br>
+                                This will be adjusted if interval and/or number of shots are changed.
+                            </span>
+                            <label for="serend">End:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="datetime-local" id="serend" name="serend" value="{{ sr.endIso }}">
+                        </td>
+                        {% if sr.endedIso is not none %}
+                        <td style="width:25%" class="w3-tooltip w3-right-align">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Date and time when the series has been ended.
+                            </span>
+                            <label for="serended">Ended:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="datetime-local" id="serended" name="serended" value="{{ sr.endedIso }}" disabled>
+                        </td>
+                        {% else %}
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Interval between shots in seconds.<br>
+                                This will be adjusted if series end or number of shots are changed.
+                            </span>
+                            <label for="serinterval">Interval [sec]:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="number" id="serinterval" name="serinterval" min="0.1" max="999999" step="0.1" value="{{ sr.interval }}">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Number of shots.<br>
+                                This will be adjusted if series end or interval are changed. 
+                            </span>
+                            <label for="sernrshots">Number of shots:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="number" id="sernrshots" name="sernrshots" min="1" max="99999" step="1" value="{{ sr.nrShots }}">
+                        </td>
+                        {% if sr.curShots is not none %}
+                        <td style="width:25%" class="w3-tooltip w3-right-align">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Current number of shots.
+                            </span>
+                            <label for="sercurshots">Current shots:</label>
+                        </td>
+                        <td style="width:25%">
+                            <input style="width:100%" type="number" id="sercurshots" name="sercurshots" min="1" max="99999" step="1" value="{{ sr.curShots }}" disabled>
+                        </td>
+                        {% else %}
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td colspan="4">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:25%">
+                            <input class="w3-button w3-black" type="submit" value="Submit">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                    </tr>
+                </form>
+                <tr>
+                    <td colspan="4" style="width:25%">
+                        <form method="post" id="attachcamcfg" action="{{ url_for('timelapse.attach_camera_cfg') }}">
+                            {% if sr.cameraConfig is none %}
+                            <input class="w3-button w3-black" type="submit" value="Attach Camera Config">
+                            {% else %}
+                            <input class="w3-button w3-black" type="submit" value="Attach Camera Config" onclick="confirmAttachConfig('attachcamcfg')">
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="width:25%">
+                        {% if sr.cameraConfig %}
+                        <form method="post" id="activatecamcfg" action="{{ url_for('timelapse.activate_camera_cfg') }}">
+                            <input class="w3-button w3-black" type="submit" value="Activate attached Camera Config" onclick="confirmActivateConfig('activatecamcfg')">
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+        <div class="w3-third">
+            <!-- Series Preview -->
+            <div style="margin-top: 5px; margin-left:10px">
+                {% if sr.status == "ACTIVE" or sr.status == "PAUSED" or sr.status == "FINISHED" %}
+                {% if sr.showPreview == False %}
+                <form method="post" id="showpreview" action="{{ url_for('timelapse.show_preview') }}">
+                    <input class="w3-button w3-black" type="submit" value="Show Preview">
+                </form>
+                {% else %}
+                <form method="post" id="hidepreview" action="{{ url_for('timelapse.hide_preview') }}">
+                    <input class="w3-button w3-black" type="submit" value="Hide Preview">
+                </form>
+                {% endif %}
+                {% if sr.showPreview == True %}
+                <table style="width:100%">
+                    <tr>
+                        {% if sr.status == "ACTIVE" %}
+                        <td style="width:80%">
+                            <div class="w3-light-grey">
+                                <div id="progressbar" class="w3-container w3-red w3-center" style="height:24px; width:0%"></div>
+                            </div>
+                        </td>
+                        <td style="width:20%">
+                            <p>{{ sr.nextTimeOnlyAsStr() }}</p>
+                        </td>
+                        {% else %}
+                        <td style="width:80%">
+                            <p>&nbsp;</p>
+                        </td>
+                        <td style="width:20%">
+                            <p>&nbsp;</p>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        {% if sr.status == "ACTIVE" %}
+                        <td colspan="2">
+                            <!--Here is the invisible datetime reference for the progress bar -->
+                            <p id="timertarget" style="display:none;">{{ sr.nextTimeIso() }}</p>
+                        </td>
+                        {% else %}
+                        <td colspan="2">
+                            <p style="display:none;">&nbsp;</p>
+                        </td>
+                        {% endif %}
+                    </tr>
+                </table>
+                <table>
+                    {% for entry in sr.getPreviewList() %}
+                    {% set url=url_for('static', filename=entry['ralPath']) %}
+                    {% set name=entry['name'] %}
+                    <tr>
+                        <td>
+                            <img style="width: 100%; height: 150px; object-fit: scale-down"
+                                src="{{ url }}" 
+                                alt="{{ name }}"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <p style="margin-top:0px; margin-bottom:5px; text-align:center">{{ name }}</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div id="tldetails" class="timelapsegroup">
+    </div>
+    {% if sr.status == "ACTIVE" and sr.showPreview == True %}
+    <script>
+        showProgress()
 
-<img style='width: 100%; height: 900px; object-fit: scale-down'
-    src="{{ url_for('static', filename='underconstruction.jpg') }}" class="w3-image">
+        function sleep(milliseconds) {
+            return new Promise(resolve => setTimeout(resolve, milliseconds));
+        }        
+
+        function showProgress() {
+            // Show the remaining time until next shot as progress bar
+            //console.log("showProgress");
+            var timeStr = document.getElementById("timertarget").innerText
+            //console.log("showProgress - timeStr=" + timeStr);
+            var timeTgt = new Date(timeStr);
+            var timeTgtMs = timeTgt.getTime();
+            var nowMs = Date.now();
+            var delta0 = (timeTgtMs - nowMs) / 1000;
+            var delta = delta0;
+            //console.log("delta0: " + delta0 + " delta: " + delta)
+            var elem = document.getElementById("progressbar");
+            var width = 0;
+            var id = setInterval(frame, 100);
+            async function frame() {
+                var disp;
+                var dispm;
+                var disph;
+                delta = (timeTgtMs - Date.now()) / 1000;
+                if (delta < 300) {
+                    disp = delta.toFixed(0) + ' s';
+                } else if (delta < 7200) {
+                    dispm = delta / 60;
+                    disp = dispm.toFixed(0) + ' min';
+                } else {
+                    disph = delta / 3600;
+                    disp = disph.toFixed(1) + ' h';
+                }
+                width = 100 * (delta0 - delta) / delta0
+                //console.log("delta: " + delta + " width: " + width)
+                if (width < 0) {
+                    clearInterval(id);
+                } else if (width >= 100) {
+                    //console.log("Sleeping 2 sec");
+                    await sleep(2000)
+                    //console.log("Reloading")
+                    location.reload();
+                } else {
+                    elem.style.width = width + '%';
+                    elem.innerHTML = disp;
+                }
+            }
+        }
+    </script>
+    {% endif %}
+    <script>
+        const selseries = document.getElementById("selectseries");
+        selseries.addEventListener("change", function() {
+            document.getElementById("series").submit();
+        });
+
+        function openTimelapseTab(tlTabName, tlabButton) {
+            var i;
+            var x = document.getElementsByClassName("timelapsegroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(tlTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("timelapsemenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button timelapsemenu";
+            }
+            document.getElementById(tlabButton).classList = "w3-bar-item w3-button timelapsemenu w3-light-green";
+        }
+
+        function confirmRemove(form) {
+            if (confirm("Do you want to remove this series\nThis will delete all related rosources!")) {
+                document.getElementById(form).submit();
+            }
+        }
+
+        function confirmAttachConfig(form) {
+            if (confirm("The Timelapse Series has already camera configuration and controls attached.\n\n"
+                      + "Do you want to overwrite the attached config & ctrl with the current 'Photo'/'Raw Photo' configuration and controls?"  
+                        )
+            ) {
+                document.getElementById(form).submit();
+            }
+        }
+
+        function confirmActivateConfig(form) {
+            if (confirm("Do you want to replace the active 'Photo'/Raw Photo' configuration and controls\n"
+                      + "with the settings attached to the Timelapse Series?")) {
+                document.getElementById(form).submit();
+            }
+        }
+    </script>
 {% endblock %}

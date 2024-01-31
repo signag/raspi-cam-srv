@@ -1,0 +1,592 @@
+from datetime import datetime
+from datetime import timedelta
+from raspiCamSrv.camCfg import CameraConfig, CameraControls
+import os
+import shutil
+from pathlib import Path
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+class Series():
+    PHOTODIGITS = 6     # Number of digits for photo number in filename
+    def __init__(self):
+        self._name = ""
+        self._status = "NE"
+        self._path = ""
+        self._start = None
+        self._started = None
+        self._end = None
+        self._ended = None
+        self._interval = None
+        self._nrShots = None
+        self._curShots = None
+        self._type = "jpg"
+        self._showPreview = True
+        self._logFile = None
+        self._cfgFile = None
+        self._cameraConfig = None
+        self._cameraControls = None
+        self._logHeadlineReq = True
+    
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+    
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @status.setter
+    def status(self, value: str):
+        self._status = value
+    
+    @property
+    def nextActions(self) -> list:
+        """Return the allowed lifecycle actions depending on current status
+        """
+        if self._status == "NE":
+            return ["create",]
+        elif self._status == "NEW":
+            return ["configure", "remove"]
+        elif self._status == "READY":
+            return ["start", "remove"]
+        elif self._status == "ACTIVE":
+            return ["pause", "finish"]
+        elif self.status == "PAUSED":
+            return ["continue", "finish"]
+        elif self.status == "FINISHED":
+            return ["remove",]
+        else:
+            return []
+    
+    def nextStatus(self, action: str) -> str:
+        """Update and return the lifecycle status depending on action
+        """
+        if action == "create":
+            self._status = "NEW"
+        elif action == "configure":
+            self._status = "READY"
+        elif action == "start":
+            self._status = "ACTIVE"
+        elif action == "pause":
+            self._status = "PAUSED"
+        elif action == "finish":
+            self._status = "FINISHED"
+        elif action == "continue":
+            self._status = "ACTIVE"
+        else:
+            self._status = "NONE"
+        return self._status
+    
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @path.setter
+    def path(self, value: str):
+        self._path = value
+    
+    @property
+    def start(self) -> datetime:
+        return self._start
+
+    @start.setter
+    def start(self, value: datetime):
+        if value is None:
+            self._start = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._start = dt
+    
+    @property
+    def startIso(self) -> str:
+        return self._start.isoformat()
+    
+    @property
+    def started(self) -> datetime:
+        return self._started
+
+    @started.setter
+    def started(self, value: datetime):
+        if value is None:
+            self._started = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._started = dt
+    
+    @property
+    def startedIso(self) -> str:
+        if self._started is None:
+            return None
+        else:
+            return self._started.isoformat()
+    
+    @property
+    def end(self) -> datetime:
+        return self._end
+
+    @end.setter
+    def end(self, value: datetime):
+        if value is None:
+            self._end = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._end = dt
+    
+    @property
+    def endIso(self) -> str:
+        return self._end.isoformat()
+    
+    @property
+    def ended(self) -> datetime:
+        return self._ended
+
+    @ended.setter
+    def ended(self, value: datetime):
+        if value is None:
+            self._ended = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._ended = dt
+    
+    @property
+    def endedIso(self) -> str:
+        if self.ended is None:
+            return None
+        else:
+            return self._ended.isoformat()
+    
+    @property
+    def interval(self) -> float:
+        return self._interval
+
+    @interval.setter
+    def interval(self, value: float):
+        self._interval = value
+    
+    @property
+    def nrShots(self) -> int:
+        return self._nrShots
+
+    @nrShots.setter
+    def nrShots(self, value: int):
+        self._nrShots = value
+    
+    @property
+    def curShots(self) -> int:
+        return self._curShots
+
+    @curShots.setter
+    def curShots(self, value: int):
+        self._curShots = value
+    
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @type.setter
+    def type(self, value: str):
+        self._type = value
+    
+    @property
+    def showPreview(self) -> bool:
+        return self._showPreview
+
+    @showPreview.setter
+    def showPreview(self, value: bool):
+        self._showPreview = value
+    
+    @property
+    def logFileName(self) -> str:
+        return self.name + "_log.csv"
+    
+    @property
+    def logFileRelPath(self) -> str:
+        return "timelapse/" + self.name + "/" + self.logFileName
+    
+    @property
+    def logFile(self) -> str:
+        return self._logFile
+
+    @logFile.setter
+    def logFile(self, value: str):
+        self._logFile = value
+    
+    @property
+    def cfgFileName(self) -> str:
+        return self.name + "_cfg.json"
+    
+    @property
+    def cfgFileRelPath(self) -> str:
+        return  "timelapse/" + self.name + "/" + self.cfgFileName
+    
+    @property
+    def cfgFile(self) -> str:
+        return self._cfgFile
+
+    @cfgFile.setter
+    def cfgFile(self, value: str):
+        self._cfgFile = value
+    
+    @property
+    def cameraConfig(self) -> CameraConfig:
+        return self._cameraConfig
+
+    @cameraConfig.setter
+    def cameraConfig(self, value: CameraConfig):
+        self._cameraConfig = value
+    
+    @property
+    def cameraControls(self) -> CameraControls:
+        return self._cameraControls
+
+    @cameraControls.setter
+    def cameraControls(self, value: CameraControls):
+        self._cameraControls = value
+    
+    @property
+    def nextPhoto(self) -> str:
+        logger.debug("Series.nextPhoto")
+        name = ""
+        if self.curShots is None:
+            self.curShots = 0
+        if self.curShots < self.nrShots:
+            self.curShots += 1
+            name = self.name + "_" + str(self.curShots).zfill(Series.PHOTODIGITS)
+        else:
+            if self.ended is None:
+                logger.debug("Series.nextPhoto - Finishing series")
+                dt = datetime.now()
+                dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
+                self.ended = dt
+                self.nextStatus("finish")
+                self.persist()
+        logger.debug("Series.nextPhoto - returning: %s", name)
+        return name
+    
+    def nextTimeOnlyAsStr(self) -> str: 
+        """ Returns just the time for the next shot
+        """
+        t = str(self.nextTime())
+        return t[11:]
+    
+    def nextTimeIso(self) -> str: 
+        """ Returns the time for the next shot in ISO format
+        """
+        t = self.nextTime()
+        return t.isoformat()
+    
+    def nextTime(self, lastTime=None) -> datetime:
+        """ Calculate and return the time when the next photo must be taken
+            lastTime: time when the last photo has been taken
+        """
+        logger.debug("Series.nextTime - lastTime: %s", lastTime)
+        next = None
+        curTime = datetime.now()
+        if curTime <= self.end:
+            if curTime < self.start:
+                next = self.start
+            else:
+                timedif = curTime - self.start
+                timedifSec = timedif.total_seconds()
+                nrint = int(timedifSec / self._interval)
+                next = self.start + timedelta(seconds = (nrint + 1)*self.interval)
+        else:
+            if self.ended is None:
+                logger.debug("Series.nextTime - Finishing series")
+                dt = datetime.now()
+                dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
+                self.ended = dt
+                self.nextStatus("finish")
+                self.persist()
+        logger.debug("Series.nextTime - returning: %s", next)
+        return next
+    
+    def getPreviewList(self):
+        """ return a list with the last n photos of the series
+        """
+        list = []
+        if self.curShots:
+            n = self.curShots + 1
+            cnt = 0
+            
+            while (cnt < 5 and n >= 0):
+                name = name = self.name + "_" + str(n).zfill(Series.PHOTODIGITS) + ".jpg"
+                path = self.path + "/" + name
+                if os.path.exists(path):
+                    relPath = "timelapse/" + self.name + "/" + name
+                    set = {}
+                    set["name"] = name
+                    set["ralPath"] = relPath
+                    list.append(set)
+                    cnt += 1
+                n = n - 1
+        return list
+    
+    def logPhoto(self, name: str, ptime: datetime, metadata: dict):
+        """Append a log entry for the photo
+        """
+        if self.started is None:
+            self.started = ptime
+            
+        if self._logHeadlineReq:
+            log = "Name" + ";"
+            log = log + "Time" + ";"
+            log = log + "SensorTimestamp" + ";"
+            log = log + "ExposureTime" + ";"
+            log = log + "AnalogueGain" + ";"
+            log = log + "DigitalGain" + ";"
+            log = log + "Lux" + ";"
+            log = log + "LensPosition" + ";"
+            log = log + "FocusFoM" + ";"
+            log = log + "FrameDuration" + ";"
+            log = log + "SensorTemperature" + ";"
+            log = log + "ColourTemperature" + ";"
+            log = log + "AeLocked" + ";"
+            f = open(self.logFile, "a")
+            f.write(log + "\n")
+            f.close()
+            self._logHeadlineReq = False
+        
+        log = name + ";"
+        log = log + ptime.isoformat() + ";"
+        if "SensorTimestamp" in metadata:
+            log = log + str(metadata["SensorTimestamp"]) + ";"
+        else:
+            log = log + ";"
+        if "ExposureTime" in metadata:
+            log = log + str(metadata["ExposureTime"]) + ";"
+        else:
+            log = log + ";"
+        if "AnalogueGain" in metadata:
+            log = log + str(metadata["AnalogueGain"]) + ";"
+        else:
+            log = log + ";"
+        if "DigitalGain" in metadata:
+            log = log + str(metadata["DigitalGain"]) + ";"
+        else:
+            log = log + ";"
+        if "Lux" in metadata:
+            log = log + str(metadata["Lux"]) + ";"
+        else:
+            log = log + ";"
+        if "LensPosition" in metadata:
+            log = log + str(metadata["LensPosition"]) + ";"
+        else:
+            log = log + ";"
+        if "FocusFoM" in metadata:
+            log = log + str(metadata["FocusFoM"]) + ";"
+        else:
+            log = log + ";"
+        if "FrameDuration" in metadata:
+            log = log + str(metadata["FrameDuration"]) + ";"
+        else:
+            log = log + ";"
+        if "SensorTemperature" in metadata:
+            log = log + str(metadata["SensorTemperature"]) + ";"
+        else:
+            log = log + ";"
+        if "ColourTemperature" in metadata:
+            log = log + str(metadata["ColourTemperature"]) + ";"
+        else:
+            log = log + ";"
+        if "AeLocked" in metadata:
+            log = log + str(metadata["AeLocked"]) + ";"
+        else:
+            log = log + ";"
+        f = open(self.logFile, "a")
+        f.write(log + "\n")
+        f.close()
+    
+    def persist(self):
+        """ Store class dictionary in the config file
+        """
+        if self.cfgFile:
+            if not os.path.exists(self.cfgFile):
+                os.makedirs(self.path, exist_ok=True)
+                Path(self.cfgFile).touch()
+            f = open(self.cfgFile, "w")
+            #cj = json.loads(json.dumps(self.toJson(), indent=4))
+            cj = self.toJson()
+            f.write(str(cj))
+            f.close()
+            
+    def toJson(self):
+        #return json.dumps(self, default=lambda o: o.__dict__)
+        return json.dumps(self, default=lambda o: getattr(o, '__dict__', str(o)), indent=4)
+    
+    @classmethod
+    def checkPhotos(cls, path: str, name: str):
+        """ Analyze photos <name>nnnnnn
+            Return nrPhotos, maxNumber
+        """
+        nrPhotos = 0
+        maxNumber = 0
+        fs = []
+        try:
+            fs = os.listdir(path)
+        except FileNotFoundError:
+            fs = []
+        fs.sort()
+        l = len(name) + 1
+        nl = l + Series.PHOTODIGITS
+        for f in fs:
+            if f.endswith(".jpg"):
+                fn = f[:len(f) - 4]
+                if len(fn) == nl:
+                    nums = fn[l:]
+                    if nums.isnumeric:
+                        nrPhotos += 1
+                        num = int(nums)
+                        if num > maxNumber:
+                            maxNumber = num
+        return nrPhotos, maxNumber
+            
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        ser = Series()
+        for key, value in dict.items():
+            if key == "_start" \
+            or key == "_started" \
+            or key == "_end" \
+            or key == "_ended":
+                if value is None:
+                    setattr(ser, key, value)
+                else:
+                    setattr(ser, key, datetime.strptime(value, "%Y-%m-%d %H:%M:%S"))
+            elif key == "_cameraConfig":
+                if value is None:
+                    setattr(ser, key, value)
+                else:
+                    ccfg = CameraConfig.initFromDict(value)
+                    ser.cameraConfig = ccfg
+            elif key == "_cameraControls":
+                if value is None:
+                    setattr(ser, key, value)
+                else:
+                    cctr = CameraControls.initFromDict(value)
+                    ser.cameraControls = cctr
+            else:
+                setattr(ser, key, value)
+                
+        nrPhotos, maxNumber = Series.checkPhotos(ser.path, ser.name)
+        ser.curShots = maxNumber
+        return ser
+
+class TimelapseCfg():
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(TimelapseCfg, cls).__new__(cls)
+            cls._rootPath = None
+            cls._tlSeries = []
+            cls._curSeries = None
+        return cls._instance
+    
+    @property
+    def rootPath(self) -> str:
+        return self._rootPath
+
+    @rootPath.setter
+    def rootPath(self, value: str):
+        self._rootPath = value
+    
+    @property
+    def tlSeries(self) -> list:
+        return self._tlSeries
+
+    @tlSeries.setter
+    def tlSeries(self, value: list):
+        self._tlSeries = value
+    
+    @property
+    def seriesNames(self) -> list:
+        nl = []
+        for s in self._tlSeries:
+            nl.append(s.name)
+        return nl
+    
+    @property
+    def curSeries(self) -> Series:
+        return self._curSeries
+
+    @curSeries.setter
+    def curSeries(self, value: Series):
+        self._curSeries = value
+    
+    @property
+    def hasCurSeries(self) -> bool:
+        return self._curSeries is not None
+        
+    def appendSeries(self, s:Series):
+        self._tlSeries.append(s)
+
+    def nameExists(self, name: str) -> bool:
+        ne = False
+        for s in self._tlSeries:
+            if s.name == name:
+                ne = True
+                break
+        return ne
+    
+    def _initSeriesFromCfg(self, spath: str, name: str) -> Series:
+        """ Initialize a timelapse series from folder information
+            Returns True/False if series is OK/NOK
+        """
+        logger.debug("_initSeriesFromFolder - path: %s name: %s", spath, name)
+        ser = None
+        cfgFile = spath + "/" + name + "_cfg.json"
+        if os.path.exists(cfgFile):
+            with open(cfgFile) as f:
+                try:
+                    sdict = json.load(f)
+                    ser = Series.initFromDict(sdict)
+                except Exception:
+                    ser = Series()
+                    ser.name = name
+                    ser.path = spath
+                    ser.cfgFile = cfgFile
+                    ser.logFile = spath + "/" + ser.logFileName
+        return ser
+    
+    def initFromTlFolder(self):
+        """ Initialize timelapse from file system information
+        """
+        try:
+            tls = os.listdir(self.rootPath)
+        except FileNotFoundError:
+            tls = []
+        tls.sort()
+        logger.debug("initFromTlFolder - Found TL series: %s", tls)
+        for tl in tls:
+            spath = self.rootPath + "/" + tl
+            if os.path.isdir(spath):
+                ser = self._initSeriesFromCfg(spath, tl)
+                if ser:
+                    self.tlSeries.append(ser)
+                    self.curSeries = ser
+        logger.debug("initFromTlFolder - # series: %s", len(self.tlSeries))
+        
+    def removeCurrentSeries(self):
+        """ Remove the current series and set current series to last one in list
+        """
+        sp = self.curSeries.path
+        try:
+            if os.path.exists(sp):
+                if os.path.isdir(sp):
+                    shutil.rmtree(sp)
+        except Exception as e:
+            logger.error("Failed to delete folder %s. Reason: %s", sp, e)
+            
+        self.tlSeries.remove(self.curSeries)
+        if len(self.tlSeries) > 0:
+            self.curSeries = self.tlSeries[0]
+        else:
+            self.curSeries = None
