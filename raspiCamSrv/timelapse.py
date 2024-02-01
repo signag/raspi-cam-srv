@@ -186,6 +186,7 @@ def finish_series():
     sr = tl.curSeries
     sc.curMenu = "timelapse"
     if request.method == "POST":
+        Camera.stopTimelapseSeries()
         sr.nextStatus("finish")
         dt = datetime.now()
         dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
