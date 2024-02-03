@@ -87,11 +87,12 @@ Initially, it will take several minutes until it is visible in the network.
 |7.  | Activate the virtual environment<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
 |8.  | Install Flask 3.0 within the virtual environment.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.0, which can be installed with<br>```pip install Flask==3.0.0```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.0.0'.
 |9.  | Initialize the database for Flask:<br>```flask --app raspiCamSrv init-db```
-|10. | Start the server:<br>```flask --app raspiCamSrv run --host=0.0.0.0```
-|11. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
-|12. | Before you can login, you first need to [register](docs/Authentication.md#registration).
-|13. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
-|14. | Done!
+|10.  | Check that the Flask default port 5000 is available<br>```sudo netstat -nlp \| grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
+|11. | Start the server:<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
+|12. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
+|13. | Before you can login, you first need to [register](docs/Authentication.md#registration).
+|14. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
+|15. | Done!
 
 
 When the Flask server starts up, it will show a warning that this is a development server.   
@@ -112,7 +113,7 @@ The following procedure is for the case where audio recording with video is **no
 |----|-----------------------------------------------
 |1.  | Open a SSH session on the Raspberry Pi
 |2.  | Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)
+|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>If you need a port different from 5000 (see [RaspiCamSrv Installation](#raspicamsrv-installation), step 10), replace also ```port 5000``` by your port.
 |4.  | Stage the service configuration file to systemd:<br>```sudo cp ~/raspiCamSrv.service /etc/systemd/system```
 |5.  | Start the service:<br>```sudo systemctl start raspiCamSrv.service```
 |6.  | Check that the Flask server has started as service:<br>```sudo journalctl -e```
@@ -133,7 +134,7 @@ If your system is a bookworm system (```lsb_release -a```) follow these steps:
 |----|-----------------------------------------------
 |1.  | Open a SSH session on the Raspberry Pi
 |2.  | Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>Remove the entry User=\<user> from the [System] section<br>In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```
+|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>If necessary, raplace also the standard port 5000 with your port.<br>Remove the entry User=\<user> from the [System] section<br>In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```
 |4.  | Create the directory for systemd user units<br>```mkdir -p ~/.config/systemd/user```
 |5.  | Stage the service configuration file to systemd for user units:<br>```cp ~/raspiCamSrv.service ~/.config/systemd/user```
 |6.  | Start the service:<br>```systemctl --user start raspiCamSrv.service```
@@ -152,7 +153,7 @@ If your system is a bullseye system (```lsb_release -a```), which is currently s
 |1.  | Open a SSH session on the Raspberry Pi
 |2.  | Clone branch 0_3_12_next of Picamera2 repository<br>```cd ~/prg```<br>```git clone -b 0_3_12_next https://github.com/raspberrypi/picamera2```
 |3.  | Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-|4.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>- Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>- Add another Environment entry: ```Environment="PYTHONPATH=/home/sn/prg/picamera2"```<br>- Remove the entry User=\<user> from the [System] section<br>- In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```<br>For an example of the final .service file, see below
+|4.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>- Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>- If necessary, raplace also the standard port 5000 with your port.<br>- Add another Environment entry: ```Environment="PYTHONPATH=/home/<user>/prg/picamera2"```<br>- Remove the entry User=\<user> from the [System] section<br>- In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```<br>For an example of the final .service file, see below
 |5.  | Create the directory for systemd user units<br>```mkdir -p ~/.config/systemd/user```
 |6.  | Stage the service configuration file to systemd for user units:<br>```cp ~/raspiCamSrv.service ~/.config/systemd/user```
 |7.  | Start the service:<br>```systemctl --user start raspiCamSrv.service```
@@ -168,7 +169,7 @@ Description=raspiCamSrv
 After=network.target
 
 [Service]
-ExecStart=/home/sn/prg/raspi-cam-srv/.venv/bin/flask --app raspiCamSrv run --host=0.0.0.0
+ExecStart=/home/sn/prg/raspi-cam-srv/.venv/bin/flask --app raspiCamSrv run --port 5000 --host=0.0.0.0
 Environment="PATH=/home/sn/prg/raspi-cam-srv/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 Environment="PYTHONPATH=/home/sn/prg/picamera2"
 WorkingDirectory=/home/sn/prg/raspi-cam-srv

@@ -3,7 +3,7 @@ Description=raspiCamSrv
 After=network.target
 
 [Service]
-ExecStart=/home/<user>/prg/raspi-cam-srv/.venv/bin/flask --app raspiCamSrv run --host=0.0.0.0
+ExecStart=/home/<user>/prg/raspi-cam-srv/.venv/bin/flask --app raspiCamSrv run --port 5000 --host=0.0.0.0
 Environment="PATH=/home/<user>/prg/raspi-cam-srv/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 WorkingDirectory=/home/<user>/prg/raspi-cam-srv
 StandardOutput=inherit
