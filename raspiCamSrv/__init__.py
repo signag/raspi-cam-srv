@@ -19,7 +19,7 @@ def create_app(test_config=None):
         pass
     
     # Configure loggers
-    Path(app.instance_path + "/raspiCamSrv.log").touch(exist_ok=True)
+    #Path(app.instance_path + "/raspiCamSrv.log").touch(exist_ok=True)
     #filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
     #filehandler.setFormatter(app.logger.handlers[0].formatter)
     for logger in(
