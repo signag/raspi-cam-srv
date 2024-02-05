@@ -40,7 +40,7 @@ def gen(camera):
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 @bp.route("/video_feed")
-@login_required
+# @login_required
 def video_feed():
     logger.debug("In video_feed")
     return Response(gen(Camera()),
