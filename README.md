@@ -18,7 +18,7 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - The **live stream** (MJPEG stream) can also be directly accessed through the enpoint ```http://<server>:<port>/video_feed``` without authentification.
 - For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance (see [Focus handling](docs/FocusHandling.md)).
 - For zooming, the intended image section can be [drawn graphically](docs/ZoomPan.md#graphically-setting-the-zoom-window) on the live stream area.
-- Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](docs/LiveScreen.md) together with their metadata (see [Photo taking](docs/Phototaking.md)).
+- Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](docs/LiveScreen.md) together with their metadata or alternatively with their histogram (see [Photo taking](docs/Phototaking.md)).
 - Videos can be recorded along with audio if a microphone (e.g. USB microphone) is connected to the Raspberry Pi (see [Recording Audio along with Video](docs/Settings.md#recording-audio-along-with-video))
 - For raw photos and videos, a jpeg placeholder is shown
 - The photos taken may be added to a display buffer for inspection of photos and metadata and for comparison (see [Photo Display](docs/Phototaking.md#photo-display))

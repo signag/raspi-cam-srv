@@ -1391,6 +1391,7 @@ RaspiCamSrv's Live page
         <div class="w3-half">
             <!-- Lower right area: Metadata-->
             {% if sc.isDisplayHidden == false and sc.displayMeta != None %}
+            {% if sc.displayContent == "meta" %}
             <h4 style="min-height: 36px; padding-left: 17px">Metadata</h4>
             <table class="w3-table-all">
                 <tr>
@@ -1601,14 +1602,35 @@ RaspiCamSrv's Live page
                 {% endif%}
                 {% endfor %}
             </table>
+            {% else %}
+            <table>
+                <tr>
+                    <td style="width:100%">
+                        <img style="max-height: 600px;" src="{{ url_for('static', filename=sc.displayHistogram) }}" class="w3-image">
+                    </td>
+                </tr>
+            </table>
+            {% endif %}
             <p> </p>
             <table class="w3-table">
                 <tr>
                     <td style="width:25%">
+                        {% if sc.useHistograms == True %}
+                        {% if sc.displayContent == "meta" %}
+                        <form method="post" action="{{ url_for('home.show_histogram') }}">
+                            <input class="w3-button w3-black" style="width:100%" type="submit" value="Show Histogram">
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('home.show_metadata') }}">
+                            <input class="w3-button w3-black" style="width:100%" type="submit" value="Show Metadata">
+                        </form>
+                        {% endif %}
+                        {% endif %}
                     </td>
                     <td style="width:25%">
                     </td>
                     <td style="width:25%">
+                        {% if sc.displayContent == "meta" %}
                         {% if sc.displayMetaFirst == 0 %}
                         <form method="post" action="{{ url_for('home.meta_prev') }}">
                             <input class="w3-button w3-black" style="width:80%" type="submit" value="Previous" disabled>
@@ -1618,8 +1640,10 @@ RaspiCamSrv's Live page
                             <input class="w3-button w3-black" style="width:80%" type="submit" value="Previous">
                         </form>
                         {% endif %}
+                        {% endif %}
                     </td>
                     <td style="width:25%">
+                        {% if sc.displayContent == "meta" %}
                         {% if sc.displayMetaLast < 999 %}
                         <form method="post" action="{{ url_for('home.meta_next') }}">
                             <input class="w3-button w3-black" style="width:80%" type="submit" value="Next">
@@ -1628,6 +1652,7 @@ RaspiCamSrv's Live page
                         <form method="post" action="{{ url_for('home.meta_next') }}">
                             <input class="w3-button w3-black" style="width:80%" type="submit" value="Next" disabled>
                         </form>
+                        {% endif %}
                         {% endif %}
                     </td>
                 </tr>

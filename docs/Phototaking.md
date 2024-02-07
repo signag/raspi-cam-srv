@@ -85,3 +85,14 @@ For the metadata, tooltips on the metadata properties explain the respective par
 ![Metadata1](img/Metadata1.jpg)
 
 ![Metadata2](img/Metadata2.jpg)
+
+## Histogram
+
+Alternatively to the metadata, you may also switch to Histogram if usage of histograms has been activated in the [Settings](./Settings.md).
+
+![Histogram](img/MetaHistogram.jpg)
+
+The setting whether metadata or histogram are shown, is kept and remains active also when the next photo is taken or when scrolling through the Photo Buffer.
+
+Histogram graphics are calculated on the fly when they are requested for the first time.    
+They are stored in a "hist" subfolder under the *Path for Photos/Videos* (see [Settings](./Settings.md))

@@ -603,6 +603,7 @@ class Camera(BaseCamera):
                 sc._displayMetaLast = 999
             else:
                 sc.displayMetaLast = 10
+            sc.displayHistogram = None
             logger.debug("Camera.takeImage: Image metedata captured")
             request.release()
             logger.debug("Camera.takeImage: Request released")
@@ -654,6 +655,7 @@ class Camera(BaseCamera):
                 sc._displayMetaLast = 999
             else:
                 sc.displayMetaLast = 10
+            sc.displayHistogram = None
             logger.debug("Camera.takeRawImage: Raw Image metedata captured")
             request.release()
             logger.debug("Camera.takeRawImage: Request released")
@@ -929,6 +931,7 @@ class Camera(BaseCamera):
                 if ser.isExposureSeries \
                 and sc.useHistograms:
                     dest = ser.histogramPath + "/" + nextPhoto + ".jpg"
+                    plt.figure()    
                     img = cv2.imread(fpjpg)
                     color = ('b','g','r')
                     for i,col in enumerate(color):

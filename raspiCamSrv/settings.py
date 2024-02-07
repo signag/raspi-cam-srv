@@ -57,6 +57,10 @@ def serverconfig():
         sc.recordAudio = recordAudio        
         audioSync = request.form["audiosync"]
         sc.audioSync = audioSync
+        useHist = not request.form.get("showhistograms") is None
+        if not useHist:
+            sc.displayContent = "meta"
+        sc.useHistograms = useHist
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
 
 @bp.route("/resetServer", methods=("GET", "POST"))

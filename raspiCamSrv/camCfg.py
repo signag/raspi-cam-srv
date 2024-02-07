@@ -1182,6 +1182,8 @@ class ServerConfig():
         self._displayMeta = None
         self._displayMetaFirst = 0
         self._displayMetaLast = 999
+        self._displayHistogram = None
+        self._displayContent = "meta"
         self._displayBuffer = {}
         self._chunkSizePhoto = 9
         self._firstPagePhoto = 1
@@ -1268,6 +1270,10 @@ class ServerConfig():
     @cameraPhotoSubPath.setter
     def cameraPhotoSubPath(self, value: str):
         self._cameraPhotoSubPath = value
+
+    @property
+    def cameraHistogramSubPath(self):
+        return self._cameraPhotoSubPath + "/hist"
 
     @property
     def photoType(self) -> str:
@@ -1464,6 +1470,26 @@ class ServerConfig():
         self._displayMetaLast = value
 
     @property
+    def displayHistogram(self) -> str:
+        return self._displayHistogram
+
+    @displayHistogram.setter
+    def displayHistogram(self, value: str):
+        self._displayHistogram = value
+
+    @property
+    def displayContent(self) -> str:
+        return self._displayContent
+
+    @displayContent.setter
+    def displayContent(self, value: str):
+        if value == "meta" \
+        or value == "hist":
+            self._displayContent = value
+        else:
+            self._displayContent = "meta"
+
+    @property
     def chunkSizePhoto(self) -> int:
         return self._chunkSizePhoto
 
@@ -1638,6 +1664,7 @@ class ServerConfig():
             el["displayPhoto"] = self._displayPhoto
             el["displayFile"]  = self._displayFile
             el["displayMeta"]  = self._displayMeta
+            el["displayHisto"]  = self._displayHistogram
             el["displayMetaFirst"]  = self._displayMetaFirst
             el["displayMetaLast"]  = self._displayMetaLast
             self._displayBuffer[self._displayFile] = el
@@ -1676,6 +1703,7 @@ class ServerConfig():
                                 self.displayFile = key
                                 self.displayPhoto = value["displayPhoto"]
                                 self.displayMeta = value["displayMeta"]
+                                self.displayHistogram = value["displayHisto"]
                                 self.displayMetaFirst = value["displayMetaFirst"]
                                 self.displayMetaLast = value["displayMetaLast"]
                                 break
@@ -1684,6 +1712,7 @@ class ServerConfig():
                     self.displayFile = None
                     self.displayPhoto = None
                     self.displayMeta = None
+                    self.displayHistogram = None
                     self.displayMetaFirst = 0
                     self.displayMetaLast = 999
         else:
@@ -1691,6 +1720,7 @@ class ServerConfig():
             self.displayFile = None
             self.displayPhoto = None
             self.displayMeta = None
+            self.displayHistogram = None
             self.displayMetaFirst = 0
             self.displayMetaLast = 999
         
@@ -1701,6 +1731,7 @@ class ServerConfig():
         self.displayFile = None
         self.displayPhoto = None
         self.displayMeta = None
+        self.displayHistogram = None
         self.displayMetaFirst = 0
         self.displayMetaLast = 999
 
@@ -1741,6 +1772,7 @@ class ServerConfig():
             self.displayFile = firstKey
             self.displayPhoto = firstEl["displayPhoto"]
             self.displayMeta = firstEl["displayMeta"]
+            self.displayHistogram = firstEl["displayHisto"]
             self.displayMetaFirst = firstEl["displayMetaFirst"]
             self.displayMetaLast = firstEl["displayMetaLast"]
 
@@ -1765,6 +1797,7 @@ class ServerConfig():
             self.displayFile = nextKey
             self.displayPhoto = nextEl["displayPhoto"]
             self.displayMeta = nextEl["displayMeta"]
+            self.displayHistogram = nextEl["displayHisto"]
             self.displayMetaFirst = nextEl["displayMetaFirst"]
             self.displayMetaLast = nextEl["displayMetaLast"]
 
@@ -1783,6 +1816,7 @@ class ServerConfig():
             self.displayFile = prevKey
             self.displayPhoto = prevEl["displayPhoto"]
             self.displayMeta = prevEl["displayMeta"]
+            self.displayHistogram = prevEl["displayHisto"]
             self.displayMetaFirst = prevEl["displayMetaFirst"]
             self.displayMetaLast = prevEl["displayMetaLast"]
 

@@ -2,7 +2,7 @@ from flask import current_app, Blueprint, Response, flash, g, redirect, render_t
 from werkzeug.exceptions import abort
 from raspiCamSrv.auth import login_required
 from raspiCamSrv.camera_pi import Camera
-from raspiCamSrv.camCfg import CameraCfg
+from raspiCamSrv.camCfg import CameraCfg, ServerConfig
 from libcamera import controls
 import math
 import os
@@ -663,6 +663,7 @@ def meta_clear():
     if request.method == "POST":
         sc.displayMeta = None
         sc.displayPhoto = None
+        sc.displayHistogram = None
         sc.displayMetaFirst = 0
         sc.displayMetaLast = 999
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -715,6 +716,10 @@ def photoBuffer_add():
     cp = cfg.cameraProperties
     if request.method == "POST":
         sc.displayBufferAdd()
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/photoBuffer_remove", methods=("GET", "POST"))
@@ -728,6 +733,10 @@ def photoBuffer_remove():
     cp = cfg.cameraProperties
     if request.method == "POST":
         sc.displayBufferRemove()
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/photoBuffer_prev", methods=("GET", "POST"))
@@ -741,6 +750,10 @@ def photoBuffer_prev():
     cp = cfg.cameraProperties
     if request.method == "POST":
         sc.displayBufferPrev()
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/photoBuffer_next", methods=("GET", "POST"))
@@ -754,6 +767,10 @@ def photoBuffer_next():
     cp = cfg.cameraProperties
     if request.method == "POST":
         sc.displayBufferNext()
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/show_photo", methods=("GET", "POST"))
@@ -809,6 +826,14 @@ def take_photo():
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Saving image %s", filename)
         fp = Camera().takeImage(filename)
+        logger.info("take_photo - success")
+        logger.info("take_photo - sc.displayContent: %s", sc.displayContent)
+        if sc.displayContent == "hist":
+            logger.info("take_photo - sc.displayHistogram: %s", sc.displayHistogram)
+            if sc.displayHistogram is None:
+                logger.info("take_photo - sc.displayPhoto: %s", sc.displayPhoto)
+                if sc.displayPhoto:
+                    generateHistogram(sc)
         msg="Image saved as " + fp
         flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
@@ -828,6 +853,10 @@ def take_raw_photo():
         filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
         logger.debug("Saving raw image %s", filenameRaw)
         fp = Camera().takeRawImage(filenameRaw, filename)
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
         msg="Image saved as " + fp
         flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
@@ -848,6 +877,10 @@ def record_video():
         logger.debug("Recording a video %s", filenameVid)
         fp = Camera.recordVideo(filenameVid, filename)
         time.sleep(4)
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
         # Check whether vido is being recorded
         if Camera.isVideoRecording():
             logger.debug("Video recording started")
@@ -876,4 +909,66 @@ def stop_recording():
         sc.isVideoRecording = False
         msg="Video recording stopped"
         flash(msg)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
+def generateHistogram(sc:ServerConfig):
+    """ Generate a histogram for the specified image
+    """
+    logger.info("In generateHistogram ")
+    import cv2
+    import numpy as np
+    from matplotlib import pyplot as plt
+
+    source = sc.photoRoot + "/" + sc.displayPhoto
+    destPath = sc.photoRoot + "/" + sc.cameraHistogramSubPath
+    if not os.path.exists(destPath):
+        os.makedirs(destPath)
+        logger.info("generateHistogram - Created directory %s", destPath)
+    file = sc.displayFile
+    if not file.endswith(".jpg"):
+        file = file[:len(file)-4] + ".jpg"
+    dest = destPath + "/" + file
+    try:
+        plt.figure()    
+        img = cv2.imread(source)
+        color = ('b','g','r')
+        for i,col in enumerate(color):
+            histr = cv2.calcHist([img],[i],None,[256],[0,256],accumulate = False)
+            plt.plot(histr,color = col)
+            plt.xlim([0,256])
+        plt.savefig(dest)
+        sc.displayHistogram = sc.cameraHistogramSubPath + "/" + file
+        logger.info("In generateHistogram - Histogram success: %s", sc.displayHistogram)
+    except Exception as e:
+        sc.displayHistogram = "histogramfailed.jpg"
+        logger.error("Histogram generation error: %s", e)
+
+@bp.route("/show_histogram", methods=("GET", "POST"))
+@login_required
+def show_histogram():
+    logger.info("In show_histogram")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        if sc.useHistograms:
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
+            sc.displayContent = "hist"
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+
+@bp.route("/show_metadata", methods=("GET", "POST"))
+@login_required
+def show_metadata():
+    logger.debug("In show_metadata")
+    g.hostname = request.host
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    if request.method == "POST":
+        sc.displayContent = "meta"
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        

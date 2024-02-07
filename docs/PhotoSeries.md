@@ -4,7 +4,7 @@
 
 
 The *Photo Series* screen allows the management of different kinds of Photo Series and includes means for series configuration, lifecycle management, photo shooting and supervision.   
-A series is a seqience of photos taken within specific time intervals. Special kinds of series are *Timelapse Series*, *Exposure Series* and *Focus Stacks*.
+A series is a seqience of photos taken within specific time intervals. Special kinds of series are [Timelapse Series](./PhotoSeriesTimelapse.md), [Exposure Series](./PhotoSeriesExp.md) and [Focus Stacks](./PhotoSeriesFocus.md).
 
 ![Timelapse Screen](img/Photoseries2.jpg)
 
