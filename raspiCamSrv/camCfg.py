@@ -1569,6 +1569,10 @@ class ServerConfig():
             module = importlib.import_module(moduleName)
         except ModuleNotFoundError:
             module = None
+        except ImportError:
+            module = None
+        except Exception:
+            module = None
         return module
 
     def checkEnvironment(self):

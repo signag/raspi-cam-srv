@@ -1,5 +1,8 @@
 # Photo Series of type "Exposure Series"
 
+[![Up](img/goup.gif)](./PhotoSeries.md)
+
+
 Exposure series iterate through a specified range of an exposure parameter, keeping all other exposure parameters constant.   
 In general, exposure is controlled by three parameters: aperture, exposure time and ISO value.   
 

@@ -1,5 +1,8 @@
 # Photo Series of Type "Focus Stack"
 
+[![Up](img/goup.gif)](./PhotoSeries.md)
+
+
 A Focus Stack series iterates the Lens Position (or Focal Distance).   
 With suitable software, such a stack can be combined to achieve a large Depth of Field (DoF).
 
