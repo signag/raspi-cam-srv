@@ -1573,6 +1573,8 @@ class ServerConfig():
             module = None
         except Exception:
             module = None
+        except:
+            module = None
         return module
 
     def checkEnvironment(self):
