@@ -1,4 +1,5 @@
 import subprocess
+import importlib
 from subprocess import CalledProcessError
 import json
 import logging
@@ -1172,6 +1173,7 @@ class ServerConfig():
         self._lastLiveTab = "focus"
         self._lastConfigTab = "cfglive"
         self._lastInfoTab = "camprops"
+        self._lastTimelapseTab = "series"
         self._isVideoRecording = False
         self._isTimelapseRecording = False
         self._isDisplayHidden = True
@@ -1187,6 +1189,10 @@ class ServerConfig():
         self._curPagePhoto = 1
         self._nrPagesPhoto = 0
         self._nrEntriesPhoto = 0
+        self._cv2Available = False
+        self._numpyAvailable = False
+        self._matplotlibAvailable = False
+        self._useHistograms = False
         
         # Check access of microphone
         self.checkMicrophone()
@@ -1382,6 +1388,14 @@ class ServerConfig():
         self._lastInfoTab = value
 
     @property
+    def lastTimelapseTab(self):
+        return self._lastTimelapseTab
+
+    @lastTimelapseTab.setter
+    def lastTimelapseTab(self, value: str):
+        self._lastTimelapseTab = value
+
+    @property
     def isDisplayHidden(self) -> bool:
         return self._isDisplayHidden
 
@@ -1496,6 +1510,82 @@ class ServerConfig():
     @nrEntriesPhoto.setter
     def nrEntriesPhoto(self, value: int):
         self._nrEntriesPhoto = value
+
+    @property
+    def cv2Available(self) -> bool:
+        return self._cv2Available
+
+    @cv2Available.setter
+    def cv2Available(self, value: bool):
+        self._cv2Available = value
+
+    @property
+    def numpyAvailable(self) -> bool:
+        return self._numpyAvailable
+
+    @numpyAvailable.setter
+    def numpyAvailable(self, value: bool):
+        self._numpyAvailable = value
+
+    @property
+    def matplotlibAvailable(self) -> bool:
+        return self._matplotlibAvailable
+
+    @matplotlibAvailable.setter
+    def matplotlibAvailable(self, value: bool):
+        self._matplotlibAvailable = value
+
+    @property
+    def useHistograms(self) -> bool:
+        return self._useHistograms
+
+    @useHistograms.setter
+    def useHistograms(self, value: bool):
+        self._useHistograms = value
+
+    @property
+    def supportsHistograms(self) -> bool:
+        sup = self.cv2Available \
+          and self.matplotlibAvailable \
+          and self.numpyAvailable
+        return sup
+
+    @property
+    def whyNotSupportsHistograms(self) -> str:
+        why = ""
+        if not self.supportsHistograms:
+            why = "Histograms are not supported because"
+            if not self.cv2Available:
+                why = why + "<br>module cv2 is not available"
+            if not self.matplotlibAvailable:
+                why = why + "<br>module matplotlib is not available"
+            if not self.numpyAvailable:
+                why = why + "<br>module matplotlib is not available"
+        return why
+    
+    def _checkModule(self, moduleName: str):
+        module = None
+        try:
+            module = importlib.import_module(moduleName)
+        except ModuleNotFoundError:
+            module = None
+        return module
+
+    def checkEnvironment(self):
+        """ Check the availability of specific modules 
+            which might be required for specific tasks.
+            - cv2
+            - numpy
+            - matplotlib
+        """
+        self.cv2Available = self._checkModule("cv2") is not None
+        self.numpyAvailable = self._checkModule("numpy") is not None
+        self.matplotlibAvailable = self._checkModule("matplotlib") is not None
+        if self.supportsHistograms:
+            self.useHistograms = True
+        else:
+            self.useHistograms = False
+        logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable)
 
     @property
     def paginationPagesPhoto(self) -> list:
@@ -1877,7 +1967,7 @@ class CameraCfg():
     @property
     def cameraProperties(self) -> CameraProperties:
         return self._cameraProperties
-    
+
     @property
     def sensorModes(self) -> list:
         return self._sensorModes
@@ -1929,3 +2019,4 @@ class CameraCfg():
     @property
     def serverConfig(self) -> ServerConfig:
         return self._serverConfig
+        

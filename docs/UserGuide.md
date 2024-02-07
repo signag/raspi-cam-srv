@@ -30,7 +30,7 @@ The main menu (black background) allows navigation to different screens
 - **Config** gives access to camera [Configuration](./Configuration.md) where basic camera configurations can be specified for different scenarios.
 - **Info** opens the [Camera Information](./Information.md) page with information on installed cameras as well as Properties and Sensor Modes of the active camera.
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
-- **Timelapse** opens the [Timelapes](./Timelapse.md) page for control of timelapse series.
+- **Timelapse** opens the [Photo Series](./PhotoSeries.md) page for control of timelapse series.
 - **Settings** opens the [Settings](./Settings.md) page where some basic server parameters can be configured and where the active camera can be switched in case the Raspberry Pi device supprts multiple cameras (such as Pi 5).
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
 

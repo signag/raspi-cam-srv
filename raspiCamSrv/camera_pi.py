@@ -40,7 +40,7 @@ class Camera(BaseCamera):
     cam = None
     camNum = -1
     videoOutput = None
-    timelapseSeries = None
+    timelapseSeries:Series = None
 
     def __init__(self):
         logger.debug("Thread %s: Camera.__init__", get_ident())
@@ -293,8 +293,16 @@ class Camera(BaseCamera):
         return camCfg
 
     @staticmethod
-    def applyControls(camCfg: CameraConfig):
-        """Apply the currently selected camera controls"""
+    def applyControls(camCfg: CameraConfig, exceptCtrl=None, exceptValue = None):
+        """ Apply the currently selected camera controls
+            camCfg      : Configuration from which controls shall be taken with priority
+            exceptCtrl  : Exception control. Optionally, one exceptional control can be specified
+                          If specified, the exceptValue will replace the value fom CameraCfg().controls
+                          Currently supported:
+                          - ExposureTime
+                          - AnalogueGain
+                          - FocalDistance -> LensPosition = 1 / FocalDistance
+        """
         logger.debug("Thread %s: Camera.applyControls", get_ident())
 
         cfg = CameraCfg()
@@ -400,6 +408,22 @@ class Camera(BaseCamera):
             if cfgCtrls.include_afWindows and "AfWindows" not in ctrls:
                 ctrls["AfWindows"] = cfgCtrls.afWindows
                 cnt += 1
+            # Consider exception control
+            if exceptCtrl:
+                if exceptCtrl == "FocalDistance":
+                    if not "LensPosition" in ctrls:
+                        cnt += 1
+                    ctrls["LensPosition"] = 1.0 / exceptValue
+        
+        # Consider exception control
+        if exceptCtrl:
+            if exceptCtrl != "FocalDistance":
+                if not exceptCtrl in ctrls:
+                    cnt += 1
+                if exceptCtrl == "ExposureTime":
+                    ctrls[exceptCtrl] = int(exceptValue)
+                else:
+                    ctrls[exceptCtrl] = exceptValue
             
         logger.debug("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
         camCtrls = Controls(Camera.cam)
@@ -407,6 +431,7 @@ class Camera(BaseCamera):
         Camera.cam.controls = camCtrls
         logger.debug("Thread %s: Camera.applyControls - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
         logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        return camCtrls
 
     @staticmethod
     def applyControlsForAfCycle(camCfg: CameraConfig):
@@ -799,10 +824,63 @@ class Camera(BaseCamera):
             cfg = srvCam.photoConfig
         else:
             cfg = srvCam.rawConfig
-        tiemelapsCfg = Camera.configure(cfg, srvCam.photoConfig)
-        cam.configure(tiemelapsCfg)
+        timelapseCfg = Camera.configure(cfg, srvCam.photoConfig)
+        cam.configure(timelapseCfg)
         logger.debug("Thread %s: _timelapseThread - configuration done", get_ident())
-        Camera.applyControls(cfg)
+        
+        exceptCtrl = None
+        exceptValue = None
+        exceptValueRaw = None
+        # Special handling for exposure series
+        if ser.isExposureSeries:
+            if sc.useHistograms:
+                import cv2
+                import numpy as np
+                from matplotlib import pyplot as plt
+            if ser.isExpGainFix:
+                exceptCtrl = "ExposureTime"
+                exceptValue = ser.expTimeStart
+                if ser.expTimeStep == 0:
+                    expFact = 2
+                elif ser.expTimeStep == 1:
+                    expFact = 2 ** (1.0 / 3)
+                elif ser.expTimeStep == 2:
+                    expFact = 4
+                else:
+                    expFact = 2
+            else:
+                exceptCtrl = "AnalogueGain"
+                exceptValue = ser.expGainStart
+                if ser.expGainStep == 0:
+                    expFact = 2
+                elif ser.expGainStep == 1:
+                    expFact = 2 ** (1.0 / 3)
+                elif ser.expGainStep == 2:
+                    expFact = 4
+                else:
+                    expFact = 2
+            if ser.curShots:
+                if ser.curShots > 1:
+                    n = 0
+                    while n < ser.curShots:
+                        n += 1
+                        exceptValue = exceptValue * expFact
+                    logger.debug("Thread %s: _timelapseThread - Exposure Series for %s: Restart after %s shots", get_ident(), exceptCtrl, ser.curShots)                    
+            logger.debug("Thread %s: _timelapseThread - Exposure Series for %s: %s Factor: %s", get_ident(), exceptCtrl, exceptValue, expFact)
+
+        # Special handling for focus series
+        if ser.isFocusStackingSeries:
+            exceptCtrl = "LensPosition"
+            exceptValueRaw = ser.focalDistStart
+            exceptValue = 1.0 / exceptValueRaw
+            if ser.curShots:
+                if ser.curShots > 1:
+                    exceptValueRaw = ser.focalDistStart + (ser.curShots - 1) * ser.focalDistStep
+                    exceptValue = 1.0 / exceptValueRaw
+                    logger.debug("Thread %s: _timelapseThread - Focus Series: Restart after %s shots", get_ident(), ser.curShots)                    
+            logger.debug("Thread %s: _timelapseThread - Focus Series for %s: %s (focal dist: %s, interval: %s)", get_ident(), exceptCtrl, exceptValue, exceptValueRaw, ser.focalDistStep)
+        
+        timelapseCtrls = Camera.applyControls(cfg, exceptCtrl, exceptValue)
         logger.debug("Thread %s: _timelapseThread - selected controls applied", get_ident())
         cam.start(show_preview=False)
         logger.debug("Thread %s: _timelapseThread - camera started", get_ident())
@@ -846,6 +924,38 @@ class Camera(BaseCamera):
                 request.release()
                 logger.debug("Thread %s: _timelapseThread - Request released", get_ident())
                 ser.logPhoto(nextPhoto, lastTime, metadata)
+                
+                # Draw histogram
+                if ser.isExposureSeries \
+                and sc.useHistograms:
+                    dest = ser.histogramPath + "/" + nextPhoto + ".jpg"
+                    img = cv2.imread(fpjpg)
+                    color = ('b','g','r')
+                    for i,col in enumerate(color):
+                        histr = cv2.calcHist([img],[i],None,[256],[0,256])
+                        plt.plot(histr,color = col)
+                        plt.xlim([0,256])
+                    plt.savefig(dest)
+                    logger.debug("Thread %s: _timelapseThread - histogram created: %s", get_ident(), dest)
+
+                # For exposure series apply controls
+                if ser.isExposureSeries:
+                    ser.logCamCfgCtrl(nextPhoto, timelapseCfg.make_dict(), timelapseCtrls.make_dict())
+                    if not stop:
+                        exceptValue = expFact * exceptValue
+                        logger.debug("Thread %s: _timelapseThread - Exposure Series for %s: %s", get_ident(), exceptCtrl, exceptValue)
+                        timelapseCtrls = Camera.applyControls(cfg, exceptCtrl, exceptValue)
+                        logger.debug("Thread %s: _timelapseThread - selected controls applied", get_ident())
+
+                # For focus series apply controls
+                if ser.isFocusStackingSeries:
+                    ser.logCamCfgCtrl(nextPhoto, timelapseCfg.make_dict(), timelapseCtrls.make_dict())
+                    if not stop:
+                        exceptValueRaw = exceptValueRaw + ser.focalDistStep
+                        exceptValue = 1.0 / exceptValueRaw
+                        logger.debug("Thread %s: _timelapseThread - Focus Series for %s: %s (focal dist: %s)", get_ident(), exceptCtrl, exceptValue, exceptValueRaw)
+                        timelapseCtrls = Camera.applyControls(cfg, exceptCtrl, exceptValue)
+                        logger.debug("Thread %s: _timelapseThread - selected controls applied", get_ident())
             
         BaseCamera.timelapseThread = None
         BaseCamera.stopTimelapseRequested = False

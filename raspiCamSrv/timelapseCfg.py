@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timedelta
 from raspiCamSrv.camCfg import CameraConfig, CameraControls
 import os
+import csv
 import shutil
 from pathlib import Path
 import json
@@ -11,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Series():
     PHOTODIGITS = 6     # Number of digits for photo number in filename
+    HISTOGRAMFOLDER = "hist"
     def __init__(self):
         self._name = ""
         self._status = "NE"
@@ -26,9 +28,24 @@ class Series():
         self._showPreview = True
         self._logFile = None
         self._cfgFile = None
+        self._camFile = None
         self._cameraConfig = None
         self._cameraControls = None
         self._logHeadlineReq = True
+        self._firstCamEntry = True
+        self._isExposureSeries = False
+        self._isExpExpTimeFix = False
+        self._isExpGainFix = True
+        self._expTimeStart = 125
+        self._expTimeStop = 1024000
+        self._expTimeStep = 0
+        self._expGainStart = 1
+        self._expGainStop = 16
+        self._expGainStep = 0
+        self._isFocusStackingSeries = False
+        self._focalDistStart = 0
+        self._focalDistStop = 0
+        self._focalDistStep = 0
     
     @property
     def name(self) -> str:
@@ -78,6 +95,7 @@ class Series():
             self._status = "PAUSED"
         elif action == "finish":
             self._status = "FINISHED"
+            self.logCamCfgCtrlClose()
         elif action == "continue":
             self._status = "ACTIVE"
         else:
@@ -91,6 +109,10 @@ class Series():
     @path.setter
     def path(self, value: str):
         self._path = value
+    
+    @property
+    def histogramPath(self) -> str:
+        return self._path + "/" + Series.HISTOGRAMFOLDER
     
     @property
     def start(self) -> datetime:
@@ -235,6 +257,146 @@ class Series():
         self._cfgFile = value
     
     @property
+    def camFileName(self) -> str:
+        return self.name + "_cam.json"
+    
+    @property
+    def camFileRelPath(self) -> str:
+        return  "timelapse/" + self.name + "/" + self.camFileName
+    
+    @property
+    def camFile(self) -> str:
+        return self._camFile
+
+    @camFile.setter
+    def camFile(self, value: str):
+        self._camFile = value
+    
+    @property
+    def isExposureSeries(self) -> bool:
+        return self._isExposureSeries
+
+    @isExposureSeries.setter
+    def isExposureSeries(self, value: bool):
+        self._isExposureSeries = value
+    
+    @property
+    def isExpExpTimeFix(self) -> bool:
+        return self._isExpExpTimeFix
+
+    @isExpExpTimeFix.setter
+    def isExpExpTimeFix(self, value: bool):
+        self._isExpExpTimeFix = value
+    
+    @property
+    def isExpGainFix(self) -> bool:
+        return self._isExpGainFix
+
+    @isExpGainFix.setter
+    def isExpGainFix(self, value: bool):
+        self._isExpGainFix = value
+    
+    @property
+    def expTimeStart(self) -> int:
+        return self._expTimeStart
+
+    @expTimeStart.setter
+    def expTimeStart(self, value: int):
+        self._expTimeStart = value
+    
+    @property
+    def expTimeStop(self) -> int:
+        return self._expTimeStop
+
+    @expTimeStop.setter
+    def expTimeStop(self, value: int):
+        self._expTimeStop = value
+    
+    @property
+    def expTimeStep(self) -> int:
+        return self._expTimeStep
+
+    @expTimeStep.setter
+    def expTimeStep(self, value: int):
+        """ Step for exposure time:
+            0: 1 EV
+            1: 1/3 EV
+            2: 2 EV
+        """
+        if value == 0 \
+        or value == 1 \
+        or value == 2:
+            self._expTimeStep = value
+        else:
+            self._expTimeStep = 0
+
+    @property
+    def expGainStart(self) -> float:
+        return self._expGainStart
+
+    @expGainStart.setter
+    def expGainStart(self, value: float):
+        self._expGainStart = value
+    
+    @property
+    def expGainStop(self) -> float:
+        return self._expGainStop
+
+    @expGainStop.setter
+    def expGainStop(self, value: float):
+        self._expGainStop = value
+    
+    @property
+    def expGainStep(self) -> int:
+        return self._expGainStep
+
+    @expGainStep.setter
+    def expGainStep(self, value: int):
+        """ Step for analogue gain:
+            0: 1 EV
+            1: 1/3 EV
+            2: 2 EV
+        """
+        if value == 0 \
+        or value == 1 \
+        or value == 2:
+            self._expGainStep = value
+        else:
+            self._expGainStep = 0
+    
+    @property
+    def isFocusStackingSeries(self) -> bool:
+        return self._isFocusStackingSeries
+
+    @isFocusStackingSeries.setter
+    def isFocusStackingSeries(self, value: bool):
+        self._isFocusStackingSeries = value
+    
+    @property
+    def focalDistStart(self) -> float:
+        return self._focalDistStart
+
+    @focalDistStart.setter
+    def focalDistStart(self, value: float):
+        self._focalDistStart = value
+    
+    @property
+    def focalDistStop(self) -> float:
+        return self._focalDistStop
+
+    @focalDistStop.setter
+    def focalDistStop(self, value: float):
+        self._focalDistStop = value
+    
+    @property
+    def focalDistStep(self) -> float:
+        return self._focalDistStep
+
+    @focalDistStep.setter
+    def focalDistStep(self, value: float):
+        self._focalDistStep = value
+
+    @property
     def cameraConfig(self) -> CameraConfig:
         return self._cameraConfig
 
@@ -316,18 +478,123 @@ class Series():
             n = self.curShots + 1
             cnt = 0
             
-            while (cnt < 5 and n >= 0):
-                name = name = self.name + "_" + str(n).zfill(Series.PHOTODIGITS) + ".jpg"
+            while (cnt < 20 and n >= 0):
+                name = self.name + "_" + str(n).zfill(Series.PHOTODIGITS) + ".jpg"
                 path = self.path + "/" + name
                 if os.path.exists(path):
                     relPath = "timelapse/" + self.name + "/" + name
                     set = {}
                     set["name"] = name
-                    set["ralPath"] = relPath
+                    set["relPath"] = relPath
                     list.append(set)
                     cnt += 1
                 n = n - 1
         return list
+
+    def _readLog(self, file: str) -> dict:
+        """ Read the log file and return as dict
+        """
+        ret = {}
+        with open(file, newline="") as csvFile:
+            reader = csv.DictReader(csvFile, delimiter = ";", quotechar = "'")
+            for row in reader:
+                ret[row["Name"]] = row
+        return ret
+
+    def _getParamsFromLog(self, log: dict, name: str) -> dict:
+        """ Get parameters for a specific name with float limited to n digits
+        """
+        ret = {}
+        if name in log:
+            ret = log[name]
+        # Limit number of digits
+        if "AnalogueGain" in ret:
+            ret["AnalogueGain"] = round(float(ret["AnalogueGain"]),4)
+        if "DigitalGain" in ret:
+            ret["DigitalGain"] = round(float(ret["DigitalGain"]),4)
+        if "Lux" in ret:
+            ret["Lux"] = round(float(ret["Lux"]),4)
+        if "LensPosition" in ret:
+            if float(ret["LensPosition"]) > 0:
+                ret["FocalDistance"] = round(1.0/float(ret["LensPosition"]), 4)
+            else:
+                ret["FocalDistance"] = 999.999
+            ret["LensPosition"] = round(float(ret["LensPosition"]),4)
+        if "ExposureTime" in ret:
+            ret["ExposureTime"] = round(float(ret["ExposureTime"]) / 1000000,4)
+        return ret
+    
+    def getPreviewListHistDetail(self):
+        """ return a list with the last n photos of the series
+            including histogram and details
+        """
+        log = self._readLog(self.logFile)
+        list = []
+        if self.curShots:
+            n = self.curShots + 1
+            cnt = 0
+            
+            while (cnt < 20 and n >= 0):
+                pureName = self.name + "_" + str(n).zfill(Series.PHOTODIGITS)
+                name = pureName + ".jpg"
+                nameRaw = pureName + ".dng"
+                photoPath = self.path + "/" + name
+                histoPath = self.histogramPath + "/" + name
+                include = False
+                if os.path.exists(photoPath):
+                    relPhotoPath = "timelapse/" + self.name + "/" + name
+                    include = True
+                else:
+                    relPhotoPath = None
+                if os.path.exists(histoPath):
+                    relHisroPath = "timelapse/" + self.name + "/" + Series.HISTOGRAMFOLDER + "/" + name
+                    include = True
+                else:
+                    relHisroPath = None
+                if include:
+                    set = {}
+                    if self.type == "raw+jpg":
+                        set["name"] = nameRaw
+                    else:
+                        set["name"] = name
+                    set["relPhotoPath"] = relPhotoPath
+                    set["relHistoPath"] = relHisroPath
+                    set["params"] = self._getParamsFromLog(log, pureName)
+                    list.append(set)
+                    cnt += 1
+                n = n - 1
+        return list
+
+    def logCamCfgCtrlClose(self):
+        """Append camera _cam.json file with closing ]
+        """
+        if self.camFile:
+            with open(self.camFile, mode='a', encoding='utf-8') as f:
+                f.write("\n]")
+
+    def logCamCfgCtrl(self, name: str, cfg: dict, ctrl: dict):
+        """Append camera config & controls  used for a photo to the _cam.json file
+           name: Name of the photo
+           cfg : camera configuration
+           ctrl: camera controls
+        """
+        if self.camFile:
+            if not os.path.exists(self.camFile):
+                os.makedirs(self.path, exist_ok=True)
+                Path(self.camFile).touch()
+            new = {}
+            new["name"] = name
+            new["config"] = cfg
+            new["controls"] = ctrl
+            logger.debug("logCamCfgCtrl new: %s", new)
+            newJson = json.dumps(new, default=lambda o: getattr(o, '__dict__', str(o)), indent=4)
+            if self._firstCamEntry:
+                newJson = "[\n" + newJson
+                self._firstCamEntry = False
+            else:
+                newJson = ",\n" + newJson
+            with open(self.camFile, mode='a', encoding='utf-8') as f:
+                f.write(newJson)
     
     def logPhoto(self, name: str, ptime: datetime, metadata: dict):
         """Append a log entry for the photo
@@ -554,6 +821,7 @@ class TimelapseCfg():
                     ser.path = spath
                     ser.cfgFile = cfgFile
                     ser.logFile = spath + "/" + ser.logFileName
+                    ser.camFile = spath + "/" + ser.camFileName
         return ser
     
     def initFromTlFolder(self):

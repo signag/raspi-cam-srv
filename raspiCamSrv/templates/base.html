@@ -55,9 +55,9 @@
                 <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button" id='imagesbtn' onclick="openMenu('imagesbtn')">Photos</a>
                 {% endif %}
                 {% if sc.curMenu == "timelapse" %}
-                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Timelapse</a>
+                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Photo Series</a>
                 {% else %}
-                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Timelapse</a>
+                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Photo Series</a>
                 {% endif %}
                 {% if sc.curMenu == "settings" %}
                 <a href="{{ url_for('settings.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='settingsbtn' onclick="openMenu('settingsbtn')">Settings</a>

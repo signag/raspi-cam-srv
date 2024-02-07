@@ -15,6 +15,7 @@ For more details, see the [User Guide](docs/UserGuide.md)
 ![Live Overview](docs/img/Live.jpg)
 
 - The [Live screen](docs/LiveScreen.md) shows a live stream of the active camera and allows individually selecting and setting all [camera controls](docs/CameraControls.md) supported by Picamera2.
+- The **live stream** (MJPEG stream) can also be directly accessed through the enpoint ```http://<server>:<port>/video_feed``` without authentification.
 - For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance (see [Focus handling](docs/FocusHandling.md)).
 - For zooming, the intended image section can be [drawn graphically](docs/ZoomPan.md#graphically-setting-the-zoom-window) on the live stream area.
 - Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](docs/LiveScreen.md) together with their metadata (see [Photo taking](docs/Phototaking.md)).
@@ -24,8 +25,8 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - On the [Config screen](docs/Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
 - The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
 - The [Photos screen](docs/PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
-- With the [Timelapse](docs/Timelapse.md) screen, timelapse series can be configured, executed and monitored during their progress.
-- The [Timelapse](docs/Timelapse.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
+- With the [Photo Series](docs/PhotoSeries.md) screen, different kinds of photo series ([Exposure Series](./docs/PhotoSeriesExp.md), [Focus Stacks](./docs/PhotoSeriesFocus.md), [Timelapse Series](./docs/PhotoSeriesTimelapse.md)) can be configured, executed and monitored during their progress.
+- The [Photo Series](docs/PhotoSeries.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
 - The [Settings screen](docs/Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
 - Access to the server requires [registration and authentification](docs/Authentication.md).
 
@@ -41,7 +42,7 @@ The software is still being tested and extended.
 - USB cameras are detected but currently not supported. One reason is that many USB cameras use the YUYV format whereas **raspiCamSrv** uses MJPEG for the Live stream and YUYV would require OpenCV for rendering.
 - **raspiCamSrv** will not automatically detect a changed camera setup, for example if cameras are plugged in and out while the Raspberry Pi is running (certainly, this would apply only to USB cameras and nobody will unplug a Pi camera without shutting down the system). However, there is a **Reset Server** button on the [Settings](docs/Settings.md) screen, which, when pressed, will force the configuration to be updated.
 - The entire configuration is still transient and will be reinitialized with server restart. It is intended to save the configuration in the database and restore it when the server is restarted.    
-(See the [Timelapse](docs/Timelapse.md#attaching-camara-configuration-to-a-timelapse-series) screen for manually persisting arbitrary configurations.)
+(See the [Photo Series](docs/PhotoSeries.md#attaching-camara-configuration-to-a-timelapse-series) screen for manually persisting arbitrary configurations.)
 - Although the layout is responsive, it may not be "good-looking" with all sizes of browser windows
 
 ## Credits
@@ -84,15 +85,16 @@ Initially, it will take several minutes until it is visible in the network.
 |4.  | Check that git is installed (which is usually the case in current Bullseye and Bookworm distributions)<br>```git --version```<br>If git is not installed, install it with<br>```sudo apt install git```
 |5.  | Clone the raspi-cam-srv repository:<br>```git clone https://github.com/signag/raspi-cam-srv```
 |6.  | Create a virtual environment ('.venv') on the 'raspi-cam-srv' folder:<br>```cd raspi-cam-srv```<br>```python -m venv --system-site-packages .venv```<br>For the reasoning to include system site packages, see the [picamera2-manual.pdf](./picamera2-manual.pdf), chapter 9.5.
-|7.  | Activate the virtual environment<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
-|8.  | Install Flask 3.0 within the virtual environment.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.0, which can be installed with<br>```pip install Flask==3.0.0```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.0.0'.
-|9.  | Initialize the database for Flask:<br>```flask --app raspiCamSrv init-db```
-|10.  | Check that the Flask default port 5000 is available<br>```sudo netstat -nlp \| grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
-|11. | Start the server:<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
-|12. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
-|13. | Before you can login, you first need to [register](docs/Authentication.md#registration).
-|14. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
-|15. | Done!
+|7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
+|8.  | Install Flask 3.0 with the virtual environment activated.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.0, which can be installed with<br>```pip install Flask==3.0.0```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.0.0'.
+|9.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>It is recommended to do the installation with an activated virtual environment (see step 7), although some of these packages might come preinstalled.<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): ```sudo apt-get install python3-opencv```<br>Install [numpy](https://numpy.org/): ```pip install numpy```<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): ```pip install matplotlib```
+|10.  | Initialize the database for Flask:<br>```flask --app raspiCamSrv init-db```
+|11. | Check that the Flask default port 5000 is available<br>```sudo netstat -nlp \| grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
+|12. | Start the server:<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
+|13. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
+|14. | Before you can login, you first need to [register](docs/Authentication.md#registration).
+|15. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
+|16. | Done!
 
 
 When the Flask server starts up, it will show a warning that this is a development server.   
