@@ -2,6 +2,7 @@ from flask import Blueprint, Response, flash, g, redirect, render_template, requ
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.camera_pi import Camera, BaseCamera
+from raspiCamSrv.db import get_db
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -92,4 +93,80 @@ def resetServer():
         sc.curMenu = "settings"
         sc.checkMicrophone()
     
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
+
+@bp.route("/remove_users", methods=("GET", "POST"))
+@login_required
+def remove_users():
+    logger.debug("In remove_users")
+    g.hostname = request.host
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    if request.method == "POST":
+        cnt = 0
+        msg = None
+        for user in g.users:
+            if request.form.get("sel_" + str(user["id"])) is not None:
+                if user["id"] == g.user["id"]:
+                    msg = "The active user cannot be removed"
+                    break
+                else:
+                    cnt += 1
+        if not msg:
+            logger.debug("Request to remove %s users", cnt)
+            if cnt > 0:
+                db = get_db()
+                if cnt < len(g.users):
+                    while cnt > 0:
+                        logger.debug("cnt: %s", cnt)
+                        userDel = None
+                        for user in g.users:
+                            logger.debug("Trying user %s %s", user["id"], user["username"])
+                            if request.form.get("sel_" + str(user["id"])) is not None:
+                                userDel =user["id"]
+                                logger.debug("User selected")
+                                break
+                            else:
+                                logger.debug("User not selected")
+                        if userDel:
+                            logger.debug("Removing user with id %s", userDel)
+                            db.execute("DELETE FROM user WHERE id = ?", (userDel,)).fetchone
+                            db.commit()
+                            g.nrUsers = db.execute("SELECT count(*) FROM user").fetchone()[0]
+                            logger.debug("Found %s users", g.nrUsers)
+                            g.users = db.execute("SELECT * FROM user").fetchall()
+                            for user in g.users:
+                                logger.debug("Found user: ID: %s, UserName: %s", user["id"], user["username"])
+                            cnt -= 1
+                else:
+                    msg="At least one user must remain"
+                    flash(msg)
+            else:
+                msg="No users were selected"
+                flash(msg)
+        else:
+            flash(msg)
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)
+
+@bp.route("/register_user", methods=("GET", "POST"))
+@login_required
+def register_user():
+    logger.debug("In register_user")
+    g.hostname = request.host
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    if request.method == "POST":
+        return render_template("auth/register.html", sc=sc, cp=cp)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs)

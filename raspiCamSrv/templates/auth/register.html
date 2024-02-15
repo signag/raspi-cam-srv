@@ -5,9 +5,10 @@
 {% endblock %}
 
 {% block content %}
-<form class="w3-container" method="post">
+<h3>Register</h3>
+<form class="w3-container" method="post" action="{{ url_for('auth.register') }}">
     <label for="username">Username</label>
-    <input class="w3-input" name="username" id="username" required>
+    <input class="w3-input" name="username" id="username" required autofocus>
     <label for="password">Password</label>
     <input class="w3-input" type="password" name="password" id="password" required>
     <p> </p>

@@ -230,10 +230,97 @@
             <p style="margin-bottom: 0"></p>
             <input class="w3-button w3-black" type="submit" value="Submit">
         </form>
+{% set activeuser = g.user %}
+<br>
+    {% if activeuser["issuperuser"] == 1 %}
+    <h3>Users</h3>
+    <div>
+        <form id="removeusersform" method="post" action="{{ url_for('settings.remove_users') }}">
+            <table class="w3-table-all">
+                <tr>
+                    <th>
+                        Sel
+                    </th>
+                    <th>
+                        ID
+                    </th>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Initial
+                    </th>
+                    <th>
+                        SuperUser
+                    </th>
+                </tr>
+                {% for user in g.users %}
+                <tr>
+                    <td style="width:5%">
+                        <input type="checkbox" id="sel_{{ user['id'] }}" name="sel_{{ user['id'] }}"
+                            aria-label="sel_{{ user['id'] }}" value="0">
+                    </td>
+                    <td>
+                        {{ user["id"] }}
+                    </td>
+                    <td>
+                        {{ user["username"] }}
+                    </td>
+                    <td>
+                        {% if 'isinitial' is in user %}
+                        {% if user["isinitial"] == 0 %}
+                        No
+                        {% else %}
+                        Yes
+                        {% endif %}
+                        {% else %}
+                        Unknown
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if 'issuperuser' is in user %}
+                        {% if user["issuperuser"] == 0 %}
+                        No
+                        {% else %}
+                        Yes
+                        {% endif %}
+                        {% else %}
+                        Unknown
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            <p style="margin-bottom: 0"></p>
+            <input class="w3-button w3-black" style="width: 22ch" type="submit" onclick="confirmRemove('removeusersform')" value="Remove Selected Users">
+            <p style="margin-bottom: 0"></p>
+        </form>
+        <form method="post" action="{{ url_for('settings.register_user') }}">
+            <p style="margin-bottom: 0"></p>
+            <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Register New User">
+        </form>
+        {% set user = g.users[0] %}
+        {% if not 'issuperuser' is in user %}
+        <p>
+            You are using an outdated database schema for users.<br>
+            To update to the new schema, run the following command in raspi-cam-srv, 
+            with activated virtual environment:<br>
+            flask --app raspiCamSrv init-db
+        </p>
+        {% endif %}
+    </div>
+{% endif %}
 <br>
 <form method="post" action="{{ url_for('settings.resetServer') }}">
     <p style="margin-bottom: 0"></p>
     <input class="w3-button w3-black" type="submit" value="Reset Server">
 </form>
+<script>
+    function confirmRemove(form) {
+        if (confirm("Do you want to remove the selected users?")) {
+            document.getElementById(form).submit();
+        }
+    }
+</script>
 
 {% endblock %}

@@ -826,12 +826,12 @@ def take_photo():
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Saving image %s", filename)
         fp = Camera().takeImage(filename)
-        logger.info("take_photo - success")
-        logger.info("take_photo - sc.displayContent: %s", sc.displayContent)
+        logger.debug("take_photo - success")
+        logger.debug("take_photo - sc.displayContent: %s", sc.displayContent)
         if sc.displayContent == "hist":
-            logger.info("take_photo - sc.displayHistogram: %s", sc.displayHistogram)
+            logger.debug("take_photo - sc.displayHistogram: %s", sc.displayHistogram)
             if sc.displayHistogram is None:
-                logger.info("take_photo - sc.displayPhoto: %s", sc.displayPhoto)
+                logger.debug("take_photo - sc.displayPhoto: %s", sc.displayPhoto)
                 if sc.displayPhoto:
                     generateHistogram(sc)
         msg="Image saved as " + fp
@@ -914,7 +914,7 @@ def stop_recording():
 def generateHistogram(sc:ServerConfig):
     """ Generate a histogram for the specified image
     """
-    logger.info("In generateHistogram ")
+    logger.debug("In generateHistogram ")
     import cv2
     import numpy as np
     from matplotlib import pyplot as plt
@@ -923,7 +923,7 @@ def generateHistogram(sc:ServerConfig):
     destPath = sc.photoRoot + "/" + sc.cameraHistogramSubPath
     if not os.path.exists(destPath):
         os.makedirs(destPath)
-        logger.info("generateHistogram - Created directory %s", destPath)
+        logger.debug("generateHistogram - Created directory %s", destPath)
     file = sc.displayFile
     if not file.endswith(".jpg"):
         file = file[:len(file)-4] + ".jpg"
@@ -938,7 +938,7 @@ def generateHistogram(sc:ServerConfig):
             plt.xlim([0,256])
         plt.savefig(dest)
         sc.displayHistogram = sc.cameraHistogramSubPath + "/" + file
-        logger.info("In generateHistogram - Histogram success: %s", sc.displayHistogram)
+        logger.debug("In generateHistogram - Histogram success: %s", sc.displayHistogram)
     except Exception as e:
         sc.displayHistogram = "histogramfailed.jpg"
         logger.error("Histogram generation error: %s", e)
@@ -946,7 +946,7 @@ def generateHistogram(sc:ServerConfig):
 @bp.route("/show_histogram", methods=("GET", "POST"))
 @login_required
 def show_histogram():
-    logger.info("In show_histogram")
+    logger.debug("In show_histogram")
     g.hostname = request.host
     cfg = CameraCfg()
     cc = cfg.controls

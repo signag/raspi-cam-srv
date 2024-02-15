@@ -88,11 +88,11 @@ Initially, it will take several minutes until it is visible in the network.
 |7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
 |8.  | Install Flask 3.0 with the virtual environment activated.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.0, which can be installed with<br>```pip install Flask==3.0.0```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.0.0'.
 |9.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>It is recommended to do the installation with an activated virtual environment (see step 7), although some of these packages might come preinstalled.<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): ```sudo apt-get install python3-opencv```<br>Install [numpy](https://numpy.org/): ```pip install numpy```<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): ```pip install matplotlib```
-|10.  | Initialize the database for Flask:<br>```flask --app raspiCamSrv init-db```
+|10.  | Initialize the database for Flask <br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv init-db```
 |11. | Check that the Flask default port 5000 is available<br>```sudo netstat -nlp \| grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
-|12. | Start the server:<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
+|12. | Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
 |13. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
-|14. | Before you can login, you first need to [register](docs/Authentication.md#registration).
+|14. | Before you can login, you first need to [register](docs/Authentication.md).<br>The first user will automatically be SuperUser who can later register other users ([User Management](docs/Authentication.md#user-management))
 |15. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
 |16. | Done!
 

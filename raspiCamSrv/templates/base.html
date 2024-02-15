@@ -71,15 +71,22 @@
                 {% endif %}
                 {% else %}
                 <div>
+                    {% if g.nrUsers == 0 %}
                     {% if sc.curMenu == "register" %}
                     <a href="{{ url_for('auth.register') }}" class="w3-bar-item w3-button w3-dark-grey" id='registerbtn' onclick="openMenu('registerbtn')">Register</a>
                     {% else %}
                     <a href="{{ url_for('auth.register') }}" class="w3-bar-item w3-button" id='registerbtn' onclick="openMenu('registerbtn')">Register</a>
                     {% endif %}
+                    {% endif %}
                     {% if sc.curMenu == "login" %}
                     <a href="{{ url_for('auth.login') }}" class="w3-bar-item w3-button w3-dark-grey" id='loginbtn' onclick="openMenu('loginbtn')">Log In</a>
                     {% else %}
                     <a href="{{ url_for('auth.login') }}" class="w3-bar-item w3-button" id='loginbtn' onclick="openMenu('loginbtn')">Log In</a>
+                    {% endif %}
+                    {% if sc.curMenu == "password" %}
+                    <a href="{{ url_for('auth.password') }}" class="w3-bar-item w3-button w3-dark-grey" id='passwdbtn' onclick="openMenu('passwdbtn')">Change Password</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.password') }}" class="w3-bar-item w3-button" id='passwdbtn' onclick="openMenu('passwdbtn')">Change Password</a>
                     {% endif %}
                 </div>
                 {% endif %}
