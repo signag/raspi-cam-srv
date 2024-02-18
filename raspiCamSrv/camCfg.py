@@ -3,6 +3,8 @@ import importlib
 from subprocess import CalledProcessError
 import json
 import logging
+import os
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -725,7 +727,20 @@ class CameraControls():
     def initFromDict(cls, dict:dict):
         cc = CameraControls()
         for key, value in dict.items():
-            setattr(cc, key, value)
+            if key == "_scalerCrop":
+                setattr(cc, key, tuple(value))
+            elif key == "_frameDurationLimits":
+                setattr(cc, key, tuple(value))
+            elif key == "_colourGains":
+                setattr(cc, key, tuple(value))
+            elif key == "_afWindows":
+                afws = ()
+                for el in value:
+                    afw = (tuple(el),)
+                    afws += afw
+                setattr(cc, key, afws)
+            else:
+                setattr(cc, key, value)
         return cc
 
 class SensorMode():
@@ -966,11 +981,11 @@ class CameraConfig():
         self._format = value
 
     @property
-    def controls(self) -> str:
+    def controls(self) -> dict:
         return self._controls
 
     @controls.setter
-    def controls(self, value: str):
+    def controls(self, value: dict):
         self._controls = value
 
     @property
@@ -989,7 +1004,30 @@ class CameraConfig():
     def initFromDict(cls, dict:dict):
         cc = CameraConfig()
         for key, value in dict.items():
-            setattr(cc, key, value)
+            if key == "_stream_size":
+                setattr(cc, key, tuple(value))
+            elif key == "_controls":
+                ctrlt = {}
+                for ckey, cvalue in value.items():
+                    vt = cvalue
+                    if ckey == "ScalerCrop":
+                        vt = tuple(cvalue)
+                    elif ckey == "FrameDurationLimits":
+                        vt = tuple(cvalue)
+                    elif ckey == "ColourGains":
+                        vt = tuple(cvalue)
+                    elif ckey == "AfWindows":
+                        afws = ()
+                        for el in cvalue:
+                            afw = (tuple(el),)
+                            afws += afw
+                        vt = afws
+                    else:
+                        vt = cvalue
+                    ctrlt[ckey] = vt
+                setattr(cc, key, ctrlt)
+            else:
+                setattr(cc, key, value)
         return cc
         
 class CameraProperties():
@@ -1949,6 +1987,73 @@ class ServerConfig():
             self.recordAudio = False
             self.isMicMuted = False
         logger.debug("ServerConfig._checkMicrophone - hasMicrophone=%s, defaultMic=%s", self.hasMicrophone, self.defaultMic)
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        sc = ServerConfig()
+        for key, value in dict.items():
+            if key == "_scalerCropLiveView":
+                setattr(sc, key, tuple(value))
+            elif key == "_displayMeta":
+                metat = {}
+                for ckey, cvalue in value.items():
+                    vt = cvalue
+                    if ckey == "ScalerCrop":
+                        vt = tuple(cvalue)
+                    elif ckey == "FrameDurationLimits":
+                        vt = tuple(cvalue)
+                    elif ckey == "ColourGains":
+                        vt = tuple(cvalue)
+                    elif ckey == "ColourCorrectionMatrix":
+                        vt = tuple(cvalue)
+                    elif ckey == "SensorBlackLevels":
+                        vt = tuple(cvalue)
+                    elif ckey == "AfWindows":
+                        afws = ()
+                        for el in cvalue:
+                            afw = (tuple(el),)
+                            afws += afw
+                        vt = afws
+                    else:
+                        vt = cvalue
+                    metat[ckey] = vt
+                setattr(sc, key, metat)
+            elif key == "_displayBuffer":
+                dbt = {}
+                for bkey, bvalue in value.items():
+                    belt = {}
+                    for belmetakey, belmetavalue in bvalue.items():
+                        if belmetakey == "displayMeta":
+                            metat = {}
+                            for ckey, cvalue in belmetavalue.items():
+                                vt = cvalue
+                                if ckey == "ScalerCrop":
+                                    vt = tuple(cvalue)
+                                elif ckey == "FrameDurationLimits":
+                                    vt = tuple(cvalue)
+                                elif ckey == "ColourGains":
+                                    vt = tuple(cvalue)
+                                elif ckey == "ColourCorrectionMatrix":
+                                    vt = tuple(cvalue)
+                                elif ckey == "SensorBlackLevels":
+                                    vt = tuple(cvalue)
+                                elif ckey == "AfWindows":
+                                    afws = ()
+                                    for el in cvalue:
+                                        afw = (tuple(el),)
+                                        afws += afw
+                                    vt = afws
+                                else:
+                                    vt = cvalue
+                                metat[ckey] = vt
+                            belt[belmetakey] = metat
+                        else:
+                            belt[belmetakey] = belmetavalue
+                    dbt[bkey] = belt
+                setattr(sc, key, dbt)
+            else:
+                setattr(sc, key, value)
+        return sc
     
 class CameraCfg():
     _instance = None
@@ -1956,10 +2061,10 @@ class CameraCfg():
         if cls._instance is None:
             cls._instance = super(CameraCfg, cls).__new__(cls)
             cls._cameras = []
-            cls._controls = CameraControls()
-            cls._cameraProperties = CameraProperties()
             cls._sensorModes = []
             cls._rawFormats = []
+            cls._controls = CameraControls()
+            cls._cameraProperties = CameraProperties()
             cls._liveViewConfig = CameraConfig()
             cls._liveViewConfig.id = "LIVE"
             cls._liveViewConfig.use_case = "Live view"
@@ -2008,6 +2113,10 @@ class CameraCfg():
     def cameraProperties(self) -> CameraProperties:
         return self._cameraProperties
 
+    @cameraProperties.setter
+    def cameraProperties(self, value: CameraProperties):
+        self._cameraProperties = value
+
     @property
     def sensorModes(self) -> list:
         return self._sensorModes
@@ -2031,6 +2140,10 @@ class CameraCfg():
     @property
     def liveViewConfig(self) -> CameraConfig:
         return self._liveViewConfig
+
+    @liveViewConfig.setter
+    def liveViewConfig(self, value: CameraConfig):
+        self._liveViewConfig = value
     
     @property
     def photoConfig(self) -> CameraConfig:
@@ -2051,12 +2164,82 @@ class CameraCfg():
     @property
     def videoConfig(self) -> CameraConfig:
         return self._videoConfig
+
+    @videoConfig.setter
+    def videoConfig(self, value: CameraConfig):
+        self._videoConfig = value
     
     @property
     def cameraConfigs(self) -> list:
         return self._cameraConfigs
+
+    @cameraConfigs.setter
+    def cameraConfigs(self, value: list):
+        self._cameraConfigs = value
     
     @property
     def serverConfig(self) -> ServerConfig:
         return self._serverConfig
+
+    @serverConfig.setter
+    def serverConfig(self, value: ServerConfig):
+        self._serverConfig = value
+    
+    def _persistCl(self, cl, fn: str, cfgPath: str):
+        """ Store class dictionary for class cl in the config file fn
+        """
+        fp = cfgPath + "/" + fn
+        Path(fp).touch()
+        f = open(fp, "w")
+        cj = self._toJson(cl)
+        f.write(str(cj))
+        f.close()
+    
+    def persist(self, cfgPath: str):
+        """ Store class dictionary in the config file
+        """
+        if cfgPath:
+            if not os.path.exists(cfgPath):
+                os.makedirs(cfgPath, exist_ok=True)
+            self._persistCl(self.cameras, "cameras.json", cfgPath)
+            self._persistCl(self.sensorModes, "sensorModes.json", cfgPath)
+            self._persistCl(self.rawFormats, "rawFormats.json", cfgPath)
+            self._persistCl(self.cameraProperties, "cameraProperties.json", cfgPath)
+            self._persistCl(self.cameraConfigs, "cameraConfigs.json", cfgPath)
+            self._persistCl(self.liveViewConfig, "liveViewConfig.json", cfgPath)
+            self._persistCl(self.photoConfig, "photoConfig.json", cfgPath)
+            self._persistCl(self.rawConfig, "rawConfig.json", cfgPath)
+            self._persistCl(self.videoConfig, "videoConfig.json", cfgPath)
+            self._persistCl(self.controls, "controls.json", cfgPath)
+            self._persistCl(self.serverConfig, "serverConfig.json", cfgPath)
+            
+    def _toJson(self, cl):
+        return json.dumps(cl, default=lambda o: getattr(o, '__dict__', str(o)), indent=4)
         
+    def _loadConfigCl(self, cl, fn: str, cfgPath: str):
+        """ Load configuration from files, except camera-specific configs
+        """
+        fp = cfgPath + "/" + fn
+        obj = cl()
+        if os.path.exists(fp):
+            with open(fp) as f:
+                try:
+                    cldict = json.load(f)
+                    obj = cl.initFromDict(cldict)
+                except Exception as e:
+                    logger.error("Error loading from %s: %s", fp, e)
+                    obj = cl()
+        return obj
+    
+    def loadConfig(self, cfgPath):
+        """ Load configuration from files, except camera-specific configs
+        """
+        if cfgPath:
+            if os.path.exists(cfgPath):
+                self.serverConfig = self._loadConfigCl(ServerConfig, "serverConfig.json", cfgPath)
+                self.liveViewConfig = self._loadConfigCl(CameraConfig, "liveViewConfig.json", cfgPath)
+                self.photoConfig = self._loadConfigCl(CameraConfig, "photoConfig.json", cfgPath)
+                self.rawConfig = self._loadConfigCl(CameraConfig, "rawConfig.json", cfgPath)
+                self.videoConfig = self._loadConfigCl(CameraConfig, "videoConfig.json", cfgPath)
+                self.controls = self._loadConfigCl(CameraControls, "controls.json", cfgPath)
+                

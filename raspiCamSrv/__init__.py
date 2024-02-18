@@ -51,10 +51,14 @@ def create_app(test_config=None):
     
     # Configure Config
     from . import camCfg
+    from . import settings
     cfg = camCfg.CameraCfg()
     sc = cfg.serverConfig
     sc.photoRoot = app.static_folder
     sc.checkEnvironment()
+    cfgPath = app.static_folder + "/config"
+    if settings.getLoadConfigOnStart(cfgPath):
+        cfg.loadConfig(cfgPath)
     
     # Configure Timelapse
     from . import timelapseCfg

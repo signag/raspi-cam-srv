@@ -668,7 +668,9 @@ class Camera(BaseCamera):
             with Camera.cam as cam:
                 srvCam = CameraCfg()
                 cfg = srvCam.liveViewConfig
+                logger.debug("Thread %s: Camera.frames - cfg: %s", get_ident(), cfg)
                 streamingConfig = Camera.configure(cfg, srvCam.photoConfig)
+                logger.debug("Thread %s: Camera.frames - streamingConfig: %s", get_ident(), streamingConfig)
                 cam.configure(streamingConfig)
                 logger.debug("Thread %s: Camera.frames - starting recording", get_ident())
                 output = StreamingOutput()
@@ -692,10 +694,10 @@ class Camera(BaseCamera):
                         l = len(frame)
                     #logger.debug("Thread %s: Camera.frames - got frame with length %s", get_ident(), l)
                     yield frame
-        except TypeError:
-            logger.error("Thread %s: Camera.frames - Type error", get_ident())
-        except Exception:
-            logger.error("Thread %s: Camera.frames - Exception", get_ident())
+        except TypeError as e:
+            logger.error("Thread %s: Camera.frames - Type error: %s", get_ident(), e)
+        except Exception as e:
+            logger.error("Thread %s: Camera.frames - Exception: %s", get_ident(), e)
     
     @staticmethod
     def _videoThread():

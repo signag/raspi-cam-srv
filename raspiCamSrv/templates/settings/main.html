@@ -230,9 +230,47 @@
             <p style="margin-bottom: 0"></p>
             <input class="w3-button w3-black" type="submit" value="Submit">
         </form>
-{% set activeuser = g.user %}
-<br>
+    </div>
+    <hr>
+    <h3>Configuration</h3>
+    <table>
+        <tr>
+            <td>
+                <form id="storeconfig" method="post" action="{{ url_for('settings.store_config') }}">
+                    <input class="w3-button w3-black" onclick="confirmStore('storeconfig')" value="Store Configuration">
+                </form>
+            </td>
+            <td>
+                <form id="loadconfig" method="post" action="{{ url_for('settings.load_config') }}">
+                    <input class="w3-button w3-black" onclick="confirmLoad('loadconfig')" value="Load Stored Configuration">
+                </form>
+            </td>
+            <td>
+                <form id="resetserver" method="post" action="{{ url_for('settings.resetServer') }}">
+                    <input class="w3-button w3-black" onclick="confirmReset('resetserver')" value="Reset Server">
+                </form>
+            </td>
+            <td style="width:25%" class="w3-tooltip">
+                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                    If selected, the system will load the stored configuration on server start.<br>
+                    Otherwise, the default configuration will be applied.
+                </span>
+                <label for="showhistograms">Start server with stored Configuration:</label>
+            </td>
+            <td>
+                <form id="loadconfigonstart" method="post" action="{{ url_for('settings.loadConfigOnStart') }}">
+                    {% if los == True %}
+                    <input type="checkbox" id="loadconfigonstartcb" name="loadconfigonstartcb" onchange="loadCfgOnStart('loadconfigonstart')" value="1" checked>
+                    {% else %}
+                    <input type="checkbox" id="loadconfigonstartcb" name="loadconfigonstartcb" onchange="loadCfgOnStart('loadconfigonstart')" value="0">
+                    {% endif %}
+                </form>
+            </td>
+        </tr>
+    </table>
+    {% set activeuser = g.user %}
     {% if activeuser["issuperuser"] == 1 %}
+    <hr>
     <h3>Users</h3>
     <div>
         <form id="removeusersform" method="post" action="{{ url_for('settings.remove_users') }}">
@@ -309,18 +347,33 @@
         </p>
         {% endif %}
     </div>
-{% endif %}
-<br>
-<form method="post" action="{{ url_for('settings.resetServer') }}">
-    <p style="margin-bottom: 0"></p>
-    <input class="w3-button w3-black" type="submit" value="Reset Server">
-</form>
-<script>
-    function confirmRemove(form) {
-        if (confirm("Do you want to remove the selected users?")) {
-            document.getElementById(form).submit();
+    <br>
+    {% endif %}
+
+    <script>
+        function confirmRemove(form) {
+            if (confirm("Do you want to remove the selected users?")) {
+                document.getElementById(form).submit();
+            }
         }
-    }
-</script>
+        function confirmReset(form) {
+            if (confirm("Do you want to reset the server?\nThe entire configuration will be reset to default!")) {
+                document.getElementById(form).submit();
+            }
+        }
+        function confirmStore(form) {
+            if (confirm("Do you want to replace the stored configuration with the current configuration?")) {
+                document.getElementById(form).submit();
+            }
+        }
+        function confirmLoad(form) {
+            if (confirm("Do you want to replace the current configuration with the stored configuration?")) {
+                document.getElementById(form).submit();
+            }
+        }
+        function loadCfgOnStart(form) {
+                document.getElementById(form).submit();
+        }
+    </script>
 
 {% endblock %}

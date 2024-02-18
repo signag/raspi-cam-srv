@@ -40,7 +40,7 @@ def register():
         try:
             nrUsers = db.execute("SELECT COUNT(*) from user").fetchone()[0]
         except db.Error as e:
-            logger.arror("Database error: %s", e)
+            logger.error("Database error: %s", e)
             nrUsers = 0
         logger.debug("Found %s users", nrUsers)
             
@@ -258,7 +258,7 @@ def login_required(view):
             try:
                 nrUsers = db.execute("SELECT COUNT(*) from user").fetchone()[0]
             except db.Error as e:
-                logger.arror("Database error: %s", e)
+                logger.error("Database error: %s", e)
                 nrUsers = 0
             if nrUsers == 0:
                 return redirect(url_for("auth.register"))
