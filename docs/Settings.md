@@ -72,7 +72,7 @@ The discrepancy is typically in subsecond range.
 
 Test videos should be made with something like a clapperboard. In case of delays, the *Audio Timeshift* value should be adjusted (it can be positive or negative) until video and audio are in sync.
 
-### Configuration
+### Server Configuration
 
 The *Settings* screen includes a *Configuration* section with functions to control the **raspiCamSrv** configuration:
 
@@ -83,9 +83,11 @@ The *Settings* screen includes a *Configuration* section with functions to contr
 - Button *Reset Server* stops any background activity (live stream, video, photo series) and replaces the current configuration with the default configuration.
 - *Start server with stored Configuration* controls whether a server start shall use the default configuration or the stored configuration.
 
-#### Configuration Storage
+#### Server Configuration Storage
 
 When the configuration is stored with the *Store Configuration* button, a set of files is created/replaced in the ```raspi-cam-srv/raspiCamSrv/static/config``` folder:
+
+![Config](./img/Settings_ConfigStore.jpg)
 
 - _loadConfigOnStart.txt<br>This is just an empty marker file. If the file exists, the server will initiate its configuration with configuration data stored in the other files.<br>Otherwise, default configuration settings will be applied.
 - cameraConfigs.json<br>This is currently not used

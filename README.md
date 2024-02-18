@@ -28,7 +28,7 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - With the [Photo Series](docs/PhotoSeries.md) screen, different kinds of photo series ([Exposure Series](./docs/PhotoSeriesExp.md), [Focus Stacks](./docs/PhotoSeriesFocus.md), [Timelapse Series](./docs/PhotoSeriesTimelapse.md)) can be configured, executed and monitored during their progress.
 - The [Photo Series](docs/PhotoSeries.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
 - The [Settings screen](docs/Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
-- The Settings screen includes also functions to control the **raspiCamSrv** configuration.<br>The entire configuration can be persisted or loaded from stored configuration files.
+- The Settings screen includes also functions to control the **raspiCamSrv** [Server Configuration](./docs/Settings.md#server-configuration).<br>The entire configuration can be persisted or loaded from stored configuration files.
 - It is also possible to configure the server to use the persisted configuration on server startup.
 - Access to the server requires [registration and authentification](docs/Authentication.md).
 
