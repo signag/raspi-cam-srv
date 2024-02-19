@@ -204,27 +204,32 @@ class Camera(BaseCamera):
             maxMode = str(maxModei)
             # For Live View
             # Initially set the stream size to (640, 480). Use Sensor Mode, if possible
-            sizeWidth = 640
-            sizeHeight =  int(sizeWidth * cfgProps.pixelArraySize[1] / cfgProps.pixelArraySize[0])
-            if (sizeHeight % 2) != 0:
-                sizeHeight += 1
-            cfg.liveViewConfig.stream_size = (sizeWidth, sizeHeight)
-            cfg.liveViewConfig.stream_size_align = False
-            if cfgSensorModes[0].size[0] == sizeWidth \
-            and cfgSensorModes[0].size[1] == sizeHeight:
-                cfg.liveViewConfig.sensor_mode = "0"
-            else:
-                cfg.liveViewConfig.sensor_mode = "custom"
+            # If stream_size is set, keep the settings. They have been loeaded from stored config
+            if cfg.liveViewConfig.stream_size is None:
+                sizeWidth = 640
+                sizeHeight =  int(sizeWidth * cfgProps.pixelArraySize[1] / cfgProps.pixelArraySize[0])
+                if (sizeHeight % 2) != 0:
+                    sizeHeight += 1
+                cfg.liveViewConfig.stream_size = (sizeWidth, sizeHeight)
+                cfg.liveViewConfig.stream_size_align = False
+                if cfgSensorModes[0].size[0] == sizeWidth \
+                and cfgSensorModes[0].size[1] == sizeHeight:
+                    cfg.liveViewConfig.sensor_mode = "0"
+                else:
+                    cfg.liveViewConfig.sensor_mode = "custom"
             # For photo
-            cfg.photoConfig.sensor_mode = maxMode
-            cfg.photoConfig.stream_size = cfgSensorModes[maxModei].size
+            if cfg.photoConfig.stream_size is None:
+                cfg.photoConfig.sensor_mode = maxMode
+                cfg.photoConfig.stream_size = cfgSensorModes[maxModei].size
             # For raw photo
-            cfg.rawConfig.sensor_mode = maxMode
-            cfg.rawConfig.stream_size = cfgSensorModes[maxModei].size
-            cfg.rawConfig.format = str(cfgSensorModes[maxModei].format)
+            if cfg.rawConfig.stream_size is None:
+                cfg.rawConfig.sensor_mode = maxMode
+                cfg.rawConfig.stream_size = cfgSensorModes[maxModei].size
+                cfg.rawConfig.format = str(cfgSensorModes[maxModei].format)
             # For Video
-            cfg.videoConfig.sensor_mode = "0"
-            cfg.videoConfig.stream_size = cfgSensorModes[0].size
+            if cfg.videoConfig.stream_size is None:
+                cfg.videoConfig.sensor_mode = "0"
+                cfg.videoConfig.stream_size = cfgSensorModes[0].size
     
     @staticmethod
     def configure(cfg: CameraConfig, cfgPhoto: CameraConfig):

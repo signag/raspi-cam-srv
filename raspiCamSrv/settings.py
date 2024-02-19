@@ -52,10 +52,16 @@ def serverconfig():
         videoType = request.form["videotype"]
         sc.videoType = videoType
         activeCam = int(request.form["activecamera"])
+        # If active camera has changed reset stream size to force adaptation of sensor mode
+        if activeCam != sc.activeCamera:
+            cfg.liveViewConfig.stream_size = None
+            cfg.photoConfig.stream_size = None
+            cfg.rawConfig.stream_size = None
+            cfg.videoConfig.stream_size = None
         sc.activeCamera = activeCam
-        for cam in cs:
-            if activeCam == cam.num:
-                sc.activeCameraInfo = "Camera " + str(cam.num) + " (" + cam.model + ")"
+        for cm in cs:
+            if activeCam == cm.num:
+                sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
                 break
         logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
         chnk = int(request.form["chunkSizePhoto"])

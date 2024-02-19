@@ -727,20 +727,23 @@ class CameraControls():
     def initFromDict(cls, dict:dict):
         cc = CameraControls()
         for key, value in dict.items():
-            if key == "_scalerCrop":
-                setattr(cc, key, tuple(value))
-            elif key == "_frameDurationLimits":
-                setattr(cc, key, tuple(value))
-            elif key == "_colourGains":
-                setattr(cc, key, tuple(value))
-            elif key == "_afWindows":
-                afws = ()
-                for el in value:
-                    afw = (tuple(el),)
-                    afws += afw
-                setattr(cc, key, afws)
-            else:
+            if value is None:
                 setattr(cc, key, value)
+            else:
+                if key == "_scalerCrop":
+                    setattr(cc, key, tuple(value))
+                elif key == "_frameDurationLimits":
+                    setattr(cc, key, tuple(value))
+                elif key == "_colourGains":
+                    setattr(cc, key, tuple(value))
+                elif key == "_afWindows":
+                    afws = ()
+                    for el in value:
+                        afw = (tuple(el),)
+                        afws += afw
+                    setattr(cc, key, afws)
+                else:
+                    setattr(cc, key, value)
         return cc
 
 class SensorMode():
@@ -1004,30 +1007,33 @@ class CameraConfig():
     def initFromDict(cls, dict:dict):
         cc = CameraConfig()
         for key, value in dict.items():
-            if key == "_stream_size":
-                setattr(cc, key, tuple(value))
-            elif key == "_controls":
-                ctrlt = {}
-                for ckey, cvalue in value.items():
-                    vt = cvalue
-                    if ckey == "ScalerCrop":
-                        vt = tuple(cvalue)
-                    elif ckey == "FrameDurationLimits":
-                        vt = tuple(cvalue)
-                    elif ckey == "ColourGains":
-                        vt = tuple(cvalue)
-                    elif ckey == "AfWindows":
-                        afws = ()
-                        for el in cvalue:
-                            afw = (tuple(el),)
-                            afws += afw
-                        vt = afws
-                    else:
-                        vt = cvalue
-                    ctrlt[ckey] = vt
-                setattr(cc, key, ctrlt)
-            else:
+            if value is None:
                 setattr(cc, key, value)
+            else:
+                if key == "_stream_size":
+                    setattr(cc, key, tuple(value))
+                elif key == "_controls":
+                    ctrlt = {}
+                    for ckey, cvalue in value.items():
+                        vt = cvalue
+                        if ckey == "ScalerCrop":
+                            vt = tuple(cvalue)
+                        elif ckey == "FrameDurationLimits":
+                            vt = tuple(cvalue)
+                        elif ckey == "ColourGains":
+                            vt = tuple(cvalue)
+                        elif ckey == "AfWindows":
+                            afws = ()
+                            for el in cvalue:
+                                afw = (tuple(el),)
+                                afws += afw
+                            vt = afws
+                        else:
+                            vt = cvalue
+                        ctrlt[ckey] = vt
+                    setattr(cc, key, ctrlt)
+                else:
+                    setattr(cc, key, value)
         return cc
         
 class CameraProperties():
@@ -1995,62 +2001,68 @@ class ServerConfig():
             if key == "_scalerCropLiveView":
                 setattr(sc, key, tuple(value))
             elif key == "_displayMeta":
-                metat = {}
-                for ckey, cvalue in value.items():
-                    vt = cvalue
-                    if ckey == "ScalerCrop":
-                        vt = tuple(cvalue)
-                    elif ckey == "FrameDurationLimits":
-                        vt = tuple(cvalue)
-                    elif ckey == "ColourGains":
-                        vt = tuple(cvalue)
-                    elif ckey == "ColourCorrectionMatrix":
-                        vt = tuple(cvalue)
-                    elif ckey == "SensorBlackLevels":
-                        vt = tuple(cvalue)
-                    elif ckey == "AfWindows":
-                        afws = ()
-                        for el in cvalue:
-                            afw = (tuple(el),)
-                            afws += afw
-                        vt = afws
-                    else:
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    metat = {}
+                    for ckey, cvalue in value.items():
                         vt = cvalue
-                    metat[ckey] = vt
-                setattr(sc, key, metat)
-            elif key == "_displayBuffer":
-                dbt = {}
-                for bkey, bvalue in value.items():
-                    belt = {}
-                    for belmetakey, belmetavalue in bvalue.items():
-                        if belmetakey == "displayMeta":
-                            metat = {}
-                            for ckey, cvalue in belmetavalue.items():
-                                vt = cvalue
-                                if ckey == "ScalerCrop":
-                                    vt = tuple(cvalue)
-                                elif ckey == "FrameDurationLimits":
-                                    vt = tuple(cvalue)
-                                elif ckey == "ColourGains":
-                                    vt = tuple(cvalue)
-                                elif ckey == "ColourCorrectionMatrix":
-                                    vt = tuple(cvalue)
-                                elif ckey == "SensorBlackLevels":
-                                    vt = tuple(cvalue)
-                                elif ckey == "AfWindows":
-                                    afws = ()
-                                    for el in cvalue:
-                                        afw = (tuple(el),)
-                                        afws += afw
-                                    vt = afws
-                                else:
-                                    vt = cvalue
-                                metat[ckey] = vt
-                            belt[belmetakey] = metat
+                        if ckey == "ScalerCrop":
+                            vt = tuple(cvalue)
+                        elif ckey == "FrameDurationLimits":
+                            vt = tuple(cvalue)
+                        elif ckey == "ColourGains":
+                            vt = tuple(cvalue)
+                        elif ckey == "ColourCorrectionMatrix":
+                            vt = tuple(cvalue)
+                        elif ckey == "SensorBlackLevels":
+                            vt = tuple(cvalue)
+                        elif ckey == "AfWindows":
+                            afws = ()
+                            for el in cvalue:
+                                afw = (tuple(el),)
+                                afws += afw
+                            vt = afws
                         else:
-                            belt[belmetakey] = belmetavalue
-                    dbt[bkey] = belt
-                setattr(sc, key, dbt)
+                            vt = cvalue
+                        metat[ckey] = vt
+                    setattr(sc, key, metat)
+            elif key == "_displayBuffer":
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    dbt = {}
+                    for bkey, bvalue in value.items():
+                        belt = {}
+                        for belmetakey, belmetavalue in bvalue.items():
+                            if belmetakey == "displayMeta":
+                                metat = {}
+                                for ckey, cvalue in belmetavalue.items():
+                                    vt = cvalue
+                                    if ckey == "ScalerCrop":
+                                        vt = tuple(cvalue)
+                                    elif ckey == "FrameDurationLimits":
+                                        vt = tuple(cvalue)
+                                    elif ckey == "ColourGains":
+                                        vt = tuple(cvalue)
+                                    elif ckey == "ColourCorrectionMatrix":
+                                        vt = tuple(cvalue)
+                                    elif ckey == "SensorBlackLevels":
+                                        vt = tuple(cvalue)
+                                    elif ckey == "AfWindows":
+                                        afws = ()
+                                        for el in cvalue:
+                                            afw = (tuple(el),)
+                                            afws += afw
+                                        vt = afws
+                                    else:
+                                        vt = cvalue
+                                    metat[ckey] = vt
+                                belt[belmetakey] = metat
+                            else:
+                                belt[belmetakey] = belmetavalue
+                        dbt[bkey] = belt
+                    setattr(sc, key, dbt)
             else:
                 setattr(sc, key, value)
         return sc
