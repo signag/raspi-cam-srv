@@ -3,6 +3,7 @@ from pathlib import Path
 from flask import Flask
 import logging
 from flask.logging import default_handler
+from picamera2 import Picamera2
 
 def create_app(test_config=None):
     # create and configure the app
@@ -24,6 +25,7 @@ def create_app(test_config=None):
     #filehandler.setFormatter(app.logger.handlers[0].formatter)
     for logger in(
         app.logger,
+        logging.getLogger("werkzeug"),
         logging.getLogger("raspiCamSrv.camCfg"),
         logging.getLogger("raspiCamSrv.camera_base"),
         logging.getLogger("raspiCamSrv.camera_pi"),
@@ -36,7 +38,16 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.timelapseCfg"),
     ):
         #logger.addHandler(filehandler)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.ERROR)
+    
+    #Explicitely set specific log levels
+    logging.getLogger("werkzeug").setLevel(logging.INFO)
+    
+    #Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
+    Picamera2.set_logging(Picamera2.ERROR)
+    
+    #Set log level for libcamera (0:DEBUG, 1:INFO, 2:WARNING, 3:ERROR, 4:FATAL)
+    os.environ["LIBCAMERA_LOG_LEVELS"] = "*:2"           
 
     if test_config is None:
         # load the instance config, if it exists, when not testing

@@ -11,6 +11,8 @@ When the server on a Pi is running and the Pi is reacheable through the network 
 
 The system will request an initial [registration and a login](./Authentication.md) and subsequently open the **Live** application screen.
 
+For error handling, see [raspiCamSrv Troubleshooting](./Troubelshooting.md)
+
 ## Application Screen
 ![Main Screen](img/Live_start.jpg)
 

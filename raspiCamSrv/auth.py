@@ -252,6 +252,7 @@ def logout():
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
         if g.user is None:
             db = get_db()
             nrUsers = 0
