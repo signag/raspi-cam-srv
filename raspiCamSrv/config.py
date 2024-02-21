@@ -49,6 +49,7 @@ def liveViewCfg():
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
     if request.method == "POST":
+        err = None
         transform_hflip = not request.form.get("LIVE_transform_hflip") is None
         cfglive.transform_hflip = transform_hflip        
         transform_vflip = not request.form.get("LIVE_transform_vflip") is None
@@ -60,13 +61,19 @@ def liveViewCfg():
         queue = not request.form.get("LIVE_queue") is None
         cfglive.queue = queue
         sensor_mode = request.form["LIVE_sensor_mode"]
-        cfglive.sensor_mode = sensor_mode
         if sensor_mode == "custom":
             size_width = int(request.form["LIVE_stream_size_width"])
+            if not (size_width % 2) == 0:
+                err = "Stream Size (width, height) must be even"
             size_height = int(request.form["LIVE_stream_size_height"])
-            cfglive.stream_size = (size_width, size_height)
-            cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
+            if not (size_height % 2) == 0:
+                err = "Stream Size (width, height) must be even"
+            if not err:
+                cfglive.sensor_mode = sensor_mode
+                cfglive.stream_size = (size_width, size_height)
+                cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
         else:
+            cfglive.sensor_mode = sensor_mode
             mode = sm[int(sensor_mode)]
             cfglive.stream_size = mode.size
             cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
@@ -75,6 +82,8 @@ def liveViewCfg():
         cfglive.display = None
         cfglive.encode = "main"
         Camera().restartLiveView()
+        if err:
+            flash(err)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addLiveViewControls", methods=("GET", "POST"))
@@ -163,6 +172,7 @@ def photoCfg():
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
     if request.method == "POST":
+        err = None
         transform_hflip = not request.form.get("FOTO_transform_hflip") is None
         cfgphoto.transform_hflip = transform_hflip        
         transform_vflip = not request.form.get("FOTO_transform_vflip") is None
@@ -174,13 +184,19 @@ def photoCfg():
         queue = not request.form.get("FOTO_queue") is None
         cfgphoto.queue = queue
         sensor_mode = request.form["FOTO_sensor_mode"]
-        cfgphoto.sensor_mode = sensor_mode
         if sensor_mode == "custom":
             size_width = int(request.form["FOTO_stream_size_width"])
+            if not (size_width % 2) == 0:
+                err = "Stream Size (width, height) must be even"
             size_height = int(request.form["FOTO_stream_size_height"])
-            cfgphoto.stream_size = (size_width, size_height)
-            cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
+            if not (size_height % 2) == 0:
+                err = "Stream Size (width, height) must be even"
+            if not err:
+                cfgphoto.sensor_mode = sensor_mode
+                cfgphoto.stream_size = (size_width, size_height)
+                cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
         else:
+            cfgphoto.sensor_mode = sensor_mode
             mode = sm[int(sensor_mode)]
             cfgphoto.stream_size = mode.size
             cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
@@ -188,6 +204,8 @@ def photoCfg():
         cfgphoto.format = format
         cfgphoto.display = None
         cfgphoto.encode = "main"
+        if err:
+            flash(err)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addPhotoControls", methods=("GET", "POST"))
@@ -282,15 +300,9 @@ def rawCfg():
         cfgraw.queue = queue
         sensor_mode = request.form["PRAW_sensor_mode"]
         cfgraw.sensor_mode = sensor_mode
-        if sensor_mode == "custom":
-            size_width = int(request.form["PRAW_stream_size_width"])
-            size_height = int(request.form["PRAW_stream_size_height"])
-            cfgraw.stream_size = (size_width, size_height)
-            cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
-        else:
-            mode = sm[int(sensor_mode)]
-            cfgraw.stream_size = mode.size
-            cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
+        mode = sm[int(sensor_mode)]
+        cfgraw.stream_size = mode.size
+        cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
         format = request.form["PRAW_format"]
         cfgraw.format = format
         cfgraw.display = None
@@ -379,6 +391,7 @@ def videoCfg():
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
     if request.method == "POST":
+        err = None
         transform_hflip = not request.form.get("VIDO_transform_hflip") is None
         cfgvideo.transform_hflip = transform_hflip        
         transform_vflip = not request.form.get("VIDO_transform_vflip") is None
@@ -390,13 +403,19 @@ def videoCfg():
         queue = not request.form.get("VIDO_queue") is None
         cfgvideo.queue = queue
         sensor_mode = request.form["VIDO_sensor_mode"]
-        cfgvideo.sensor_mode = sensor_mode
         if sensor_mode == "custom":
             size_width = int(request.form["VIDO_stream_size_width"])
+            if not (size_width % 2) == 0:
+                err = "Stream Size (width, height) must be even"
             size_height = int(request.form["VIDO_stream_size_height"])
-            cfgvideo.stream_size = (size_width, size_height)
-            cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
+            if not (size_height % 2) == 0:
+                err = "Stream Size (width, height) must be even"
+            if not err:
+                cfgvideo.sensor_mode = sensor_mode
+                cfgvideo.stream_size = (size_width, size_height)
+                cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
         else:
+            cfgvideo.sensor_mode = sensor_mode
             mode = sm[int(sensor_mode)]
             cfgvideo.stream_size = mode.size
             cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
@@ -404,6 +423,8 @@ def videoCfg():
         cfgvideo.format = format
         cfgvideo.display = None
         cfgvideo.encode = "main"
+        if err:
+            flash(err)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addVideoControls", methods=("GET", "POST"))

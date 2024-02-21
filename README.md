@@ -37,6 +37,7 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - In **Safari** (e.g. on an iPad), there is still an issue with the Live Screen:    
  Due to the specific timing of the onload event, [AF Windows](docs/FocusHandling.md#autofocus-windows) may not be visible immediately after the page has been loaded. If you just 'pull' the entire window down for a short time (don't touch the AF Windows canvas), they will show up.   
  If the Live stream does not show up (e.g. after visiting another screen), take a photo and then push **Hide**/**Show**. This will show the live stream.
+ - There may be an issue configuring specific sensor modes or stream sizes for the *Live View* in [Config](./docs/Configuration.md). As a result, the live view will not show up and the server log will show an exception. You may need to reset the server (see [Reset Server](./docs/Settings.md#server-configuration))<br>This is already fixed but may not yet be available in your environment see [picamera2 Issue #959](https://github.com/raspberrypi/picamera2/issues/959)
 
 ## Limitations
 The software is still being tested and extended.
