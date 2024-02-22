@@ -2,6 +2,7 @@ from flask import Blueprint, Response, flash, g, redirect, render_template, requ
 from werkzeug.exceptions import abort
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg
+from raspiCamSrv.version import version
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -16,6 +17,7 @@ def main():
     cam = Camera().cam
     props = cam.camera_properties
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cs = cfg.cameras
     sc = cfg.serverConfig

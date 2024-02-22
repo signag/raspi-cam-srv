@@ -3,6 +3,7 @@ from werkzeug.exceptions import abort
 from raspiCamSrv.auth import login_required
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, ServerConfig
+from raspiCamSrv.version import version
 from libcamera import controls
 import math
 import os
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 def index():
     logger.debug("In index")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     logger.debug("Camera instantiated")
     cfg = CameraCfg()
@@ -61,6 +63,7 @@ def displayImage(photo: str):
 def focus_control():
     logger.debug("In focus_control")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -139,6 +142,7 @@ def focus_control():
 def trigger_autofocus():
     logger.debug("In trigger_autofocus")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -171,6 +175,7 @@ def trigger_autofocus():
 def set_zoom():
     logger.debug("In set_zoom")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -204,6 +209,7 @@ def set_zoom():
 def zoom_in():
     logger.debug("In zoom_in")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     logger.debug("cfg.liveViewConfig.controls=%s",cfg.liveViewConfig.controls)
     cc = cfg.controls
@@ -240,6 +246,7 @@ def zoom_in():
 def zoom_out():
     logger.debug("In zoom_out")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -289,6 +296,7 @@ def zoom_out():
 def zoom_full():
     logger.debug("In zoom_full")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -311,6 +319,7 @@ def zoom_full():
 def pan_up():
     logger.debug("In pan_up")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -340,6 +349,7 @@ def pan_up():
 def pan_left():
     logger.debug("In pan_left")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -369,6 +379,7 @@ def pan_left():
 def pan_center():
     logger.debug("In pan_center")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -398,6 +409,7 @@ def pan_center():
 def pan_right():
     logger.debug("In pan_right")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -427,6 +439,7 @@ def pan_right():
 def pan_down():
     logger.debug("In pan_down")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -470,6 +483,7 @@ def zoom_draw():
 def ae_control():
     logger.debug("In ae_control")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -531,6 +545,7 @@ def ae_control():
 def exposure_control():
     logger.debug("In exposure_control")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -593,6 +608,7 @@ def exposure_control():
 def image_control():
     logger.debug("In image_control")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -656,6 +672,7 @@ def image_control():
 def meta_clear():
     logger.debug("In meta_clear")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -673,6 +690,7 @@ def meta_clear():
 def meta_prev():
     logger.debug("In meta_prev")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -691,6 +709,7 @@ def meta_prev():
 def meta_next():
     logger.debug("In meta_next")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -710,6 +729,7 @@ def meta_next():
 def photoBuffer_add():
     logger.debug("In photoBuffer_add")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -744,6 +764,7 @@ def photoBuffer_remove():
 def photoBuffer_prev():
     logger.debug("In photoBuffer_prev")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -761,6 +782,7 @@ def photoBuffer_prev():
 def photoBuffer_next():
     logger.debug("In photoBuffer_next")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -778,6 +800,7 @@ def photoBuffer_next():
 def show_photo():
     logger.debug("In show_photo")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -791,6 +814,7 @@ def show_photo():
 def hide_photo():
     logger.debug("In hide_photo")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -804,6 +828,7 @@ def hide_photo():
 def clear_buffer():
     logger.debug("In clear_buffer")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -817,6 +842,7 @@ def clear_buffer():
 def take_photo():
     logger.debug("In take_photo")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -843,6 +869,7 @@ def take_photo():
 def take_raw_photo():
     logger.debug("In take_raw_photo")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -866,6 +893,7 @@ def take_raw_photo():
 def record_video():
     logger.debug("In record_video")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -899,6 +927,7 @@ def record_video():
 def stop_recording():
     logger.debug("In stop_recording")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -948,6 +977,7 @@ def generateHistogram(sc:ServerConfig):
 def show_histogram():
     logger.debug("In show_histogram")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
@@ -965,6 +995,7 @@ def show_histogram():
 def show_metadata():
     logger.debug("In show_metadata")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig

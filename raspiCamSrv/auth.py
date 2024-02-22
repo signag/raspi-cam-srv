@@ -1,4 +1,5 @@
 import functools
+from raspiCamSrv.version import version
 
 from flask import (
     Blueprint,
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 def register():
     logger.debug("In register")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
@@ -99,6 +101,7 @@ def register():
 @bp.route("/login", methods=("GET", "POST"))
 def login():
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
@@ -137,6 +140,7 @@ def login():
 @bp.route("/password", methods=("GET", "POST"))
 def password():
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     sc = cfg.serverConfig
     cp = cfg.cameraProperties

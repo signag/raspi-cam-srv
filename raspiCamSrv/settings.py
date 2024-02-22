@@ -2,6 +2,7 @@ from flask import Blueprint, Response, flash, g, render_template, request, curre
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig
 from raspiCamSrv.camera_pi import Camera, BaseCamera
+from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
 import os
 from pathlib import Path
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def main():
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -34,6 +36,7 @@ def main():
 def serverconfig():
     logger.debug("serverconfig")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -81,6 +84,7 @@ def serverconfig():
 def resetServer():
     logger.debug("resetServer")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -148,6 +152,7 @@ def resetServer():
 def remove_users():
     logger.debug("In remove_users")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -209,6 +214,7 @@ def remove_users():
 def register_user():
     logger.debug("In register_user")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -228,6 +234,7 @@ def register_user():
 def store_config():
     logger.debug("In store_config")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -250,6 +257,7 @@ def store_config():
 def load_config():
     logger.debug("In load_config")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras
@@ -295,6 +303,7 @@ def setLoadConfigOnStart(cfgPath: str, value: bool):
 def loadConfigOnStart():
     logger.debug("In loadConfigOnStart")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     cs = cfg.cameras

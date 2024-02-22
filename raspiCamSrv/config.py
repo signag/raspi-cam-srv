@@ -2,6 +2,7 @@ from flask import Blueprint, Response, flash, g, redirect, render_template, requ
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.version import version
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def main():
     g.hostname = request.host
+    g.version = version
     # Although not directly needed here, the camara needs to be initialized
     # in order to load the camera-specific parameters into configuration
     cam = Camera().cam
@@ -36,6 +38,7 @@ def main():
 def liveViewCfg():
     logger.debug("In liveViewCfg")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
@@ -91,6 +94,7 @@ def liveViewCfg():
 def addLiveViewControls():
     logger.debug("In addLiveViewControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     cp = cfg.cameraProperties
@@ -117,6 +121,7 @@ def addLiveViewControls():
 def remLiveViewControls():
     logger.debug("In remLiveViewControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
@@ -159,6 +164,7 @@ def remLiveViewControls():
 def photoCfg():
     logger.debug("In photoCfg")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
@@ -213,6 +219,7 @@ def photoCfg():
 def addPhotoControls():
     logger.debug("In addPhotoControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     cp = cfg.cameraProperties
@@ -238,6 +245,7 @@ def addPhotoControls():
 def remPhotoControls():
     logger.debug("In remPhotoControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
@@ -277,6 +285,7 @@ def remPhotoControls():
 def rawCfg():
     logger.debug("In rawCfg")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
@@ -314,6 +323,7 @@ def rawCfg():
 def addRawControls():
     logger.debug("In addRawControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     cp = cfg.cameraProperties
@@ -339,6 +349,7 @@ def addRawControls():
 def remRawControls():
     logger.debug("In remRawControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
@@ -378,6 +389,7 @@ def remRawControls():
 def videoCfg():
     logger.debug("In videoCfg")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
@@ -432,6 +444,7 @@ def videoCfg():
 def addVideoControls():
     logger.debug("In addVideoControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cc = cfg.controls
     cp = cfg.cameraProperties
@@ -457,6 +470,7 @@ def addVideoControls():
 def remVideoControls():
     logger.debug("In remVideoControls")
     g.hostname = request.host
+    g.version = version
     cfg = CameraCfg()
     cp = cfg.cameraProperties
     sm = cfg.sensorModes

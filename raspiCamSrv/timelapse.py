@@ -4,6 +4,7 @@ from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.timelapseCfg import TimelapseCfg
 from raspiCamSrv.timelapseCfg import Series
 from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.version import version
 import os
 import copy
 from pathlib import Path
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def main():
     g.hostname = request.host
+    g.version = version
     # Although not directly needed here, the camara needs to be initialized
     # in order to load the camera-specific parameters into configuration
     cam = Camera().cam
@@ -38,6 +40,7 @@ def main():
 def new_series():
     logger.debug("In new_series")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -112,6 +115,7 @@ def new_series():
 def select_series():
     logger.debug("In select_series")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -136,6 +140,7 @@ def select_series():
 def start_series():
     logger.debug("In start_series")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -194,6 +199,7 @@ def start_series():
 def pause_series():
     logger.debug("In pause_series")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -213,6 +219,7 @@ def pause_series():
 def finish_series():
     logger.debug("In finish_series")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -235,6 +242,7 @@ def finish_series():
 def continue_series():
     logger.debug("In continue_series")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -254,6 +262,7 @@ def continue_series():
 def remove_series():
     logger.debug("In remove_series")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -276,6 +285,7 @@ def remove_series():
 def series_properties():
     logger.debug("In series_properties")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -343,6 +353,7 @@ def series_properties():
 def attach_camera_cfg():
     logger.debug("In attach_camera_cfg")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -370,6 +381,7 @@ def attach_camera_cfg():
 def activate_camera_cfg():
     logger.debug("In activate_camera_cfg")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -402,6 +414,7 @@ def activate_camera_cfg():
 def show_preview():
     logger.debug("In show_preview")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -419,6 +432,7 @@ def show_preview():
 def hide_preview():
     logger.debug("In hide_preview")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -459,6 +473,7 @@ def calcExpSeries(start, stop, int):
 def expseries_properties():
     logger.debug("In expseries_properties")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -547,6 +562,7 @@ def calcFocusSeries(start, stop, intv):
 def focusstack_properties():
     logger.debug("In focusstack_properties")
     g.hostname = request.host
+    g.version = version
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig

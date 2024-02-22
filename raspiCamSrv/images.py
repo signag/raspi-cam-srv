@@ -2,6 +2,7 @@ from flask import Blueprint, Response, flash, g, redirect, render_template, requ
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.version import version
 import os
 
 from raspiCamSrv.auth import login_required
@@ -92,6 +93,7 @@ def getFileList() -> list:
 def main():
     logger.debug("In images/main")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -109,6 +111,7 @@ def page(pagenr):
     logger.debug("request.method: %s", request.method)
     logger.debug("pagenr: %s", pagenr)
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -125,6 +128,7 @@ def page(pagenr):
 def backwards():
     logger.debug("In images/backwards")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -146,6 +150,7 @@ def backwards():
 def forwards():
     logger.debug("In images/forwards")
     g.hostname = request.host
+    g.version = version
     cam = Camera()
     cfg = CameraCfg()
     sc = cfg.serverConfig

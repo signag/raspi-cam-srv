@@ -14,7 +14,7 @@
     {% endif %}
         <div class="w3-container">
             <div class="w3-bar w3-blue w3-large">
-                <div class="w3-bar-item w3-left">raspiCamSrv</div>
+                <div class="w3-bar-item w3-left">raspiCamSrv {{ g.version }}</div>
                 <div class="w3-bar-item w3-center">{% block header %}{% endblock %}</div>
                 {% if g.user %}
                 <div class="w3-bar-item w3-right">
