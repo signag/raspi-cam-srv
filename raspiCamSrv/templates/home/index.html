@@ -1399,7 +1399,7 @@ RaspiCamSrv's Live page
                     <th>Value</th>
                 </tr>
                 {% for prop in sc.displayMeta %}
-                {% if loop.index >= sc.displayMetaFirst and loop.index < sc.displayMetaLast %}
+                {% if loop.index >= sc.displayMetaFirst and loop.index < sc.displayMetaLast and prop !="PispStatsOutput" %}
                 <tr>
                     <td class="w3-tooltip">
                         {% if prop|string() == "Camera" %}
