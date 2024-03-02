@@ -9,8 +9,8 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview
-For more details, see the [User Guide](docs/UserGuide.md)
+## Feature Overview V2.0
+For more details, see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md)
 
 ![Live Overview](docs/img/Live.jpg)
 
@@ -32,12 +32,18 @@ For more details, see the [User Guide](docs/UserGuide.md)
 - It is also possible to configure the server to use the persisted configuration on server startup.
 - Access to the server requires [registration and authentification](docs/Authentication.md).
 
+**New in V2.0**
+- "Intelligent" camera control supporting simultaneous camera access from different tasks as long as the requested configurations are compatible (see [raspiCamSrv Tasks and Background Processes](./docs/Background%20Processes.md)).   
+This includes a continuous live stream while taking photos, videos or photo series.   
+- Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
+(See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
+
 ## Known Issues
 
 - In **Safari** (e.g. on an iPad), there is still an issue with the Live Screen:    
  Due to the specific timing of the onload event, [AF Windows](docs/FocusHandling.md#autofocus-windows) may not be visible immediately after the page has been loaded. If you just 'pull' the entire window down for a short time (don't touch the AF Windows canvas), they will show up.   
  If the Live stream does not show up (e.g. after visiting another screen), take a photo and then push **Hide**/**Show**. This will show the live stream.
- - There may be an issue configuring specific sensor modes or stream sizes for the *Live View* in [Config](./docs/Configuration.md). As a result, the live view will not show up and the server log will show an exception. You may need to reset the server (see [Reset Server](./docs/Settings.md#server-configuration))<br>This is already fixed but may not yet be available in your environment see [picamera2 Issue #959](https://github.com/raspberrypi/picamera2/issues/959)
+ - There may be an issue configuring specific sensor modes or stream sizes for the *Live View* in [Config](./docs/Configuration.md). As a result, the live view will not show up and the server log will show an exception. You may need to reset the server (see [Reset Server](./docs/Settings.md#server-configuration))<br>This is already fixed but may not yet be available in your environment (see [picamera2 Issue #959](https://github.com/raspberrypi/picamera2/issues/959))
 
 ## Limitations
 The software is still being tested and extended.

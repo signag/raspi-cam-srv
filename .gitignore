@@ -3,8 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 tests/
+logs/
+output/
 raspiCamSrv/static/photos/
 raspiCamSrv/static/timelapse/
+raspiCamSrv/static/photoseries/
 raspiCamSrv/static/config/
 *.mp4
 *.h264

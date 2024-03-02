@@ -63,6 +63,8 @@ def liveViewCfg():
         cfglive.buffer_count = buffer_count
         queue = not request.form.get("LIVE_queue") is None
         cfglive.queue = queue
+        stream = request.form["LIVE_stream"]
+        cfglive.stream = stream
         sensor_mode = request.form["LIVE_sensor_mode"]
         if sensor_mode == "custom":
             size_width = int(request.form["LIVE_stream_size_width"])
@@ -83,8 +85,11 @@ def liveViewCfg():
         format = request.form["LIVE_format"]
         cfglive.format = format
         cfglive.display = None
-        cfglive.encode = "main"
-        Camera().restartLiveView()
+        cfglive.encode = cfglive.stream
+        Camera().restartLiveStream()
+        if cfglive.stream != "lores":
+            msg = "WARNING: If you do not set Stream to 'lores', the Live Stream cannot be shown parallel to other activities!"
+            flash(msg)
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
@@ -113,7 +118,7 @@ def addLiveViewControls():
             if value[0] == True:
                 if key not in cfg.liveViewConfig.controls:
                     cfg.liveViewConfig.controls[key] = value[1]
-        Camera().restartLiveView()
+        Camera().restartLiveStream()
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/remLiveViewControls", methods=("GET", "POST"))
@@ -150,7 +155,7 @@ def remLiveViewControls():
                             break
                     del cfg.liveViewConfig.controls[ctrlDel]
                     cnt -= 1
-                Camera().restartLiveView()
+                Camera().restartLiveStream()
             else:
                 msg="At least one control must remain in the configuration"
                 flash(msg)
@@ -210,6 +215,10 @@ def photoCfg():
         cfgphoto.format = format
         cfgphoto.display = None
         cfgphoto.encode = "main"
+        cc, cr =  Camera().ctrl.requestConfig(cfgphoto, test=True)
+        if cc:
+            msg = "This modification will cause the live stream to be interrupted when a photo is taken!\nReason: " + cr
+            flash(msg)
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)

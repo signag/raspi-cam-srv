@@ -1,8 +1,8 @@
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
-from raspiCamSrv.timelapseCfg import TimelapseCfg
-from raspiCamSrv.timelapseCfg import Series
+from raspiCamSrv.photoseriesCfg import PhotoSeriesCfg
+from raspiCamSrv.photoseriesCfg import Series
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.version import version
 import os
@@ -14,11 +14,11 @@ from datetime import timedelta
 from raspiCamSrv.auth import login_required
 import logging
 
-bp = Blueprint("timelapse", __name__)
+bp = Blueprint("photoseries", __name__)
 
 logger = logging.getLogger(__name__)
 
-@bp.route("/timelapse")
+@bp.route("/photoseries")
 @login_required
 def main():
     g.hostname = request.host
@@ -28,12 +28,12 @@ def main():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
-    sc.lastTimelapseTab = "series"
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    sc.curMenu = "photoseries"
+    sc.lastPhotoSeriesTab = "series"
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/new_series", methods=("GET", "POST"))
 @login_required
@@ -44,17 +44,18 @@ def new_series():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         seriesName = request.form["tlnewseries"]
         logger.debug("seriesName: %s", seriesName)
         if tl.nameExists(seriesName):
             msg = "Error: There is already a series with this name."
             flash(msg)
+            serOK = False
         else:
             ser = Series()
             ser.name = seriesName
@@ -108,7 +109,7 @@ def new_series():
             logger.debug("Current series set to: %s", ser.name)
             sr=tl.curSeries
             
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/select_series", methods=("GET", "POST"))
 @login_required
@@ -119,12 +120,12 @@ def select_series():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         serName = request.form["selectseries"]
         logger.debug("selected series: %s", serName)
         for ser in tl.tlSeries:
@@ -133,7 +134,7 @@ def select_series():
                 break
         sr = tl.curSeries
         logger.debug("current series set to: %s", tl.curSeries.name)
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/start_series", methods=("GET", "POST"))
 @login_required
@@ -144,13 +145,17 @@ def start_series():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
-        if sr.status == "READY" or sr.status == "PAUSED":
+        sc.lastPhotoSeriesTab = "series"
+        if sr.status == "READY":
+            if sr.isExposureSeries or sr.isFocusStackingSeries:
+                #Backup controls
+                cfg.controlsBackup = copy.deepcopy(cfg.controls)
+                logger.debug("Created backup for controls: %s", cfg.controlsBackup.__dict__)
             if sr.isExposureSeries:
                 # For exposure series disable Auto and set fixed control parameter
                 ctrl = cfg.controls
@@ -171,28 +176,32 @@ def start_series():
             # Ckeck whether series start is in the past
             dt = datetime.now() + timedelta(seconds=5)
             startnow = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
-            startnow = startnow + timedelta(minutes=1)
-            if sr.start < startnow:
+            startnow = startnow + timedelta(minutes=0)
+            logger.debug("now: %s  startnow: %s  sr.start: %s", datetime.now(), startnow, sr.start)
+            if sr.start <= startnow:
+                logger.debug("Start immediately")
                 sr.start = startnow
                 timedifSec = int(sr.interval * sr.nrShots)
                 delta = timedelta(seconds=timedifSec)
                 serEndRaw = sr.start + delta
                 serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
-                serEnd = serEnd + timedelta(minutes=1)
+                serEnd = serEnd + timedelta(minutes=2)
                 sr.end = serEnd
             
             tlOK = True
             try:
-                Camera.startTimelapseSeries(sr)
+                Camera.startPhotoSeries(sr)
             except Exception as e:
                 tlOK = False
-                msg = "Error while starting Timelapse series " + str(e)
+                msg = "Error while starting Photoseries " + str(e)
                 flash(msg)
             if tlOK:
                 sr.nextStatus("start")
                 sr.persist()
+        else:
+            logger.debug("Nothing to do sr.status is %s", sr.status)
         
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/pause_series", methods=("GET", "POST"))
 @login_required
@@ -203,16 +212,29 @@ def pause_series():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         sr.nextStatus("pause")
         sr.persist()
-        Camera.stopTimelapseSeries()
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+        Camera.stopPhotoSeries()
+        if sr.isExposureSeries or sr.isFocusStackingSeries:
+            if cfg.controlsBackup:
+                #Restore controls
+                cfg.controls = copy.deepcopy(cfg.controlsBackup)
+                logger.debug("Restored controls from backup: %s", cfg.controls.__dict__)
+                cfg.controlsBackup = None
+                wait = None
+                if sr.isExposureSeries:
+                    #For an exposure series wait for the longest exposure time
+                    if sr.isExpGainFix:
+                        wait = 0.2 + sr.expTimeStop / 1000000
+                Camera().applyControlsForLivestream(wait)
+                logger.debug("Restored controls backup")
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/finish_series", methods=("GET", "POST"))
 @login_required
@@ -223,19 +245,31 @@ def finish_series():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
-        Camera.stopTimelapseSeries()
+        sc.lastPhotoSeriesTab = "series"
+        Camera.stopPhotoSeries()
+        logger.debug("Stopped Photo Series")
         sr.nextStatus("finish")
         dt = datetime.now()
         dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
         sr.ended = dt
         sr.persist()
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+        if sr.isExposureSeries or sr.isFocusStackingSeries:
+            if cfg.controlsBackup:
+                #Restore controls
+                cfg.controls = copy.deepcopy(cfg.controlsBackup)
+                cfg.controlsBackup = None
+                wait = None
+                if sr.isExposureSeries:
+                    #For an exposure series wait for the longest exposure time
+                    if sr.isExpGainFix:
+                        wait = 0.2 + sr.expTimeStop / 1000000
+                Camera().applyControlsForLivestream(wait)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/continue_series", methods=("GET", "POST"))
 @login_required
@@ -246,16 +280,58 @@ def continue_series():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
-        sr.nextStatus("continue")
-        sr.persist()
-        Camera.startTimelapseSeries(sr)
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+        sc.lastPhotoSeriesTab = "series"
+        if sr.status == "PAUSED":
+            if sr.isExposureSeries or sr.isFocusStackingSeries:
+                #Backup controls
+                cfg.controlsBackup = copy.deepcopy(cfg.controls)
+                logger.debug("Created backup for controls: %s", cfg.controlsBackup.__dict__)
+            if sr.isExposureSeries:
+                # For exposure series disable Auto and set fixed control parameter
+                ctrl = cfg.controls
+                ctrl.aeEnable = False
+                ctrl.include_aeEnable = True
+                ctrl.awbEnable = False
+                ctrl.include_awbEnable = True
+                if sr.isExpGainFix:
+                    ctrl.include_analogueGain = True
+                    ctrl.analogueGain = sr.expGainStart
+                if sr.isExpExpTimeFix:
+                    ctrl.include_exposureTime = True
+                    ctrl.exposureTime = sr.expTimeStart
+            if sr.isFocusStackingSeries:
+                # For focus series, set Autofocus to manual
+                ctrl = cfg.controls
+                ctrl.afMode = 0
+
+            #Adjust end time of series
+            logger.debug("Start immediately")
+            timedifSec = int(sr.interval * (sr.nrShots - sr.curShots + 1))
+            delta = timedelta(seconds=timedifSec)
+            serEndRaw = datetime.now() + delta
+            serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
+            serEnd = serEnd + timedelta(minutes=2)
+            sr.end = serEnd
+            logger.debug("Adjusted series end time to %s", sr.end)
+            
+            tlOK = True
+            try:
+                Camera.startPhotoSeries(sr)
+            except Exception as e:
+                tlOK = False
+                msg = "Error while starting Photoseries " + str(e)
+                flash(msg)
+            if tlOK:
+                sr.nextStatus("continue")
+                sr.persist()
+        else:
+            logger.debug("Nothing to do sr.status is %s", sr.status)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/remove_series", methods=("GET", "POST"))
 @login_required
@@ -266,19 +342,19 @@ def remove_series():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         nam = sr.name
         path = sr.path
         tl.removeCurrentSeries()
         sr = tl.curSeries
-        msg = "Timelapse series " + nam + " removed. Path: " + path
+        msg = "Photoseries " + nam + " removed. Path: " + path
         flash(msg)
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/series_properties", methods=("GET", "POST"))
 @login_required
@@ -289,12 +365,12 @@ def series_properties():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         serOK = True
         sertype = request.form["imgtype"]
         serStartFormIso = request.form["serstart"]
@@ -346,7 +422,7 @@ def series_properties():
             sr.nrShots = serNrShots
             sr.nextStatus("configure")
             sr.persist()
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/attach_camera_cfg", methods=("GET", "POST"))
 @login_required
@@ -357,24 +433,24 @@ def attach_camera_cfg():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         sr = tl.curSeries
         if sr.type == "jpg":
             sr.cameraConfig = copy.deepcopy(cfg.photoConfig)
-            msg = "Current 'Photo' configuration and Controls attached to Timelapse series."
+            msg = "Current 'Photo' configuration and Controls attached to Photoseries."
         else:
             sr.cameraConfig = copy.deepcopy(cfg.rawConfig)
-            msg = "Current 'Raw Photo' configuration and Controls attached to Timelapse series."
+            msg = "Current 'Raw Photo' configuration and Controls attached to Photoseries."
         sr.cameraControls = copy.deepcopy(cfg.controls)
         sr.persist()
         flash(msg)
         
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/activate_camera_cfg", methods=("GET", "POST"))
 @login_required
@@ -385,29 +461,29 @@ def activate_camera_cfg():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         sr = tl.curSeries
         if sr.cameraConfig:
             if sr.type == "jpg":
                 cfg.photoConfig = copy.deepcopy(sr.cameraConfig)
-                msg = "'Photo' configuration and Controls replaced with settings from Timelapse series."
+                msg = "'Photo' configuration and Controls replaced with settings from Photoseries."
             else:
                 cfg.rawConfig = copy.deepcopy(sr.cameraConfig)
-                msg = "'Raw Photo' configuration and Controls replaced with settings from Timelapse series."
+                msg = "'Raw Photo' configuration and Controls replaced with settings from Photoseries."
             cfg.controls = copy.deepcopy(sr.cameraControls)
-            Camera().applyControls(cfg.liveViewConfig)
+            Camera().applyControlsForLivestream()
             sr.persist()
             flash(msg)
         else:
-            msg="The Timelapse series has no camera configuration attached."
+            msg="The Photoseries has no camera configuration attached."
             flash(msg)
         
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/show_preview", methods=("GET", "POST"))
 @login_required
@@ -418,14 +494,14 @@ def show_preview():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         sr.showPreview = True
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/hide_preview", methods=("GET", "POST"))
 @login_required
@@ -436,14 +512,14 @@ def hide_preview():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
-        sc.lastTimelapseTab = "series"
+        sc.lastPhotoSeriesTab = "series"
         sr.showPreview = False
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 def calcExpSeries(start, stop, int):
     """ Iterate an Exposure Series and return number of shots and stop
@@ -477,13 +553,13 @@ def expseries_properties():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
         ok = True
-        sc.lastTimelapseTab = "exposure"
+        sc.lastPhotoSeriesTab = "exposure"
         if request.form.get("isexposure") is None:
             sr.isExposureSeries = False
         else:
@@ -539,7 +615,7 @@ def expseries_properties():
         if ok:
             sr.nextStatus("configure")
             sr.persist()
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 def calcFocusSeries(start, stop, intv):
     """ Iterate an Exposure Series and return number of shots and stop
@@ -566,13 +642,13 @@ def focusstack_properties():
     cam = Camera().cam
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tl = TimelapseCfg()
+    tl = PhotoSeriesCfg()
     sr = tl.curSeries
     cp = cfg.cameraProperties
-    sc.curMenu = "timelapse"
+    sc.curMenu = "photoseries"
     if request.method == "POST":
         ok = True
-        sc.lastTimelapseTab = "focusstack"
+        sc.lastPhotoSeriesTab = "focusstack"
         if request.form.get("isfocusstack") is None:
             sr.isFocusStackingSeries = False
         else:
@@ -615,4 +691,4 @@ def focusstack_properties():
         if ok:
             sr.nextStatus("configure")
             sr.persist()
-    return render_template("timelapse/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)

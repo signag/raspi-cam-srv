@@ -237,25 +237,33 @@
         <tr>
             <td>
                 <form id="storeconfig" method="post" action="{{ url_for('settings.store_config') }}">
-                    <input class="w3-button w3-black" onclick="confirmStore('storeconfig')" value="Store Configuration">
+                    <input class="w3-button w3-black" style="width: 22ch" type="submit" onclick="confirmStore('storeconfig')" value="Store Configuration">
                 </form>
             </td>
             <td>
                 <form id="loadconfig" method="post" action="{{ url_for('settings.load_config') }}">
-                    <input class="w3-button w3-black" onclick="confirmLoad('loadconfig')" value="Load Stored Configuration">
+                    <input class="w3-button w3-black" style="width: 26ch" type="submit"  onclick="confirmLoad('loadconfig')" value="Load Stored Configuration">
                 </form>
             </td>
             <td>
                 <form id="resetserver" method="post" action="{{ url_for('settings.resetServer') }}">
-                    <input class="w3-button w3-black" onclick="confirmReset('resetserver')" value="Reset Server">
+                    <input class="w3-button w3-black" style="width: 16ch" type="submit"  onclick="confirmReset('resetserver')" value="Reset Server">
                 </form>
             </td>
+            <!--
+            <td>
+                <form id="shutdownserver" method="post" action="{{ url_for('settings.shutdown') }}">
+                    <input class="w3-button w3-black" style="width: 20ch" type="submit" onclick="confirmShutdown('shutdownserver')"
+                        value="Shutdown Server">
+                </form>
+            </td>
+            -->
             <td style="width:25%" class="w3-tooltip">
                 <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                     If selected, the system will load the stored configuration on server start.<br>
                     Otherwise, the default configuration will be applied.
                 </span>
-                <label for="showhistograms">Start server with stored Configuration:</label>
+                <label for="loadconfigonstartcb">Start server with stored Configuration:</label>
             </td>
             <td>
                 <form id="loadconfigonstart" method="post" action="{{ url_for('settings.loadConfigOnStart') }}">
@@ -358,6 +366,11 @@
         }
         function confirmReset(form) {
             if (confirm("Do you want to reset the server?\nThe entire configuration will be reset to default!")) {
+                document.getElementById(form).submit();
+            }
+        }
+        function confirmShutdown(form) {
+            if (confirm("Do you want to shut down the server?\nIf the server is running as service, it will restart automatically.\nOtherwise, you need to start it manually")) {
                 document.getElementById(form).submit();
             }
         }

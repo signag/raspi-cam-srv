@@ -54,10 +54,10 @@
                 {% else %}
                 <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button" id='imagesbtn' onclick="openMenu('imagesbtn')">Photos</a>
                 {% endif %}
-                {% if sc.curMenu == "timelapse" %}
-                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Photo Series</a>
+                {% if sc.curMenu == "photoseries" %}
+                <a href="{{ url_for('photoseries.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='photoseriesbtn' onclick="openMenu('photoseriesbtn')">Photo Series</a>
                 {% else %}
-                <a href="{{ url_for('timelapse.main') }}" class="w3-bar-item w3-button" id='timelapsebtn' onclick="openMenu('timelapsebtn')">Photo Series</a>
+                <a href="{{ url_for('photoseries.main') }}" class="w3-bar-item w3-button" id='photoseriesbtn' onclick="openMenu('photoseriesbtn')">Photo Series</a>
                 {% endif %}
                 {% if sc.curMenu == "settings" %}
                 <a href="{{ url_for('settings.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='settingsbtn' onclick="openMenu('settingsbtn')">Settings</a>
@@ -69,6 +69,28 @@
                 {% else %}
                 <a href="{{ url_for('auth.logout') }}" class="w3-bar-item w3-button" id='logoutbtn' onclick="openMenu('logoutbtn')">Log Out</a>
                 {% endif %}
+                <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+                    {% if sc.isPhotoSeriesRecording %}
+                    <img src="{{ url_for('static', filename='recording_series_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_series_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
+                    {% if sc.isAudioRecording %}
+                    <img src="{{ url_for('static', filename='recording_audio_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_audio_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
+                    {% if sc.isVideoRecording %}
+                    <img src="{{ url_for('static', filename='recording_video_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_video_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
+                    {% if sc.isLiveStream %}
+                    <img src="{{ url_for('static', filename='recording_live_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px"> 
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_live_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px"> 
+                    {% endif %}
+                </div>
                 {% else %}
                 <div>
                     {% if g.nrUsers == 0 %}

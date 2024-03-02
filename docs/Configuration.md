@@ -26,6 +26,9 @@ which will be applied when raw photos are taken
 - Video configuration   
 which will be applied when videos are recorded
 
+Configuration changes may have an impact on the way how tasks and background processes are executed. If specific parameters, such as [Transform](#transform) are changed for a specific use case only, for example for *Video*, video recording will require that the Live Stream is stopped and paused while the video is being recorded.   
+For more details, see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md).
+
 ## Configuration Tab
 
 An individual configuration tab is available for each use case. All tabs have essentially the same structure:

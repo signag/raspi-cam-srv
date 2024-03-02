@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, flash, g, render_template, request, current_app
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig
-from raspiCamSrv.camera_pi import Camera, BaseCamera
+from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
 import os
@@ -48,6 +48,7 @@ def serverconfig():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     if request.method == "POST":
+        msg = None
         photoType = request.form["phototype"]
         sc.photoType = photoType
         rawPhotoType = request.form["rawphototype"]
@@ -61,12 +62,14 @@ def serverconfig():
             cfg.photoConfig.stream_size = None
             cfg.rawConfig.stream_size = None
             cfg.videoConfig.stream_size = None
-        sc.activeCamera = activeCam
-        for cm in cs:
-            if activeCam == cm.num:
-                sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
-                break
-        logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
+            sc.activeCamera = activeCam
+            for cm in cs:
+                if activeCam == cm.num:
+                    sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
+                    break
+            Camera.switchCamera()
+            msg = "Camera switched to " + sc.activeCameraInfo
+            logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
         chnk = int(request.form["chunkSizePhoto"])
         sc.chunkSizePhoto = chnk
         recordAudio = not request.form.get("recordaudio") is None
@@ -77,6 +80,8 @@ def serverconfig():
         if not useHist:
             sc.displayContent = "meta"
         sc.useHistograms = useHist
+        if msg:
+            flash(msg)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
 
 @bp.route("/resetServer", methods=("GET", "POST"))
@@ -98,10 +103,10 @@ def resetServer():
     if request.method == "POST":
         logger.debug("Stopping camera system")
         Camera().stopCameraSystem()
-        BaseCamera.liveViewDeactivated = False
-        BaseCamera.thread = None
-        BaseCamera.videoThread = None
-        BaseCamera.timelapseThread = None
+        Camera.liveViewDeactivated = False
+        Camera.thread = None
+        Camera.videoThread = None
+        Camera.photoSeriesThread = None
         logger.debug("Resetting server configuration")
         photoRoot = sc.photoRoot
         cfg = CameraCfg()
@@ -272,7 +277,7 @@ def load_config():
         cfg.loadConfig(cfgPath)
         msg = "Configuration loaded from " + cfgPath
         flash(msg)
-        Camera().restartLiveView()
+        Camera().restartLiveStream()
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
 
 def getLoadConfigOnStart(cfgPath: str) -> bool:
@@ -318,4 +323,29 @@ def loadConfigOnStart():
         cb = not request.form.get("loadconfigonstartcb") is None
         setLoadConfigOnStart(cfgPath, cb)
         los = getLoadConfigOnStart(cfgPath)
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
+    
+@bp.route('/shutdown', methods=("GET", "POST"))
+def shutdown():
+    logger.debug("In shutdown")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    if request.method == "POST":
+        shutdown = request.environ.get('werkzeug.server.shutdown')
+        if shutdown is None:
+            msg = "raspiCamSrv is not running with Werkzeug Server. Shut down manually."
+        else:
+            shutdown()
+            msg = "Server shutting down ..."
+        flash(msg)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)

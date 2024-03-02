@@ -1206,6 +1206,7 @@ class ServerConfig():
         self._audioSync = 0.3
         self._photoRoot = "."
         self._cameraPhotoSubPath = "."
+        self._prgOutputPath = "."
         self._photoType = "jpg"
         self._rawPhotoType = "dng"
         self._videoType = "mp4"
@@ -1217,9 +1218,11 @@ class ServerConfig():
         self._lastLiveTab = "focus"
         self._lastConfigTab = "cfglive"
         self._lastInfoTab = "camprops"
-        self._lastTimelapseTab = "series"
+        self._lastPhotoSeriesTab = "series"
+        self._isLiveStream = False
         self._isVideoRecording = False
-        self._isTimelapseRecording = False
+        self._isAudioRecording = False
+        self._isPhotoSeriesRecording = False
         self._isDisplayHidden = True
         self._displayPhoto = None
         self._displayFile = None
@@ -1314,6 +1317,14 @@ class ServerConfig():
     @cameraPhotoSubPath.setter
     def cameraPhotoSubPath(self, value: str):
         self._cameraPhotoSubPath = value
+
+    @property
+    def prgOutputPath(self):
+        return self._prgOutputPath
+
+    @prgOutputPath.setter
+    def prgOutputPath(self, value: str):
+        self._prgOutputPath = value
 
     @property
     def cameraHistogramSubPath(self):
@@ -1438,12 +1449,12 @@ class ServerConfig():
         self._lastInfoTab = value
 
     @property
-    def lastTimelapseTab(self):
-        return self._lastTimelapseTab
+    def lastPhotoSeriesTab(self):
+        return self._lastPhotoSeriesTab
 
-    @lastTimelapseTab.setter
-    def lastTimelapseTab(self, value: str):
-        self._lastTimelapseTab = value
+    @lastPhotoSeriesTab.setter
+    def lastPhotoSeriesTab(self, value: str):
+        self._lastPhotoSeriesTab = value
 
     @property
     def isDisplayHidden(self) -> bool:
@@ -1454,6 +1465,14 @@ class ServerConfig():
         self._isDisplayHidden = value
 
     @property
+    def isLiveStream(self) -> bool:
+        return self._isLiveStream
+
+    @isLiveStream.setter
+    def isLiveStream(self, value: bool):
+        self._isLiveStream = value
+
+    @property
     def isVideoRecording(self) -> bool:
         return self._isVideoRecording
 
@@ -1462,12 +1481,20 @@ class ServerConfig():
         self._isVideoRecording = value
 
     @property
-    def isTimelapseRecording(self) -> bool:
-        return self._isTimelapseRecording
+    def isAudioRecording(self) -> bool:
+        return self._isAudioRecording
 
-    @isTimelapseRecording.setter
-    def isTimelapseRecording(self, value: bool):
-        self._isTimelapseRecording = value
+    @isAudioRecording.setter
+    def isAudioRecording(self, value: bool):
+        self._isAudioRecording = value
+
+    @property
+    def isPhotoSeriesRecording(self) -> bool:
+        return self._isPhotoSeriesRecording
+
+    @isPhotoSeriesRecording.setter
+    def isPhotoSeriesRecording(self, value: bool):
+        self._isPhotoSeriesRecording = value
 
     @property
     def buttonClear(self) -> str:
@@ -2076,11 +2103,13 @@ class CameraCfg():
             cls._sensorModes = []
             cls._rawFormats = []
             cls._controls = CameraControls()
+            cls._controlsBackup: CameraControls = None
             cls._cameraProperties = CameraProperties()
             cls._liveViewConfig = CameraConfig()
             cls._liveViewConfig.id = "LIVE"
             cls._liveViewConfig.use_case = "Live view"
-            cls._liveViewConfig.buffer_count = 4
+            cls._liveViewConfig.stream = "lores"
+            cls._liveViewConfig.buffer_count = 6
             cls._liveViewConfig.encode = "main"
             cls._liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
             cls._photoConfig = CameraConfig()
@@ -2120,6 +2149,14 @@ class CameraCfg():
     @controls.setter
     def controls(self, value: CameraControls):
         self._controls = value
+    
+    @property
+    def controlsBackup(self) -> CameraControls:
+        return self._controlsBackup
+
+    @controlsBackup.setter
+    def controlsBackup(self, value: CameraControls):
+        self._controlsBackup = value
     
     @property
     def cameraProperties(self) -> CameraProperties:

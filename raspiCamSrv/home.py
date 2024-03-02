@@ -5,6 +5,7 @@ from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, ServerConfig
 from raspiCamSrv.version import version
 from libcamera import controls
+from _thread import get_ident
 import math
 import os
 import datetime
@@ -18,33 +19,34 @@ logger = logging.getLogger(__name__)
 @bp.route("/")
 @login_required
 def index():
-    logger.debug("In index")
+    logger.debug("Thread %s: In index", get_ident())
     g.hostname = request.host
     g.version = version
-    cam = Camera()
-    logger.debug("Camera instantiated")
+    Camera().startLiveStream()
+    logger.debug("Thread %s: Camera instantiated", get_ident())
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.curMenu = "live"
-    logger.debug("cp.hasFocus is %s", cp.hasFocus)
+    logger.debug("Thread %s: cp.hasFocus is %s", get_ident(), cp.hasFocus)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 def gen(camera):
     """Video streaming generator function."""
-    #logger.debug("In gen")
+    #logger.debug("Thread %s: In gen", get_ident())
     yield b'--frame\r\n'
     while True:
         frame = camera.get_frame()
         l = len(frame)
-        #logger.debug("Got frame of length %s", l)
+        #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), l)
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 @bp.route("/video_feed")
 # @login_required
 def video_feed():
-    logger.debug("In video_feed")
+    logger.debug("Thread %s: In video_feed", get_ident())
+    Camera().startLiveStream()
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -134,7 +136,7 @@ def focus_control():
                 if len(cc.afWindows) == 0:
                     cc.include_afWindows = False
 
-            Camera().applyControls(cfg.liveViewConfig)
+            Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/trigger_autofocus", methods=("GET", "POST"))
@@ -194,7 +196,7 @@ def set_zoom():
             cc.scalerCropStr = scalerCropStr
             logger.debug("cc.scalerCrop: %s", cc.scalerCrop)
             cc.include_scalerCrop = True
-            Camera().applyControls(cfg.liveViewConfig)
+            Camera().applyControlsForLivestream()
             time.sleep(0.5)
             metadata = Camera().getMetaData()
             sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -235,7 +237,7 @@ def zoom_in():
         else:
             cc.include_scalerCrop = False
         logger.debug("ScalerCrop new: %s", cc.scalerCrop)
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -285,7 +287,7 @@ def zoom_out():
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -307,7 +309,7 @@ def zoom_full():
         sc.zoomFactor = 100
         sccrop = (0, 0, cp.pixelArraySize[0], cp.pixelArraySize[1])
         cc.scalerCrop = sccrop
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -338,7 +340,7 @@ def pan_up():
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -368,7 +370,7 @@ def pan_left():
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -398,7 +400,7 @@ def pan_center():
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -428,7 +430,7 @@ def pan_right():
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -458,7 +460,7 @@ def pan_down():
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
         time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
@@ -492,9 +494,7 @@ def ae_control():
     if request.method == "POST":
         if request.form.get("include_aeconstraintmode") is None:
             cc.include_aeConstraintMode = False
-            logger.debug("AeConstraintMode excluded")
         else:
-            logger.debug("AeConstraintMode included")
             cc.include_aeConstraintMode = True
             aeConstraintMode = int(request.form["aeconstraintmode"])
             cc.aeConstraintMode = aeConstraintMode
@@ -515,9 +515,7 @@ def ae_control():
 
         if request.form.get("include_aemeteringmode") is None:
             cc.include_aeMeteringMode = False
-            logger.debug("AeMeteringMode excluded")
         else:
-            logger.debug("AeMeteringMode included")
             cc.include_aeMeteringMode = True
             aeMeteringMode = int(request.form["aemeteringmode"])
             cc.aeMeteringMode = aeMeteringMode
@@ -537,7 +535,7 @@ def ae_control():
                 aeFlickerPeriod = int(request.form["aeflickerperiod"])
                 cc.aeFlickerPeriod = aeFlickerPeriod
 
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/exposure_control", methods=("GET", "POST"))
@@ -600,7 +598,7 @@ def exposure_control():
                 hdrMode = int(request.form["hdrmode"])
                 cc.hdrMode = hdrMode
 
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/image_control", methods=("GET", "POST"))
@@ -664,7 +662,7 @@ def image_control():
             brightness = float(request.form["brightness"])
             cc.brightness = brightness
 
-        Camera().applyControls(cfg.liveViewConfig)
+        Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
         
 @bp.route("/meta_clear", methods=("GET", "POST"))
@@ -913,11 +911,14 @@ def record_video():
         if Camera.isVideoRecording():
             logger.debug("Video recording started")
             sc.isVideoRecording = True
+            if sc.recordAudio:
+                sc.isAudioRecording = True
             msg="Video saved as " + fp
             flash(msg)
         else:
             logger.debug("Video recording did not start")
             sc.isVideoRecording = False
+            sc.isAudioRecording = False
             msg="Video recording failed. Requested resolution too high "
             flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
@@ -936,6 +937,9 @@ def stop_recording():
         logger.debug("Requesting video recording to stop")
         Camera().stopVideoRecording()
         sc.isVideoRecording = False
+        sc.isAudioRecording = False
+        #sleep a little bit to avoid race condition with restoreLiveStream in video thread
+        time.sleep(2)
         msg="Video recording stopped"
         flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)

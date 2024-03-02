@@ -1,8 +1,10 @@
 from datetime import datetime
 from datetime import timedelta
-from raspiCamSrv.camCfg import CameraConfig, CameraControls
+from raspiCamSrv.camCfg import CameraCfg, CameraConfig, CameraControls
+import raspiCamSrv.camera_pi
 import os
 import csv
+import copy
 import shutil
 from pathlib import Path
 import json
@@ -230,7 +232,7 @@ class Series():
     
     @property
     def logFileRelPath(self) -> str:
-        return "timelapse/" + self.name + "/" + self.logFileName
+        return "photoseries/" + self.name + "/" + self.logFileName
     
     @property
     def logFile(self) -> str:
@@ -246,7 +248,7 @@ class Series():
     
     @property
     def cfgFileRelPath(self) -> str:
-        return  "timelapse/" + self.name + "/" + self.cfgFileName
+        return  "photoseries/" + self.name + "/" + self.cfgFileName
     
     @property
     def cfgFile(self) -> str:
@@ -262,7 +264,7 @@ class Series():
     
     @property
     def camFileRelPath(self) -> str:
-        return  "timelapse/" + self.name + "/" + self.camFileName
+        return  "photoseries/" + self.name + "/" + self.camFileName
     
     @property
     def camFile(self) -> str:
@@ -429,6 +431,17 @@ class Series():
                 self.ended = dt
                 self.nextStatus("finish")
                 self.persist()
+                #Restore camera controls
+                if CameraCfg().controlsBackup:
+                    CameraCfg().controls = copy.deepcopy(CameraCfg().controlsBackup)
+                    CameraCfg().controlsBackup = None
+                    logger.debug("Series.nextPhoto - Restored controls backup: %s", CameraCfg().controls.__dict__)
+                    wait = None
+                    if self.isExposureSeries:
+                        #For an exposure series wait for the longest exposure time
+                        if self.isExpGainFix:
+                            wait = 0.2 + self.expTimeStop / 1000000
+                    raspiCamSrv.camera_pi.Camera().applyControlsForLivestream(wait)
         logger.debug("Series.nextPhoto - returning: %s", name)
         return name
     
@@ -467,7 +480,18 @@ class Series():
                 self.ended = dt
                 self.nextStatus("finish")
                 self.persist()
-        logger.debug("Series.nextTime - returning: %s", next)
+                #Restore camera controls
+                if CameraCfg().controlsBackup:
+                    CameraCfg().controls = copy.deepcopy(CameraCfg().controlsBackup)
+                    CameraCfg().controlsBackup = None
+                    logger.debug("Series.nextTime - Restored controls backup: %s", CameraCfg().controls.__dict__)
+                    wait = None
+                    if self.isExposureSeries:
+                        #For an exposure series wait for the longest exposure time
+                        if self.isExpGainFix:
+                            wait = 0.2 + self.expTimeStop / 1000000
+                    raspiCamSrv.camera_pi.Camera().applyControlsForLivestream(wait)
+        logger.debug("Series.nextTime - returning: %s", next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
         return next
     
     def getPreviewList(self):
@@ -482,7 +506,7 @@ class Series():
                 name = self.name + "_" + str(n).zfill(Series.PHOTODIGITS) + ".jpg"
                 path = self.path + "/" + name
                 if os.path.exists(path):
-                    relPath = "timelapse/" + self.name + "/" + name
+                    relPath = "photoseries/" + self.name + "/" + name
                     set = {}
                     set["name"] = name
                     set["relPath"] = relPath
@@ -542,12 +566,12 @@ class Series():
                 histoPath = self.histogramPath + "/" + name
                 include = False
                 if os.path.exists(photoPath):
-                    relPhotoPath = "timelapse/" + self.name + "/" + name
+                    relPhotoPath = "photoseries/" + self.name + "/" + name
                     include = True
                 else:
                     relPhotoPath = None
                 if os.path.exists(histoPath):
-                    relHisroPath = "timelapse/" + self.name + "/" + Series.HISTOGRAMFOLDER + "/" + name
+                    relHisroPath = "photoseries/" + self.name + "/" + Series.HISTOGRAMFOLDER + "/" + name
                     include = True
                 else:
                     relHisroPath = None
@@ -747,14 +771,14 @@ class Series():
         ser.curShots = maxNumber
         return ser
 
-class TimelapseCfg():
+class PhotoSeriesCfg():
     _instance = None
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(TimelapseCfg, cls).__new__(cls)
+            cls._instance = super(PhotoSeriesCfg, cls).__new__(cls)
             cls._rootPath = None
             cls._tlSeries = []
-            cls._curSeries = None
+            cls._curSeries: Series = None
         return cls._instance
     
     @property
@@ -804,7 +828,7 @@ class TimelapseCfg():
         return ne
     
     def _initSeriesFromCfg(self, spath: str, name: str) -> Series:
-        """ Initialize a timelapse series from folder information
+        """ Initialize a photoseries series from folder information
             Returns True/False if series is OK/NOK
         """
         logger.debug("_initSeriesFromFolder - path: %s name: %s", spath, name)
@@ -825,7 +849,7 @@ class TimelapseCfg():
         return ser
     
     def initFromTlFolder(self):
-        """ Initialize timelapse from file system information
+        """ Initialize photoseries from file system information
         """
         try:
             tls = os.listdir(self.rootPath)

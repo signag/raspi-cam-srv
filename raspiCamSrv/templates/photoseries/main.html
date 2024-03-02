@@ -7,51 +7,51 @@
 {% block content %}
     <div class="w3-bar w3-green">
         <!-- Info menue -->
-        {% if sc.lastTimelapseTab == "series" %}
-        <button class="w3-bar-item w3-button timelapsemenu w3-light-green" id="tlseriesbtn"
-            onclick="openTimelapseTab('tlseries', 'tlseriesbtn')">Series</button>
+        {% if sc.lastPhotoSeriesTab == "series" %}
+        <button class="w3-bar-item w3-button photoseriesmenu w3-light-green" id="tlseriesbtn"
+            onclick="openPhotoseriesTab('tlseries', 'tlseriesbtn')">Series</button>
         {% else %}
-        <button class="w3-bar-item w3-button timelapsemenu" id="tlseriesbtn"
-            onclick="openTimelapseTab('tlseries', 'tlseriesbtn')">Series</button>
+        <button class="w3-bar-item w3-button photoseriesmenu" id="tlseriesbtn"
+            onclick="openPhotoseriesTab('tlseries', 'tlseriesbtn')">Series</button>
         {% endif %}
-        {% if sc.lastTimelapseTab == "details" %}
-        <button class="w3-bar-item w3-button timelapsemenu w3-light-green" id="tldetailsbtn"
-            onclick="openTimelapseTab('tldetails', 'tldetailsbtn')">Timelapse Series</button>
+        {% if sc.lastPhotoSeriesTab == "tldetails" %}
+        <button class="w3-bar-item w3-button photoseriesmenu w3-light-green" id="tldetailsbtn"
+            onclick="openPhotoseriesTab('tldetails', 'tldetailsbtn')">Timelapse Series</button>
         {% else %}
-        <button class="w3-bar-item w3-button timelapsemenu" id="tldetailsbtn"
-            onclick="openTimelapseTab('tldetails', 'tldetailsbtn')">Timelapse Series</button>
+        <button class="w3-bar-item w3-button photoseriesmenu" id="tldetailsbtn"
+            onclick="openPhotoseriesTab('tldetails', 'tldetailsbtn')">Timelapse Series</button>
         {% endif %}
-        {% if sc.lastTimelapseTab == "exposure" %}
-        <button class="w3-bar-item w3-button timelapsemenu w3-light-green" id="tlexposurebtn"
-            onclick="openTimelapseTab('tlexposure', 'tlexposurebtn')">Exposure Series</button>
+        {% if sc.lastPhotoSeriesTab == "exposure" %}
+        <button class="w3-bar-item w3-button photoseriesmenu w3-light-green" id="tlexposurebtn"
+            onclick="openPhotoseriesTab('tlexposure', 'tlexposurebtn')">Exposure Series</button>
         {% else %}
-        <button class="w3-bar-item w3-button timelapsemenu" id="tlexposurebtn"
-            onclick="openTimelapseTab('tlexposure', 'tlexposurebtn')">Exposure Series</button>
+        <button class="w3-bar-item w3-button photoseriesmenu" id="tlexposurebtn"
+            onclick="openPhotoseriesTab('tlexposure', 'tlexposurebtn')">Exposure Series</button>
         {% endif %}
-        {% if sc.lastTimelapseTab == "focusstack" %}
-        <button class="w3-bar-item w3-button timelapsemenu w3-light-green" id="tlfocusstackbtn"
-            onclick="openTimelapseTab('tlfocusstack', 'tlfocusstackbtn')">Focus Stack</button>
+        {% if sc.lastPhotoSeriesTab == "focusstack" %}
+        <button class="w3-bar-item w3-button photoseriesmenu w3-light-green" id="tlfocusstackbtn"
+            onclick="openPhotoseriesTab('tlfocusstack', 'tlfocusstackbtn')">Focus Stack</button>
         {% else %}
-        <button class="w3-bar-item w3-button timelapsemenu" id="tlfocusstackbtn"
-            onclick="openTimelapseTab('tlfocusstack', 'tlfocusstackbtn')">Focus Stack</button>
+        <button class="w3-bar-item w3-button photoseriesmenu" id="tlfocusstackbtn"
+            onclick="openPhotoseriesTab('tlfocusstack', 'tlfocusstackbtn')">Focus Stack</button>
         {% endif %}
     </div>
-    {% if sc.lastTimelapseTab == "series" %}
-    <div id="tlseries" class="timelapsegroup">
+    {% if sc.lastPhotoSeriesTab == "series" %}
+    <div id="tlseries" class="photoseriesgroup">
     {% else %}
-    <div id="tlseries" class="timelapsegroup" style="display:none">
+    <div id="tlseries" class="photoseriesgroup" style="display:none">
     {% endif %}
         <div class="w3-twothird">
             <!-- Series configuration -->
             <table>
                 <tr>
-                    <form method="post" id="newtlseries" action="{{ url_for('timelapse.new_series') }}">
+                    <form method="post" id="newtlseries" action="{{ url_for('photoseries.new_series') }}">
                         <td class="w3-tooltip" style="width:25%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                To create a new Timelapse series, enter a unique name for the series.<br>
+                                To create a new Photoseries, enter a unique name for the series.<br>
                                 The name will be used as prefix for images.
                             </span>
-                            <label for="tlnewseries">New Timelapse Series:</label>
+                            <label for="tlnewseries">New Photo Series:</label>
                         </td>
                         <td style="width:25%">
                             <input type="text" id="tlnewseries" name="tlnewseries" value="" aria-label="Name for new series">
@@ -75,19 +75,19 @@
                 </tr>
                 <tr>
                     {% if tl.hasCurSeries == True %}
-                    <form method="post" id="series" action="{{ url_for('timelapse.select_series') }}">
+                    <form method="post" id="series" action="{{ url_for('photoseries.select_series') }}">
                         <td style="width:25%" class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 {% if sr.status == "NEW" %}
-                                The timelapse series is new and needs to be configured (see below).
+                                The photo series is new and needs to be configured (see below).
                                 {% elif sr.status == "READY" %}
-                                The timelapse series has been configured and can be started.
+                                The photo series has been configured and can be started.
                                 {% elif sr.status == "ACTIVE" %}
-                                The timelapse series is currently active.
+                                The photo series is currently active.
                                 {% elif sr.status == "PAUSED" %}
-                                The timelapse series is paused.
+                                The photo series is paused.
                                 {% elif sr.status == "FINISHED" %}
-                                The timelapse series is finised.
+                                The photo series is finised.
                                 {% endif %}
                             </span>
                             <label for="series">Status: {{ sr.status }}</label>
@@ -107,19 +107,19 @@
                     <td style="width:25%">
                         {% for action in sr.nextActions %}
                         {% if action == "start" %}
-                        <form method="post" id="startseries" action="{{ url_for('timelapse.start_series') }}">
+                        <form method="post" id="startseries" action="{{ url_for('photoseries.start_series') }}">
                             <input class="w3-button w3-black" style="width:95px" type="submit" value="Start">
                         </form>
                         {% elif action == "pause" %}
-                        <form method="post" id="pauseseries" action="{{ url_for('timelapse.pause_series') }}">
+                        <form method="post" id="pauseseries" action="{{ url_for('photoseries.pause_series') }}">
                             <input class="w3-button w3-black" style="width:95px" type="submit" value="Pause">
                         </form>
                         {% elif action == "continue" %}
-                        <form method="post" id="continueseries" action="{{ url_for('timelapse.continue_series') }}">
+                        <form method="post" id="continueseries" action="{{ url_for('photoseries.continue_series') }}">
                             <input class="w3-button w3-black" style="width:95px" type="submit" value="Continue">
                         </form>
                         {% elif action == "remove" and (sr.nextActions|length == 1 or sr.status == "NEW") %}
-                        <form method="post" id="removeseries" action="{{ url_for('timelapse.remove_series') }}">
+                        <form method="post" id="removeseries" action="{{ url_for('photoseries.remove_series') }}">
                             <input class="w3-button w3-black" style="width:95px" value="Remove" onclick="confirmRemove('removeseries')">
                         </form>
                         {% endif %}
@@ -128,11 +128,11 @@
                     <td style="width:25%">
                         {% for action in sr.nextActions %}
                         {% if (sr.status != "NEW" and action == "remove" and sr.nextActions|length > 1) %}
-                        <form method="post" id="removeseries2" action="{{ url_for('timelapse.remove_series') }}">
+                        <form method="post" id="removeseries2" action="{{ url_for('photoseries.remove_series') }}">
                             <input class="w3-button w3-black" style="width:95px" value="Remove" onclick="confirmRemove('removeseries2')">
                         </form>
                         {% elif action == "finish" %}
-                        <form method="post" id="finishseries" action="{{ url_for('timelapse.finish_series') }}">
+                        <form method="post" id="finishseries" action="{{ url_for('photoseries.finish_series') }}">
                             <input class="w3-button w3-black" style="width:95px" type="submit" value="Finish">
                         </form>
                         {% endif %}
@@ -141,7 +141,7 @@
                     {% endif %}
                 </tr>
                 {% if tl.hasCurSeries == True %}
-                <form method="post" id="seriesprops" action="{{ url_for('timelapse.series_properties') }}">
+                <form method="post" id="seriesprops" action="{{ url_for('photoseries.series_properties') }}">
                     <tr>
                         <td style="width:25%" class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -380,7 +380,7 @@
                 </form>
                 <tr>
                     <td colspan="4" style="width:25%">
-                        <form method="post" id="attachcamcfg" action="{{ url_for('timelapse.attach_camera_cfg') }}">
+                        <form method="post" id="attachcamcfg" action="{{ url_for('photoseries.attach_camera_cfg') }}">
                             {% if sr.cameraConfig is none %}
                             <input class="w3-button w3-black" type="submit" value="Attach Camera Config">
                             {% else %}
@@ -392,7 +392,7 @@
                 <tr>
                     <td colspan="4" style="width:25%">
                         {% if sr.cameraConfig %}
-                        <form method="post" id="activatecamcfg" action="{{ url_for('timelapse.activate_camera_cfg') }}">
+                        <form method="post" id="activatecamcfg" action="{{ url_for('photoseries.activate_camera_cfg') }}">
                             <input class="w3-button w3-black" type="submit" value="Activate attached Camera Config" onclick="confirmActivateConfig('activatecamcfg')">
                         </form>
                         {% endif %}
@@ -406,11 +406,11 @@
             <div style="margin-top: 5px; margin-left:10px">
                 {% if sr.status == "ACTIVE" or sr.status == "PAUSED" or sr.status == "FINISHED" %}
                 {% if sr.showPreview == False %}
-                <form method="post" id="showpreview" action="{{ url_for('timelapse.show_preview') }}">
+                <form method="post" id="showpreview" action="{{ url_for('photoseries.show_preview') }}">
                     <input class="w3-button w3-black" type="submit" value="Show Preview">
                 </form>
                 {% else %}
-                <form method="post" id="hidepreview" action="{{ url_for('timelapse.hide_preview') }}">
+                <form method="post" id="hidepreview" action="{{ url_for('photoseries.hide_preview') }}">
                     <input class="w3-button w3-black" type="submit" value="Hide Preview">
                 </form>
                 {% endif %}
@@ -474,16 +474,16 @@
             </div>
         </div>
     </div>
-    {% if sc.lastTimelapseTab == "details" %}
-    <div id="tldetails" class="timelapsegroup">
+    {% if sc.lastPhotoSeriesTab == "tldetails" %}
+    <div id="tldetails" class="photoseriesgroup">
     {% else %}
-    <div id="tldetails" class="timelapsegroup" style="display:none">
+    <div id="tldetails" class="photoseriesgroup" style="display:none">
     {% endif %}
     </div>
-    {% if sc.lastTimelapseTab == "exposure" %}
-    <div id="tlexposure" class="timelapsegroup">
+    {% if sc.lastPhotoSeriesTab == "exposure" %}
+    <div id="tlexposure" class="photoseriesgroup">
     {% else %}
-    <div id="tlexposure" class="timelapsegroup" style="display:none">
+    <div id="tlexposure" class="photoseriesgroup" style="display:none">
     {% endif %}
         <!-- Exposure -->
         <div class="w3-half">
@@ -491,11 +491,14 @@
             <p>Here, you can specify a series as an exposure series.</p>
             <p>Since Raspberry Pi cameras have fixed or manual aperture, 
                 only exposure time (shutter speed) and analogue gain (instead of ISO) can be varied.</p>
-            <p class="w3-text-red"><b>When the series will be started, Automatic Exposure (AE) 
-                and Automatic White Balance (AWB) will be disabled.</b></p>
+            <p class="w3-text-red"><b>Be aware that the live stream will be affected by changing control parameters<br>
+                While the series is active, Automatic Exposure (AE) 
+                and Automatic White Balance (AWB) will be disabled.<br>
+                It is recommended to activate these parameters before the series is started.
+                </b></p>
             {% if tl.hasCurSeries %}
             <table>
-                <form method="post" id="expseriesform" action="{{ url_for('timelapse.expseries_properties') }}">
+                <form method="post" id="expseriesform" action="{{ url_for('photoseries.expseries_properties') }}">
                     <tr>
                         <td style="width:40%">
                             <p style="margin-bottom:0">Series:</p>
@@ -743,10 +746,10 @@
             {% endif %}
         </div>
     </div>
-    {% if sc.lastTimelapseTab == "focusstack" %}
-    <div id="tlfocusstack" class="timelapsegroup">
+    {% if sc.lastPhotoSeriesTab == "focusstack" %}
+    <div id="tlfocusstack" class="photoseriesgroup">
     {% else %}
-    <div id="tlfocusstack" class="timelapsegroup" style="display:none">
+    <div id="tlfocusstack" class="photoseriesgroup" style="display:none">
     {% endif %}
         {% if cp.hasFocus %}
         <!-- Focus stack -->
@@ -754,11 +757,12 @@
             <!-- Focus stack definitions -->
             <p>Here, you can specify that you want to use a series for focus stacking.</p>
             <p>Only the Lens Position (1 / Focal Distance) will be varied</p>
-            <p class="w3-text-red"><b>When the series will be started, 
-                    Autofocus Mode will be set to "Manual".</b></p>
+            <p class="w3-text-red"><b>While the series is active, 
+                    Autofocus Mode will be set to "Manual".<br>
+                    Be aware that the live stream may be affected by changing control parameters</b></p>
             {% if tl.hasCurSeries %}
             <table>
-                <form method="post" id="expseriesform" action="{{ url_for('timelapse.focusstack_properties') }}">
+                <form method="post" id="expseriesform" action="{{ url_for('photoseries.focusstack_properties') }}">
                     <tr>
                         <td style="width:40%">
                             <p style="margin-bottom:0">Series:</p>
@@ -992,19 +996,19 @@
             document.getElementById("series").submit();
         });
 
-        function openTimelapseTab(tlTabName, tlabButton) {
+        function openPhotoseriesTab(tlTabName, tlabButton) {
             var i;
-            var x = document.getElementsByClassName("timelapsegroup");
+            var x = document.getElementsByClassName("photoseriesgroup");
             for (i = 0; i < x.length; i++) {
                 x[i].style.display = "none";
             }
             document.getElementById(tlTabName).style.display = "block";
 
-            var b = document.getElementsByClassName("timelapsemenu");
+            var b = document.getElementsByClassName("photoseriesmenu");
             for (i = 0; i < b.length; i++) {
-                b[i].classList = "w3-bar-item w3-button timelapsemenu";
+                b[i].classList = "w3-bar-item w3-button photoseriesmenu";
             }
-            document.getElementById(tlabButton).classList = "w3-bar-item w3-button timelapsemenu w3-light-green";
+            document.getElementById(tlabButton).classList = "w3-bar-item w3-button photoseriesmenu w3-light-green";
         }
 
         function confirmRemove(form) {
@@ -1014,7 +1018,7 @@
         }
 
         function confirmAttachConfig(form) {
-            if (confirm("The Timelapse Series has already camera configuration and controls attached.\n\n"
+            if (confirm("The Photo Series has already camera configuration and controls attached.\n\n"
                       + "Do you want to overwrite the attached config & ctrl with the current 'Photo'/'Raw Photo' configuration and controls?"  
                         )
             ) {
@@ -1024,7 +1028,7 @@
 
         function confirmActivateConfig(form) {
             if (confirm("Do you want to replace the active 'Photo'/Raw Photo' configuration and controls\n"
-                      + "with the settings attached to the Timelapse Series?")) {
+                      + "with the settings attached to the Photo Series?")) {
                 document.getElementById(form).submit();
             }
         }

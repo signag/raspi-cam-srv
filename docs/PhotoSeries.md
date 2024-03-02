@@ -6,7 +6,7 @@
 The *Photo Series* screen allows the management of different kinds of Photo Series and includes means for series configuration, lifecycle management, photo shooting and supervision.   
 A series is a seqience of photos taken within specific time intervals. Special kinds of series are [Timelapse Series](./PhotoSeriesTimelapse.md), [Exposure Series](./PhotoSeriesExp.md) and [Focus Stacks](./PhotoSeriesFocus.md).
 
-![Timelapse Screen](img/Photoseries2.jpg)
+![Photoseries Screen](img/Photoseries2.jpg)
 
 ## Creation of a new Series
 
@@ -24,7 +24,7 @@ When a series is initially created, some parameters are predefined which later n
 
 ![Series Config](img/Photoseries1.jpg)
 
-- The lifecycle of a Timelapse Series is represented as its **Status**.   
+- The lifecycle of a Photo Series is represented as its **Status**.   
 Transitions between different states can be initiated by one or two buttons at the right of the series selection combo box.   
 For details see the [Series State Chart](#photo-series-state-chart).
 - If multiple series have been created, the **active series** can be selected with a combo box showing the series names.
@@ -63,7 +63,7 @@ This will execute the following steps:
 9. Wait until the next interval and repeat steps from 6. until either the configured *Number of Shots* or the configured *End* time has been reached.
 10. Finally, the series status will be "FINISHED".
 
-While the series is "ACTIVE", the screen will show the progress:
+While the series is "ACTIVE", this is shown by the Series status indicator and the screen will show the progress:
 
 ![Series Progress](img/Photoseries2.jpg)
 
@@ -71,11 +71,38 @@ In the *Preview* area, the time for the next photo to be taken is shown and the 
 
 When the photo time is reached, the page will be reloaded and the latest photo will be shown on top. The last 20 photos are available in the scroll area.
 
+## Live Stream
+
+### Active Live Stream
+
+If the [Configuration](./Configuration.md) for the *Photo* and *Raw Photo* use cases are compliant with the configuration for *Live View*, the Live Stream will not be interrupted while the series is ACTIVE.    
+For more details, see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)
+
+Simultaneous activity of Live Stream and Photo Series is indicated by the process status indicators:
+
+![Process Status Indicators](./img/ProcessIndicator4.jpg)
+
+If the series is an [Exposure Series](./PhotoSeriesExp.md) or a [Focus Stack](./PhotoSeriesFocus.md) Series, [Camera Controls](./CameraControls.md) will be modified while the series is active.    
+*Auto Exposure* and *Auto White Balance* will be deactivated and other parameters, such as *Exposure Time*, *Analogue Gain* or *Focal Distance*/*Lens Position* will vary from photo to photo.   
+These variations will be visible in the Live Stream.
+
+After the series is FINISHED, the original control parameters will be restored.
+
+### Paused Live Stream
+
+If the Live Stream is paused because photo taking requires exclusive camera access because of specific [Configuration](./Configuration.md) (see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)), this is indicated by the process status indicators:
+
+![Process Status Indicators](./img/ProcessIndicator6.jpg)    
+and a placeholder image will be schown instead of the Live Stream:
+
+![Photoseries Active](img/Photoseries3.jpg)
+
+
 ## Interrupting an ACTIVE Series
 
-While a Photo Series is ACTIVE, the Live stream is deactivated and photo- and video taking is disabled:
+While a Photo Series is ACTIVE, photo- and video taking is disabled:
 
-![Timelapse Active](img/Photoseries3.jpg)
+![Photoseries Active](img/Photoseries3b.jpg)
 
 The thread in which the Photo Series is executed, checks every 2 seconds whether a request to pause or stop has been issued.
 
@@ -83,9 +110,9 @@ If the series shall be paused and (possibly) continued later, the *Pause* button
 
 If the series shall be interrupted and terminated, the *Finish* button can be used.
 
-## Attaching Camara Configuration to a Timelapse Series
+## Attaching Camara Configuration to a Photo Series
 
-Before a Timelapse Series is started, normally the camera [configuration](./Configuration.md) and [controls](./CameraControls.md) will manually be adjusted for optimal photo quality.
+Before a Photo Series is started, normally the camera [configuration](./Configuration.md) and [controls](./CameraControls.md) will manually be adjusted for optimal photo quality.
 
 These settings (configuration **and** controls) can be attached to a Photo Series with the *Attach Camera Config* button.
 
@@ -106,8 +133,8 @@ This feature can also be used to persist specific settings under an indicative n
 
 ## Photo Series in the File System
 
-All resources related to a Photo Series ase stored in the file system under   
-```/home/<user>/prg/raspi-cam-srv/RaspiCamSrv/static/timelapse/<name>```   
+All resources related to a Photo Series are stored in the file system under    
+```/home/<user>/prg/raspi-cam-srv/RaspiCamSrv/static/photoseries/<name>```   
 where \<user> is the user ID specified during [system setup](../README.md#system-setup) and \<name> is the name of the series.
 
 After [Creation of a new Series](#creation-of-a-new-series), the folder has been created and a [Series Configuration File](#series-configuration-file), a [Series Log File](#series-log-file) and a [Series Camera File](#series-camera-file) have been initiated:
@@ -127,7 +154,7 @@ The file ```<name>_cfg.json``` contains the entire configuration of a series, in
 
 ![Series Configuration File](img/PhotoSeries7.jpg)
 
-When the server starts up, all folders under ```.../timelapse``` are searched for a configuration file and series configurations are created from their contents. These will then be available in the **raspiCamSrv** *Photo Series* dialog.
+When the server starts up, all folders under ```.../photoseries``` are searched for a configuration file and series configurations are created from their contents. These will then be available in the **raspiCamSrv** *Photo Series* dialog.
 
 ### Series Log File
 

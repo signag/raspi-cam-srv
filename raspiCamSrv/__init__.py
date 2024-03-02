@@ -4,6 +4,8 @@ from flask import Flask
 import logging
 from flask.logging import default_handler
 from picamera2 import Picamera2
+import json
+import datetime
 
 def create_app(test_config=None):
     # create and configure the app
@@ -20,34 +22,66 @@ def create_app(test_config=None):
         pass
     
     # Configure loggers
-    #Path(app.instance_path + "/raspiCamSrv.log").touch(exist_ok=True)
-    #filehandler = logging.FileHandler(app.instance_path + "/raspiCamSrv.log")
-    #filehandler.setFormatter(app.logger.handlers[0].formatter)
+    logsPath = os.path.dirname(app.instance_path) + "/logs"
+    os.makedirs(logsPath, exist_ok=True)
+    logFile = logsPath + "/raspiCamSrv.log"
+    Path(logFile).touch(exist_ok=True)
+    filehandler = logging.FileHandler(logFile)
+    filehandler.setFormatter(app.logger.handlers[0].formatter)
     for logger in(
         app.logger,
         logging.getLogger("werkzeug"),
+        logging.getLogger("raspiCamSrv.auth"),
+        logging.getLogger("raspiCamSrv.auth_su"),
         logging.getLogger("raspiCamSrv.camCfg"),
-        logging.getLogger("raspiCamSrv.camera_base"),
         logging.getLogger("raspiCamSrv.camera_pi"),
         logging.getLogger("raspiCamSrv.config"),
         logging.getLogger("raspiCamSrv.home"),
         logging.getLogger("raspiCamSrv.images"),
         logging.getLogger("raspiCamSrv.info"),
         logging.getLogger("raspiCamSrv.settings"),
-        logging.getLogger("raspiCamSrv.timelapse"),
-        logging.getLogger("raspiCamSrv.timelapseCfg"),
+        logging.getLogger("raspiCamSrv.photoseries"),
+        logging.getLogger("raspiCamSrv.photoseriesCfg"),
     ):
-        #logger.addHandler(filehandler)
         logger.setLevel(logging.ERROR)
-    
-    #Explicitely set specific log levels
+
+    #>>>>> Uncomment the following line in order to log to the log file
+    #app.logger.addHandler(filehandler)
+
+    #>>>>> Explicitely set specific log levels. Leave "erkzeug" at INFO
     logging.getLogger("werkzeug").setLevel(logging.INFO)
+    #logging.getLogger("raspiCamSrv.auth").setLevel(logging.ERROR)
+    #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.home").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.photoseries").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.photoseriesCfg").setLevel(logging.DEBUG)
     
-    #Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
+    #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
     Picamera2.set_logging(Picamera2.ERROR)
-    
-    #Set log level for libcamera (0:DEBUG, 1:INFO, 2:WARNING, 3:ERROR, 4:FATAL)
-    os.environ["LIBCAMERA_LOG_LEVELS"] = "*:2"           
+    #>>>>> Uncomment the following line to let Picamera2 log to the log file
+    #logging.getLogger("picamera2").addHandler(filehandler)
+        
+    #>>>>> Set log level for libcamera (0:DEBUG, 1:INFO, 2:WARNING, 3:ERROR, 4:FATAL)
+    os.environ["LIBCAMERA_LOG_LEVELS"] = "*:2"
+
+    #Configure the logger for generation of program code
+    #This logger generates an executable Picamera2 Python application program
+    #including the entire interaction with Picamera2 during a server run
+    prgOutPath = os.path.dirname(app.instance_path) + "/output"
+    os.makedirs(prgOutPath, exist_ok=True)
+    prgLogger = logging.getLogger("pc2_prg")
+    prgLogPath = os.path.dirname(app.instance_path) + "/logs"
+    prgLogTime = datetime.datetime.now()
+    prgLogFilename = "prgLog_" + prgLogTime.strftime("%Y%m%d_%H%M%S") + ".log"
+    prgLogFile = prgLogPath+ "/" + prgLogFilename
+    #>>>>> Uncomment the following 5 lines when code generation is activated (see below)
+    #Path(prgLogFile).touch(exist_ok=True)
+    #prgFilehandler = logging.FileHandler(prgLogFile)
+    #prgFormatter = logging.Formatter('%(message)s')
+    #prgFilehandler.setFormatter(prgFormatter)
+    #prgLogger.addHandler(prgFilehandler)
+    #>>>>> To activate Python code generation, set level to DEBUG
+    prgLogger.setLevel(logging.ERROR)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -66,16 +100,17 @@ def create_app(test_config=None):
     cfg = camCfg.CameraCfg()
     sc = cfg.serverConfig
     sc.photoRoot = app.static_folder
+    sc.prgOutputPath = prgOutPath
     sc.checkEnvironment()
     cfgPath = app.static_folder + "/config"
     if settings.getLoadConfigOnStart(cfgPath):
         cfg.loadConfig(cfgPath)
     
-    # Configure Timelapse
-    from . import timelapseCfg
-    tlRootPath = app.static_folder + "/timelapse"
+    # Configure Photoseries
+    from . import photoseriesCfg
+    tlRootPath = app.static_folder + "/photoseries"
     os.makedirs(tlRootPath, exist_ok=True)
-    tlCfg = timelapseCfg.TimelapseCfg()
+    tlCfg = photoseriesCfg.PhotoSeriesCfg()
     tlCfg.rootPath = tlRootPath
     tlCfg.initFromTlFolder()
     
@@ -99,7 +134,7 @@ def create_app(test_config=None):
     from . import settings
     app.register_blueprint(settings.bp)
 
-    from . import timelapse
-    app.register_blueprint(timelapse.bp)
+    from . import photoseries
+    app.register_blueprint(photoseries.bp)
 
     return app

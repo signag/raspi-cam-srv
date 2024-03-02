@@ -49,9 +49,11 @@ def getFileList() -> list:
     for file in fl:
         name, ext = os.path.splitext(file)
         path = sc.cameraPhotoSubPath + "/" + file
+        fpath = os.path.join(fp, file)
         if ext.lower() != ".dng" \
         and ext.lower() != ".mp4" \
-        and ext.lower() != ".h264":
+        and ext.lower() != ".h264" \
+        and (not os.path.isdir(fpath)):
             cnt += 1
             if cnt > sc.chunkSizePhoto:
                 p += 1

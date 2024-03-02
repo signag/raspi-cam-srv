@@ -1,4 +1,4 @@
-# raspiCamSrv Photo Taking
+# raspiCamSrv Photo Taking and Video Recording
 
 [![Up](img/goup.gif)](./LiveScreen.md)
 
@@ -20,24 +20,37 @@ where for the video format you may choose between *.mp4* and *.h264* in the [Set
 
 ## Photo / Raw Photo
 
-When a photo or raw photo is taken, the live stream will be shortly interrupted in order to allow the system to apply the [Camera Configuration](./Configuration.md) for these use cases.
+If the *Photo*/*Raw Photo* [Configuration](./Configuration.md) is not compliant with the *Live View* configuration, the live stream will be shortly interrupted in order to allow the system to apply the [Camera Configuration](./Configuration.md) for these use cases.   
+For more details, see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)
 
 The photo (in the case of raw photos a placeholder photo) will be shown in the bottom area of the screen together with the Metadata.
 
 ## Video
 
-When video recording is started, the system will first interrupt and block the live stream in order to allow application of [Camera Configuration](./Configuration.md) settings.
+### With active Live Stream
 
-Then, a normal photo of the scene will be taken, which will be used as placeholder. This will be shown in the bottom area.
+When video recording is started, the system will first check whether the required [Camera Configuration](./Configuration.md) is compliant with the configuration of the active Live Stream.
 
-Afterwards, the live stream area will be replaced by a placeholder indicating that recording has started:
+If this is the case, first a normal photo of the scene will be taken, which will be used as placeholder. This will be shown in the bottom area.
+
 ![Video1](img/Video1.jpg)
 
 The **Video** button has changed to **Stop** which must be used to stop video recording.
 
+If audio is recorded along with video (see [Settings](./Settings.md#recording-audio-along-with-video)), this will be indicated by the process indicator:
+
+![Processindicator](img/ProcessIndicator3.jpg)
+
+### With paused Live Stream
+
+If video recording requires exclusive camera access because of specific configuration (see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)), the live stream will be paused and a placeholder is shown instead:
+
+
+![Video1](img/Video2.jpg)
+
 ## Photo Display
 
-When a photo, raw photo or video has been taken, the bottom area will show the photo together with its Metadata:
+When a photo, raw photo or video has been taken, the bottom area will show the photo together with its Metadata or its histogram:
 
 ![Foto1](img/Foto1.jpg)
 
