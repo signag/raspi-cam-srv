@@ -1,6 +1,6 @@
-#Release Notes
+# Release Notes
 
-##V2.0.0
+## V2.0.0
 
 - Major modification of camera control to allow non-exclusive access to the camera from parallel tasks.   
 Phototaking, video recording and photoseries do no longer interrupt the live stream if the required camera configurations are compatible.
