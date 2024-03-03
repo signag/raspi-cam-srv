@@ -1011,6 +1011,20 @@ class Camera():
 
         #logger.debug("Thread %s: Returning frame", get_ident())
         return Camera.frame
+
+    def get_photoFrame(self):
+        """Return the current camera frame."""
+        logger.debug("Thread %s: Camera.get_photoFrame", get_ident())
+        Camera.last_access = time.time()
+
+        # wait for a signal from the camera thread
+        logger.debug("Thread %s: Camera.get_photoFrame - waiting for frame", get_ident())
+        Camera.event.wait()
+        logger.debug("Thread %s: Camera.get_photoFrame - continue", get_ident())
+        Camera.event.clear()
+
+        logger.debug("Thread %s: Camera.get_photoFrame - Returning frame", get_ident())
+        return Camera.frame
         
     @staticmethod
     def getActiveCamera() -> int:

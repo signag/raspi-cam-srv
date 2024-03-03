@@ -1,5 +1,9 @@
 # Release Notes
 
+## V2.1.0
+- Added endpoint for photo snapshots ([raspi-cam-srv Issue #5](https://github.com/signag/raspi-cam-srv/issues/5))  
+(see [Web Cam](./Webcam.md))
+
 ## V2.0.0
 
 - Major modification of camera control to allow non-exclusive access to the camera from parallel tasks.   

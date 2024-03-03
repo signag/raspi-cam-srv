@@ -9,7 +9,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.0
+## Feature Overview V2.1
 For more details, see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md)
 
 ![Live Overview](docs/img/Live.jpg)
@@ -37,6 +37,9 @@ For more details, see the [User Guide](docs/UserGuide.md) and [Release Notes](./
 This includes a continuous live stream while taking photos, videos or photo series.   
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
+
+**New in V2.1**
+- Web access to photo snapshots is achieved through the URL ```http://<server>:<port>/photo_feed``` without authentication.
 
 ## Known Issues
 

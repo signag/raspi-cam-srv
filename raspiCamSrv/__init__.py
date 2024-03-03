@@ -42,19 +42,18 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.settings"),
         logging.getLogger("raspiCamSrv.photoseries"),
         logging.getLogger("raspiCamSrv.photoseriesCfg"),
+        logging.getLogger("raspiCamSrv.trigger"),
+        logging.getLogger("raspiCamSrv.webcam"),
     ):
         logger.setLevel(logging.ERROR)
 
     #>>>>> Uncomment the following line in order to log to the log file
     #app.logger.addHandler(filehandler)
 
-    #>>>>> Explicitely set specific log levels. Leave "erkzeug" at INFO
+    #>>>>> Explicitely set specific log levels. Leave "werkzeug" at INFO
     logging.getLogger("werkzeug").setLevel(logging.INFO)
-    #logging.getLogger("raspiCamSrv.auth").setLevel(logging.ERROR)
-    #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.home").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.photoseries").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.photoseriesCfg").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO)
+    #logging.getLogger("raspiCamSrv.webcam").setLevel(logging.INFO)
     
     #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
     Picamera2.set_logging(Picamera2.ERROR)
@@ -136,5 +135,11 @@ def create_app(test_config=None):
 
     from . import photoseries
     app.register_blueprint(photoseries.bp)
+
+    from . import trigger
+    app.register_blueprint(trigger.bp)
+
+    from . import webcam
+    app.register_blueprint(webcam.bp)
 
     return app

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block header %}
+{% block title %}Web Cam Access{% endblock %}
+{% endblock %}
+
+{% block content %}
+<h2>Web Cam</h2>
+    <table>
+        <tr>
+            <td style="width: 50%;">
+                <h3 style="margin: 0px;">{{ sc.activeCameraInfo}}</h3>
+            </td>
+            <td style="width: 50%;">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <h4 style="margin: 0px;">Video Stream:</h4>
+            </td>
+            <td>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
+            </td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>
+            <!-- Live stream -->
+            {% if sc.isLiveStream %}
+            <img src="{{ url_for('home.video_feed') }}" class="w3-image" id="liveviewimage" alt="Camera Live View">
+            {% else %}
+            {% if sc.isVideoRecording %}
+            {% if sc.recordAudio == False %}
+            <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" id="liveviewimage"
+                alt="Placeholder for video recording">
+            {% else %}
+            <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" id="liveviewimage"
+                alt="Placeholder for video recording">
+            {% endif %}
+            {% elif sc.isPhotoSeriesRecording %}
+            <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" id="liveviewimage"
+                alt="Placeholder for video recording">
+            {% endif %}
+            {% endif %}
+            </td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+                MJPEG Streaming URL: <a href="http://{{ g.hostname }}/video_feed" target="_blank">http://{{ g.hostname }}/video_feed</a>
+            </td>
+            <td>
+            
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <h4 style="margin: 0px;">Photo:</h4>
+            </td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Using Configuration <b>LIVE</b> 
+                with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
+            </td>
+            <td>
+        
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="{{ url_for('webcam.photo_feed') }}" class="w3-image" id="liveviewimage" alt="Camera Live View">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Photo URL: <a href="http://{{ g.hostname }}/photo_feed" target="_blank">http://{{ g.hostname }}/photo_feed</a>
+            </td>
+            <td>
+            
+            </td>
+        </tr>
+    </table>
+
+{% endblock %}
