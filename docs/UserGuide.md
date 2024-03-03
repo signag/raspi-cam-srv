@@ -63,8 +63,9 @@ At the bottom of the screen, there is a message line where application messages 
 **raspiCamSrv** supports streaming MJPEG video.
 
 The straming URL is   
-```http://<server>:<port>/video_feed```   
-This URL can be accessed without authentication.
+```http://<server>:<port>/video_feed``` for MJPEG video   
+```http://<server>:<port>/photo_feed``` for photo snapshots      
+Both URLs can be accessed without authentication.
 
 In the web client, an active streaming server is indicated with the process status indicators as    
 ![ProcessStatusIndicator](./img/ProcessIndicator1.jpg)   
