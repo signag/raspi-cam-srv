@@ -8,7 +8,6 @@ from raspiCamSrv.photoseriesCfg import Series
 from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
 from libcamera import Transform, Size, ColorSpace, controls
 from picamera2.encoders import JpegEncoder, MJPEGEncoder
-from picamera2.configuration import SensorConfiguration
 from picamera2.outputs import FileOutput, FfmpegOutput
 from picamera2.encoders import H264Encoder
 from threading import Condition, Lock
@@ -16,6 +15,12 @@ import copy
 import os
 from pathlib import Path
 import logging
+# Try to import SensorConfiguration, which is missing in Bullseye Picamera2 distributions
+try:
+    from picamera2.configuration import SensorConfiguration
+    useSensorConfiguration = True
+except ImportError:
+    useSensorConfiguration = False
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +28,8 @@ prgLogger = logging.getLogger("pc2_prg")
 prgLogger.debug("from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls")
 prgLogger.debug("from libcamera import Transform, Size, ColorSpace, controls")
 prgLogger.debug("from picamera2.encoders import JpegEncoder, MJPEGEncoder")
-prgLogger.debug("from picamera2.configuration import SensorConfiguration")
+if useSensorConfiguration:
+    prgLogger.debug("from picamera2.configuration import SensorConfiguration")
 prgLogger.debug("from picamera2.outputs import FileOutput, FfmpegOutput")
 prgLogger.debug("from picamera2.encoders import H264Encoder")
 prgLogger.debug("import time")
@@ -51,6 +57,8 @@ class CameraController():
     """
     def __init__(self, cam: Picamera2):
         logger.debug("Thread %s: CameraController.__init__", get_ident())
+        if not useSensorConfiguration:
+            logger.error("Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration")
         self._cam = cam
         self._activeCfg:CameraConfiguration = None
         self._requestedCfg:CameraConfiguration = CameraConfiguration()
@@ -310,12 +318,13 @@ class CameraController():
 
         #Sensor is not explicitely set in the configuration
         #It will be selected and updated by picamera2 automaticallx
-        if not cfgRef.sensor:
-            if not test:
-                sensor = SensorConfiguration()
-                sensor.output_size = None
-                sensor.bit_depth = None
-                cfgRef.sensor = sensor
+        if useSensorConfiguration:
+            if not cfgRef.sensor:
+                if not test:
+                    sensor = SensorConfiguration()
+                    sensor.output_size = None
+                    sensor.bit_depth = None
+                    cfgRef.sensor = sensor
 
         #'main' stream must be identical
         if cfg.stream == "main":
@@ -484,12 +493,13 @@ class CameraController():
         else:
             prgLogger.debug("ccfg.controls = None")
             
-        if cfg.sensor:
-            prgLogger.debug("ccfg.sensor = SensorConfiguration()")
-            prgLogger.debug("ccfg.sensor.output_size = %s", cfg.sensor.output_size)
-            prgLogger.debug("ccfg.sensor.bit_depth = %s", cfg.sensor.bit_depth)
-        else:
-            prgLogger.debug("ccfg.sensor = None")
+        if useSensorConfiguration:
+            if cfg.sensor:
+                prgLogger.debug("ccfg.sensor = SensorConfiguration()")
+                prgLogger.debug("ccfg.sensor.output_size = %s", cfg.sensor.output_size)
+                prgLogger.debug("ccfg.sensor.bit_depth = %s", cfg.sensor.bit_depth)
+            else:
+                prgLogger.debug("ccfg.sensor = None")
 
         if cfg.main:
             prgLogger.debug("ccfg.main = StreamConfiguration()")
@@ -541,12 +551,13 @@ class CameraController():
         else:
             ccfg.controls = None
             
-        if cfg.sensor:
-            ccfg.sensor = SensorConfiguration()
-            ccfg.sensor.output_size = copy.copy(cfg.sensor.output_size)
-            ccfg.sensor.bit_depth = cfg.sensor.bit_depth
-        else:
-            ccfg.sensor = None
+        if useSensorConfiguration:
+            if cfg.sensor:
+                ccfg.sensor = SensorConfiguration()
+                ccfg.sensor.output_size = copy.copy(cfg.sensor.output_size)
+                ccfg.sensor.bit_depth = cfg.sensor.bit_depth
+            else:
+                ccfg.sensor = None
 
         if cfg.main:
             ccfg.main = StreamConfiguration()
@@ -668,21 +679,22 @@ class CameraController():
                 res = False
                 dif += "queue,"
 
-        if cfg1.sensor:
-            if cfg2.sensor:
-                if cfg1.sensor.bit_depth != cfg2.sensor.bit_depth:
+        if useSensorConfiguration:
+            if cfg1.sensor:
+                if cfg2.sensor:
+                    if cfg1.sensor.bit_depth != cfg2.sensor.bit_depth:
+                        res = False
+                        dif += "sensor.bit_depth,"
+                    if cfg1.sensor.output_size != cfg2.sensor.output_size:
+                        res = False
+                        dif += "sensor.output_size,"
+                else:
                     res = False
-                    dif += "sensor.bit_depth,"
-                if cfg1.sensor.output_size != cfg2.sensor.output_size:
-                    res = False
-                    dif += "sensor.output_size,"
+                    dif += "sensor,"
             else:
-                res = False
-                dif += "sensor,"
-        else:
-            if cfg2.sensor:
-                res = False
-                dif += "sensor,"
+                if cfg2.sensor:
+                    res = False
+                    dif += "sensor,"
 
         if cfg1.main:
             if cfg2.main:

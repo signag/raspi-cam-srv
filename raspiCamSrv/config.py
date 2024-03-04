@@ -83,15 +83,33 @@ def liveViewCfg():
             cfglive.stream_size = mode.size
             cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
         format = request.form["LIVE_format"]
-        cfglive.format = format
         cfglive.display = None
         cfglive.encode = cfglive.stream
-        Camera().restartLiveStream()
-        if cfglive.stream != "lores":
-            msg = "WARNING: If you do not set Stream to 'lores', the Live Stream cannot be shown parallel to other activities!"
-            flash(msg)
+        #Camera().restartLiveStream()
+
+        msg = ""
         if err:
-            flash(err)
+            msg = err
+        if sc.raspiModelLower5:
+            if cfglive.stream == "lores":
+                if format == "YUV420":
+                    cfglive.format = format
+                else:
+                    if msg != "":
+                        msg = msg + "\n"
+                    msg = msg + "For Raspberry Pi models < 5, the lowres stream format must be YUV"
+            else:
+                cfglive.format = format
+        else:
+            cfglive.format = format
+
+        if cfglive.stream != "lores":
+            if msg != "":
+                msg = msg + "\n"
+            msg = msg + "WARNING: If you do not set Stream to 'lores', the Live Stream cannot be shown parallel to other activities!"
+
+        if len(msg) :
+            flash(msg)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/addLiveViewControls", methods=("GET", "POST"))

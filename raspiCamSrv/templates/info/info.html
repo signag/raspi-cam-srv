@@ -14,6 +14,20 @@
         {% endfor%}
     </div>
     <div id="cameras" class="infogroup">
+        <h4>Raspberry Pi</h4>
+        <table class="w3-table-all">
+            <tr>
+                <td style="width:15%">Model</td>
+                <td style="width:55%">{{sc.raspiModelFull}}</td>
+                <td style="width:30%"></td>
+            </tr>
+            <tr>
+                <td>Board Revision</td>
+                <td>{{sc.boardRevision}}</td>
+                <td></td>
+            </tr>
+        </table>
+        <p>&nbsp;</p>
         {% for cam in cs %}
         {% if cam.num == sc.activeCamera %}
         <h4>Camera {{ cam.num }} (currently active)</h4>
@@ -26,9 +40,9 @@
         {% endif%}
         <table class="w3-table-all">
             <tr>
-                <th>Property</th>
-                <th>Value</th>
-                <th>Description</th>
+                <th style="width:15%">Property</th>
+                <th style="width:55%">Value</th>
+                <th style="width:30%">Description</th>
             </tr>
             <tr>
                 <td>

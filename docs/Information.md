@@ -8,6 +8,12 @@ This screen contains several tabs with information on the camera system:
 
 ![Cameras](img/Info-Cameras.jpg)
 
+### Raspberry Pi
+
+This section shows information on the server hardware with *Model* and *Board Revision*
+
+### Camera x
+
 The tab lists all cameras currently connected to the system.
 
 Each camera has an identifying number (0, 1, ...) shown in the title above each parameter list.

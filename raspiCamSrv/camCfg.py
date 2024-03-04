@@ -1197,6 +1197,9 @@ class CameraProperties():
 
 class ServerConfig():
     def __init__(self):
+        self._raspiModelFull = ""
+        self._raspiModelLower5 = False
+        self._boardRevision = ""
         self._activeCamera = 0
         self._activeCameraInfo = ""
         self._hasMicrophone = False
@@ -1245,6 +1248,49 @@ class ServerConfig():
         
         # Check access of microphone
         self.checkMicrophone()
+        
+        # Get Raspi Info
+        model = self.getPiModel()
+        self._raspiModelFull = model
+        if model.startswith("Raspberry Pi 5"):
+            self._raspiModelLower5 = False
+        elif model.startswith("Raspberry Pi 4"):
+            self._raspiModelLower5 = True
+        elif model.startswith("Raspberry Pi 3"):
+            self._raspiModelLower5 = True
+        elif model.startswith("Raspberry Pi Zero W"):
+            self._raspiModelLower5 = True
+        elif model.startswith("Raspberry Pi Zero 2 W"):
+            self._raspiModelLower5 = True
+        else:
+            self._raspiModelLower5 = False
+
+        boardRev = self.getBoardRevision()
+        self._boardRevision = boardRev
+
+    @property
+    def raspiModelFull(self) -> str:
+        return self._raspiModelFull
+
+    @raspiModelFull.setter
+    def raspiModelFull(self, value: str):
+        self._raspiModelFull = value
+
+    @property
+    def raspiModelLower5(self) -> bool:
+        return self._raspiModelLower5
+
+    @raspiModelLower5.setter
+    def raspiModelLower5(self, value: bool):
+        self._raspiModelLower5 = value
+
+    @property
+    def boardRevision(self) -> str:
+        return self._boardRevision
+
+    @boardRevision.setter
+    def boardRevision(self, value: str):
+        self._boardRevision = value
 
     @property
     def activeCamera(self) -> int:
@@ -2021,6 +2067,40 @@ class ServerConfig():
             self.isMicMuted = False
         logger.debug("ServerConfig._checkMicrophone - hasMicrophone=%s, defaultMic=%s", self.hasMicrophone, self.defaultMic)
 
+    @staticmethod
+    def getPiModel() -> str:
+        """ Get the Raspberry Pi model
+        
+        """
+        logger.debug("CameraCfg.getPiModel")
+        model = ""
+        with open('/proc/device-tree/model') as f:
+            model = f.read()
+            if model.endswith("\x00"):
+                model = model[:len(model)-1]
+        logger.debug("CameraCfg.getPiModel - model: %s", model)
+        return model
+
+    @staticmethod
+    def getBoardRevision():
+        """ Get the revision of the Raspberry Pi board
+        
+        """
+        logger.debug("CameraCfg.getBoardRevision")
+        boardRev = "0000"
+        try:
+            with open('/proc/cpuinfo','r') as f:
+                for line in f:
+                    if line[0:8]=='Revision':
+                        length=len(line)
+                        boardRev = line[11:length-1]
+        except Exception as e:
+            logger.error("Error opening /proc/cpuinfo : %s", e)
+            boardRev = "0000"
+        
+        logger.debug("CameraCfg.getBoardRevision - boardRev = %s", boardRev)
+        return boardRev
+    
     @classmethod                
     def initFromDict(cls, dict:dict):
         sc = ServerConfig()
@@ -2132,6 +2212,12 @@ class CameraCfg():
             cls._videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
             cls._cameraConfigs = []
             cls._serverConfig = ServerConfig()
+            # For Raspi models < 5 the lowres format must be YUV
+            # See Picamera2 manual ch. 4.2, p. 16
+            if cls._serverConfig.raspiModelLower5:
+                cls._liveViewConfig.format = "YUV420"
+            if cls._serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
+                cls._liveViewConfig.buffer_count = 2
         return cls._instance
     
     @property
