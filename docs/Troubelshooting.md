@@ -4,6 +4,10 @@
 
 This page intends to collect information on how to deal with errors which may occur while running **raspiCamSrv**.
 
+- **SystemError: No cameras were found on the server's device**   
+See [raspi-cam-srv Issue #6](https://github.com/signag/raspi-cam-srv/issues/6)
+- **ERROR in camera_pi: Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration**   
+This message may occur when running on Bullseye systems
 - **ERROR V4L2 v4l2_videodevice.cpp:1906 /dev/video4[16:cap]: Failed to start streaming: Broken pipe**  
 See [picamera2 Issue #104](https://github.com/raspberrypi/libcamera/issues/104) from Feb 1, 2024   
 The recommended solution was to go back to kernel release 6.1.65 with ```sudo rpi-update d16727d```

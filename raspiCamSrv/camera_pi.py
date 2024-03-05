@@ -1192,8 +1192,13 @@ class Camera():
                 cfg.rawConfig.format = str(cfgSensorModes[maxModei].format)
             # For Video
             if cfg.videoConfig.stream_size is None:
-                cfg.videoConfig.sensor_mode = maxMode
-                cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
+                # For Pi Zero set video resolution to lowes value and buffer size to 4
+                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
+                    cfg.videoConfig.sensor_mode = 0
+                    cfg.videoConfig.stream_size = cfgSensorModes[0].size
+                else:
+                    cfg.videoConfig.sensor_mode = maxMode
+                    cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
     
     @staticmethod
     def configure(cfg: CameraConfig, cfgPhoto: CameraConfig):

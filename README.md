@@ -3,7 +3,7 @@
 The Raspberry Pi Camera Server (raspiCamSrv) is a web server which can be deployed on a Raspberry Pi device giving access to installed cameras and allows to control these.
 
 It can be installed on all Raspberry Pi platforms which allow connection of one or multiple cameras and supports the currently existing camera types.
-Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2 and 3. On Pi 5, also parallel installation of two different cameras was tested.
+Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2, 3 and HQ. On Pi 5, also parallel installation of two different cameras was tested.
 
 **raspiCamSrv** is built with [Flask 3.0](https://flask.palletsprojects.com/en/3.0.x/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 
@@ -76,7 +76,7 @@ The software is still being tested and extended.
 The setup description, below, assumes a completely autonomous or 'headless' setup, where the Raspberry Pi requires nothing but a power supply cable without any necessity to ever connect it to a display, keyboard or mouse.   
 ![Pi Zero Cover](docs/img/pi_zero_cover.jpg)<br>Here, the camera model 2 is installed.
 
-The described steps were successfully executed with Raspberry Pi Imager version 1.8.4 and a Raspberry Pi Zero W.
+The described steps were successfully executed with Raspberry Pi Imager version 1.8.5 and a Raspberry Pi Zero W.
 
 ### System Setup
 For system setup, follow the instructions of the [Raspberry Pi Getting Started Documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#install-using-imager) for OS installation using Imager.   
@@ -86,6 +86,8 @@ Once the SD card is written, insert it into the Raspberry Pi and power it up.
 Initially, it will take several minutes until it is visible in the network.
 
 ### RaspiCamSrv Installation
+
+In case of problems during installation and usage, see [Troubleshooting](./docs/Troubelshooting.md)
 
 |Step|Action
 |----|--------------------------------------------------

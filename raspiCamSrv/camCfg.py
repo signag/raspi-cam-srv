@@ -2217,7 +2217,9 @@ class CameraCfg():
             if cls._serverConfig.raspiModelLower5:
                 cls._liveViewConfig.format = "YUV420"
             if cls._serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
+                # For Pi Zero reduce buffer_count defaults for live view and video
                 cls._liveViewConfig.buffer_count = 2
+                cls._videoConfig.buffer_count = 4
         return cls._instance
     
     @property

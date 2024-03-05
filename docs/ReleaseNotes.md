@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+
+## V2.1.2
+
+### Bugfix
+
+- For Raspberry Pi Zero, the "Buffer Count* in the [Configuration](./Configuration.md) for *Live View* and *Video* has been reduced to 2 and 4, respectively because of memory issues.   
+Also, the default *Sensor Mode* for *Video* has been set to the lowest (0) mode, rather than to the highest.
+
 ## V2.1.1
 
 ### Known issues
