@@ -361,27 +361,42 @@
     <script>
         function confirmRemove(form) {
             if (confirm("Do you want to remove the selected users?")) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
         function confirmReset(form) {
             if (confirm("Do you want to reset the server?\nThe entire configuration will be reset to default!")) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
         function confirmShutdown(form) {
             if (confirm("Do you want to shut down the server?\nIf the server is running as service, it will restart automatically.\nOtherwise, you need to start it manually")) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
         function confirmStore(form) {
             if (confirm("Do you want to replace the stored configuration with the current configuration?")) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
         function confirmLoad(form) {
             if (confirm("Do you want to replace the current configuration with the stored configuration?")) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
         function loadCfgOnStart(form) {

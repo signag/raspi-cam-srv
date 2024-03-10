@@ -5,8 +5,512 @@ import json
 import logging
 import os
 from pathlib import Path
+from datetime import datetime
+from datetime import date
+from datetime import time
+from datetime import timedelta
+import raspiCamSrv.dbx as dbx
+
+
 
 logger = logging.getLogger(__name__)
+
+class TriggerConfig():
+    motionDetectAlgos = ["Mean Square Diff",]
+    videoRecorders = ["Normal", "Circular"]
+    def __init__(self):
+        self._triggeredByMotion = True
+        self._triggeredBySound = False
+        self._actionVideo = True
+        self._actionPhoto = True
+        self._operationStartMinute: int = 0
+        self._operationEndMinute: int = 1439
+        self._operationWeekdays = {"1":True, "2":True, "3":True, "4":True, "5":True, "6":True, "7":True}
+        self._detectionDelaySec = 0
+        self._detectionPauseSec = 20
+        self._motionDetectAlgo = 1
+        self._msdThreshold = 10
+        self._actionVR = 1
+        self._actionCircSize = 5
+        self._actionPath = ""
+        self._actionVideoDuration = 10
+        self._actionPhotoBurst = 1
+        self._actionPhotoBurstDelaySec = 2
+        self._retentionPeriod = 3
+        self._evStart = None
+        self._evIncludePhoto = False
+        self._evIncludeVideo = True
+        self._evAutoRefresh = False
+        self._calStart = None
+        
+    @property
+    def logFileName(self) -> str:
+        return "_events.log"
+        
+    @property
+    def logFilePath(self) -> str:
+        return self._actionPath + "/" + self.logFileName
+
+    @property
+    def operationStartMinute(self) -> int:
+        return self._operationStartMinute
+
+    @operationStartMinute.setter
+    def operationStartMinute(self, value: int):
+        self._operationStartMinute = value
+
+    @property
+    def operationStartStr(self) -> str:
+        h = self._operationStartMinute // 60
+        m = self._operationStartMinute % 60
+        return str(h).zfill(2) + ":" + str(m).zfill(2)
+
+    @operationStartStr.setter
+    def operationStartStr(self, value: str):
+        h = 0
+        m = 0
+        if value:
+            if len(value) == 5:
+                h = int(value[:2])
+                m = int(value[3:])
+        self._operationStartMinute = 60 * h + m
+
+    @property
+    def operationEndMinute(self) -> int:
+        return self._operationEndMinute
+
+    @operationEndMinute.setter
+    def operationEndMinute(self, value: int):
+        self._operationEndMinute = value
+
+    @property
+    def operationEndStr(self) -> str:
+        h = self._operationEndMinute // 60
+        m = self._operationEndMinute % 60
+        return str(h).zfill(2) + ":" + str(m).zfill(2)
+
+    @operationEndStr.setter
+    def operationEndStr(self, value: str):
+        h = 0
+        m = 0
+        if value:
+            if len(value) == 5:
+                h = int(value[:2])
+                m = int(value[3:])
+        self._operationEndMinute = 60 * h + m
+
+    @property
+    def operationWeekdays(self) -> dict:
+        return self._operationWeekdays
+
+    @operationWeekdays.setter
+    def operationWeekdays(self, value: dict):
+        self._operationWeekdays = value
+
+    @property
+    def detectionDelaySec(self) -> int:
+        return self._detectionDelaySec
+
+    @detectionDelaySec.setter
+    def detectionDelaySec(self, value: int):
+        self._detectionDelaySec = value
+
+    @property
+    def detectionPauseSec(self) -> int:
+        return self._detectionPauseSec
+
+    @detectionPauseSec.setter
+    def detectionPauseSec(self, value: int):
+        self._detectionPauseSec = value
+
+    @property
+    def triggeredByMotion(self) -> bool:
+        return self._triggeredByMotion
+
+    @triggeredByMotion.setter
+    def triggeredByMotion(self, value: bool):
+        self._triggeredByMotion = value
+
+    @property
+    def triggeredBySound(self) -> bool:
+        return self._triggeredBySound
+
+    @triggeredBySound.setter
+    def triggeredBySound(self, value: bool):
+        self._triggeredBySound = value
+
+    @property
+    def motionDetectAlgo(self) -> int:
+        return self._motionDetectAlgo
+
+    @motionDetectAlgo.setter
+    def motionDetectAlgo(self, value: int):
+        self._motionDetectAlgo = value
+
+    @property
+    def actionVideo(self) -> bool:
+        return self._actionVideo
+
+    @actionVideo.setter
+    def actionVideo(self, value: bool):
+        self._actionVideo = value
+
+    @property
+    def actionPhoto(self) -> bool:
+        return self._actionPhoto
+
+    @actionPhoto.setter
+    def actionPhoto(self, value: bool):
+        self._actionPhoto = value
+
+    @property
+    def msdThreshold(self) -> int:
+        return self._msdThreshold
+
+    @msdThreshold.setter
+    def msdThreshold(self, value: int):
+        self._msdThreshold = value
+
+    @property
+    def actionVR(self) -> int:
+        return self._actionVR
+
+    @actionVR.setter
+    def actionVR(self, value: int):
+        self._actionVR = value
+
+    @property
+    def actionCircSize(self) -> int:
+        return self._actionCircSize
+
+    @actionCircSize.setter
+    def actionCircSize(self, value: int):
+        self._actionCircSize = value
+
+    @property
+    def actionPath(self) -> str:
+        return self._actionPath
+
+    @actionPath.setter
+    def actionPath(self, value: str):
+        self._actionPath = value
+
+    @property
+    def actionVideoDuration(self) -> int:
+        return self._actionVideoDuration
+
+    @actionVideoDuration.setter
+    def actionVideoDuration(self, value: int):
+        self._actionVideoDuration = value
+
+    @property
+    def actionPhotoBurst(self) -> int:
+        return self._actionPhotoBurst
+
+    @actionPhotoBurst.setter
+    def actionPhotoBurst(self, value: int):
+        self._actionPhotoBurst = value
+
+    @property
+    def actionPhotoBurstDelaySec(self) -> int:
+        return self._actionPhotoBurstDelaySec
+
+    @actionPhotoBurstDelaySec.setter
+    def actionPhotoBurstDelaySec(self, value: int):
+        self._actionPhotoBurstDelaySec = value
+
+    @property
+    def retentionPeriod(self) -> int:
+        return self._retentionPeriod
+
+    @retentionPeriod.setter
+    def retentionPeriod(self, value: int):
+        self._retentionPeriod = value
+
+    @property
+    def retentionPeriodStr(self) -> str:
+        return str(self._retentionPeriod)
+
+    @property
+    def evStart(self) -> datetime:
+        return self._evStart
+
+    @evStart.setter
+    def evStart(self, value: datetime):
+        if value is None:
+            val = None
+        else:
+            val = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+        self._evStart = val
+
+    @property
+    def evStartDateStr(self) -> str:
+        return self._evStart.isoformat()[:10]
+
+    @evStartDateStr.setter
+    def evStartDateStr(self, value: str):
+        try:
+            d = date.fromisoformat(value)
+        except ValueError:
+            d = datetime.now()
+        v = datetime(year=d.year, month=d.month, day=d.day, hour=self._evStart.hour, minute=self._evStart.minute)        
+        self._evStart = v
+
+    @property
+    def evStartTimeStr(self) -> str:
+        return self._evStart.isoformat()[11:16]
+
+    @evStartTimeStr.setter
+    def evStartTimeStr(self, value: str):
+        try:
+            d = time.fromisoformat(value)
+        except ValueError:
+            d = datetime.now()
+        v = datetime(year=self._evStart.year, month=self._evStart.month, day=self._evStart.day, hour=d.hour, minute=d.minute)        
+        self._evStart = v
+    
+    @property
+    def evStartIso(self) -> str:
+        return self._evStart.isoformat()
+    
+    def evStartMidnight(self):
+        self._evStart = datetime(year=self._evStart.year, month=self._evStart.month, day=self._evStart.day, hour=0, minute=0)
+
+    @property
+    def evIncludePhoto(self) -> bool:
+        return self._evIncludePhoto
+
+    @evIncludePhoto.setter
+    def evIncludePhoto(self, value: bool):
+        self._evIncludePhoto = value
+
+    @property
+    def evIncludeVideo(self) -> bool:
+        return self._evIncludeVideo
+
+    @evIncludeVideo.setter
+    def evIncludeVideo(self, value: bool):
+        self._evIncludeVideo = value
+
+    @property
+    def evAutoRefresh(self) -> bool:
+        return self._evAutoRefresh
+
+    @evAutoRefresh.setter
+    def evAutoRefresh(self, value: bool):
+        self._evAutoRefresh = value
+
+    @property
+    def calStart(self) -> datetime:
+        return self._calStart
+
+    @calStart.setter
+    def calStart(self, value: datetime):
+        if value == None:
+            val = None
+        else:
+            val = datetime(year=value.year, month=value.month, day=1, hour=0, minute=0, second=0)
+        self._calStart = val
+
+    @property
+    def calStartDateStr(self) -> str:
+        return self._calStart.isoformat()[:10]
+
+    @calStartDateStr.setter
+    def calStartDateStr(self, value: str):
+        try:
+            d = date.fromisoformat(value)
+        except ValueError:
+            d = datetime.now()
+        v = datetime(year=d.year, month=d.month, day=1, hour=0, minute=0)        
+        self._evStart = v
+        
+    @property
+    def eventList(self) -> list:
+        return self.getEventList()
+        
+    def getEventList(self) -> list:
+        db = dbx.get_dbx()
+        events = []
+        seldate = self.evStartDateStr
+        seltime = self.evStartTimeStr
+        eventsdb = db.execute("SELECT * FROM events WHERE date = ? AND minute >= ?",
+                              (seldate, seltime)
+        ).fetchall()
+        
+        for eventdb in eventsdb:
+            eventContainer = {}
+            event = {}
+            event["timestamp"] = eventdb["timestamp"]
+            event["date"] = eventdb["date"]
+            event["time"] = eventdb["time"]
+            event["type"] = eventdb["type"]
+            event["trigger"] = eventdb["trigger"]
+            event["triggertype"] = eventdb["triggertype"]
+            event["triggerparam"] = eventdb["triggerparam"]
+            eventContainer["event"] = event
+            events.append(eventContainer)
+            
+        if self.evIncludeVideo:
+            for ev in events:
+                event = ev["event"]
+                ts = event["timestamp"]
+                eventactions = db.execute("SELECT * FROM eventactions WHERE event = ? AND actiontype = ?",
+                                    (ts, "Video")
+                ).fetchone()
+                if eventactions is None:
+                    eventVideo = {}
+                else:
+                    eventVideo = {}
+                    eventVideo["timestamp"] = eventactions["timestamp"]
+                    eventVideo["date"] = eventactions["date"]
+                    eventVideo["time"] = eventactions["time"]
+                    eventVideo["duration"] = round(eventactions["actionduration"], 0)
+                    eventVideo["filename"] = eventactions["filename"]
+                    videophoto = db.execute("SELECT * FROM eventactions WHERE event = ? AND actiontype = ? AND timestamp = ?",
+                                        (ts, "Photo", eventactions["timestamp"])
+                    ).fetchone()
+                    if videophoto is None:
+                        eventVideo["photo"] = None
+                    else:
+                        eventVideo["photo"] = videophoto["filename"]
+                ev["video"] = eventVideo
+
+        if self.evIncludePhoto:
+            for ev in events:
+                event = ev["event"]
+                ts = event["timestamp"]
+                eventactions = None
+                #if self.evIncludeVideo:
+                #    if len(ev["video"]) > 0:
+                #        eventVideo = ev["video"]
+                #        if not eventVideo["photo"] is None:
+                #            videoTs = eventVideo["timestamp"]
+                #            eventactions = db.execute("SELECT * FROM eventactions WHERE event = ? AND actiontype = ? AND timestamp != ? ORDER BY timestamp ASC",
+                #                                (ts, "Photo", videoTs)
+                #            ).fetchall()
+                if eventactions is None:
+                    eventactions = db.execute("SELECT * FROM eventactions WHERE event = ? AND actiontype = ? ORDER BY timestamp ASC",
+                                        (ts, "Photo")
+                    ).fetchall()
+                if eventactions is None:
+                    eventPhotos = []
+                else:
+                    eventPhotos = []
+                    for eventactiondb in eventactions:
+                        eventPhoto = {}
+                        eventPhoto["timestamp"] = eventactiondb["timestamp"]
+                        eventPhoto["date"] = eventactiondb["date"]
+                        eventPhoto["time"] = eventactiondb["time"]
+                        eventPhoto["duration"] = round(eventactiondb["actionduration"], 0)
+                        eventPhoto["filename"] = eventactiondb["filename"]
+                        eventPhotos.append(eventPhoto)
+                ev["photos"] = eventPhotos
+        return events
+
+    @property 
+    def calendar(self) -> list:
+        return self.getCalendar()
+
+    @property 
+    def calendarMonthStr(self) -> str:
+        return self.calStart.strftime("%B") + " " + str(self.calStart.year)
+
+    def getCalendar(self)-> list:
+        """ Setup calendar for the selected month with information on events
+        """
+        db = dbx.get_dbx()
+        wd = self.calStart.isocalendar().weekday
+        month = self.calStart.month
+        wnrStart = self.calStart.isocalendar().week
+        dayStart = self.calStart - timedelta(hours = (wd - 1) * 24)
+        
+        calendar = []
+        dayIter = dayStart
+        for week in range(wnrStart, wnrStart + 6):
+            calWeek = {}
+            calWeek["week"] = week
+            weekdays = []
+            for weekday in range(1, 8):
+                day = {}
+                day["day"] = dayIter.day
+                day["weekday"] = dayIter.isocalendar().weekday
+                day["week"] = dayIter.isocalendar().week
+                dayIso = dayIter.isoformat()[:10]
+                day["date"] = dayIso
+                data = {}
+                nrEvents = db.execute("SELECT count(*) FROM events WHERE date = ?",
+                                    (dayIso,)
+                ).fetchone()[0]
+                data["nrevents"] = nrEvents
+                day["data"] = data
+                weekdays.append(day)
+                dayIter = dayIter + timedelta(hours=24)
+            calWeek["weekdays"] = weekdays
+            calendar.append(calWeek)
+            if dayIter.month > month:
+                break
+        return calendar
+    
+    def cleanupEvents(self):
+        """ Remove all events older than retention period
+        """
+        logger.debug("TriggerConfig.cleanupEvents")
+        db = dbx.get_dbx()
+        dr = datetime.now() - timedelta(days=self.retentionPeriod)
+        #dr = dr - timedelta(hours=23)
+        dateRem = str(dr.isoformat()[:10])
+        logger.debug("TriggerConfig.cleanupEvents - Removing %s and earlier", dateRem)
+        
+        # Cleanup events log
+        fpLog = self.logFilePath
+        fpLogOld = os.path.dirname(fpLog) + "/_backup.log"
+        if os.path.exists(fpLog):
+            if os.path.exists(fpLogOld):
+                os.remove(fpLogOld)
+            os.rename(fpLog, fpLogOld)
+        with open(fpLogOld, "r") as src:
+            oldLines = src.readlines()
+        with open(fpLog, "w") as tgt:
+            for line in oldLines:
+                if line[:10] > dateRem:
+                    tgt.write(line)
+        os.remove(fpLogOld)
+        logger.debug("Cleaned up %s", fpLog)
+        
+        # Remove files
+        cnt = 0
+        evadb = db.execute("SELECT * FROM eventactions WHERE date <= ?", (dateRem,)).fetchall()
+        if not evadb is None:
+            for eva in evadb:
+                fp = eva["fullpath"]
+                if os.path.exists(fp):
+                    os.remove(fp)
+                    cnt += 1
+        logger.debug("Removed %s files", cnt)
+
+        # Delete eventactions
+        db.execute("DELETE FROM eventactions WHERE date <= ?", (dateRem,)).fetchall()
+        db.commit()
+        logger.debug("Removed old eventaction")
+
+        # Delete events
+        db.execute("DELETE FROM events WHERE date <= ?", (dateRem,)).fetchall()
+        db.commit()
+        logger.debug("Removed old events")
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        cc = TriggerConfig()
+        for key, value in dict.items():
+            if value is None:
+                setattr(cc, key, value)
+            else:
+                setattr(cc, key, value)
+        #Reset some default values for which imported values shall be ignored
+        cc.evStart = None
+        cc.calStart = None
+        return cc
 
 class CameraInfo():
     def __init__(self):
@@ -1197,6 +1701,7 @@ class CameraProperties():
 
 class ServerConfig():
     def __init__(self):
+        self._database = None
         self._raspiModelFull = ""
         self._raspiModelLower5 = False
         self._boardRevision = ""
@@ -1222,10 +1727,13 @@ class ServerConfig():
         self._lastConfigTab = "cfglive"
         self._lastInfoTab = "camprops"
         self._lastPhotoSeriesTab = "series"
+        self._lastTriggerTab = "trgcontrol"
         self._isLiveStream = False
         self._isVideoRecording = False
         self._isAudioRecording = False
         self._isPhotoSeriesRecording = False
+        self._isTriggerRecording = False
+        self._isTriggerWaiting = False
         self._isDisplayHidden = True
         self._displayPhoto = None
         self._displayFile = None
@@ -1267,6 +1775,14 @@ class ServerConfig():
 
         boardRev = self.getBoardRevision()
         self._boardRevision = boardRev
+
+    @property
+    def database(self) -> str:
+        return self._database
+
+    @database.setter
+    def database(self, value: str):
+        self._database = value
 
     @property
     def raspiModelFull(self) -> str:
@@ -1503,6 +2019,14 @@ class ServerConfig():
         self._lastPhotoSeriesTab = value
 
     @property
+    def lastTriggerTab(self):
+        return self._lastTriggerTab
+
+    @lastTriggerTab.setter
+    def lastTriggerTab(self, value: str):
+        self._lastTriggerTab = value
+
+    @property
     def isDisplayHidden(self) -> bool:
         return self._isDisplayHidden
 
@@ -1541,6 +2065,22 @@ class ServerConfig():
     @isPhotoSeriesRecording.setter
     def isPhotoSeriesRecording(self, value: bool):
         self._isPhotoSeriesRecording = value
+
+    @property
+    def isTriggerRecording(self) -> bool:
+        return self._isTriggerRecording
+
+    @isTriggerRecording.setter
+    def isTriggerRecording(self, value: bool):
+        self._isTriggerRecording = value
+
+    @property
+    def isTriggerWaiting(self) -> bool:
+        return self._isTriggerWaiting
+
+    @isTriggerWaiting.setter
+    def isTriggerWaiting(self, value: bool):
+        self._isTriggerWaiting = value
 
     @property
     def buttonClear(self) -> str:
@@ -2211,6 +2751,7 @@ class CameraCfg():
             cls._videoConfig.encode = "main"
             cls._videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
             cls._cameraConfigs = []
+            cls._triggerConfig = TriggerConfig()
             cls._serverConfig = ServerConfig()
             # For Raspi models < 5 the lowres format must be YUV
             # See Picamera2 manual ch. 4.2, p. 16
@@ -2315,6 +2856,14 @@ class CameraCfg():
         self._cameraConfigs = value
     
     @property
+    def triggerConfig(self) -> TriggerConfig:
+        return self._triggerConfig
+
+    @triggerConfig.setter
+    def triggerConfig(self, value: TriggerConfig):
+        self._triggerConfig = value
+    
+    @property
     def serverConfig(self) -> ServerConfig:
         return self._serverConfig
 
@@ -2349,6 +2898,7 @@ class CameraCfg():
             self._persistCl(self.videoConfig, "videoConfig.json", cfgPath)
             self._persistCl(self.controls, "controls.json", cfgPath)
             self._persistCl(self.serverConfig, "serverConfig.json", cfgPath)
+            self._persistCl(self.triggerConfig, "triggerConfig.json", cfgPath)
             
     def _toJson(self, cl):
         return json.dumps(cl, default=lambda o: getattr(o, '__dict__', str(o)), indent=4)
@@ -2379,4 +2929,5 @@ class CameraCfg():
                 self.rawConfig = self._loadConfigCl(CameraConfig, "rawConfig.json", cfgPath)
                 self.videoConfig = self._loadConfigCl(CameraConfig, "videoConfig.json", cfgPath)
                 self.controls = self._loadConfigCl(CameraControls, "controls.json", cfgPath)
+                self.triggerConfig = self._loadConfigCl(TriggerConfig, "triggerConfig.json", cfgPath)
                 

@@ -5,6 +5,720 @@
 {% endblock %}
 
 {% block content %}
-<h1>Trigger</h1>
+    <div class="w3-bar w3-green">
+        <!-- Info menue -->
+        {% if sc.lastTriggerTab == "trgcontrol" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgCtrlBtn"
+            onclick="openTriggerTab('trgcontrol', 'trgCtrlBtn')">Control</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgCtrlBtn"
+            onclick="openTriggerTab('trgcontrol', 'trgCtrlBtn')">Control</button>
+        {% endif %}
+        {% if sc.lastTriggerTab == "trgmotion" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgmotionbtn"
+            onclick="openTriggerTab('trgmotion', 'trgmotionbtn')">motion</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgmotionbtn"
+            onclick="openTriggerTab('trgmotion', 'trgmotionbtn')">Motion</button>
+        {% endif %}
+        {% if sc.lastTriggerTab == "trgaction" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgactionbtn"
+            onclick="openTriggerTab('trgaction', 'trgactionbtn')">Action</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgactionbtn"
+            onclick="openTriggerTab('trgaction', 'trgactionbtn')">Action</button>
+        {% endif %}
+        {% if sc.lastTriggerTab == "trgevents" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgeventsbtn"
+            onclick="openTriggerTab('trgevents', 'trgeventsbtn')">Events</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgeventsbtn"
+            onclick="openTriggerTab('trgevents', 'trgeventsbtn')">Events</button>
+        {% endif %}
+        {% if sc.lastTriggerTab == "trgcalendar" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgcalendarbtn"
+            onclick="openTriggerTab('trgcalendar', 'trgcalendarbtn')">Calendar</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgcalendarbtn"
+            onclick="openTriggerTab('trgcalendar', 'trgcalendarbtn')">Calendar</button>
+        {% endif %}
+    </div>
+    {% if sc.lastTriggerTab == "trgcontrol" %}
+    <div id="trgcontrol" class="triggergroup">
+    {% else %}
+    <div id="trgcontrol" class="triggergroup" style="display:none">
+    {% endif %}
+        <form method="post" action="{{ url_for('trigger.control') }}">
+            <h4>Triggers and Actions</h4>
+            <table class="w3-table-all">
+                <tr>
+                    <th colspan="2">
+                        Triggers
+                    </th>
+                    <th colspan="2">
+                        Actions
+                    </th>
+                    <th>
+                    </th>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip" style="width:15%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Activate checkbox if actions shall be triggered by motion detection.<br>
+                            You need to specify details on the Motion tab
+                        </span>
+                        <label for="triggerbymotion">Motion Detection:</label>
+                    </td>
+                    <td style="width:10%">
+                        {% if tc.triggeredByMotion == True %}
+                        <input type="checkbox" id="triggerbymotion" name="triggerbymotion" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="triggerbymotion" name="triggerbymotion" value="1">
+                        {% endif %}
+                    </td>
+                    <td class="w3-tooltip" style="width:15%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Activate checkbox if video recording shall be teiggered.<br>
+                            You need to specify details on the Action tab
+                        </span>
+                        <label for="triggervideo">Record Video:</label>
+                    </td>
+                    <td style="width:10%">
+                        {% if tc.actionVideo == True %}
+                        <input type="checkbox" id="triggervideo" name="triggervideo" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="triggervideo" name="triggervideo" value="1">
+                        {% endif %}
+                    </td>
+                    <td style="width: 50%;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:15%">
+                    </td>
+                    <td style="width:10%">
+                    </td>
+                    <td class="w3-tooltip" style="width:15%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Activate checkbox if a photo shall be taken.<br>
+                            You need to specify details on the Action tab
+                        </span>
+                        <label for="triggerphoto">Take Photo:</label>
+                    </td>
+                    <td style="width:10%;">
+                        {% if tc.actionPhoto == True %}
+                        <input type="checkbox" id="triggerphoto" name="triggerphoto" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="triggerphoto" name="triggerphoto" value="1">
+                        {% endif %}
+                    </td>
+                    <td style="width:50%;">
+                    </td>
+                </tr>
+            </table>
+            <p style="margin-bottom: 0"></p>
+            <h4>Operation</h4>
+            <table class="w3-table-all">
+                <tr>
+                    <td style="width:25%">
+                    </td>
+                    <td style="width: 5%;">Mo</td>
+                    <td style="width: 5%;">Tu</td>
+                    <td style="width: 5%;">We</td>
+                    <td style="width: 5%;">Th</td>
+                    <td style="width: 5%;">Fr</td>
+                    <td style="width: 5%;">Sa</td>
+                    <td style="width: 5%;">Su</td>
+                    <td style="width: 40%;"></td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip" style="width:25%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Select the weekdays when triggers shall be active
+                        </span>
+                        <label for="opweekday1">Operation Weekdays:</label>
+                    </td>
+                    {% for key, value in tc.operationWeekdays.items()  %}
+                    <td style="width: 5%;">
+                        {% if value == True %}
+                        <input type="checkbox" id="opweekday{{key}}" name="opweekday{{key}}" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="opweekday{{key}}" name="opweekday{{key}}" value="1">
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td style="width: 40%;"></td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip" style="width:25%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Time when triggering starts at every selected day
+                        </span>
+                        <label for="opstart">Operation Start:</label>
+                    </td>
+                    <td colspan="2" style="width: 10%;">
+                        <input style="width:100%" type="time" id="opstart" name="opstart" value="{{ tc.operationStartStr }}">
+                    </td>
+                    <td colspan="6" style="width: 65%;"></td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip" style="width:25%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Time when triggering ends at every selected day
+                        </span>
+                        <label for="opend">Operation End:</label>
+                    </td>
+                    <td colspan="2" style="width: 10%;">
+                        <input style="width:100%" type="time" id="opend" name="opend" value="{{ tc.operationEndStr }}">
+                    </td>
+                    <td colspan="6" style="width: 65%;"></td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip" style="width:25%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Delay in seconds for starting actions after trigger event
+                        </span>
+                        <label for="opdelay">Detection Delay (Sec):</label>
+                    </td>
+                    <td colspan="2" style="width: 10%;">
+                        <input type="number" id="opdelay" name="opdelay" min="0" max="9999" step="1" value="{{ tc.detectionDelaySec }}">
+                    </td>
+                    <td colspan="6" style="width: 65%;"></td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip" style="width:25%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Pause in seconds after a trigger event in which actions are not started
+                        </span>
+                        <label for="oppause">Detection Pause (Sec):</label>
+                    </td>
+                    <td colspan="2" style="width: 10%;">
+                        <input type="number" id="oppause" name="oppause" min="0" max="9999" step="1" value="{{ tc.detectionPauseSec }}">
+                    </td>
+                    <td colspan="6" style="width: 65%;"></td>
+                <tr>
+                    <td class="w3-tooltip" style="width:25%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Number of days for which data are kept on the server.<br>
+                            Older data will be automatically deleted
+                        </span>
+                        <label for="retentionperiod">Retention Period (days):</label>
+                    </td>
+                    <td colspan="2" style="width: 10%;">
+                        <input type="number" id="retentionperiod" name="retentionperiod" min="0" max="9999" step="1" value="{{ tc.retentionPeriod }}">
+                    </td>
+                    <td colspan="6" style="width: 65%;"></td>
+                </tr>
+            </table>
+            <p style="margin-bottom: 0"></p>
+            <input class="w3-button w3-black" type="submit" value="Submit">
+        </form>
+        <p style="margin-bottom: 0"></p>
+        {% if sc.isTriggerRecording == False %}
+        <form method="post" action="{{ url_for('trigger.start_triggered_capture') }}">
+            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Start">
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('trigger.stop_triggered_capture') }}">
+            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
+        </form>
+        {% endif %}
+    </div>
+    {% if sc.lastTriggerTab == "trgmotion" %}
+    <div id="trgmotion" class="triggergroup">
+    {% else %}
+    <div id="trgmotion" class="triggergroup" style="display:none">
+    {% endif %}
+        <div class="w3-half">
+            <p>&nbsp;</p>
+            <form method="post" action="{{ url_for('trigger.motion') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Choose the algorithm for motion detection
+                            </span>
+                            <label for="motiondetectionalgo">Motion Detection Algorithm:</label>
+                        </td>
+                        <td style="width:50%">
+                            <select name="motiondetectionalgo" id="motiondetectionalgo">
+                                {% for algo in tc.motionDetectAlgos %}
+                                {% if tc.motionDetectAlgo == n %}
+                                <option value="{{ loop.index }}" selected>{{ algo }}</option>
+                                {% else %}
+                                <option value="{{ loop.index }}">{{ algo }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Threshold for mean square deviation between successive frames
+                                above which motion is detected.
+                            </span>
+                            <label for="msdthreshold">Mean Square Threshold:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="msdthreshold" name="msdthreshold" min="0" max="100" step="1" value="{{ tc.msdThreshold }}">
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit">
+            </form>
+        </div>
+    </div>
+    {% if sc.lastTriggerTab == "trgaction" %}
+    <div id="trgaction" class="triggergroup">
+    {% else %}
+    <div id="trgaction" class="triggergroup" style="display:none">
+    {% endif %}
+        <div class="w3-half">
+            <p>&nbsp;</p>
+            <form method="post" action="{{ url_for('trigger.action') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Normal recording starts when triggered.<br>
+                                Circular recording continuously buffers in a circular buffer
+                                and starts recording some seconds before being triggered.
+                            </span>
+                            <label for="actionvr">Video Recording Type:</label>
+                        </td>
+                        <td style="width:50%">
+                            <select name="actionvr" id="actionvr">
+                                {% for vr in tc.videoRecorders %}
+                                {% if tc.actionVR == loop.index %}
+                                <option value="{{ loop.index }}" selected>{{ vr }}</option>
+                                {% else %}
+                                <option value="{{ loop.index }}">{{ vr }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Size of circular buffer in seconds.<br>
+                                The recorded video starts the given number of seconds before the event.
+                            </span>
+                            <label for="actioncircsize">Circular Buffer Size (sec):</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="actioncircsize" name="actioncircsize" min="0" max="10" step="1"
+                                value="{{ tc.actionCircSize }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The duration of each video take.
+                            </span>
+                            <label for="actionvideoduration">Video Duration (sec):</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="actionvideoduration" name="actionvideoduration" min="0" max="9999" step="1"
+                                value="{{ tc.actionVideoDuration }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The number of photos to be taken in sequence for each event.
+                            </span>
+                            <label for="actionphotoburst">Photo Burst - Number of Photos:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="actionphotoburst" name="actionphotoburst" min="1" max="10" step="1"
+                                value="{{ tc.actionPhotoBurst }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The time in seconds between successive photos of a photo burst.
+                            </span>
+                            <label for="actionphotoburstdelaysec">Photo Burst Interval (sec):</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="actionphotoburstdelaysec" name="actionphotoburstdelaysec" min="0" max="10" step="1"
+                                value="{{ tc.actionPhotoBurstDelaySec }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Folder for storage of event data, photos and videos.
+                            </span>
+                            <label for="actionpath">Action Data Path:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input style="width: 100%; text-align:right" type="text" id="actionpath" name="actionpath"
+                                value="{{ tc.actionPath }}" disabled>
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit">
+            </form>
+        </div>
 
+    </div>
+    {% if sc.lastTriggerTab == "trgevents" %}
+    <div id="trgevents" class="triggergroup">
+    {% else %}
+    <div id="trgevents" class="triggergroup" style="display:none">
+    {% endif %}
+        <div class="w3-container" style="padding-left: 0;">
+            <div class="w3-twothird">
+                <p style="margin-top: 0px; margin-bottom:0px">&nbsp</p>
+                <div class="w3-bar">
+                    <div style="display:inline-block">
+                        <a href="{{ url_for('trigger.prev_month') }}" class="w3-button w3-sand">&laquo;</a>
+                        <a href="{{ url_for('trigger.prev_day') }}" class="w3-button w3-sand">&lt</a>
+                        <form style="display:inline-block" id="setevstartdate" method="post" action="{{ url_for('trigger.set_date') }}">
+                            <input style="width:100%" type="date" onchange="dosubmit('setevstartdate')" id="evstartdate" name="evstartdate" value="{{ tc.evStartDateStr }}">
+                        </form>
+                        <a href="{{ url_for('trigger.next_day') }}" class="w3-button w3-sand">&gt</a>
+                        <a href="{{ url_for('trigger.next_month') }}" class="w3-button w3-sand">&raquo;</a>
+                    </div>
+                    <div style="display:inline-block">
+                        <p style="display:inline-block">&nbsp&nbsp&nbsp</p>
+                        <a href="{{ url_for('trigger.prev_hor') }}" class="w3-button w3-sand">&laquo;</a>
+                        <a href="{{ url_for('trigger.prev_quarter') }}" class="w3-button w3-sand">&lt</a>
+                        <form style="display:inline-block" id="setevstarttime" method="post" action="{{ url_for('trigger.set_time') }}">
+                            <input style="width:100%" type="time" onchange="dosubmit('setevstarttime')" id="evstarttime" name="evstarttime" value="{{ tc.evStartTimeStr }}">
+                        </form>
+                        <a href="{{ url_for('trigger.next_quarter') }}" class="w3-button w3-sand">&gt</a>
+                        <a href="{{ url_for('trigger.next_hour') }}" class="w3-button w3-sand">&raquo;</a>
+                    </div>
+                    <div style="display:inline-block; border-left: 20px">
+                        <form style="display:inline-block" id="setevstartnow" method="post" action="{{ url_for('trigger.events_now') }}">
+                            <input class="w3-button w3-sand" type="submit" value="Now">
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="w3-third">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="height: 15px;">
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 5%;">
+                            <form style="display:inline-block" id="evincludevideofrm" method="post" action="{{ url_for('trigger.event_include_video') }}">
+                                {% if tc.evIncludeVideo == True %}
+                                <input type="checkbox" id="evincludevideo" name="evincludevideo" onchange="dosubmit('evincludevideofrm')" value="1" checked>
+                                {% else %}
+                                <input type="checkbox" id="evincludevideo" name="evincludevideo" onchange="dosubmit('evincludevideofrm')" value="0">
+                                {% endif %}
+                            </form>
+                        </td>
+                        <td style="width: 35%;">
+                            <label for="evincludevideo">Include Videos</label>
+                        </td>
+                        <td rowspan="2" style="width: 60%;">
+                            <div class="w3-right">
+                                <form style="display:inline-block" method="post" action="{{ url_for('trigger.do_refresh') }}">
+                                    <input style="display:inline-block" class="w3-button w3-green w3-round-xxlarge" type="submit" value="Refresh">
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 5%;">
+                            <form style="display:inline-block" id="evincludephotofrm" method="post" action="{{ url_for('trigger.event_include_photo') }}">
+                                {% if tc.evIncludePhoto == True %}
+                                <input type="checkbox" id="evincludephoto" name="evincludephoto" onchange="dosubmit('evincludephotofrm')" value="1" checked>
+                                {% else %}
+                                <input type="checkbox" id="evincludephoto" name="evincludephoto" onchange="dosubmit('evincludephotofrm')" value="0">
+                                {% endif %}
+                            </form>
+                        </td>
+                        <td style="width: 35%;">
+                            <label for="evincludephoto">Include Photos</label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <hr>
+        <div class="w3-container" style="padding-left: 0;">
+            <div class="w3-third">
+                <div style="height:1000px; overflow: auto">
+                    <table class="w3-table w3-bordered">
+                        {% for ev in tc.eventList %}
+                        {% set event = ev.event %}
+                        <tr>
+                            <td style="width:50%;">
+                                <div class="w3-card-4" style="width:100%;">
+                                    <header class="w3-container w3-red">
+                                        <h5 style="margin-top: 0;margin-bottom:0">{{ event.type }}</h5>
+                                    </header>
+                                    <div class="w3-container">
+                                        <p style="margin-top: 0;margin-bottom:0">{{ event.date }}</p>
+                                        <p style="margin-top: 0;margin-bottom:0">{{ event.time }}</p>
+                                        <p style="margin-top: 0;margin-bottom:0">{{ event.trigger }}</p>
+                                        <p style="margin-top: 0;margin-bottom:0">{{ event.triggertype }}</p>
+                                        <p style="margin-top: 0;margin-bottom:0">{{ event.triggerparam }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            {% if tc.evIncludeVideo %}
+                            {% set video = ev.video %}
+                            {% if video|length > 0 %}
+                            <td style="width:50%;">
+                                <div class="w3-card-4" style="width:100%">
+                                    {% set urlMini=url_for('static', filename='events/' + video.photo) %}
+                                    {% set urlDetail=url_for('static', filename='events/' + video.filename) %}
+                                    <img src="{{ urlMini }}" 
+                                         alt="{{ video.filename }}" 
+                                         style="width:100%"
+                                         onclick="showDetail('video', '{{ urlDetail }}', 'detailphoto', '{{ video.filename }}', '{{ video.filename }}')"
+                                    >
+                                    <div class="w3-container w3-center">
+                                        <p style="margin-top: 0;margin-bottom:0">{{ video.time }}&nbsp;&nbsp;{{ video.duration }} sec</p>
+                                    </div>
+                                </div>
+                            </td>
+                            {% else %}
+                            {% if tc.evIncludePhoto %}
+                            {% set photos = ev.photos %}
+                            {% if photos|length > 0 %}
+                            {% set photo = photos[0] %}
+                            <td style="width:50%;">
+                                <div class="w3-card-4" style="width:100%">
+                                    {% set urlMini=url_for('static', filename='events/' + photo.filename) %}
+                                    {% set urlDetail=url_for('static', filename='events/' + photo.filename) %}
+                                    <img src="{{ urlMini }}" 
+                                         alt="{{ photo.filename }}" 
+                                         style="width:100%"
+                                         onclick="showDetail('photo', '{{ urlDetail }}', 'detailphoto', '{{ photo.filename }}', '{{ photo.filename }}')"
+                                    >
+                                    <div class="w3-container w3-center">
+                                        <p style="margin-top: 0;margin-bottom:0">{{ photo.time }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endif %}
+                            {% endif %}
+                            {% endif %}
+                            {% else %}
+                            {% if tc.evIncludePhoto %}
+                            {% set photos = ev.photos %}
+                            {% if photos|length > 0 %}
+                            {% set photo = photos[0] %}
+                            <td style="width:50%;">
+                                <div class="w3-card-4" style="width:100%">
+                                    {% set urlMini=url_for('static', filename='events/' + photo.filename) %}
+                                    {% set urlDetail=url_for('static', filename='events/' + photo.filename) %}
+                                    <img src="{{ urlMini }}" 
+                                         alt="{{ photo.filename }}" 
+                                         style="width:100%"
+                                         onclick="showDetail('photo', '{{ urlDetail }}', 'detailphoto', '{{ photo.filename }}', '{{ photo.filename }}')"
+                                    >
+                                    <div class="w3-container w3-center">
+                                        <p style="margin-top: 0;margin-bottom:0">{{ photo.time }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endif %}
+                            {% endif %}
+                            {% endif %}
+                        </tr>
+                        {% if tc.evIncludePhoto %}
+                        {% set photos = ev.photos %}
+                        {% if photos|length > 0 %}
+                        {% for photo in photos%}
+                        {% if loop.index > 1 %}
+                        <tr>
+                            <td>
+                            </td>
+                            <td style="width:50%;">
+                                <div class="w3-card-4" style="width:100%">
+                                    {% set urlMini=url_for('static', filename='events/' + photo.filename) %}
+                                    {% set urlDetail=url_for('static', filename='events/' + photo.filename) %}
+                                    <img src="{{ urlMini }}" alt="{{ photo.filename }}" style="width:100%"
+                                        onclick="showDetail('photo', '{{ urlDetail }}', 'detailphoto', '{{ photo.filename }}', '{{ photo.filename }}')">
+                                    <div class="w3-container w3-center">
+                                        <p style="margin-top: 0;margin-bottom:0">{{ photo.time }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            <div class="w3-twothird">
+                <!-- Detail-->
+                <div id="detailphoto" class="w3-container w3-center">
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if sc.lastTriggerTab == "trgcalendar" %}
+    <div id="trgcalendar" class="triggergroup">
+    {% else %}
+    <div id="trgcalendar" class="triggergroup" style="display:none">
+    {% endif %}
+        <div class="w3-container" style="padding-left: 0;">
+            <div class="w3-twothird">
+                <p style="margin-top: 0px; margin-bottom:0px">&nbsp</p>
+                <div class="w3-bar">
+                    <div style="display:inline-block">
+                        <a href="{{ url_for('trigger.prev_cal_month') }}" class="w3-button w3-sand">&lt</a>
+                        <form style="display:inline-block" id="setcalmonthfrm" method="post" action="{{ url_for('trigger.set_cal_month') }}">
+                            <input style="width:100%" type="date" onchange="dosubmit('setcalmonthfrm')" id="setcalmonth" name="setcalmonth" value="{{ tc.calStartDateStr }}">
+                        </form>
+                        <a href="{{ url_for('trigger.next_cal_month') }}" class="w3-button w3-sand">&gt</a>
+                    </div>
+                    <div style="display:inline-block; border-left: 20px">
+                        <form style="display:inline-block" id="setcalstartnow" method="post" action="{{ url_for('trigger.calendar_now') }}">
+                            <input class="w3-button w3-sand" type="submit" value="Now">
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="w3-third">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="height: 15px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="width: 5%;">
+                        </td>
+                        <td style="width: 35%;">
+                        </td>
+                        <td rowspan="2" style="width: 60%;">
+                            <div class="w3-right">
+                                <form style="display:inline-block" id="docleanupevents" method="post" action="{{ url_for('trigger.do_cleanup') }}">
+                                    <input class="w3-button w3-black w3-round-xxlarge" style="display:inline-block; width: 100px" type="submit" onclick="confirmCleanup('docleanupevents', '{{ tc.retentionPeriodStr}}')" value="Cleanup">
+                                </form>
+                                <form style="display:inline-block" method="post" action="{{ url_for('trigger.do_refresh_calendar') }}">
+                                    <input style="display:inline-block" class="w3-button w3-green w3-round-xxlarge" type="submit" value="Refresh">
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 5%;"></td>
+                        <td style="width: 35%;"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <hr>
+        <div class="w3-container" style="padding-left: 0;">
+            <h2 style="margin-left: 30px"> Events for {{ tc.calendarMonthStr}}</h2>
+            <!-- Invisible input field for selected day -->
+            <form style="display:none;" id="selecteddayfrm" method="post" action="{{ url_for('trigger.calendar_goto') }}">
+                <input style="display:none;" type="text" id="selectedday" name="selectedday" value="">
+            </form>
+            <table>
+                <tr>
+                    <td style="width:30px"></td>
+                    <td style="width:50px">Mo</td>
+                    <td style="width:50px">Tu</td>
+                    <td style="width:50px">We</td>
+                    <td style="width:50px">Th</td>
+                    <td style="width:50px">Fr</td>
+                    <td style="width:50px">Sa</td>
+                    <td style="width:50px">Su</td>
+                </tr>
+                {% for week in tc.calendar%}
+                <tr>
+                    <td>{{ week.week }}</td>
+                    {% set weekdays = week.weekdays %}
+                    {% for day in weekdays %}
+                    {% set data = day.data %}
+                    <td class="w3-border">
+                        <div class="w3-panel w3-light-grey" style="margin-top: 0px; margin-bottom: 0px">
+                            <p style="margin-top: 8px; margin-bottom: 8px">{{ day.day }}</p>
+                        </div>
+                        {% if data.nrevents > 0 %}
+                        <div class="w3-panel w3-border-red w3-pale-red" style="margin-top: 0px; margin-bottom: 0px" onclick="goToDay('{{ day.date }}')">
+                            <p>{{ data.nrevents }}</p>
+                        </div>
+                        {% else %}
+                        <div class="w3-panel" style="margin-top: 0px; margin-bottom: 0px">
+                        <p>&nbsp;</p>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <script>
+        function openTriggerTab(trgTabName, trgTabButton) {
+            var i;
+            var x = document.getElementsByClassName("triggergroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(trgTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("triggermenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button triggermenu";
+            }
+            document.getElementById(trgTabButton).classList = "w3-bar-item w3-button triggermenu w3-light-green";
+        }
+
+        function dosubmit(form) {
+            document.getElementById(form).submit();
+        }
+
+        function showDetail(type, url, tgtPhoto, file, name) {
+            var tgtP = document.getElementById(tgtPhoto);
+            if (type != "video") {
+                tag = "<img style='width: 100%; height: 900px; object-fit: scale-down'"
+                tag = tag + " src='" + url + "'"
+                tag = tag + " class='w3-border w3-padding'"
+                tag = tag + " alt='" + name + "'"
+                tag = tag + ">"
+                tag = tag + "<p>" + file + "</p>"
+                //console.log("tag:", tag)
+                tgtP.innerHTML = tag
+            } else {
+                tag = "<video style='width: 100%; height: 900px; object-fit: scale-down'"
+                tag = tag + " class='w3-border w3-padding'"
+                tag = tag + " controls>"
+                tag = tag + "<source src='" + url + "'" + " type='video/mp4'>"
+                tag = tag + "Your browser does not support mp4 video"
+                tag = tag + "</video>"
+                tag = tag + "<p>" + file + "</p>"
+                //console.log("tag:", tag)
+                tgtP.innerHTML = tag
+            }
+        }
+
+        function confirmCleanup(form, retention) {
+            if (confirm("Do you want to delete all events older than " + retention + " days?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+
+        function goToDay(date) {
+            var datefield = document.getElementById("selectedday");
+            datefield.value = date
+            document.getElementById("selecteddayfrm").submit();
+        }
+    </script>
 {% endblock %}

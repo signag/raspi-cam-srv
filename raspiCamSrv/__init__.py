@@ -31,6 +31,7 @@ def create_app(test_config=None):
     for logger in(
         app.logger,
         logging.getLogger("werkzeug"),
+        logging.getLogger("raspiCamSrv.db"),
         logging.getLogger("raspiCamSrv.auth"),
         logging.getLogger("raspiCamSrv.auth_su"),
         logging.getLogger("raspiCamSrv.camCfg"),
@@ -43,6 +44,7 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.photoseries"),
         logging.getLogger("raspiCamSrv.photoseriesCfg"),
         logging.getLogger("raspiCamSrv.trigger"),
+        logging.getLogger("raspiCamSrv.motionDetector"),
         logging.getLogger("raspiCamSrv.webcam"),
     ):
         logger.setLevel(logging.ERROR)
@@ -53,7 +55,7 @@ def create_app(test_config=None):
     #>>>>> Explicitely set specific log levels. Leave "werkzeug" at INFO
     logging.getLogger("werkzeug").setLevel(logging.INFO)
     #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO)
-    #logging.getLogger("raspiCamSrv.camCfg").setLevel(logging.INFO)
+    #logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)
     
     #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
     Picamera2.set_logging(Picamera2.ERROR)
@@ -73,14 +75,14 @@ def create_app(test_config=None):
     prgLogTime = datetime.datetime.now()
     prgLogFilename = "prgLog_" + prgLogTime.strftime("%Y%m%d_%H%M%S") + ".log"
     prgLogFile = prgLogPath+ "/" + prgLogFilename
-    #>>>>> Uncomment the following 5 lines when code generation is activated (see below)
+    #>>>>> Uncomment the following 6 lines when code generation is activated (see below)
     #Path(prgLogFile).touch(exist_ok=True)
     #prgFilehandler = logging.FileHandler(prgLogFile)
     #prgFormatter = logging.Formatter('%(message)s')
     #prgFilehandler.setFormatter(prgFormatter)
     #prgLogger.addHandler(prgFilehandler)
     #>>>>> To activate Python code generation, set level to DEBUG
-    prgLogger.setLevel(logging.ERROR)
+    #prgLogger.setLevel(logging.DEBUG)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -104,7 +106,18 @@ def create_app(test_config=None):
     cfgPath = app.static_folder + "/config"
     if settings.getLoadConfigOnStart(cfgPath):
         cfg.loadConfig(cfgPath)
-    
+    cfg = camCfg.CameraCfg()
+    sc = cfg.serverConfig
+    sc.database = os.path.join(app.instance_path, "raspiCamSrv.sqlite")
+        
+    # Configure Triggered Capture        
+    tcActionPath = app.static_folder + "/events"
+    os.makedirs(tcActionPath, exist_ok=True)
+    tc = cfg.triggerConfig
+    tc.actionPath = tcActionPath
+    Path(tc.logFilePath).touch(exist_ok=True)
+
+        
     # Configure Photoseries
     from . import photoseriesCfg
     tlRootPath = app.static_folder + "/photoseries"

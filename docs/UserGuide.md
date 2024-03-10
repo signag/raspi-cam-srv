@@ -33,7 +33,7 @@ The main menu (black background) allows navigation to different screens
 - **Info** opens the [Camera Information](./Information.md) page with information on installed cameras as well as Properties and Sensor Modes of the active camera.
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
-- **Trigger** Allows configuring triggered video and/or photo taking (not yet available)
+- **Trigger** Allows configuring and controlling [triggered video and/or photo taking](./Trigger.md)
 - **Web Cam** opens the [Web Cam](./Webcam.md) page showing web cam features of **raspiCamSrv**
 - **Settings** opens the [Settings](./Settings.md) page where some basic server parameters can be configured and where the active camera can be switched in case the Raspberry Pi device supprts multiple cameras (such as Pi 5).
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
@@ -52,8 +52,12 @@ From right to left, these indicate the status of
 - Video thread
 - Recording [audio](./Settings.md#recording-audio-along-with-video) along with video
 - [Photo Series](./PhotoSeries.md) thread
+- [Motion Capture](./Trigger.md)
 
-Red color indicates that a process is active whereas gray indicates that it is inactive.
+Red color indicates that a process is active whereas gray indicates that it is inactive.    
+In the case of motion capture, yellow color indicates that the process is active but currently not scheduled to register events
+
+![MotionPaused](./img/ProcessIndicator8.jpg)
 
 #### Message Line
 At the bottom of the screen, there is a message line where application messages will be shown when necessary.
@@ -73,7 +77,7 @@ A live stream is shown in in the [Live Screen](./LiveScreen.md)
 
 The streaming server is automatically shut down if no client has been streaming within the last 10 seconds.   
 For example if one is working in other dialogs rather than *Live Screen*, straming is not used and the streaming server is shut down, which is indicated by   
-![ProcessStatusIndicator](./img/ProcessIndicator7.jpg)   
+![ProcessStatusIndicator](./img/ProcessIndicator0.jpg)   
 Streaming is automatically reactivated, if a streaming client connects, for example if the *Live Screen* is activated.
 
 Other clients, either connecting directly through the streaming URL or by using the **raspiCamSrv** web client, will also activate the streaming server.

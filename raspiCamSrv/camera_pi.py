@@ -8,7 +8,7 @@ from raspiCamSrv.photoseriesCfg import Series
 from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
 from libcamera import Transform, Size, ColorSpace, controls
 from picamera2.encoders import JpegEncoder, MJPEGEncoder
-from picamera2.outputs import FileOutput, FfmpegOutput
+from picamera2.outputs import FileOutput, FfmpegOutput, CircularOutput
 from picamera2.encoders import H264Encoder
 from threading import Condition, Lock
 import copy
@@ -1010,6 +1010,11 @@ class Camera():
         Camera.startLiveStream()
         logger.debug("Thread %s: Camera.restartLiveStream: Live stream started", get_ident())
 
+    def getLiveViewBuffer(self):
+        """ Capture and return a buffer
+        """
+        return Camera.cam.capture_buffer(CameraCfg().liveViewConfig.stream)
+
     def get_frame(self):
         """Return the current camera frame."""
         #logger.debug("Thread %s: Camera.get_frame", get_ident())
@@ -1659,6 +1664,153 @@ class Camera():
         if not keepExclusive:
             Camera.ctrl.restoreLivestream(exclusive)
         return fp
+    
+    @staticmethod
+    def quickPhoto(fp: str) -> tuple:
+        """ Take a photo assuming that the camera is started
+        """
+        logger.debug("Thread %s: Camera.quickPhoto - filename: %s", get_ident(), fp)
+        done = False
+        err = ""
+        cfg = CameraCfg()
+        if Camera.cam.started:
+            try:
+                request = Camera.cam.capture_request()
+                request.save(cfg.photoConfig.stream, fp)
+                request.release()
+                done = True
+            except Exception as e:
+                err = str(e)
+        else:
+            err = "Camera not started"
+        return (done, err)
+
+    @staticmethod
+    def quickVideoStart(fp: str) -> tuple:
+        """ Record a video assuming that the camera is started
+        """
+        logger.debug("Thread %s: Camera.quickVideoStart - filename: %s", get_ident(), fp)
+        encoder = None
+        done = False
+        err = ""
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        if Camera.cam.started:
+            try:
+                encoder = H264Encoder()
+                output = fp
+                if output.lower().endswith(".mp4"):
+                    if sc.recordAudio == False:
+                        encoder.output = FfmpegOutput(output, audio=False)
+                    else:
+                        encoder.output = FfmpegOutput(output, audio=True, audio_sync=sc.audioSync)
+                else:
+                    encoder.output = FileOutput(output)
+                Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
+                done = True
+            except Exception as e:
+                err = str(e)
+        else:
+            err = "Camera not started"
+        return (done, encoder, err)
+    
+    @staticmethod
+    def quickVideoStop(encoder) -> tuple:
+        """ Stop a video recording that the camera is started
+        """
+        logger.debug("Thread %s: Camera.quickVideoStop", get_ident())
+        done = False
+        err = ""
+        if Camera.cam.started:
+            try:
+                Camera.cam.stop_encoder(encoder)
+                done = True
+            except Exception as e:
+                err = str(e)
+        else:
+            err = "Camera not started"
+        return (done, err)
+
+    @staticmethod
+    def startCircular(buffersizeSec = 5) -> tuple:
+        """ Start encoder for circular output
+        """
+        logger.debug("Thread %s: Camera.startCircular", get_ident())
+        encoder = None
+        circ = None
+        done = False
+        err = ""
+        cfg = CameraCfg()
+        if Camera.cam.started:
+            try:
+                encoder = H264Encoder()
+                sm = cfg.videoConfig.sensor_mode
+                if sm == "custom":
+                    buffersize = 150
+                else:
+                    buffersize = cfg.sensorModes[sm].fps * buffersizeSec
+                circ = CircularOutput(buffersize=buffersize)
+                encoder.output = [circ]
+                Camera.cam.encoders = encoder
+                Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
+                done = True
+            except Exception as e:
+                err = str(e)
+        else:
+            err = "Camera not started"
+        return (done, circ, encoder, err)
+    
+    @staticmethod
+    def stopCircular(encoder) -> tuple:
+        """ Stop encoder for circular output
+        """
+        logger.debug("Thread %s: Camera.stopCircular", get_ident())
+        done = False
+        err = ""
+        if Camera.cam.started:
+            try:
+                Camera.cam.stop_encoder(encoder)
+                done = True
+            except Exception as e:
+                err = str(e)
+        else:
+            err = "Camera not started"
+        return (done, err)
+    
+    @staticmethod
+    def recordCircular(circ:CircularOutput, fp: str) -> tuple:
+        """ Start recording circular output
+        """
+        logger.debug("Thread %s: Camera.recordCircular - file: %s", get_ident(), fp)
+        done = False
+        err = ""
+        if Camera.cam.started:
+            try:
+                circ.fileoutput = fp
+                circ.start()
+                done = True
+            except Exception as e:
+                err = str(e)
+        else:
+            err = "Camera not started"
+        return (done, err)
+    
+    @staticmethod
+    def stopRecordingCircular(circ:CircularOutput) -> tuple:
+        """ Start recording circular output
+        """
+        logger.debug("Thread %s: Camera.stopRecordingCircular", get_ident())
+        done = False
+        err = ""
+        if Camera.cam.started:
+            try:
+                circ.stop()
+                done = True
+            except Exception as e:
+                err = str(e)
+        else:
+            err = "Camera not started"
+        return (done, err)
 
     @staticmethod
     def takeRawImage(filenameRaw: str, filename: str):

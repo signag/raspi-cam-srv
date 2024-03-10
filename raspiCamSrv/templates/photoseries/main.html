@@ -120,7 +120,7 @@
                         </form>
                         {% elif action == "remove" and (sr.nextActions|length == 1 or sr.status == "NEW") %}
                         <form method="post" id="removeseries" action="{{ url_for('photoseries.remove_series') }}">
-                            <input class="w3-button w3-black" style="width:95px" value="Remove" onclick="confirmRemove('removeseries')">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Remove" onclick="confirmRemove('removeseries')">
                         </form>
                         {% endif %}
                         {% endfor %}
@@ -129,7 +129,7 @@
                         {% for action in sr.nextActions %}
                         {% if (sr.status != "NEW" and action == "remove" and sr.nextActions|length > 1) %}
                         <form method="post" id="removeseries2" action="{{ url_for('photoseries.remove_series') }}">
-                            <input class="w3-button w3-black" style="width:95px" value="Remove" onclick="confirmRemove('removeseries2')">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Remove" onclick="confirmRemove('removeseries2')">
                         </form>
                         {% elif action == "finish" %}
                         <form method="post" id="finishseries" action="{{ url_for('photoseries.finish_series') }}">
@@ -1013,7 +1013,10 @@
 
         function confirmRemove(form) {
             if (confirm("Do you want to remove this series\nThis will delete all related rosources!")) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
 
@@ -1022,14 +1025,20 @@
                       + "Do you want to overwrite the attached config & ctrl with the current 'Photo'/'Raw Photo' configuration and controls?"  
                         )
             ) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
 
         function confirmActivateConfig(form) {
             if (confirm("Do you want to replace the active 'Photo'/Raw Photo' configuration and controls\n"
                       + "with the settings attached to the Photo Series?")) {
+                document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
             }
         }
     </script>

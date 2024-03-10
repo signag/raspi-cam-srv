@@ -2,6 +2,22 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.2
+
+### Installation Hints
+
+This version has a new database schema with tables used for captured events.
+
+After an update with ```git pull```, you need to initialize the database with   
+```flask --app raspiCamSrv init-db```   
+before starting the server.   
+This will also recreate the user database and requires new registration.
+
+Services should be stopped during upgrade
+
+### New Feature
+
+- Introduced basic motion capturing (see [Triggered Capture of Videos and Photo](./Trigger.md))
 
 ## V2.1.2
 

@@ -2,7 +2,10 @@ import sqlite3
 
 import click
 from flask import current_app, g
+from raspiCamSrv.camCfg import CameraCfg
+import logging
 
+logger = logging.getLogger(__name__)
 
 def get_db():
     if "db" not in g:

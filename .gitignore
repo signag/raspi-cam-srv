@@ -9,6 +9,7 @@ raspiCamSrv/static/photos/
 raspiCamSrv/static/timelapse/
 raspiCamSrv/static/photoseries/
 raspiCamSrv/static/config/
+raspiCamSrv/static/events/
 *.mp4
 *.h264
 
