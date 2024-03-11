@@ -14,11 +14,12 @@ You can change the active month using the date control and navigation arrows, or
 
 ### Cleanup
 
-The *Cleanup* button can be used for event cleanup after a confirmation
+The *Cleanup* button can be used for removing old events.   
+This requires that the process is stopped.
 
-![CleanupConfirm](./img/Trigger_ConfirmCleanup.jpg)
-
-The *Retention Period* for cleanup has been specified on the [Trigger/Control](./Trigger.md) page.
+After pressing the button, a confirmation is required:   
+![CleanupConfirm](./img/Trigger_ConfirmCleanup.jpg)    
+The *Retention Period* for cleanup, shown in this confirmation, has been specified on the [Trigger/Control](./Trigger.md) page.
 
 For all events older than the *Retention Period*, cleanup will
 
