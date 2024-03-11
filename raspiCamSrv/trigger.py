@@ -69,6 +69,10 @@ def control():
         tc.operationStartStr = opStartStr
         opEndStr = request.form["opend"]
         tc.operationEndStr = opEndStr
+        if request.form.get("opautostart") is None:
+            tc.operationAutoStart = False
+        else:
+            tc.operationAutoStart = True
         detectDelay = int(request.form["opdelay"])
         tc.detectionDelaySec = detectDelay
         detectPause = int(request.form["oppause"])

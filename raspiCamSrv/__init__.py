@@ -4,8 +4,11 @@ from flask import Flask
 import logging
 from flask.logging import default_handler
 from picamera2 import Picamera2
+from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.motionDetector import MotionDetector
 import json
 import datetime
+from werkzeug.serving import is_running_from_reloader
 
 def create_app(test_config=None):
     # create and configure the app
@@ -54,7 +57,7 @@ def create_app(test_config=None):
 
     #>>>>> Explicitely set specific log levels. Leave "werkzeug" at INFO
     logging.getLogger("werkzeug").setLevel(logging.INFO)
-    #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.INFO)
+    #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)
     
     #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
@@ -116,7 +119,6 @@ def create_app(test_config=None):
     tc = cfg.triggerConfig
     tc.actionPath = tcActionPath
     Path(tc.logFilePath).touch(exist_ok=True)
-
         
     # Configure Photoseries
     from . import photoseriesCfg
@@ -125,6 +127,11 @@ def create_app(test_config=None):
     tlCfg = photoseriesCfg.PhotoSeriesCfg()
     tlCfg.rootPath = tlRootPath
     tlCfg.initFromTlFolder()
+
+    # Autostart triggered capture, if configured
+    if tc.operationAutoStart:
+        MotionDetector().startMotionDetection()
+        sc.isTriggerRecording = True
     
     # Register required blueprints
     from . import auth

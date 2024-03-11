@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.1.2
+
+### New Feature
+
+- Added an option to automatically start motion capture with the Flask server.   
+Thus, if server start is done in a service, motion capturing will automatically be active if the device is booted.   
+(See [Triggered Capture of Videos and Photos](./Trigger.md))
+
 ## V2.2.1
 
 ### Bugfixes

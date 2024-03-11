@@ -26,6 +26,7 @@ class TriggerConfig():
         self._operationStartMinute: int = 0
         self._operationEndMinute: int = 1439
         self._operationWeekdays = {"1":True, "2":True, "3":True, "4":True, "5":True, "6":True, "7":True}
+        self._operationAutoStart = False
         self._detectionDelaySec = 0
         self._detectionPauseSec = 20
         self._motionDetectAlgo = 1
@@ -106,6 +107,14 @@ class TriggerConfig():
     @operationWeekdays.setter
     def operationWeekdays(self, value: dict):
         self._operationWeekdays = value
+
+    @property
+    def operationAutoStart(self) -> bool:
+        return self._operationAutoStart
+
+    @operationAutoStart.setter
+    def operationAutoStart(self, value: bool):
+        self._operationAutoStart = value
 
     @property
     def detectionDelaySec(self) -> int:
@@ -2712,6 +2721,12 @@ class ServerConfig():
                     setattr(sc, key, dbt)
             else:
                 setattr(sc, key, value)
+        # Reset process status variables
+        sc.isLiveStream = False
+        sc.isAudioRecording = False
+        sc.isPhotoSeriesRecording = False
+        sc.isTriggerRecording = False
+        sc.isVideoRecording = False
         return sc
     
 class CameraCfg():

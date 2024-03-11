@@ -176,6 +176,26 @@
                 <tr>
                     <td class="w3-tooltip" style="width:25%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Automatically start with server start.<br>
+                            Requires to store configuration and start server with stored configuration
+                        </span>
+                        <label for="opautostart">Automatic Start with Server:</label>
+                    </td>
+                    <td style="width:5%;">
+                        {% if tc.operationAutoStart == True %}
+                        <input type="checkbox" id="opautostart" name="opautostart" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="opautostart" name="opautostart" value="0">
+                        {% endif %}
+                    </td>
+                    <td colspan="6" style="width: 70%;"></td>
+                </tr>
+                <tr>
+                    <td colspan="9" style="width: 100%;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip" style="width:25%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Delay in seconds for starting actions after trigger event
                         </span>
                         <label for="opdelay">Detection Delay (Sec):</label>
