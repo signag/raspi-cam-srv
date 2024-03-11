@@ -539,11 +539,17 @@ class Series():
         if "Lux" in ret:
             ret["Lux"] = round(float(ret["Lux"]),4)
         if "LensPosition" in ret:
-            if float(ret["LensPosition"]) > 0:
-                ret["FocalDistance"] = round(1.0/float(ret["LensPosition"]), 4)
+            lp = ret["LensPosition"]
+            if len(lp) > 0:
+                if float(ret["LensPosition"]) > 0:
+                    ret["FocalDistance"] = round(1.0/float(ret["LensPosition"]), 4)
+                else:
+                    ret["FocalDistance"] = 999.999
+                ret["LensPosition"] = round(float(ret["LensPosition"]),4)
             else:
-                ret["FocalDistance"] = 999.999
-            ret["LensPosition"] = round(float(ret["LensPosition"]),4)
+                ret["FocalDistance"] = "0"
+                ret["LensPosition"] = "0"
+                
         if "ExposureTime" in ret:
             ret["ExposureTime"] = round(float(ret["ExposureTime"]) / 1000000,4)
         return ret

@@ -31,7 +31,28 @@ While motion capturing is active, the live stream process will be kept active be
 While motion capturing is active, you may continue working with **raspiCamSrv**.   
 You may even take photos, videos or photo series.
 
-However, you should avoyd changing camera controls or configuration because this would restart the camera
+However, you should avoid changing camera controls or configuration because this might restart the camera.
+
+### Dos and Don'ts
+
+#### Blocked:
+
+- Changing [Settings](./Settings.md)
+- Starting a [Exposure Series](./PhotoSeriesExp.md) or a [Focus Stack Series](./PhotoSeriesFocus.md)
+- Changing [Camera Configuration](./Configuration.md)
+
+#### Changing Zoom
+
+This can be done while trigger capturing is active.   
+However the moment when the new zoom setting is activated will be registered as motion event.
+
+#### Changing Focus
+
+To improve the focus for camera model 3, you may change [Focus Settings](./FocusHandling.md) and [Trigger Autofocus](./FocusHandling.md#trigger-autofocus)
+
+#### Changing Camera Controls
+
+In order to change the quality of videos and photos, you may change any [Camera Controls](./CameraControls.md) while motion capturing is active.
 
 ## Log File
 

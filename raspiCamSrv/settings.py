@@ -49,37 +49,40 @@ def serverconfig():
     los = getLoadConfigOnStart(cfgPath)
     if request.method == "POST":
         msg = None
-        photoType = request.form["phototype"]
-        sc.photoType = photoType
-        rawPhotoType = request.form["rawphototype"]
-        sc.rawPhotoType = rawPhotoType
-        videoType = request.form["videotype"]
-        sc.videoType = videoType
-        activeCam = int(request.form["activecamera"])
-        # If active camera has changed reset stream size to force adaptation of sensor mode
-        if activeCam != sc.activeCamera:
-            cfg.liveViewConfig.stream_size = None
-            cfg.photoConfig.stream_size = None
-            cfg.rawConfig.stream_size = None
-            cfg.videoConfig.stream_size = None
-            sc.activeCamera = activeCam
-            for cm in cs:
-                if activeCam == cm.num:
-                    sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
-                    break
-            Camera.switchCamera()
-            msg = "Camera switched to " + sc.activeCameraInfo
-            logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
-        chnk = int(request.form["chunkSizePhoto"])
-        sc.chunkSizePhoto = chnk
-        recordAudio = not request.form.get("recordaudio") is None
-        sc.recordAudio = recordAudio        
-        audioSync = request.form["audiosync"]
-        sc.audioSync = audioSync
-        useHist = not request.form.get("showhistograms") is None
-        if not useHist:
-            sc.displayContent = "meta"
-        sc.useHistograms = useHist
+        if sc.isTriggerRecording:
+            msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
+        if not msg:
+            photoType = request.form["phototype"]
+            sc.photoType = photoType
+            rawPhotoType = request.form["rawphototype"]
+            sc.rawPhotoType = rawPhotoType
+            videoType = request.form["videotype"]
+            sc.videoType = videoType
+            activeCam = int(request.form["activecamera"])
+            # If active camera has changed reset stream size to force adaptation of sensor mode
+            if activeCam != sc.activeCamera:
+                cfg.liveViewConfig.stream_size = None
+                cfg.photoConfig.stream_size = None
+                cfg.rawConfig.stream_size = None
+                cfg.videoConfig.stream_size = None
+                sc.activeCamera = activeCam
+                for cm in cs:
+                    if activeCam == cm.num:
+                        sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
+                        break
+                Camera.switchCamera()
+                msg = "Camera switched to " + sc.activeCameraInfo
+                logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
+            chnk = int(request.form["chunkSizePhoto"])
+            sc.chunkSizePhoto = chnk
+            recordAudio = not request.form.get("recordaudio") is None
+            sc.recordAudio = recordAudio        
+            audioSync = request.form["audiosync"]
+            sc.audioSync = audioSync
+            useHist = not request.form.get("showhistograms") is None
+            if not useHist:
+                sc.displayContent = "meta"
+            sc.useHistograms = useHist
         if msg:
             flash(msg)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
@@ -171,13 +174,14 @@ def remove_users():
     if request.method == "POST":
         cnt = 0
         msg = None
-        for user in g.users:
-            if request.form.get("sel_" + str(user["id"])) is not None:
-                if user["id"] == g.user["id"]:
-                    msg = "The active user cannot be removed"
-                    break
-                else:
-                    cnt += 1
+        if not msg:
+            for user in g.users:
+                if request.form.get("sel_" + str(user["id"])) is not None:
+                    if user["id"] == g.user["id"]:
+                        msg = "The active user cannot be removed"
+                        break
+                    else:
+                        cnt += 1
         if not msg:
             logger.debug("Request to remove %s users", cnt)
             if cnt > 0:

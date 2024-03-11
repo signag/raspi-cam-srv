@@ -2,7 +2,16 @@
 
 [![Up](img/goup.gif)](../README.md)
 
-## V2.2
+## V2.2.1
+
+### Bugfixes
+
+- Prevent changing settings while the trigger-capture process is active
+- Prevent changing camera configuration while the trigger-capture process is active
+- Prevent starting an Exposure Series or a Focus Stack Series while the trigger-capture process is active
+- Fixed "ValueError: could not convert string to float: ''" which may have ocurred for Exposure Series or Focus Stack Series with a camera having no focus support
+
+## V2.2.0
 
 ### Installation Hints
 
