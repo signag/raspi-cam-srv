@@ -52,7 +52,7 @@ From right to left, these indicate the status of
 - Video thread
 - Recording [audio](./Settings.md#recording-audio-along-with-video) along with video
 - [Photo Series](./PhotoSeries.md) thread
-- [Motion Capture](./Trigger.md)
+- [Motion Capture](./Trigger.md) thread
 
 Red color indicates that a process is active whereas gray indicates that it is inactive.    
 In the case of motion capture, yellow color indicates that the process is active but currently not scheduled to register events
