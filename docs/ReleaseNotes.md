@@ -2,7 +2,7 @@
 
 [![Up](img/goup.gif)](../README.md)
 
-## V2.1.2
+## V2.2.2
 
 ### New Feature
 
