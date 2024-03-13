@@ -1197,7 +1197,7 @@ class Camera():
                 cfg.rawConfig.format = str(cfgSensorModes[maxModei].format)
             # For Video
             if cfg.videoConfig.stream_size is None:
-                # For Pi Zero set video resolution to lowes value and buffer size to 4
+                # For Pi Zero set video resolution to lowest value
                 if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
                     cfg.videoConfig.sensor_mode = 0
                     cfg.videoConfig.stream_size = cfgSensorModes[0].size
@@ -1706,7 +1706,13 @@ class Camera():
                         encoder.output = FfmpegOutput(output, audio=True, audio_sync=sc.audioSync)
                 else:
                     encoder.output = FileOutput(output)
-                Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
+                    
+                stream = cfg.videoConfig.stream
+                # For Pi Zero take video with liveView (lowres stream)
+                # The lower buffer size of lowres is too small for video and we do not want to switch mode
+                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
+                    stream = cfg.liveViewConfig.stream
+                Camera.cam.start_encoder(encoder, name=stream)
                 done = True
             except Exception as e:
                 err = str(e)

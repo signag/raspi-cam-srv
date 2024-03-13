@@ -66,4 +66,4 @@ If a new event is registered while video recording from the previous event is st
 - *Photo Burst - Number of Photos* allows specifying a number of photos which will be successively captured in case of an event.   
 If video is recorded, at least one photo must be specified.
 - *Photo Burst Interval* is the interval after the previous photo when the system will capture a new photo if there is still motion detected. If no motion is detected after this interval, no photo will be taken.
-- *Action data path* is the path where pictures an logs for events will be stored.
+- *Action data path* is the path where pictures and logs for events will be stored.

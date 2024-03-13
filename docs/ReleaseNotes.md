@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.2.3
+
+### Bugfixes
+
+- For Raspberry Pi Zero, use the *lowres* stream (Live View Configuration) for recording videos during motion capture.   
+During motion capture, the *Live View* camera configuration is used because the live stream is required for detecting motion. However, the *Buffer Count* of 2, used for this configuration for Pi Zero (see [V2.1.2](#v212)), is too small for video recording with the resolution of the *Video* configuration.
+- Fixed an error which could occur when [viewing events](./TriggerEventViewer.md#events) when placeholder photos for videos were not yet read from the database.
+
 ## V2.2.2
 
 ### New Feature

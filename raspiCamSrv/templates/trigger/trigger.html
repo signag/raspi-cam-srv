@@ -492,7 +492,7 @@
                             </td>
                             {% if tc.evIncludeVideo %}
                             {% set video = ev.video %}
-                            {% if video|length > 0 %}
+                            {% if (video|length > 0) and (video.photo != None) %}
                             <td style="width:50%;">
                                 <div class="w3-card-4" style="width:100%">
                                     {% set urlMini=url_for('static', filename='events/' + video.photo) %}
