@@ -89,7 +89,7 @@ def liveViewCfg():
             format = request.form["LIVE_format"]
             cfglive.display = None
             cfglive.encode = cfglive.stream
-            #Camera().restartLiveStream()
+            Camera().restartLiveStream()
 
             msg = ""
             if err:

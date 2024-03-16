@@ -9,14 +9,16 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.2.3
+## Feature Overview V2.3.0
 For more details, see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md)
 
 ![Live Overview](docs/img/Live.jpg)
 
 - The [Live screen](docs/LiveScreen.md) shows a live stream of the active camera and allows individually selecting and setting all [camera controls](docs/CameraControls.md) supported by Picamera2.
-- The **live stream** (MJPEG stream) can also be directly accessed through the enpoint ```http://<server>:<port>/video_feed``` without authentication.
+- The **live stream** (MJPEG stream) can also be directly accessed through the endpoint ```http://<server>:<port>/video_feed``` without authentication.
 - Web access to photo snapshots is achieved through the URL ```http://<server>:<port>/photo_feed``` without authentication.
+- Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
+- [Event viewer](./docs/TriggerEventViewer.md) with calendar overview
 - For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance (see [Focus handling](docs/FocusHandling.md)).
 - For zooming, the intended image section can be [drawn graphically](docs/ZoomPan.md#graphically-setting-the-zoom-window) on the live stream area.
 - Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](docs/LiveScreen.md) together with their metadata or alternatively with their histogram (see [Photo taking](docs/Phototaking.md)).
@@ -37,10 +39,10 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 
-**New in V2.2**
+**New in V2.3**
+- For systems with 2 Raspberry Pi cameras (currently Pi 5) both cameras can stream simultaneously.    
+The non-active camera stream and photo can be accessed through endpoints ```http://<server>:<port>/video_feed2``` and ```http://<server>:<port>/photo_feed2```, respectively.
 
-- Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
-- [Event viewer](./docs/TriggerEventViewer.md) with calendar overview
 
 ## Known Issues
 

@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.3.0
+
+### New Features
+
+- Streaming of second camera added (see [Webcam](./Webcam.md) page). A single **raspiCamSrv** server can now simultaneously stream both cameras connected to a Raspberry Pi 5.
+- The camera configuration and controls for the active camera can be preserved also for a situation when this camera acts as "other" camera.
+- Streaming configurations for both cameras are stored together with the entire configuration (see [Settings](./Settings.md#server-configuration-storage)) and can be loaded on server restart.
+
 ## V2.2.3
 
 ### Bugfixes

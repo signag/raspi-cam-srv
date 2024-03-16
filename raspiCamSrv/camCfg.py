@@ -1738,6 +1738,7 @@ class ServerConfig():
         self._lastPhotoSeriesTab = "series"
         self._lastTriggerTab = "trgcontrol"
         self._isLiveStream = False
+        self._isLiveStream2 = None
         self._isVideoRecording = False
         self._isAudioRecording = False
         self._isPhotoSeriesRecording = False
@@ -2050,6 +2051,14 @@ class ServerConfig():
     @isLiveStream.setter
     def isLiveStream(self, value: bool):
         self._isLiveStream = value
+
+    @property
+    def isLiveStream2(self) -> bool:
+        return self._isLiveStream2
+
+    @isLiveStream2.setter
+    def isLiveStream2(self, value: bool):
+        self._isLiveStream2 = value
 
     @property
     def isVideoRecording(self) -> bool:
@@ -2776,6 +2785,7 @@ class CameraCfg():
                 # For Pi Zero reduce buffer_count defaults for live view and video
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 4
+            cls._streamingCfg = {}
         return cls._instance
     
     @property
@@ -2886,6 +2896,14 @@ class CameraCfg():
     def serverConfig(self, value: ServerConfig):
         self._serverConfig = value
     
+    @property
+    def streamingCfg(self) -> dict:
+        return self._streamingCfg
+
+    @streamingCfg.setter
+    def streamingCfg(self, value: dict):
+        self._streamingCfg = value
+    
     def _persistCl(self, cl, fn: str, cfgPath: str):
         """ Store class dictionary for class cl in the config file fn
         """
@@ -2914,6 +2932,7 @@ class CameraCfg():
             self._persistCl(self.controls, "controls.json", cfgPath)
             self._persistCl(self.serverConfig, "serverConfig.json", cfgPath)
             self._persistCl(self.triggerConfig, "triggerConfig.json", cfgPath)
+            self._persistCl(self.streamingCfg, "streamingCfg.json", cfgPath)
             
     def _toJson(self, cl):
         return json.dumps(cl, default=lambda o: getattr(o, '__dict__', str(o)), indent=4)
@@ -2933,6 +2952,34 @@ class CameraCfg():
                     obj = cl()
         return obj
     
+    def _initStreamingConfigFromDisc(self, fn: str, cfgPath: str) -> dict:
+        """ Load streaming configuration
+        """
+        sc = {}
+        scdict = {}
+        fp = cfgPath + "/" + fn
+        if os.path.exists(fp):
+            with open(fp) as f:
+                try:
+                    scdict = json.load(f)
+                except Exception as e:
+                    logger.error("Error loading from %s: %s", fp, e)
+                    scdict = {}
+        if len(scdict) > 0:
+            for camKey, camValue in scdict.items():
+                scfg = {}
+                for key, value in camValue.items():
+                    if key == "liveconfig":
+                        scfg["liveconfig"] = CameraConfig.initFromDict(value)
+                    elif key == "videoconfig":
+                        scfg["videoconfig"] = CameraConfig.initFromDict(value)
+                    elif key == "controls":
+                        scfg["controls"] = CameraControls.initFromDict(value)
+                    else:
+                        scfg[key] = value
+                sc[camKey] = scfg
+        return sc
+    
     def loadConfig(self, cfgPath):
         """ Load configuration from files, except camera-specific configs
         """
@@ -2945,4 +2992,5 @@ class CameraCfg():
                 self.videoConfig = self._loadConfigCl(CameraConfig, "videoConfig.json", cfgPath)
                 self.controls = self._loadConfigCl(CameraControls, "controls.json", cfgPath)
                 self.triggerConfig = self._loadConfigCl(TriggerConfig, "triggerConfig.json", cfgPath)
+                self.streamingCfg = self._initStreamingConfigFromDisc("streamingCfg.json", cfgPath)
                 

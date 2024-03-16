@@ -48,11 +48,12 @@ On the right side of the menu bar there is a group of statis indicators for the 
 
 From right to left, these indicate the status of
 
-- Live stream thread
+- Live stream thread for active camera
 - Video thread
 - Recording [audio](./Settings.md#recording-audio-along-with-video) along with video
 - [Photo Series](./PhotoSeries.md) thread
 - [Motion Capture](./Trigger.md) thread
+- Live stream thread for the other camera, if available (see [Webcam](./Webcam.md))
 
 Red color indicates that a process is active whereas gray indicates that it is inactive.    
 In the case of motion capture, yellow color indicates that the process is active but currently not scheduled to register events
@@ -72,14 +73,18 @@ The straming URL is
 Both URLs can be accessed without authentication.
 
 In the web client, an active streaming server is indicated with the process status indicators as    
-![ProcessStatusIndicator](./img/ProcessIndicator1.jpg)   
-A live stream is shown in in the [Live Screen](./LiveScreen.md)
+![ProcessStatusIndicator](./img/ProcessIndicator1.jpg) if only the active camera is streaming or   
+![ProcessStatusIndicator](./img/ProcessIndicator10.jpg) if both cameras are streaming or     
+![ProcessStatusIndicator](./img/ProcessIndicator11.jpg) if if only the other (not active) camera is streaming     
 
-The streaming server is automatically shut down if no client has been streaming within the last 10 seconds.   
-For example if one is working in other dialogs rather than *Live Screen*, straming is not used and the streaming server is shut down, which is indicated by   
+A live stream is shown in in the [Live Screen](./LiveScreen.md) for the active camera or on the [Webcam](./Webcam.md) page for both cameras.
+
+The streaming servers are automatically shut down if no client has been streaming within the last 10 seconds.   
+This is independently controlled for both cameras.   
+For example if one is working in other dialogs rather than *Live Screen*, straming is not used and the streaming servers are shut down, which is indicated by   
 ![ProcessStatusIndicator](./img/ProcessIndicator0.jpg)   
 Streaming is automatically reactivated, if a streaming client connects, for example if the *Live Screen* is activated.
 
-Other clients, either connecting directly through the streaming URL or by using the **raspiCamSrv** web client, will also activate the streaming server.
+Other clients, either connecting directly through the streaming URL or by using the **raspiCamSrv** web client, will also activate the streaming servers.
 
-Streaming can be deactivated, if a **raspiCamSrv** task is executed which requires exclusive access to the camera because of a specific [Configuration](./Configuration.md) which is not compliant with the configuration required for streaming (for more details, see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)).
+Streaming of the active camera can be deactivated, if a **raspiCamSrv** task is executed which requires exclusive access to the camera because of a specific [Configuration](./Configuration.md) which is not compliant with the configuration required for streaming (for more details, see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)).

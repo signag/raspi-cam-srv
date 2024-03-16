@@ -12,6 +12,9 @@
                 <h3 style="margin: 0px;">{{ sc.activeCameraInfo}}</h3>
             </td>
             <td style="width: 50%;">
+            {% if str2 != None %}
+                <h3 style="margin: 0px;">{{ str2["camerainfo"]}}</h3>
+            {% endif %}
             </td>
         </tr>
         <tr>
@@ -19,6 +22,9 @@
                 <h4 style="margin: 0px;">Video Stream:</h4>
             </td>
             <td>
+            {% if str2 != None %}
+                <h4 style="margin: 0px;">Video Stream:</h4>
+            {% endif %}
             </td>
         </tr>
         <tr>
@@ -26,31 +32,33 @@
                 Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
             </td>
             <td>
-                
+            {% if str2 != None %}
+                Using stored configuration with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+            {% endif %}
             </td>
         </tr>
         <tr>
             <td>
             <!-- Live stream -->
             {% if sc.isLiveStream %}
-            <img src="{{ url_for('home.video_feed') }}" class="w3-image" id="liveviewimage" alt="Camera Live View">
+                <img src="{{ url_for('home.video_feed') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
             {% else %}
             {% if sc.isVideoRecording %}
             {% if sc.recordAudio == False %}
-            <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" id="liveviewimage"
-                alt="Placeholder for video recording">
+                <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
             {% else %}
-            <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" id="liveviewimage"
-                alt="Placeholder for video recording">
+                <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
             {% endif %}
             {% elif sc.isPhotoSeriesRecording %}
-            <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" id="liveviewimage"
-                alt="Placeholder for video recording">
+                <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
             {% endif %}
             {% endif %}
             </td>
             <td>
-
+            <!-- Live stream 2 -->
+            {% if str2 != None %}
+                <img src="{{ url_for('home.video_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+            {% endif %}
             </td>
         </tr>
         <tr>
@@ -58,7 +66,9 @@
                 MJPEG Streaming URL: <a href="http://{{ g.hostname }}/video_feed" target="_blank">http://{{ g.hostname }}/video_feed</a>
             </td>
             <td>
-            
+            {% if str2 != None %}
+                MJPEG Streaming URL: <a href="http://{{ g.hostname }}/video_feed2" target="_blank">http://{{ g.hostname }}/video_feed2</a>
+            {% endif %}
             </td>
         </tr>
         <tr>
@@ -66,7 +76,9 @@
                 <h4 style="margin: 0px;">Photo:</h4>
             </td>
             <td>
-
+            {% if str2 != None %}
+                <h4 style="margin: 0px;">Photo:</h4>
+            {% endif %}
             </td>
         </tr>
         <tr>
@@ -75,12 +87,20 @@
                 with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
             </td>
             <td>
-        
+            {% if str2 != None %}
+                Using stored Configuration
+                with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+            {% endif %}
             </td>
         </tr>
         <tr>
             <td>
-                <img src="{{ url_for('webcam.photo_feed') }}" class="w3-image" id="liveviewimage" alt="Camera Live View">
+                <img src="{{ url_for('webcam.photo_feed') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+            </td>
+            <td>
+            {% if str2 != None %}
+                <img src="{{ url_for('webcam.photo_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+            {% endif %}
             </td>
         </tr>
         <tr>
@@ -88,7 +108,29 @@
                 Photo URL: <a href="http://{{ g.hostname }}/photo_feed" target="_blank">http://{{ g.hostname }}/photo_feed</a>
             </td>
             <td>
-            
+            {% if str2 != None %}
+                Photo URL: <a href="http://{{ g.hostname }}/photo_feed2" target="_blank">http://{{ g.hostname }}/photo_feed2</a>
+            {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if str2 != None %}
+                <form method="post" action="{{ url_for('webcam.store_streaming_config') }}">
+                    <p style="margin-bottom: 0"></p>
+                    <input class="w3-button w3-black" type="submit" value="Memorize Configuration and Controls for Camera Change">
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if str2 != None %}
+                <form method="post" action="{{ url_for('webcam.switch_cameras') }}">
+                    <p style="margin-bottom: 0"></p>
+                    <input class="w3-button w3-black" type="submit" value="<<< Switch Cameras >>>">
+                </form>
+                {% endif %}
             </td>
         </tr>
     </table>

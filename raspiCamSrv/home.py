@@ -42,12 +42,30 @@ def gen(camera):
         #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), l)
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
+def gen2(camera):
+    """Video streaming generator function."""
+    #logger.debug("Thread %s: In gen", get_ident())
+    yield b'--frame\r\n'
+    while True:
+        frame = camera.get_frame2()
+        l = len(frame)
+        #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), l)
+        yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+
 @bp.route("/video_feed")
 # @login_required
 def video_feed():
     logger.debug("Thread %s: In video_feed", get_ident())
     Camera().startLiveStream()
     return Response(gen(Camera()),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@bp.route("/video_feed2")
+# @login_required
+def video_feed2():
+    logger.debug("Thread %s: In video_feed2", get_ident())
+    Camera().startLiveStream2()
+    return Response(gen2(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @bp.route("/photos/<photo>")

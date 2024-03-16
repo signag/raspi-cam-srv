@@ -80,6 +80,13 @@
                 <a href="{{ url_for('auth.logout') }}" class="w3-bar-item w3-button" id='logoutbtn' onclick="openMenu('logoutbtn')">Log Out</a>
                 {% endif %}
                 <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+                    {% if sc.isLiveStream2 != None %}
+                    {% if sc.isLiveStream2 == True %}
+                    <img src="{{ url_for('static', filename='recording_live2_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px"> 
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_live2_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px"> 
+                    {% endif %}
+                    {% endif %}
                     {% if sc.isTriggerRecording %}
                     {% if sc.isTriggerWaiting %}
                     <img src="{{ url_for('static', filename='recording_trigger_wait.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
