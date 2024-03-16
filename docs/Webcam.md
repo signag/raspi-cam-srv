@@ -21,6 +21,17 @@ The configuration and camera stream used for video and photo capture are indicat
 
 The links shown on the page open a new browser window.
 
+### Buttons
+
+#### Memorize Configuration and Controls for Camera Change
+
+This button stores the current [Camera Configuration](./Configuration.md) for *Live View* and *Video* as well as the current [Controls](./CameraControls.md) settings for the active camera in a specific structure (streamingCfg) so that it can be reused for streaming in a case that the other camera has been activated. (See also [Configuring MJPEG Stream and jpeg Photo](#configuring-mjpeg-stream-and-jpeg-photo))
+
+
+#### <<< Switch Cameras >>>
+
+With this button, you can switch the cameras so that the one sown on the right side will become the active camera.
+
 ## Process Status Indicators
 
 [Process Status Indicators](./UserGuide.md#process-status-indicators) show whether a background thread for streaming is active or not.   
@@ -39,7 +50,7 @@ The photo snapshot is currently also using the LIVE configuration.
 
 ## Configuring MJPEG Stream and jpeg Photo
 
-With **raspiCamSrv**, you can [Camera Configuration](./Configuration.md) and [Controls](./CameraControls.md) apply always to the active camera (which camera is the active one, can be selected in the [Settings](./Settings.md)).
+With **raspiCamSrv**, [Camera Configuration](./Configuration.md) and [Controls](./CameraControls.md) apply always to the active camera (which camera is the active one, can be selected in the [Settings](./Settings.md)).
 
 When the Flask server starts up without preloading stored configurations, the active camera and, if available, the second camera are preconfigured with parameter defaults.
 
