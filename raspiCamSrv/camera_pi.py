@@ -195,12 +195,14 @@ class CameraController():
         if self._cam.started == True:
             try:
                 #First stop encoders
+                logger.debug("Thread %s: CameraController.requestStop - Stopping %s encoders", get_ident(), len(self._activeEncoders))
                 while len(self._activeEncoders) > 0:
                     task, encoder = self._activeEncoders.popitem()
                     self._cam.stop_encoder(encoder)
                     prgLogger.debug("picam2.stop_encoder(encoder)")
                     logger.debug("Thread %s: CameraController.requestStop - Stopped Encoder for %s", get_ident(), task)
                 #Then stop the camera
+                logger.debug("Thread %s: CameraController.requestStop - Stopping camera", get_ident())
                 self._cam.stop()
                 prgLogger.debug("picam2.stop()")
                 cnt = 0
@@ -974,7 +976,7 @@ class Camera():
         """
         logger.debug("Thread %s: Camera.startLiveStream", get_ident())
         if Camera.liveViewDeactivated:
-            logger.debug("Thread %s: Not starting Live View thread. Live View deactivated")
+            logger.debug("Thread %s: Not starting Live View thread. Live View deactivated", get_ident())
             CameraCfg().serverConfig.isLiveStream = False
         else:
             if Camera.thread is None:
@@ -1324,7 +1326,8 @@ class Camera():
             # For Video
             if cfg.videoConfig.stream_size is None:
                 # For Pi Zero set video resolution to lowest value
-                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
+                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
                     cfg.videoConfig.sensor_mode = 0
                     cfg.videoConfig.stream_size = cfgSensorModes[0].size
                 else:
@@ -1407,7 +1410,8 @@ class Camera():
                 videoConfig.encode = "main"
                 videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
                 
-                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
+                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
                     videoConfig.sensor_mode = 0
                     videoConfig.stream_size = sensorModes[0]["size"]
                 else:
@@ -2059,11 +2063,13 @@ class Camera():
                 stream = cfg.videoConfig.stream
                 # For Pi Zero take video with liveView (lowres stream)
                 # The lower buffer size of lowres is too small for video and we do not want to switch mode
-                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
+                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
                     stream = cfg.liveViewConfig.stream
                 Camera.cam.start_encoder(encoder, name=stream)
                 done = True
             except Exception as e:
+                logger.error("Thread %s: Camera.quickVideoStart - error when starting encoder: %s", get_ident(), e)
                 err = str(e)
         else:
             err = "Camera not started"
@@ -2081,6 +2087,7 @@ class Camera():
                 Camera.cam.stop_encoder(encoder)
                 done = True
             except Exception as e:
+                logger.error("Thread %s: Camera.quickVideoStop - error when stopping encoder: %s", get_ident(), e)
                 err = str(e)
         else:
             err = "Camera not started"
@@ -2110,6 +2117,7 @@ class Camera():
                 Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
                 done = True
             except Exception as e:
+                logger.error("Thread %s: Camera.startCircular - error when starting encoder: %s", get_ident(), e)
                 err = str(e)
         else:
             err = "Camera not started"
@@ -2127,6 +2135,7 @@ class Camera():
                 Camera.cam.stop_encoder(encoder)
                 done = True
             except Exception as e:
+                logger.error("Thread %s: Camera.stopCircular - error when stopping encoder: %s", get_ident(), e)
                 err = str(e)
         else:
             err = "Camera not started"
@@ -2145,6 +2154,7 @@ class Camera():
                 circ.start()
                 done = True
             except Exception as e:
+                logger.error("Thread %s: Camera.recordCircular - error when starting circular: %s", get_ident(), e)
                 err = str(e)
         else:
             err = "Camera not started"
@@ -2162,6 +2172,7 @@ class Camera():
                 circ.stop()
                 done = True
             except Exception as e:
+                logger.error("Thread %s: Camera.stopRecordingCircular - error when stopping circular: %s", get_ident(), e)
                 err = str(e)
         else:
             err = "Camera not started"
@@ -2232,8 +2243,8 @@ class Camera():
 
         sc.checkMicrophone()
 
-        encoder = H264Encoder(10000000)
-        prgLogger.debug("encoder = H264Encoder(10000000)")
+        encoder = H264Encoder()
+        prgLogger.debug("encoder = H264Encoder()")
         output = Camera.videoOutput
         prgLogger.debug("output=\"%s\"", Camera.prgVideoOutput)
         if output.lower().endswith(".mp4"):
@@ -2261,10 +2272,10 @@ class Camera():
             logger.debug("Thread %s: Camera._videoThread - encoder stopped", get_ident())
             Camera.stopVideoRequested = False
         except ProcessLookupError:
-            logger.debug("Thread %s: Camera._videoThread - Encoder could not be started (requested resolution too high)", get_ident())
+            logger.error("Thread %s: Camera._videoThread - Encoder could not be started (requested resolution too high)", get_ident())
             Camera.liveViewDeactivated = False
         except RuntimeError:
-            logger.debug("Thread %s: Camera._videoThread - Encoder could not be started (not enough memory for requested resolution)", get_ident())
+            logger.error("Thread %s: Camera._videoThread - Encoder could not be started (not enough memory for requested resolution)", get_ident())
             Camera.liveViewDeactivated = False
             
         Camera.videoThread = None

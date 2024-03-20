@@ -2,6 +2,22 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.3.1
+
+### Bugfixes
+
+- Avoid flooding with console error message "Motion detection thread did not stop within 5 sec".    
+Now assuming that thread does no longer exist.
+- Fixed error ```TypeError: can only concatenate str (not "NoneType") to str``` which could occur in ```motionDetector.py``` if video recording failed after motion detection.   
+In this case, there has been an error message in [events logfile](./TriggerActive.md#log-file)
+- Encoder Bitrate is no longer specified when recording a video (before it was set to 10000000)
+- Changed loglevel from ```debug``` to ```error``` when an exception occurred during video recording
+- Added error log when encoder could not be started after motion capture.   
+Previously, the error was only shown in the [events logfile](./TriggerActive.md#log-file)
+- For Raspberry Pi 4, the default sensor mode is set to 0 (lowest resolution) in order to avoid encoder errors.
+- For Raspberry Pi 4, motion capture videos are recorded from the *lowres* stream with *Live View* configuration
+- For Raspberry Pi 4, default buffer count was reduced to 2 for live view and 4 for video
+
 ## V2.3.0
 
 ### New Features

@@ -56,7 +56,7 @@ In order to change the quality of videos and photos, you may change any [Camera 
 
 ## Log File
 
-While events are registered and videos and photos are taken, the system maintains a log file with antries for all events and the times when photos are captured or videos are started and stopped:
+While events are registered and videos and photos are taken, the system maintains a log file (```events/_events.log```) with antries for all events and the times when photos are captured or videos are started and stopped:
 
 ![EventLog](./img/Trigger_Logfile.jpg)
 

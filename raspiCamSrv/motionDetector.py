@@ -207,32 +207,33 @@ class MotionDetector():
         """
         if not cls.videoStart is None:
             if cls.videoStop is None:
-                tc = CameraCfg().triggerConfig
-                now = datetime.now()
-                dur = now-cls.videoStart
-                durSec = dur.total_seconds()
-                if durSec > tc.actionVideoDuration or force:
-                    logger.debug("Thread %s: MotionDetector._stopAction - stopping video", get_ident())
-                    if tc.actionVR == 1:
-                        (done, err) = Camera.quickVideoStop(cls.videoEncoder)
-                    else:
-                        (done, err) = Camera.stopRecordingCircular(cls.videoCircOutput)
-                    logTS = now.strftime("%Y-%m-%d %H:%M:%S")
-                    if done:
-                        cls.videoEncoder = None
-                        with open(tc.logFilePath, "a") as f:
-                            f.write(logTS + " Video: " + cls.videoName + " stopped" + "\n")
-                        #logger.debug("Thread %s: MotionDetector._doAction - UPDATE eventactions", get_ident())
-                        cls.db.execute(
-                            "UPDATE eventactions set actionduration = ? WHERE event = ? AND timestamp = ? AND actiontype = ?",
-                            (round(durSec,0), cls.eventKey, cls.videoKey, "Video")
-                        )
-                        cls.db.commit()
-                        #logger.debug("Thread %s: MotionDetector._doAction - DB committed", get_ident())
-                    else:
-                        with open(tc.logFilePath, "a") as f:
-                            f.write(logTS + " Video: " + cls.videoName + " Stop     Error" + err + "\n")
-                    cls.videoStop = now
+                if not cls.videoName is None:
+                    tc = CameraCfg().triggerConfig
+                    now = datetime.now()
+                    dur = now-cls.videoStart
+                    durSec = dur.total_seconds()
+                    if durSec > tc.actionVideoDuration or force:
+                        logger.debug("Thread %s: MotionDetector._stopAction - stopping video", get_ident())
+                        if tc.actionVR == 1:
+                            (done, err) = Camera.quickVideoStop(cls.videoEncoder)
+                        else:
+                            (done, err) = Camera.stopRecordingCircular(cls.videoCircOutput)
+                        logTS = now.strftime("%Y-%m-%d %H:%M:%S")
+                        if done:
+                            cls.videoEncoder = None
+                            with open(tc.logFilePath, "a") as f:
+                                f.write(logTS + " Video: " + cls.videoName + " stopped" + "\n")
+                            #logger.debug("Thread %s: MotionDetector._doAction - UPDATE eventactions", get_ident())
+                            cls.db.execute(
+                                "UPDATE eventactions set actionduration = ? WHERE event = ? AND timestamp = ? AND actiontype = ?",
+                                (round(durSec,0), cls.eventKey, cls.videoKey, "Video")
+                            )
+                            cls.db.commit()
+                            #logger.debug("Thread %s: MotionDetector._doAction - DB committed", get_ident())
+                        else:
+                            with open(tc.logFilePath, "a") as f:
+                                f.write(logTS + " Video: " + cls.videoName + " Stop     Error" + err + "\n")
+                        cls.videoStop = now
                     
     @staticmethod
     def _isActive() -> bool:
@@ -355,6 +356,10 @@ class MotionDetector():
                 cnt += 1
                 if cnt > 500:
                     logger.error("Motion detection thread did not stop within 5 sec")
+                    if cls.mThread.is_alive():
+                        cnt = 0
+                    else:
+                        cls.mThread = None
                     #raise TimeoutError("Motion detection thread did not stop within 5 sec")
             cls.mThreadStop = False
             cls._cleanupEvent()

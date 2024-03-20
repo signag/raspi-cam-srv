@@ -2781,8 +2781,9 @@ class CameraCfg():
             # See Picamera2 manual ch. 4.2, p. 16
             if cls._serverConfig.raspiModelLower5:
                 cls._liveViewConfig.format = "YUV420"
-            if cls._serverConfig.raspiModelFull.startswith("Raspberry Pi Zero"):
-                # For Pi Zero reduce buffer_count defaults for live view and video
+            if cls._serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+            or cls._serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
+                # For Pi Zero and 4 reduce buffer_count defaults for live view and video
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 4
             cls._streamingCfg = {}
