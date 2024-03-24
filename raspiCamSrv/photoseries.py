@@ -10,6 +10,7 @@ import copy
 from pathlib import Path
 from datetime import datetime
 from datetime import timedelta
+import time
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -152,6 +153,7 @@ def start_series():
     if request.method == "POST":
         sc.lastPhotoSeriesTab = "series"
         msg = None
+        sr.error = None
         if sr.isExposureSeries \
         or sr.isFocusStackingSeries:
             if sc.isTriggerRecording:
@@ -195,12 +197,24 @@ def start_series():
                     sr.end = serEnd
                 
                 tlOK = True
-                try:
-                    Camera.startPhotoSeries(sr)
-                except Exception as e:
+                Camera.startPhotoSeries(sr)
+                time.sleep(2)
+                if sc.error:
                     tlOK = False
-                    msg = "Error while starting Photoseries " + str(e)
+                    sr.nextStatus("pause")
+                    msg = "Error in " + sc.errorSource + ": " + sc.error
                     flash(msg)
+                    if sc.error2:
+                        flash(sc.error2)
+                    msg = None
+                if sr.error:
+                    tlOK = False
+                    sr.nextStatus("pause")
+                    msg = "Error in " + sr.errorSource + ": " + sr.error
+                    flash(msg)
+                    if sr.error2:
+                        flash(sr.error2)
+                    msg = None
                 if tlOK:
                     sr.nextStatus("start")
                     sr.persist()
@@ -208,7 +222,8 @@ def start_series():
                 logger.debug("Nothing to do sr.status is %s", sr.status)
         if msg:
             flash(msg)
-    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    #return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+    return redirect(url_for("photoseries.main"))
 
 @bp.route("/pause_series", methods=("GET", "POST"))
 @login_required
@@ -293,52 +308,73 @@ def continue_series():
     sc.curMenu = "photoseries"
     if request.method == "POST":
         sc.lastPhotoSeriesTab = "series"
-        if sr.status == "PAUSED":
-            if sr.isExposureSeries or sr.isFocusStackingSeries:
-                #Backup controls
-                cfg.controlsBackup = copy.deepcopy(cfg.controls)
-                logger.debug("Created backup for controls: %s", cfg.controlsBackup.__dict__)
-            if sr.isExposureSeries:
-                # For exposure series disable Auto and set fixed control parameter
-                ctrl = cfg.controls
-                ctrl.aeEnable = False
-                ctrl.include_aeEnable = True
-                ctrl.awbEnable = False
-                ctrl.include_awbEnable = True
-                if sr.isExpGainFix:
-                    ctrl.include_analogueGain = True
-                    ctrl.analogueGain = sr.expGainStart
-                if sr.isExpExpTimeFix:
-                    ctrl.include_exposureTime = True
-                    ctrl.exposureTime = sr.expTimeStart
-            if sr.isFocusStackingSeries:
-                # For focus series, set Autofocus to manual
-                ctrl = cfg.controls
-                ctrl.afMode = 0
+        msg = None
+        sr.error = None
+        if sr.isExposureSeries \
+        or sr.isFocusStackingSeries:
+            if sc.isTriggerRecording:
+                msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
+        if not msg:
+            if sr.status == "PAUSED":
+                if sr.isExposureSeries or sr.isFocusStackingSeries:
+                    #Backup controls
+                    cfg.controlsBackup = copy.deepcopy(cfg.controls)
+                    logger.debug("Created backup for controls: %s", cfg.controlsBackup.__dict__)
+                if sr.isExposureSeries:
+                    # For exposure series disable Auto and set fixed control parameter
+                    ctrl = cfg.controls
+                    ctrl.aeEnable = False
+                    ctrl.include_aeEnable = True
+                    ctrl.awbEnable = False
+                    ctrl.include_awbEnable = True
+                    if sr.isExpGainFix:
+                        ctrl.include_analogueGain = True
+                        ctrl.analogueGain = sr.expGainStart
+                    if sr.isExpExpTimeFix:
+                        ctrl.include_exposureTime = True
+                        ctrl.exposureTime = sr.expTimeStart
+                if sr.isFocusStackingSeries:
+                    # For focus series, set Autofocus to manual
+                    ctrl = cfg.controls
+                    ctrl.afMode = 0
 
-            #Adjust end time of series
-            logger.debug("Start immediately")
-            timedifSec = int(sr.interval * (sr.nrShots - sr.curShots + 1))
-            delta = timedelta(seconds=timedifSec)
-            serEndRaw = datetime.now() + delta
-            serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
-            serEnd = serEnd + timedelta(minutes=2)
-            sr.end = serEnd
-            logger.debug("Adjusted series end time to %s", sr.end)
-            
-            tlOK = True
-            try:
+                #Adjust end time of series
+                logger.debug("Start immediately")
+                timedifSec = int(sr.interval * (sr.nrShots - sr.curShots + 1))
+                delta = timedelta(seconds=timedifSec)
+                serEndRaw = datetime.now() + delta
+                serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
+                serEnd = serEnd + timedelta(minutes=2)
+                sr.end = serEnd
+                logger.debug("Adjusted series end time to %s", sr.end)
+
+                tlOK = True
                 Camera.startPhotoSeries(sr)
-            except Exception as e:
-                tlOK = False
-                msg = "Error while starting Photoseries " + str(e)
-                flash(msg)
-            if tlOK:
-                sr.nextStatus("continue")
-                sr.persist()
-        else:
-            logger.debug("Nothing to do sr.status is %s", sr.status)
-    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+                time.sleep(2)
+                if sc.error:
+                    tlOK = False
+                    sr.nextStatus("pause")
+                    msg = "Error in " + sc.errorSource + ": " + sc.error
+                    flash(msg)
+                    if sc.error2:
+                        flash(sc.error2)
+                    msg = None
+                if sr.error:
+                    tlOK = False
+                    sr.nextStatus("pause")
+                    msg = "Error in " + sr.errorSource + ": " + sr.error
+                    flash(msg)
+                    if sr.error2:
+                        flash(sr.error2)
+                    msg = None
+                if tlOK:
+                    sr.nextStatus("start")
+                    sr.persist()
+            else:
+                logger.debug("Nothing to do sr.status is %s", sr.status)
+        if msg:
+            flash(msg)
+    return redirect(url_for("photoseries.main"))
 
 @bp.route("/remove_series", methods=("GET", "POST"))
 @login_required

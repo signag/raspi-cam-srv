@@ -43,6 +43,9 @@ class TriggerConfig():
         self._evIncludeVideo = True
         self._evAutoRefresh = False
         self._calStart = None
+        self._error = None
+        self._error2 = None
+        self._errorSource = None
         
     @property
     def logFileName(self) -> str:
@@ -333,6 +336,33 @@ class TriggerConfig():
             d = datetime.now()
         v = datetime(year=d.year, month=d.month, day=1, hour=0, minute=0)        
         self._evStart = v
+
+    @property
+    def error(self) -> str:
+        return self._error
+
+    @error.setter
+    def error(self, value: str):
+        self._error = value
+        if value is None:
+            self._errorSource = None
+            self._error2 = None
+
+    @property
+    def error2(self) -> str:
+        return self._error2
+
+    @error2.setter
+    def error2(self, value: str):
+        self._error2 = value
+
+    @property
+    def errorSource(self) -> str:
+        return self._errorSource
+
+    @errorSource.setter
+    def errorSource(self, value: str):
+        self._errorSource = value
         
     @property
     def eventList(self) -> list:
@@ -1710,6 +1740,12 @@ class CameraProperties():
 
 class ServerConfig():
     def __init__(self):
+        self._error = None
+        self._error2 = None
+        self._errorSource = None
+        self._errorc2 = None
+        self._errorc22 = None
+        self._errorc2Source = None
         self._database = None
         self._raspiModelFull = ""
         self._raspiModelLower5 = False
@@ -1785,6 +1821,60 @@ class ServerConfig():
 
         boardRev = self.getBoardRevision()
         self._boardRevision = boardRev
+
+    @property
+    def error(self) -> str:
+        return self._error
+
+    @error.setter
+    def error(self, value: str):
+        self._error = value
+        if value is None:
+            self._errorSource = None
+            self._error2 = None
+
+    @property
+    def error2(self) -> str:
+        return self._error2
+
+    @error2.setter
+    def error2(self, value: str):
+        self._error2 = value
+
+    @property
+    def errorSource(self) -> str:
+        return self._errorSource
+
+    @errorSource.setter
+    def errorSource(self, value: str):
+        self._errorSource = value
+
+    @property
+    def errorc2(self) -> str:
+        return self._errorc2
+
+    @errorc2.setter
+    def errorc2(self, value: str):
+        self._errorc2 = value
+        if value is None:
+            self._errorc2Source = None
+            self._errorc22 = None
+
+    @property
+    def errorc22(self) -> str:
+        return self._errorc22
+
+    @errorc22.setter
+    def errorc22(self, value: str):
+        self._errorc22 = value
+
+    @property
+    def errorc2Source(self) -> str:
+        return self._errorc2Source
+
+    @errorc2Source.setter
+    def errorc2Source(self, value: str):
+        self._errorc2Source = value
 
     @property
     def database(self) -> str:

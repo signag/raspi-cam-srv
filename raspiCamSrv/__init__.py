@@ -57,6 +57,7 @@ def create_app(test_config=None):
 
     #>>>>> Explicitely set specific log levels. Leave "werkzeug" at INFO
     logging.getLogger("werkzeug").setLevel(logging.INFO)
+    #logging.getLogger("raspiCamSrv.auth").setLevel(logging.ERROR)
     #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.webcam").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)

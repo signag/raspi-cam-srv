@@ -22,14 +22,20 @@ def index():
     logger.debug("Thread %s: In index", get_ident())
     g.hostname = request.host
     g.version = version
-    Camera().startLiveStream()
-    logger.debug("Thread %s: Camera instantiated", get_ident())
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.error = None
+    Camera().startLiveStream()
+    logger.debug("Thread %s: Camera instantiated", get_ident())
     sc.curMenu = "live"
     logger.debug("Thread %s: cp.hasFocus is %s", get_ident(), cp.hasFocus)
+    if sc.error:
+        msg = "Error in " + sc.errorSource + ": " + sc.error
+        flash(msg)
+        if sc.error2:
+            flash(sc.error2)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 def gen(camera):
@@ -38,9 +44,9 @@ def gen(camera):
     yield b'--frame\r\n'
     while True:
         frame = camera.get_frame()
-        l = len(frame)
-        #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), l)
-        yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+        if frame:
+            #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), len(frame))
+            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 def gen2(camera):
     """Video streaming generator function."""
@@ -48,9 +54,9 @@ def gen2(camera):
     yield b'--frame\r\n'
     while True:
         frame = camera.get_frame2()
-        l = len(frame)
-        #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), l)
-        yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+        if frame:
+            #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), len(frame))
+            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 @bp.route("/video_feed")
 # @login_required
@@ -868,16 +874,22 @@ def take_photo():
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Saving image %s", filename)
         fp = Camera().takeImage(filename)
-        logger.debug("take_photo - success")
-        logger.debug("take_photo - sc.displayContent: %s", sc.displayContent)
-        if sc.displayContent == "hist":
-            logger.debug("take_photo - sc.displayHistogram: %s", sc.displayHistogram)
-            if sc.displayHistogram is None:
-                logger.debug("take_photo - sc.displayPhoto: %s", sc.displayPhoto)
-                if sc.displayPhoto:
-                    generateHistogram(sc)
-        msg="Image saved as " + fp
-        flash(msg)
+        if not sc.error:
+            logger.debug("take_photo - success")
+            logger.debug("take_photo - sc.displayContent: %s", sc.displayContent)
+            if sc.displayContent == "hist":
+                logger.debug("take_photo - sc.displayHistogram: %s", sc.displayHistogram)
+                if sc.displayHistogram is None:
+                    logger.debug("take_photo - sc.displayPhoto: %s", sc.displayPhoto)
+                    if sc.displayPhoto:
+                        generateHistogram(sc)
+            msg="Image saved as " + fp
+            flash(msg)
+        else:
+            msg = "Error in " + sc.errorSource + ": " + sc.error
+            flash(msg)
+            if sc.error2:
+                flash(sc.error2)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/take_raw_photo", methods=("GET", "POST"))
@@ -896,12 +908,18 @@ def take_raw_photo():
         filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
         logger.debug("Saving raw image %s", filenameRaw)
         fp = Camera().takeRawImage(filenameRaw, filename)
-        if sc.displayContent == "hist":
-            if sc.displayHistogram is None:
-                if sc.displayPhoto:
-                    generateHistogram(sc)
-        msg="Image saved as " + fp
-        flash(msg)
+        if not sc.error:
+            if sc.displayContent == "hist":
+                if sc.displayHistogram is None:
+                    if sc.displayPhoto:
+                        generateHistogram(sc)
+            msg="Image saved as " + fp
+            flash(msg)
+        else:
+            msg = "Error in " + sc.errorSource + ": " + sc.error
+            flash(msg)
+            if sc.error2:
+                flash(sc.error2)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/record_video", methods=("GET", "POST"))
@@ -919,26 +937,32 @@ def record_video():
         filenameVid = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Recording a video %s", filenameVid)
-        fp = Camera.recordVideo(filenameVid, filename)
+        fp = Camera().recordVideo(filenameVid, filename)
         time.sleep(4)
-        if sc.displayContent == "hist":
-            if sc.displayHistogram is None:
-                if sc.displayPhoto:
-                    generateHistogram(sc)
-        # Check whether vido is being recorded
-        if Camera.isVideoRecording():
-            logger.debug("Video recording started")
-            sc.isVideoRecording = True
-            if sc.recordAudio:
-                sc.isAudioRecording = True
-            msg="Video saved as " + fp
-            flash(msg)
+        if not sc.error:
+            if sc.displayContent == "hist":
+                if sc.displayHistogram is None:
+                    if sc.displayPhoto:
+                        generateHistogram(sc)
+            # Check whether vido is being recorded
+            if Camera.isVideoRecording():
+                logger.debug("Video recording started")
+                sc.isVideoRecording = True
+                if sc.recordAudio:
+                    sc.isAudioRecording = True
+                msg="Video saved as " + fp
+                flash(msg)
+            else:
+                logger.debug("Video recording did not start")
+                sc.isVideoRecording = False
+                sc.isAudioRecording = False
+                msg="Video recording failed. Requested resolution too high "
+                flash(msg)
         else:
-            logger.debug("Video recording did not start")
-            sc.isVideoRecording = False
-            sc.isAudioRecording = False
-            msg="Video recording failed. Requested resolution too high "
+            msg = "Error in " + sc.errorSource + ": " + sc.error
             flash(msg)
+            if sc.error2:
+                flash(sc.error2)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
 
 @bp.route("/stop_recording", methods=("GET", "POST"))

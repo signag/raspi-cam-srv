@@ -23,7 +23,7 @@ def trigger():
     g.version = version
     cfg = CameraCfg()
     sc = cfg.serverConfig
-    tc = cfg._triggerConfig
+    tc = cfg.triggerConfig
     if tc.evStart == None:
         tc.evStart = datetime.now()
     if tc.calStart == None:
@@ -147,8 +147,23 @@ def start_triggered_capture():
         err = None
         if tc.triggeredByMotion:
             MotionDetector().startMotionDetection()
-            sc.isTriggerRecording = True
-            logger.debug("In motion detection started")
+            if sc.error:
+                logger.debug("In motion detection not started because of error")
+                msg = "Error in " + sc.errorSource + ": " + sc.error
+                flash(msg)
+                if sc.error2:
+                    flash(sc.error2)
+                err = None
+            elif tc.error:
+                logger.debug("In motion detection not started because of error")
+                msg = "Error in " + tc.errorSource + ": " + tc.error
+                flash(msg)
+                if tc.error2:
+                    flash(tc.error2)
+                err = None
+            else:
+                sc.isTriggerRecording = True
+                logger.debug("In motion detection started")
         else:
             err = "There is no trigger activated"
         if err:

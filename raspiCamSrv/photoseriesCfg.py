@@ -48,6 +48,9 @@ class Series():
         self._focalDistStart = 0
         self._focalDistStop = 0
         self._focalDistStep = 0
+        self._error = None
+        self._error2 = None
+        self._errorSource = None
     
     @property
     def name(self) -> str:
@@ -413,6 +416,33 @@ class Series():
     @cameraControls.setter
     def cameraControls(self, value: CameraControls):
         self._cameraControls = value
+
+    @property
+    def error(self) -> str:
+        return self._error
+
+    @error.setter
+    def error(self, value: str):
+        self._error = value
+        if value is None:
+            self._errorSource = None
+            self._error2 = None
+
+    @property
+    def error2(self) -> str:
+        return self._error2
+
+    @error2.setter
+    def error2(self, value: str):
+        self._error2 = value
+
+    @property
+    def errorSource(self) -> str:
+        return self._errorSource
+
+    @errorSource.setter
+    def errorSource(self, value: str):
+        self._errorSource = value
     
     @property
     def nextPhoto(self) -> str:
@@ -491,6 +521,8 @@ class Series():
                         if self.isExpGainFix:
                             wait = 0.2 + self.expTimeStop / 1000000
                     raspiCamSrv.camera_pi.Camera().applyControlsForLivestream(wait)
+        if not next:
+            next = datetime.now()
         logger.debug("Series.nextTime - returning: %s", next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
         return next
     

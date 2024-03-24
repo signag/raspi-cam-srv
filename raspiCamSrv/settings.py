@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, flash, g, render_template, request, current_app
 from werkzeug.exceptions import abort
-from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig
-from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig
+from raspiCamSrv.camera_pi import Camera, CameraEvent
 from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
 import os
@@ -108,6 +108,7 @@ def resetServer():
         Camera().stopCameraSystem()
         Camera.liveViewDeactivated = False
         Camera.thread = None
+        Camera.thread2 = None
         Camera.videoThread = None
         Camera.photoSeriesThread = None
         logger.debug("Resetting server configuration")
@@ -117,39 +118,82 @@ def resetServer():
         cfg.sensorModes = []
         cfg.rawFormats = []
         cfg.controls = CameraControls()
+        cfg.controlsBackup = None
         cfg.cameraProperties = CameraProperties()
-        cfg._liveViewConfig = CameraConfig()
-        cfg._liveViewConfig.id = "LIVE"
-        cfg._liveViewConfig.use_case = "Live view"
-        cfg._liveViewConfig.buffer_count = 4
-        cfg._liveViewConfig.encode = "main"
-        cfg._liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
-        cfg._photoConfig = CameraConfig()
-        cfg._photoConfig.id = "FOTO"
-        cfg._photoConfig.use_case = "Photo"
-        cfg._photoConfig.buffer_count = 1
-        cfg._photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
-        cfg._rawConfig = CameraConfig()
-        cfg._rawConfig.id = "PRAW"
-        cfg._rawConfig.use_case = "Raw Photo"
-        cfg._rawConfig.buffer_count = 1
-        cfg._rawConfig.stream = "raw"
-        cfg._rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
-        cfg._videoConfig = CameraConfig()
-        cfg._videoConfig.buffer_count = 6
-        cfg._videoConfig.id = "VIDO"
-        cfg._videoConfig.use_case = "Video"
-        cfg._videoConfig.buffer_count = 6
-        cfg._videoConfig.encode = "main"
-        cfg._videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
+        cfg.liveViewConfig = CameraConfig()
+        cfg.liveViewConfig.id = "LIVE"
+        cfg.liveViewConfig.use_case = "Live view"
+        cfg.liveViewConfig.stream = "lores"
+        cfg.liveViewConfig.buffer_count = 6
+        cfg.liveViewConfig.encode = "main"
+        cfg.liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
+        cfg.photoConfig = CameraConfig()
+        cfg.photoConfig.id = "FOTO"
+        cfg.photoConfig.use_case = "Photo"
+        cfg.photoConfig.buffer_count = 1
+        cfg.photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+        cfg.rawConfig = CameraConfig()
+        cfg.rawConfig.id = "PRAW"
+        cfg.rawConfig.use_case = "Raw Photo"
+        cfg.rawConfig.buffer_count = 1
+        cfg.rawConfig.stream = "raw"
+        cfg.rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+        cfg.videoConfig = CameraConfig()
+        cfg.videoConfig.buffer_count = 6
+        cfg.videoConfig.id = "VIDO"
+        cfg.videoConfig.use_case = "Video"
+        cfg.videoConfig.buffer_count = 6
+        cfg.videoConfig.encode = "main"
+        cfg.videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
         cfg._cameraConfigs = []
-        cfg._serverConfig = ServerConfig()
+        cfg.triggerConfig = TriggerConfig()
+        cfg.serverConfig = ServerConfig()
         sc = cfg.serverConfig
         sc.photoRoot = photoRoot
+        if sc.raspiModelLower5:
+            cfg.liveViewConfig.format = "YUV420"
+        if sc.raspiModelFull.startswith("Raspberry Pi Zero") \
+        or sc.raspiModelFull.startswith("Raspberry Pi 4"):
+            # For Pi Zero and 4 reduce buffer_count defaults for live view and video
+            cfg.liveViewConfig.buffer_count = 2
+            cfg.videoConfig.buffer_count = 4
+        cfg.streamingCfg = {}
+        
         sc.isVideoRecording = False
-        sc.curMenu = "settings"
+        sc.isAudioRecording = False
+        sc.isTriggerRecording = False
+        sc.isPhotoSeriesRecording = False
+        sc.isLiveStream = False
+        sc.isLiveStream2 = False
         sc.checkMicrophone()
         sc.checkEnvironment()
+        sc.curMenu = "settings"
+        
+        Camera.cam = None
+        Camera.cam2 = None
+        Camera.camNum = -1
+        Camera.camNum2 = -1
+        Camera.ctrl = None
+        Camera.ctrl2 = None
+        Camera.videoOutput = None
+        Camera.prgVideoOutput = None
+        Camera.photoSeries = None
+        Camera.thread = None
+        Camera.thread2 = None
+        Camera.liveViewDeactivated = False
+        Camera.videoThread = None
+        Camera.photoSeriesThread = None
+        Camera.frame = None
+        Camera.frame2 = None
+        Camera.last_access = 0
+        Camera.last_access2 = 0
+        Camera.stopRequested = False
+        Camera.stopRequested2 = False
+        Camera.stopVideoRequested = False
+        Camera.stopPhotoSeriesRequested = False
+        Camera.event = CameraEvent()
+        Camera.event2 = None
+        Camera._instance = None
         
         msg = "Server configuration has been reset to default values"
         flash(msg)

@@ -308,6 +308,8 @@ class MotionDetector():
                 except Exception as e:
                     cls._cleanupEvent()
                     logger.error("Exception in _motionThread: %s", e)
+                    cfg.triggerConfig.error = "Error in motion detection: " + str(e)
+                    cfg.triggerConfig.errorSource = "motionDetector._motionThread"
                     stop = True
             else:
                 cls._cleanupEvent()
@@ -331,13 +333,20 @@ class MotionDetector():
         
         """
         logger.debug("Thread %s: MotionDetector.startMotionDetection", get_ident())
+        sc = CameraCfg().serverConfig
+        tc = CameraCfg().triggerConfig
         if cls.mThread is None:
+            sc.error = None
+            tc.error = None
             if not CameraCfg().serverConfig.isLiveStream:
                 Camera().startLiveStream()
-            logger.debug("Thread %s: MotionDetector.startMotionDetection - starting new thread", get_ident())
-            cls.mThread = threading.Thread(target=cls._motionThread, daemon=True)
-            cls.mThread.start()
-            logger.debug("Thread %s: MotionDetector.startMotionDetection - thread started", get_ident())
+            if not sc.error:
+                logger.debug("Thread %s: MotionDetector.startMotionDetection - starting new thread", get_ident())
+                cls.mThread = threading.Thread(target=cls._motionThread, daemon=True)
+                cls.mThread.start()
+                logger.debug("Thread %s: MotionDetector.startMotionDetection - thread started", get_ident())
+            else:
+                logger.debug("Thread %s: MotionDetector.startMotionDetection - not started", get_ident())
         
     @classmethod
     def stopMotionDetection(cls):

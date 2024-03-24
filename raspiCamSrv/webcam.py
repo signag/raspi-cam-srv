@@ -17,17 +17,28 @@ logger = logging.getLogger(__name__)
 @login_required
 def webcam():
     logger.debug("In webcam")
-    Camera().startLiveStream()
-    Camera().startLiveStream2()
-    cam = Camera().cam
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    sc.error = None
+    sc.errorc2 = None
+    Camera().startLiveStream()
+    Camera().startLiveStream2()
     str2 = None
     if sc.isLiveStream2:
         str2 = cfg.streamingCfg[str(Camera().camNum2)]
     sc.curMenu = "webcam"
+    if sc.error:
+        msg = "Error in " + sc.errorSource + ": " + sc.error
+        flash(msg)
+        if sc.error2:
+            flash(sc.error2)
+    if sc.errorc2:
+        msg = "Error in " + sc.errorc2Source + ": " + sc.errorc2
+        flash(msg)
+        if sc.errorc22:
+            flash(sc.errorc22)
     return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2)
 
 @bp.route("/store_streaming_config", methods=("GET", "POST"))
@@ -81,6 +92,8 @@ def switch_cameras():
             cfg.videoConfig.stream_size = None
             sc.activeCamera = newCam
             Camera.switchCamera()
+            if sc.isLiveStream2:
+                str2 = cfg.streamingCfg[str(Camera().camNum2)]
             logger.debug("switch_cameras - active camera set to %s", sc.activeCamera)
     return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2)
 
@@ -89,18 +102,18 @@ def genPhoto(camera):
     logger.debug("Thread %s: In genPhoto", get_ident())
     yield b'--frame\r\n'
     frame = camera.get_photoFrame()
-    l = len(frame)
-    logger.debug("Thread %s: genPhoto - Got frame of length %s", get_ident(), l)
-    yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+    if frame:
+        logger.debug("Thread %s: genPhoto - Got frame of length %s", get_ident(), len(frame))
+        yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 def genPhoto2(camera):
     """photo taking function."""
     logger.debug("Thread %s: In genPhoto", get_ident())
     yield b'--frame\r\n'
     frame = camera.get_photoFrame2()
-    l = len(frame)
-    logger.debug("Thread %s: genPhoto - Got frame of length %s", get_ident(), l)
-    yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+    if frame:
+        logger.debug("Thread %s: genPhoto - Got frame of length %s", get_ident(), len(frame))
+        yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 @bp.route("/photo_feed")
 # @login_required

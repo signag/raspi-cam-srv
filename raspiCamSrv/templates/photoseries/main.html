@@ -400,9 +400,21 @@
                 </tr>
                 {% endif %}
             </table>
+            {% if sr.error %}
+            <p>&nbsp;</p>
+            <hr>
+            <div class="w3-panel w3-pale-red w3-border">
+            <h3>Photoseries paused with error:</h3>
+            <p>Error in {{ sr.errorSource }}: {{ sr.error }}</p>
+            {% if sr.error2 != None %}
+            <p>{{ sr.error2 }}</p>
+            {% endif %}
+            </div>
+            {% endif %}
         </div>
         <div class="w3-third">
             <!-- Series Preview -->
+            {% if not sc.error %}
             <div style="margin-top: 5px; margin-left:10px">
                 {% if sr.status == "ACTIVE" or sr.status == "PAUSED" or sr.status == "FINISHED" %}
                 {% if sr.showPreview == False %}
@@ -417,7 +429,7 @@
                 {% if sr.showPreview == True %}
                 <table style="width:100%">
                     <tr>
-                        {% if sr.status == "ACTIVE" %}
+                        {% if sr.status == "ACTIVE" and sc.isPhotoSeriesRecording == True %}
                         <td style="width:80%">
                             <div class="w3-light-grey">
                                 <div id="progressbar" class="w3-container w3-red w3-center" style="height:24px; width:0%"></div>
@@ -472,6 +484,7 @@
                 {% endif %}
                 {% endif %}
             </div>
+            {% endif %}
         </div>
     </div>
     {% if sc.lastPhotoSeriesTab == "tldetails" %}
@@ -937,7 +950,7 @@
         {% endif %}
     </div>
         
-    {% if sr.status == "ACTIVE" and sr.showPreview == True %}
+    {% if sr.status == "ACTIVE" and sr.showPreview == True and sc.isPhotoSeriesRecording %}
     <script>
         showProgress()
 

@@ -2,6 +2,20 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.3.2
+
+### Improvements
+
+- Error handling has been improved. Server errors, also from background threads, are routed to the web client.   
+This does not apply to errors occurring in encoders which are running in own threads. Exceptions thrown in these threads are currently not handled by **raspiCamSrv**.   
+Error reasons are mostly invalid combinations of [Configuration](./Configuration.md) parameters, especially with *Stream Format*
+
+### Bugfixes
+
+- After applying **Swith Cameras** in page *Web Cam*, Title and metadata for the second camera were identical to those of the first camera.
+- [Reset Server](./Settings.md#server-configuration) may have caused errors in streaming or other functions
+- In [Config](./Configuration.md), *raw* stream can no longer be configured for *Live View*, *Photo*, and *Video*
+
 ## V2.3.1
 
 ### Bugfixes

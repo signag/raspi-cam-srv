@@ -243,6 +243,17 @@
             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
         </form>
         {% endif %}
+        {% if tc.error %}
+        <p>&nbsp;</p>
+        <hr>
+        <div class="w3-panel w3-pale-red w3-border">
+            <h3>Triggered capture stopped with error:</h3>
+            <p>Error in {{ tc.errorSource }}: {{ tc.error }}</p>
+            {% if tc.error2 != None %}
+            <p>{{ tc.error2 }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
     {% if sc.lastTriggerTab == "trgmotion" %}
     <div id="trgmotion" class="triggergroup">
