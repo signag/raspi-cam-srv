@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.3.3
+
+### Bugfixes
+
+- Starting server with stored Configuration ([Settings](./Settings.md#server-configuration)) did not correctly set a previously configured [Zoom](./ZoomPan.md) (*ScalerCrop*). Instead, *ScalerCrop* was set to the active camera's pixel array size (see [raspiCamSrv Issue #7](https://github.com/signag/raspi-cam-srv/issues/7)). This was done only during initial system start and not after manually applying **Load Stored Configuration** in [Settings](./Settings.md#server-configuration).   
+Now, the stored *ScalerCrop* is no longer overwritten, if a zoom (<>100%) has been explicitely applied ("include_scalerCrop": true in controls.json).
+
+
 ## V2.3.2
 
 ### Improvements

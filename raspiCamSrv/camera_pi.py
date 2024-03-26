@@ -1307,7 +1307,8 @@ class Camera():
             cfgProps.hasFlicker = "AeFlickerMode" in Camera.cam.camera_controls
             cfgProps.hasHdr = "HdrMode" in Camera.cam.camera_controls
             
-            cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
+            if cfgCtrls.include_scalerCrop == False:
+                cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
             logger.debug("Thread %s: Camera.loadCameraSpecifics loaded to config", get_ident())
 
         # Load Sensor Modes
