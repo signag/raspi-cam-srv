@@ -8,6 +8,10 @@ from datetime import datetime
 from datetime import timedelta
 import logging
 from raspiCamSrv.dbx import get_dbx
+import smtplib
+from email.message import EmailMessage
+import mimetypes
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +35,9 @@ class MotionDetector():
     videoEncoder = None
     videoCircOutput = None
     videoName = None
-
+    notificationDone = None
+    notifyMail = None
+    notifyBuffer = []
 
     def __new__(cls):
         logger.debug("Thread %s: MotionDetector.__new__", get_ident())
@@ -107,6 +113,7 @@ class MotionDetector():
 
         startVideo = False
         doPhoto = False
+        doNotify = False
         
         if deltaSec >= tc.detectionDelaySec:
             if tc.actionVideo == True:
@@ -127,6 +134,16 @@ class MotionDetector():
                             doPhoto = True
                             cls.nrPhotos += 1
                             cls.lastPhoto = now
+
+            if tc.actionNotify == True:
+                if logEvent == True:
+                    if cls.notificationDone is None:
+                        doNotify = True
+                    else:
+                        notifyDelta = now - cls.notificationDone
+                        notifyDeltaSec = notifyDelta.total_seconds()
+                        if notifyDeltaSec >= tc.notifyPause:
+                            doNotify = True
                         
         fnRaw = now.strftime("%Y-%m-%dT%H-%M-%S")
         logTS = now.strftime("%Y-%m-%dT%H:%M:%S")
@@ -169,8 +186,10 @@ class MotionDetector():
                 with open(tc.logFilePath, "a") as f:
                     f.write(logTS + " Video: " + fnVideo + " Start   Error: " + err + "\n")
         
+        photoDone = False
         if doPhoto:
             (done, err) = Camera.quickPhoto(tc.actionPath + "/" + fnPhoto)
+            photoDone = done
             if done:
                 with open(tc.logFilePath, "a") as f:
                     f.write(logTS + " Photo: " + fnPhoto + "\n")
@@ -181,9 +200,104 @@ class MotionDetector():
                 )
                 cls.db.commit()
                 #logger.debug("Thread %s: MotionDetector._doAction - DB committed", get_ident())
+                if not cls.notifyMail is None:
+                    if tc.notifyIncludePhoto == True:
+                        cls._attachToNotification(cls.notifyMail, fnPhoto)
+                        if cls.nrPhotos >= tc.actionPhotoBurst:
+                            if tc.notifyIncludeVideo == True:
+                                if not cls.videoStop is None:
+                                    cls._sendNotification()
+                            else:
+                                cls._sendNotification()
             else:
                 with open(tc.logFilePath, "a") as f:
                     f.write(logTS + " Photo: " + fnPhoto + " Error:  " + err + "\n")
+                    
+        if doNotify:
+            cls.notificationDone = now
+            cls.notifyMail = cls._initNotificationMessage(logTS, trigger)
+            if tc.notifyIncludePhoto:
+                if photoDone:
+                    cls._attachToNotification(cls.notifyMail, fnPhoto)
+            if tc.notifyIncludeVideo == False \
+            and (tc.notifyIncludePhoto == False \
+            or  (tc.notifyIncludePhoto == True \
+            and tc.actionPhotoBurst <= 1)):
+                cls._sendNotification()
+    
+    @staticmethod            
+    def _initNotificationMessage(logTS, trigger) -> EmailMessage:
+        """ Set up an eMail Message for notification
+        """
+        logger.debug("Thread %s: MotionDetector._initNotificationMessage", get_ident())
+        msg = EmailMessage()
+        tc = CameraCfg().triggerConfig
+        msg["From"] = tc.notifyFrom
+        msg["To"] = tc.notifyTo
+        msg["Subject"] = tc.notifySubject
+        msg.set_content(
+            "Notification on an event\n\n" \
+            "Time   : " + logTS + "\n" \
+            "Trigger: " + trigger["trigger"] + "\n" \
+            "Type   : " + trigger["triggertype"] + "\n" \
+            "MSD    : " + trigger["triggerparam"]
+        )
+        logger.debug("Thread %s: MotionDetector._initNotificationMessage - done", get_ident())
+        return msg
+    
+    @staticmethod            
+    def _attachToNotification(msg, fn):
+        """ Attach a photo to a notification mail
+        """
+        logger.debug("Thread %s: MotionDetector._attachToNotification - fn: %s", get_ident(), fn)
+        tc = CameraCfg().triggerConfig
+        img = tc.actionPath + "/" + fn
+        ctype, encoding = mimetypes.guess_type(img)
+        if ctype is None or encoding is not None:
+            ctype = 'application/octet-stream'
+        maintype, subtype = ctype.split('/', 1)
+        with open(img, 'rb') as fp:
+            msg.add_attachment(fp.read(),
+                                maintype=maintype,
+                                subtype=subtype,
+                                filename=fn)
+        logger.debug("Thread %s: MotionDetector._attachToNotification - done", get_ident())
+                    
+    @classmethod
+    def _sendNotificationThread(cls):
+        """ Send notification mail in own thread
+        """
+        logger.debug("Thread %s: MotionDetector._sendNotificationThread", get_ident())
+        tc = CameraCfg().triggerConfig
+        scr =CameraCfg().secrets
+        msg = cls.notifyBuffer.pop(0)
+        try:
+            if tc.notifyUseSSL == True:
+                server = smtplib.SMTP_SSL(host=tc.notifyHost, port=tc.notifyPort)
+            else:
+                server = smtplib.SMTP(host=tc.notifyHost, port=tc.notifyPort)
+            server.connect(tc.notifyHost)
+            server.login(scr.notifyUser, scr.notifyPwd)
+            server.ehlo()
+            server.send_message(msg)
+            server.quit()
+        except Exception as e:
+            tc.error = "Error sending notification mail: " + str(e)
+            tc.errorSource = "MotionDetector._sendNotificationThread"
+            logger.error("Error sending notification mail: %s", e)
+        logger.debug("Thread %s: MotionDetector._sendNotificationThread - done", get_ident())
+
+    @classmethod
+    def _sendNotification(cls):
+        """ Send notification mail
+        """
+        logger.debug("Thread %s: MotionDetector._sendNotification", get_ident())
+        msg = copy.copy(cls.notifyMail)
+        cls.notifyBuffer.append(msg)
+        thread = threading.Thread(target=cls._sendNotificationThread)
+        thread.start()
+        cls.notifyMail = None
+        logger.debug("Thread %s: MotionDetector._sendNotification - done", get_ident())
                     
     @classmethod
     def _cleanupEvent(cls):
@@ -200,6 +314,8 @@ class MotionDetector():
         cls.videoName = None
         cls.videoStart = None
         cls.videoStop = None
+        if not cls.notifyMail is None:
+            cls._sendNotification()
 
     @classmethod
     def _stopAction(cls, force = False):
@@ -230,6 +346,10 @@ class MotionDetector():
                             )
                             cls.db.commit()
                             #logger.debug("Thread %s: MotionDetector._doAction - DB committed", get_ident())
+                            if not cls.notifyMail is None:
+                                if tc.notifyIncludeVideo == True:
+                                    cls._attachToNotification(cls.notifyMail, cls.videoName)
+                                cls._sendNotification()
                         else:
                             with open(tc.logFilePath, "a") as f:
                                 f.write(logTS + " Video: " + cls.videoName + " Stop     Error" + err + "\n")

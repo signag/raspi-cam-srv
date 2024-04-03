@@ -10,8 +10,9 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 import raspiCamSrv.dbx as dbx
-
-
+import smtplib
+from flask import g
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class TriggerConfig():
         self._triggeredBySound = False
         self._actionVideo = True
         self._actionPhoto = True
+        self._actionNotify = False
         self._operationStartMinute: int = 0
         self._operationEndMinute: int = 1439
         self._operationWeekdays = {"1":True, "2":True, "3":True, "4":True, "5":True, "6":True, "7":True}
@@ -37,6 +39,18 @@ class TriggerConfig():
         self._actionVideoDuration = 10
         self._actionPhotoBurst = 1
         self._actionPhotoBurstDelaySec = 2
+        self._notifyHost = ""
+        self._notifyPort = 0
+        self._notifyUseSSL = False
+        self._notifyConOK = False
+        self._notifyPause = 0
+        self._notifyIncludeVideo = False
+        self._notifyIncludePhoto = False
+        self._notifySavePwd = False
+        self._notifyPwdPath = ""
+        self._notifyFrom = ""
+        self._notifyTo = ""
+        self._notifySubject = ""
         self._retentionPeriod = 3
         self._evStart = None
         self._evIncludePhoto = False
@@ -176,6 +190,14 @@ class TriggerConfig():
         self._actionPhoto = value
 
     @property
+    def actionNotify(self) -> bool:
+        return self._actionNotify
+
+    @actionNotify.setter
+    def actionNotify(self, value: bool):
+        self._actionNotify = value
+
+    @property
     def msdThreshold(self) -> int:
         return self._msdThreshold
 
@@ -230,6 +252,102 @@ class TriggerConfig():
     @actionPhotoBurstDelaySec.setter
     def actionPhotoBurstDelaySec(self, value: int):
         self._actionPhotoBurstDelaySec = value
+
+    @property
+    def notifyHost(self) -> str:
+        return self._notifyHost
+
+    @notifyHost.setter
+    def notifyHost(self, value: str):
+        self._notifyHost = value
+
+    @property
+    def notifyPort(self) -> int:
+        return self._notifyPort
+
+    @notifyPort.setter
+    def notifyPort(self, value: int):
+        self._notifyPort = value
+
+    @property
+    def notifyUseSSL(self) -> bool:
+        return self._notifyUseSSL
+
+    @notifyUseSSL.setter
+    def notifyUseSSL(self, value: bool):
+        self._notifyUseSSL = value
+
+    @property
+    def notifyConOK(self) -> bool:
+        return self._notifyConOK
+
+    @notifyConOK.setter
+    def notifyConOK(self, value: bool):
+        self._notifyConOK = value
+
+    @property
+    def notifyPause(self) -> int:
+        return self._notifyPause
+
+    @notifyPause.setter
+    def notifyPause(self, value: int):
+        self._notifyPause = value
+
+    @property
+    def notifyIncludeVideo(self) -> bool:
+        return self._notifyIncludeVideo
+
+    @notifyIncludeVideo.setter
+    def notifyIncludeVideo(self, value: bool):
+        self._notifyIncludeVideo = value
+
+    @property
+    def notifyIncludePhoto(self) -> bool:
+        return self._notifyIncludePhoto
+
+    @notifyIncludePhoto.setter
+    def notifyIncludePhoto(self, value: bool):
+        self._notifyIncludePhoto = value
+
+    @property
+    def notifySavePwd(self) -> bool:
+        return self._notifySavePwd
+
+    @notifySavePwd.setter
+    def notifySavePwd(self, value: bool):
+        self._notifySavePwd = value
+
+    @property
+    def notifyPwdPath(self) -> str:
+        return self._notifyPwdPath
+
+    @notifyPwdPath.setter
+    def notifyPwdPath(self, value: str):
+        self._notifyPwdPath = value
+
+    @property
+    def notifyFrom(self) -> str:
+        return self._notifyFrom
+
+    @notifyFrom.setter
+    def notifyFrom(self, value: str):
+        self._notifyFrom = value
+
+    @property
+    def notifyTo(self) -> str:
+        return self._notifyTo
+
+    @notifyTo.setter
+    def notifyTo(self, value: str):
+        self._notifyTo = value
+
+    @property
+    def notifySubject(self) -> str:
+        return self._notifySubject
+
+    @notifySubject.setter
+    def notifySubject(self, value: str):
+        self._notifySubject = value
 
     @property
     def retentionPeriod(self) -> int:
@@ -537,6 +655,132 @@ class TriggerConfig():
         db.execute("DELETE FROM events WHERE date <= ?", (dateRem,)).fetchall()
         db.commit()
         logger.debug("Removed old events")
+        
+    def checkNotificationRecipient(self, user=None, pwd=None) -> tuple:
+        """ Check login to mail server using available credentials
+
+            Return (user, password, error message)
+        """
+        logger.debug("TriggerConfig.checkNotificationRecipient")
+        err = ""
+        secHost = ""
+        secPort = -1
+        secUseSSL = None
+        secUser = ""
+        secPwd = ""
+        secretsOK = False
+        # Try to get credentials from the file
+        if os.path.exists(self.notifyPwdPath):
+            with open(self.notifyPwdPath) as f:
+                try:
+                    secrets = json.load(f)
+                    notifySecrets = secrets["eventnotification"]
+                    secHost = notifySecrets["host"]
+                    secPort = notifySecrets["port"]
+                    secUseSSL = notifySecrets["useSSL"]
+                    secUser = notifySecrets["user"]
+                    secPwd = notifySecrets["password"]
+                    secretsOK = True
+                    logger.debug("TriggerConfig.checkNotificationRecipient - read credentials from file")
+                except Exception as e:
+                    pass
+        if secHost == "":
+            secHost = self.notifyHost
+        else:
+            if secHost != self.notifyHost:
+                secHost = self.notifyHost
+                secretsOK = False
+        if secPort == -1:
+            secPort = self.notifyPort
+        else:
+            if secPort != self.notifyPort:
+                secPort = self.notifyPort
+                secretsOK = False
+        if secUseSSL is None:
+            secUseSSL = self.notifyUseSSL
+        else:
+            if secUseSSL != self.notifyUseSSL:
+                secUseSSL = self.notifyUseSSL
+                secretsOK = False
+        if secUser == "":
+            if not user is None:
+                secUser = user
+        else:
+            if not user is None:
+                if user != "":
+                    secUser = user
+                    secretsOK = False
+        if secPwd == "":
+            if not pwd is None:
+                secPwd = pwd
+        else:
+            if not pwd is None:
+                if pwd != "":
+                    secPwd = pwd
+                    secretsOK = False
+        
+        # Test connection
+        try:
+            if secUseSSL == True:
+                server = smtplib.SMTP_SSL(host=secHost, port=secPort)
+            else:
+                server = smtplib.SMTP(host=secHost, port=secPort)
+            server.connect(secHost)
+            server.login(secUser, secPwd)
+            server.ehlo()
+            server.quit()
+            logger.debug("TriggerConfig.checkNotificationRecipient - connection test successful")
+        except Exception as e:
+            logger.debug("TriggerConfig.checkNotificationRecipient - connection test failed")
+            self.notifyConOK = False
+            err = "Connection error: " + str(e)
+            
+        if err == "":
+            self.notifyConOK = True
+            if secretsOK == False:
+                if self.notifySavePwd == True:
+                    # Store credentials
+                    if self.notifyPwdPath == "":
+                        err = "Please enter the file path for storage of credentials!"
+                    else:
+                        if not os.path.exists(self.notifyPwdPath):
+                            fp = Path(self.notifyPwdPath)
+                            dir = fp.parent.absolute()
+                            fn = fp.name
+                            if not os.path.exists(dir):
+                                os.makedirs(dir, exist_ok=True)
+                            self.notifyPwdPath = str(dir) + "/" + fn
+                            Path(self.notifyPwdPath).touch(exist_ok=True)
+                        else:
+                            if os.path.isdir(self.notifyPwdPath):
+                                err = "The 'Password File Path' must be a file and not a directory!"
+                        secrets = {}
+                        if err == "":
+                            if os.stat(self.notifyPwdPath).st_size > 0:
+                                with open(self.notifyPwdPath, "r") as f:
+                                    try:
+                                        secrets = json.load(f)
+                                    except Exception as e:
+                                        err = "The file specified as 'Password File Path' has content which is not in JSON format"
+                        if err == "":
+                            if "eventnotification" in secrets:
+                                notifySecrets = secrets["eventnotification"]
+                            else:
+                                notifySecrets = {}
+                                secrets["eventnotification"] = notifySecrets
+                            notifySecrets["host"] = self.notifyHost
+                            notifySecrets["port"] = self.notifyPort
+                            notifySecrets["useSSL"] = self.notifyUseSSL
+                            notifySecrets["user"] = secUser
+                            notifySecrets["password"] = secPwd
+                            with open(self.notifyPwdPath, "w") as f:
+                                try:
+                                    json.dump(secrets,fp=f, indent=4)
+                                    logger.debug("TriggerConfig.checkNotificationRecipient - saved credentials to file %s", self.notifyPwdPath)
+                                except Exception as e:
+                                    logger.err("TriggerConfig.checkNotificationRecipient - error while saving credentials to file %s: %s", self.notifyPwdPath, e)
+                                    err = "Error writing to " + self.notifyPwdPath + ": " + str(e)
+        return (secUser, secPwd, err)
 
     @classmethod                
     def initFromDict(cls, dict:dict):
@@ -549,6 +793,7 @@ class TriggerConfig():
         #Reset some default values for which imported values shall be ignored
         cc.evStart = None
         cc.calStart = None
+        cc.notifyConOK = False
         return cc
 
 class CameraInfo():
@@ -2828,6 +3073,30 @@ class ServerConfig():
         sc.isVideoRecording = False
         return sc
     
+class Secrets():
+    """ Class for secrets which are never persisted
+    """
+    def __init__(self) -> None:
+        self._notifyUser = ""
+        self._notifyPwd = ""
+
+    @property
+    def notifyUser(self) -> str:
+        return self._notifyUser
+
+    @notifyUser.setter
+    def notifyUser(self, value: str):
+        self._notifyUser = value
+
+    @property
+    def notifyPwd(self) -> str:
+        return self._notifyPwd
+
+    @notifyPwd.setter
+    def notifyPwd(self, value: str):
+        self._notifyPwd = value
+    
+    
 class CameraCfg():
     _instance = None
     def __new__(cls):
@@ -2877,6 +3146,7 @@ class CameraCfg():
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 4
             cls._streamingCfg = {}
+            cls._secrets = Secrets()
         return cls._instance
     
     @property
@@ -2995,6 +3265,14 @@ class CameraCfg():
     def streamingCfg(self, value: dict):
         self._streamingCfg = value
     
+    @property
+    def secrets(self) -> Secrets:
+        return self._secrets
+
+    @secrets.setter
+    def secrets(self, value: Secrets):
+        self._secrets = value
+    
     def _persistCl(self, cl, fn: str, cfgPath: str):
         """ Store class dictionary for class cl in the config file fn
         """
@@ -3084,4 +3362,11 @@ class CameraCfg():
                 self.controls = self._loadConfigCl(CameraControls, "controls.json", cfgPath)
                 self.triggerConfig = self._loadConfigCl(TriggerConfig, "triggerConfig.json", cfgPath)
                 self.streamingCfg = self._initStreamingConfigFromDisc("streamingCfg.json", cfgPath)
+                tc = self.triggerConfig
+                (usr, pwd, err) = tc.checkNotificationRecipient()
+                if tc.notifyConOK == True:
+                    sc = self.secrets
+                    sc.notifyUser = usr
+                    sc.notifyPwd = pwd
+                
                 

@@ -4,6 +4,10 @@
 
 This page intends to collect information on how to deal with errors which may occur while running **raspiCamSrv**.
 
+- **No Connection to server although server has been started as service**.    
+This may happen (see [raspi-cam-srv Issue #8](https://github.com/signag/raspi-cam-srv/issues/8)) if the service has been started before the network interfaces are ready.   
+The systemd journal will indicate that the Flask server is only listening to *localhost* (127.0.0.1)   
+In this case, more restrictive settings in the *After* clause of the [service configuration](../README.md#service-configuration) file may be required (see [systemd Network Configuration Synchronization Points](https://systemd.io/NETWORK_ONLINE/)) 
 - **SystemError: No cameras were found on the server's device**   
 See [raspi-cam-srv Issue #6](https://github.com/signag/raspi-cam-srv/issues/6)
 - **ERROR in camera_pi: Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration**   

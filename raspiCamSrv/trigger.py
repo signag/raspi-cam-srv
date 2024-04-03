@@ -60,6 +60,10 @@ def control():
             if not tc.actionPhoto:
                 err = "Together with videos, you must capture at least one photo."
                 tc.actionPhoto = True
+        if request.form.get("triggernotify") is None:
+            tc.actionNotify = False
+        else:
+            tc.actionNotify = True
         for key, value in tc.operationWeekdays.items():
             if request.form.get("opweekday" + key) is None:
                 tc.operationWeekdays[key] = False
@@ -131,6 +135,70 @@ def action():
         tc.actionPhotoBurstDelaySec = pbd
         if err:
             flash(err)
+    return render_template("trigger/trigger.html", tc=tc, sc=sc)
+
+@bp.route("/notify", methods=("GET", "POST"))
+@login_required
+def notify():
+    logger.debug("In notify")
+    cfg = CameraCfg()
+    g.hostname = request.host
+    g.version = version
+    sc = cfg.serverConfig
+    tc = cfg._triggerConfig
+    sc.lastTriggerTab = "trgnotify"
+    scr = cfg.secrets
+    if request.method == "POST":
+        err = ""
+        notifyFrom = request.form["notifyfrom"]
+        notifyTo = request.form["notifyto"]
+        notifySubject = request.form["notifysubject"]
+        if notifySubject == "":
+            err = "Please enter 'Subject'"
+        if notifyTo == "":
+            err = "Please enter 'To e-Mail'"
+        if notifyFrom == "":
+            err = "Please enter 'From e-Mail'"
+        if err != "":
+            flash(err)
+        else:
+            tc.notifyFrom = notifyFrom
+            tc.notifyTo = notifyTo
+            tc.notifySubject = notifySubject
+            tc.notifyHost = request.form["notifyhost"]
+            tc.notifyPort = int(request.form["notifyport"])
+            if request.form.get("notifyusessl") is None:
+                tc.notifyUseSSL = False
+            else:
+                tc.notifyUseSSL = True
+            user = request.form["notifyuser"]
+            pwd = request.form["notifypassword"]
+            if request.form.get("notifysavepwd") is None:
+                tc.notifySavePwd = False
+            else:
+                tc.notifySavePwd = True
+            tc.notifyPwdPath = request.form["notifypwdpath"]
+            tc.notifyPause = int(request.form["notifypause"])
+            if request.form.get("notifyincludevideo") is None:
+                tc.notifyIncludeVideo = False
+            else:
+                tc.notifyIncludeVideo = True
+            if request.form.get("notifyincludephoto") is None:
+                tc.notifyIncludePhoto = False
+            else:
+                tc.notifyIncludePhoto = True
+            if tc.notifyConOK:
+                if user == "":
+                    user = scr.notifyUser
+                if pwd == "":
+                    pwd = scr.notifyPwd
+            (user, pwd, err) = tc.checkNotificationRecipient(user=user, pwd=pwd)
+            if err != "":
+                flash(err)
+            else:
+                scr.notifyUser = user
+                scr.notifyPwd = pwd
+                flash("Connection test successful")
     return render_template("trigger/trigger.html", tc=tc, sc=sc)
 
 @bp.route("/start_triggered_capture", methods=("GET", "POST"))

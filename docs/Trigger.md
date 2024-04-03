@@ -11,6 +11,7 @@ Motion detection is basic and based on frame-differencing with simple mean squar
 Further reading:
 - [Active Motion Capture](./TriggerActive.md)
 - [Event Viewer](./TriggerEventViewer.md)
+- [Notification](./TriggerNotification.md)
 
 ## Control
 
@@ -22,7 +23,8 @@ In the *Control* section, you may specify basic aspects of triggered capture:
 Currently, only motion detection is available.
 - Under *Actions* you specify the actions to be taken in case of a trigger event.   
 You may select among video recording and photo taking.   
-In case *Record Video* is selected, also at least one photo must be taken. This photo will serve as placeholder for the video in the [Event Viewer](./TriggerEventViewer.md).
+In case *Record Video* is selected, also at least one photo must be taken. This photo will serve as placeholder for the video in the [Event Viewer](./TriggerEventViewer.md).    
+With *Notification* you specify whether or not you want to be informed by e-Mail about an event. The details need to be specified on the [Notification](./TriggerNotification.md) tab.
 - With *Operation Weekdays*, you specify the weekdays when triggering shall be active.
 - *Operation Start* specifies the daytime when triggering is activated on each active weekday.
 - *Operation End* specifies the daytime when triggering is paused.
@@ -31,7 +33,7 @@ When activated, the trigger capturing process can be automatically started with 
 When you change this parameter, you need to go to [Settings](./Settings.md) and store the current [Server Configuration](./Settings.md#server-configuration)   
 If you want automatic start, you also need to select *Start Server with stored Configuration*.    
 **Note** In case you start the Flask server manually, do not use the ```--debug``` option. This will cause an exception (see [Flask Issue #5437](https://github.com/pallets/flask/discussions/5437)).
-- *Detection Delay* allows specifying a dalay in seconds. When an event is triggered, the configured action (video and/or photo) will be delayed by the specified number of seconds. Normally, this will be 0.
+- *Detection Delay* allows specifying a dalay in seconds. When an event is triggered, the configured action (video and/or photo, Notification) will be delayed by the specified number of seconds. Normally, this will be 0.
 - *Detection Pause* specifies a 'dead time' after an event has been registerd. Within this time no new event will be registered although the system will not stop detecting motion.   
 This setting prevents from being flooded with registered events, for example if motion persists for a longer time.
 - *Retention Period* specifies the number of days  for which event data will be retained when a [cleanup](./TriggerEventViewer.md#cleanup) is done.

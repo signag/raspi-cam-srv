@@ -2,6 +2,12 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.3.4
+
+### New Features
+
+- e-Mail notification on motion capturing events (see [Notification](./TriggerNotification.md))
+
 ## V2.3.3
 
 ### Bugfixes

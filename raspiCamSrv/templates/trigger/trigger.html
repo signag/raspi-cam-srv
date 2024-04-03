@@ -28,6 +28,13 @@
         <button class="w3-bar-item w3-button triggermenu" id="trgactionbtn"
             onclick="openTriggerTab('trgaction', 'trgactionbtn')">Action</button>
         {% endif %}
+        {% if sc.lastTriggerTab == "trgnotify" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgnotifybtn"
+            onclick="openTriggerTab('trgnotify', 'trgnotifybtn')">Notification</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgnotifybtn"
+            onclick="openTriggerTab('trgnotify', 'trgnotifybtn')">Notification</button>
+        {% endif %}
         {% if sc.lastTriggerTab == "trgevents" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgeventsbtn"
             onclick="openTriggerTab('trgevents', 'trgeventsbtn')">Events</button>
@@ -110,6 +117,28 @@
                         <input type="checkbox" id="triggerphoto" name="triggerphoto" value="1" checked>
                         {% else %}
                         <input type="checkbox" id="triggerphoto" name="triggerphoto" value="1">
+                        {% endif %}
+                    </td>
+                    <td style="width:50%;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:15%">
+                    </td>
+                    <td style="width:10%">
+                    </td>
+                    <td class="w3-tooltip" style="width:15%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Activate checkbox in order to be notified in case of events.<br>
+                            You need to specify details on the Notification tab
+                        </span>
+                        <label for="triggernotify">Notification:</label>
+                    </td>
+                    <td style="width:10%;">
+                        {% if tc.actionNotify == True %}
+                        <input type="checkbox" id="triggernotify" name="triggernotify" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="triggernotify" name="triggernotify" value="1">
                         {% endif %}
                     </td>
                     <td style="width:50%;">
@@ -397,7 +426,195 @@
                 <input class="w3-button w3-black" type="submit" value="Submit">
             </form>
         </div>
-
+    </div>
+    {% if sc.lastTriggerTab == "trgnotify" %}
+    <div id="trgnotify" class="triggergroup">
+    {% else %}
+    <div id="trgnotify" class="triggergroup" style="display:none">
+    {% endif %}
+        <div class="w3-half">
+            <p>&nbsp;</p>
+            {% if tc.notifyConOK == False %}
+            <h3 class="w3-red">Please enter credentials to check notification recipient</h3>
+            {% else %}
+            <h3 class="w3-green">Mail account for notification is already verified</h3>
+            {% endif %}
+            <form method="post" action="{{ url_for('trigger.notify') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                SMTP Server
+                            </span>
+                            <label for="notifyhost">SMTP Server:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="text" id="notifyhost" name="notifyhost" value="{{ tc.notifyHost }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Port
+                            </span>
+                            <label for="notifyport">Port:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="notifyport" name="notifyport" min="1" max="999" step="1"
+                                value="{{ tc.notifyPort }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Use SSL.
+                            </span>
+                            <label for="notifyusessl">Use SSL:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.notifyUseSSL == True %}
+                            <input type="checkbox" id="notifyusessl" name="notifyusessl" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="notifyusessl" name="notifyusessl" value="1">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                User<br>
+                                Must not be specified if mail account is already verified.
+                            </span>
+                            <label for="notifyuser">User:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="text" id="notifyuser" name="notifyuser" value="">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Password<br>
+                                Must not be specified if mail account is already verified.
+                            </span>
+                            <label for="notifypassword">Password:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="password" id="notifypassword" name="notifypassword" value="">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Activate checkbox if you want the password to be stored in a file.
+                            </span>
+                            <label for="notifysavepwd">Store Credentials in File:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.notifySavePwd == True %}
+                            <input type="checkbox" id="notifysavepwd" name="notifysavepwd" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="notifysavepwd" name="notifysavepwd" value="1">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Full path to credentials file.<br>
+                                Make sure that the file is securely protected.
+                            </span>
+                            <label for="notifypwdpath">Credentials File Path:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input style="width: 100%" type="text" id="notifypwdpath" name="notifypwdpath"
+                                value="{{ tc.notifyPwdPath }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%;">&nbsp;</td>
+                        <td style="width: 50%;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                E-Mail of sender
+                            </span>
+                            <label for="notifyfrom">From e-Mail:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input style="width: 100%" type="email" id="notifyfrom" name="notifyfrom" value="{{ tc.notifyFrom }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                E-Mail of receipient
+                            </span>
+                            <label for="notifyto">To e-Mail:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input style="width: 100%" type="email" id="notifyto" name="notifyto" value="{{ tc.notifyTo }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Subject to be be shown in the mail
+                            </span>
+                            <label for="notifysubject">Subject:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input style="width: 100%" type="text" id="notifysubject" name="notifysubject" value="{{ tc.notifySubject }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Number of seconds after a notification in which no other notification shall be sent.<br>
+                                Should be a multiple of the detection pause to be effective.
+                            </span>
+                            <label for="notifypause">Notification Pause:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="notifypause" name="notifypause" min="1" max="999999" step="1" value="{{ tc.notifyPause }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Activate checkbox if you want the event video included in the mail.
+                            </span>
+                            <label for="notifyincludevideo">Include Video:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.notifyIncludeVideo == True %}
+                            <input type="checkbox" id="notifyincludevideo" name="notifyincludevideo" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="notifyincludevideo" name="notifyincludevideo" value="1">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Activate checkbox if you want the event photo(s) included in the mail.
+                            </span>
+                            <label for="notifyincludephoto">Include Photos:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.notifyIncludePhoto == True %}
+                            <input type="checkbox" id="notifyincludephoto" name="notifyincludephoto" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="notifyincludephoto" name="notifyincludephoto" value="1">
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit">
+            </form>
+        </div>
     </div>
     {% if sc.lastTriggerTab == "trgevents" %}
     <div id="trgevents" class="triggergroup">
