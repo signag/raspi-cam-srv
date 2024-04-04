@@ -119,10 +119,12 @@ def genPhoto2(camera):
 # @login_required
 def photo_feed():
     logger.debug("Thread %s: In photo_feed", get_ident())
+    Camera().startLiveStream()
     return Response(genPhoto(Camera()), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @bp.route("/photo_feed2")
 # @login_required
 def photo_feed2():
     logger.debug("Thread %s: In photo_feed2", get_ident())
+    Camera().startLiveStream2()
     return Response(genPhoto2(Camera()), mimetype='multipart/x-mixed-replace; boundary=frame')

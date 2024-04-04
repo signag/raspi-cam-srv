@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.3.5
+
+### Bugfixes
+
+- Fixed issue with **endpoints photo_feed and photo_feed2**:    
+These endpoints use the live streams for the available cameras. However, if the live stream was not active at the time when a client requested this endpoint, no photo was shown. Only when live streams were activated through the **raspiCamSrv** Web UI, photos were shown.   
+Now, when these endpoints are requested, the system automatically starts a live stream if it is currently not active and delivers a photo.
+
 ## V2.3.4
 
 ### New Features
