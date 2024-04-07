@@ -153,7 +153,10 @@ def resetServer():
         if sc.raspiModelLower5:
             cfg.liveViewConfig.format = "YUV420"
         if sc.raspiModelFull.startswith("Raspberry Pi Zero") \
-        or sc.raspiModelFull.startswith("Raspberry Pi 4"):
+        or sc.raspiModelFull.startswith("Raspberry Pi 4") \
+        or sc.raspiModelFull.startswith("Raspberry Pi 3") \
+        or sc.raspiModelFull.startswith("Raspberry Pi 2") \
+        or sc.raspiModelFull.startswith("Raspberry Pi 1"):
             # For Pi Zero and 4 reduce buffer_count defaults for live view and video
             cfg.liveViewConfig.buffer_count = 2
             cfg.videoConfig.buffer_count = 4

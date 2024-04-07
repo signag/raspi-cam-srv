@@ -1,1 +1,1 @@
-version="V2.3.5"
+version="V2.3.6"

@@ -2057,6 +2057,10 @@ class ServerConfig():
             self._raspiModelLower5 = True
         elif model.startswith("Raspberry Pi 3"):
             self._raspiModelLower5 = True
+        elif model.startswith("Raspberry Pi 2"):
+            self._raspiModelLower5 = True
+        elif model.startswith("Raspberry Pi 1"):
+            self._raspiModelLower5 = True
         elif model.startswith("Raspberry Pi Zero W"):
             self._raspiModelLower5 = True
         elif model.startswith("Raspberry Pi Zero 2 W"):
@@ -3141,7 +3145,10 @@ class CameraCfg():
             if cls._serverConfig.raspiModelLower5:
                 cls._liveViewConfig.format = "YUV420"
             if cls._serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
-            or cls._serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
+            or cls._serverConfig.raspiModelFull.startswith("Raspberry Pi 4") \
+            or cls._serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
+            or cls._serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
+            or cls._serverConfig.raspiModelFull.startswith("Raspberry Pi 1"):
                 # For Pi Zero and 4 reduce buffer_count defaults for live view and video
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 4

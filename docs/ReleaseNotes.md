@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.3.6
+
+### Bugfixes
+
+- Fixed error ```[Errno 12] Cannot allocate memory``` for Raspberry Pi 3.    
+(See [raspi-cam-srv Issue #9](https://github.com/signag/raspi-cam-srv/issues/9))    
+Lower values for buffer_count are now also used for Pi 3, Pi 2 and Pi 1. in the same way as for Pi 4 and Pi Zero.
+
 ## V2.3.5
 
 ### Bugfixes
