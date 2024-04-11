@@ -11,7 +11,14 @@ In this case, more restrictive settings in the *After* clause of the [service co
 - **SystemError: No cameras were found on the server's device**   
 See [raspi-cam-srv Issue #6](https://github.com/signag/raspi-cam-srv/issues/6)
 - **ERROR in camera_pi: Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration**   
-This message may occur when running on Bullseye systems
+This message may occur when running on Bullseye systems.   
+Currently, it can be ignored because the missing *SensorConfiguration* class has currently no impact on **raspiCamSrv** functionality.   
+*SensorConfiguration* is a class in Picamera2 which is referenced in the CameraConfiguration (see [Picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf) chapter 4.3)    
+It includes information on the output size and bit depth of a stream.    
+In Bullseye systems, this class is missing.         
+Currently, raspiCamSrv does not require the *SensorConfigiuration* but it is included in the data model because Picamera2 uses it.   
+The error occurs when trying to import the class. 
+
 - **ERROR V4L2 v4l2_videodevice.cpp:1906 /dev/video4[16:cap]: Failed to start streaming: Broken pipe**  
 See [picamera2 Issue #104](https://github.com/raspberrypi/libcamera/issues/104) from Feb 1, 2024   
 The recommended solution was to go back to kernel release 6.1.65 with ```sudo rpi-update d16727d```
