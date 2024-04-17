@@ -17,7 +17,12 @@ Currently, it can be ignored because the missing *SensorConfiguration* class has
 It includes information on the output size and bit depth of a stream.    
 In Bullseye systems, this class is missing.         
 Currently, raspiCamSrv does not require the *SensorConfigiuration* but it is included in the data model because Picamera2 uses it.   
-The error occurs when trying to import the class. 
+The error occurs when trying to import the class.   
+
+- **WARN RPiSdn sdn.cpp:39 Using legacy SDN tuning - please consider moving SDN inside rpi.denoise**   
+This is just a warning from the libcamera system that the tuning file should be updated.      
+It is currently not known that there is an impact on raspiCamSrv functionality.
+
 
 - **ERROR V4L2 v4l2_videodevice.cpp:1906 /dev/video4[16:cap]: Failed to start streaming: Broken pipe**  
 See [picamera2 Issue #104](https://github.com/raspberrypi/libcamera/issues/104) from Feb 1, 2024   
@@ -26,6 +31,7 @@ The recommended solution was to go back to kernel release 6.1.65 with ```sudo rp
 See [raspi-cam-srv Issue #4](https://github.com/signag/raspi-cam-srv/issues/4)
 - **TypeError: memoryview: casts are restricted to C-contiguous views**   
 See [picamera2 Issue #959](https://github.com/raspberrypi/picamera2/issues/959)
+
 ## Logging
 
 The **raspiCamSrv** server uses Python logging.
