@@ -6,7 +6,7 @@
 
 ### New Features
 
-- Photo Series can be set to be [automatically continued](./docs/PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shotdown or reboot.
+- Photo Series can be set to be [automatically continued](./PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shotdown or reboot.
 
 ### Bugfixes
 
