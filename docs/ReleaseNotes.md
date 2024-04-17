@@ -2,6 +2,17 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.4.0
+
+### New Features
+
+- Photo Series can be set to be [automatically continued](./docs/PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shotdown or reboot.
+
+### Bugfixes
+
+- The active [Photo Series](./PhotoSeries.md) had always been set to the alphabetically last series in case of a server start/restart, even if another series had been active at the time when the server was stopped.    
+Now, if a series with status "ACTIVE" is found when the server is started, this series will be set as active series.
+
 ## V2.3.6
 
 ### Bugfixes

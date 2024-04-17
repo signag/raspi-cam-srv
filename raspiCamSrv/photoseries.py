@@ -421,6 +421,10 @@ def series_properties():
         serEndFormIso = request.form["serend"]
         serIntForm = float(request.form["serinterval"])
         serShtForm = int(request.form["sernrshots"])
+        if request.form.get("isautocontinue") is None:
+            continueOnServerStart = False
+        else:
+            continueOnServerStart = True
         # Iso date from form does not include seconds, 
         # so we need to cut off the seconds from the stored series
         serEndOldIso = sr.endIso
@@ -463,6 +467,11 @@ def series_properties():
             sr.end = serEnd
             sr.interval = serInt
             sr.nrShots = serNrShots
+            if sr.isExposureSeries == False \
+            and sr.isFocusStackingSeries == False:
+                sr.continueOnServerStart = continueOnServerStart
+            else:
+                sr.continueOnServerStart = False
             sr.nextStatus("configure")
             sr.persist()
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
@@ -612,6 +621,7 @@ def expseries_properties():
                 msg = "The series is already marked as Focus Stack"
             else:
                 sr.isExposureSeries = True
+                sr.continueOnServerStart = False
                 if request.form.get("isexptimefix") is None:
                     sr.isExpExpTimeFix = False
                     if request.form.get("isexpgainfix") is None:
@@ -724,6 +734,7 @@ def focusstack_properties():
                             ok = False
             if ok:
                 sr.isFocusStackingSeries = True
+                sr.continueOnServerStart = False
                 nrShots, focusStop = calcFocusSeries(focusStart, focusStop, focusStep)
                 sr.focalDistStart = focusStart
                 sr.focalDistStop = focusStop

@@ -4,7 +4,7 @@
 
 
 The *Photo Series* screen allows the management of different kinds of Photo Series and includes means for series configuration, lifecycle management, photo shooting and supervision.   
-A series is a seqience of photos taken within specific time intervals. Special kinds of series are [Timelapse Series](./PhotoSeriesTimelapse.md), [Exposure Series](./PhotoSeriesExp.md) and [Focus Stacks](./PhotoSeriesFocus.md).
+A series is a sequence of photos taken with specific time intervals. Special kinds of series are [Timelapse Series](./PhotoSeriesTimelapse.md), [Exposure Series](./PhotoSeriesExp.md) and [Focus Stacks](./PhotoSeriesFocus.md).
 
 ![Photoseries Screen](img/Photoseries2.jpg)
 
@@ -42,6 +42,10 @@ If this is done, the number of shots will be calculated based on the specified *
 From experience, the system will observe the given value within a tolerance of about 30 ms.
 - The *Number of Shosts* specifies the numper of photos intended for the series.   
 If the *End* time has not been explicitly specified, it will be calculated from *Interval* and *Number of Shots* considering the specified *Start* time.
+- The checkbox *Cont. on Server Start* allows to automatically continue an active series in case of a server restart.    
+Such a situation may happen if the server is stopped (explicitly or implicitly with a device shutdown) while a series is active.    
+For example, if you have a long running timelapse series, there might be power outages forcing a system reboot. If you have set the series to automatic continuation it will be continued as soon as the server is restarted. Otherwise, it will be in status PAUSED.   
+Automatic continuation is not used for [Exposure Series](./PhotoSeriesExp.md) or [Focus Stack](./PhotoSeriesFocus.md) series because these series are typically not running for a longer time.
 
 After the values have been entered, pressing the *Submit* button will calculate dependent parameters an change the [status](#photo-series-state-chart) of the series to "READY".
 

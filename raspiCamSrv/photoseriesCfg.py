@@ -27,6 +27,7 @@ class Series():
         self._nrShots = None
         self._curShots = None
         self._type = "jpg"
+        self._continueOnServerStart = False
         self._showPreview = True
         self._logFile = None
         self._cfgFile = None
@@ -220,6 +221,14 @@ class Series():
     @type.setter
     def type(self, value: str):
         self._type = value
+    
+    @property
+    def continueOnServerStart(self) -> bool:
+        return self._continueOnServerStart
+
+    @continueOnServerStart.setter
+    def continueOnServerStart(self, value: bool):
+        self._continueOnServerStart = value
     
     @property
     def showPreview(self) -> bool:
@@ -895,13 +904,21 @@ class PhotoSeriesCfg():
             tls = []
         tls.sort()
         logger.debug("initFromTlFolder - Found TL series: %s", tls)
+        curSer = None
+        lastSer = None
         for tl in tls:
             spath = self.rootPath + "/" + tl
             if os.path.isdir(spath):
                 ser = self._initSeriesFromCfg(spath, tl)
                 if ser:
                     self.tlSeries.append(ser)
-                    self.curSeries = ser
+                    lastSer = ser
+                    if ser.status == "ACTIVE":
+                        curSer = ser
+        if curSer:
+            self.curSeries = curSer
+        else:
+            self.curSeries = lastSer
         logger.debug("initFromTlFolder - # series: %s", len(self.tlSeries))
         
     def removeCurrentSeries(self):

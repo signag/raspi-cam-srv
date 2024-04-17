@@ -8,6 +8,7 @@ from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.motionDetector import MotionDetector
 import json
 import datetime
+import time
 from werkzeug.serving import is_running_from_reloader
 
 def create_app(test_config=None):
@@ -130,6 +131,24 @@ def create_app(test_config=None):
     tlCfg = photoseriesCfg.PhotoSeriesCfg()
     tlCfg.rootPath = tlRootPath
     tlCfg.initFromTlFolder()
+    tlCfg = photoseriesCfg.PhotoSeriesCfg()
+    
+    # Restart an active series if requested
+    if tlCfg.hasCurSeries:
+        sr = tlCfg.curSeries
+        if sr.status == "ACTIVE":
+            if sr.isExposureSeries == False \
+            and sr.isFocusStackingSeries == False:
+                if sr.continueOnServerStart == True:
+                    sr.nextStatus("pause")
+                    Camera().startPhotoSeries(sr)
+                    time.sleep(2)
+                    if sc.error is None and sr.error is None:
+                        sr.nextStatus("start")
+                else:
+                    sr.nextStatus("pause")
+            else:
+                sr.nextStatus("pause")
 
     # Autostart triggered capture, if configured
     if tc.operationAutoStart:

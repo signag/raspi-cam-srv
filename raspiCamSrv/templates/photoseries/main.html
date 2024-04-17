@@ -362,6 +362,26 @@
                         {% endif %}
                     </tr>
                     <tr>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Activate this checkbox if you want an active series 
+                                to be automatically continued on server start.
+                            </span>
+                            <label for="isautocontinue">Cont. on Server Start:</label>
+                        </td>
+                        <td style="width:25%">
+                            {% if sr.continueOnServerStart == True %}
+                            <input type="checkbox" id="isautocontinue" name="isautocontinue" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="isautocontinue" name="isautocontinue" value="0">
+                            {% endif %}
+                        </td>
+                        <td style="width:25%">
+                        </td>
+                        <td style="width:20%">
+                        </td>
+                    </tr>
+                    <tr>
                         <td colspan="4">
                             &nbsp;
                         </td>
