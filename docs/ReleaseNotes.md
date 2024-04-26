@@ -2,9 +2,18 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.4.2
+
+### Bugfixes
+
+- If livestream terminates, camera is closed if a [Photo Series](./PhotoSeries.md) is active (no [Exposure Series](./PhotoSeriesExp.md) or [Focus Stack](./PhotoSeriesFocus.md)) and if the time to the next shot is larger than 60 sec.    
+In the previous version, the camera would not have been closed if a Photo Series was active at the time when the livestream terminated.    
+If, for example, the interval for the Photo Series would have been 1 hour and if the livestream would have been activated shortly after a shot was taken, the camera would have been open and started for about one hour and only be closed after the next shot of the series.
+
 ## V2.4.1
 
 ### New Features
+
 - Process information for the Flask server process and its threads has been added to the [Info screen](./Information.md) 
 - Camera status information has been added to the [Info screen](./Information.md)
 

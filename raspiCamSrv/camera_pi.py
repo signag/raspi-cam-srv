@@ -1926,8 +1926,24 @@ class Camera():
                 
         Camera.thread = None
         sc = CameraCfg().serverConfig
-        if sc.isPhotoSeriesRecording == False \
-        and sc.isVideoRecording == False:
+        
+        closeCam = True
+        if sc.isVideoRecording == True:
+            closeCam = False
+        if sc.isPhotoSeriesRecording == True:
+            ser = Camera.photoSeries
+            if ser:
+                if ser.isExposureSeries == True \
+                or ser.isFocusStackingSeries == True:
+                    closeCam = False
+                else:
+                    nextTime = ser.nextTime()
+                    curTime = datetime.datetime.now()
+                    timedif = nextTime - curTime
+                    timedifSec = timedif.total_seconds()
+                    if timedifSec < 60:
+                        closeCam = False
+        if closeCam == True:
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
         sc.isLiveStream = False
 
