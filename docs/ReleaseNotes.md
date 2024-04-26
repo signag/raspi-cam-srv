@@ -2,6 +2,23 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## V2.4.1
+
+### New Features
+- Process information for the Flask server process and its threads has been added to the [Info screen](./Information.md) 
+- Camera status information has been added to the [Info screen](./Information.md)
+
+### Improvements
+- Cameras are now stopped and closed in times when they are not active.   
+As a consequence, the number of active threads and CPU utilization is reduced in phases when cameras are not streaming and no other background processes (video recording, photo series, motion capturing) are active.    
+For more details, see [Camera Status and Number of Threads](./Information.md#camera-status-and-number-of-threads)
+
+
+### Bugfixes
+
+- [Code Generation](./Troubelshooting.md#generation-of-python-code-for-camera) did not generate import statements.
+- Error status for [Triggered Capture of Videos and Photos](./Trigger.md) which had been stored with [Store Configuration](./Settings.md#server-configuration) are now cleared if server is started with stored configuration
+
 ## V2.4.0
 
 ### New Features

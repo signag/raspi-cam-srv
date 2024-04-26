@@ -9,7 +9,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.4.0
+## Feature Overview V2.4.1
 For more details, see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md)
 
 ![Live Overview](docs/img/Live.jpg)

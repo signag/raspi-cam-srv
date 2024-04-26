@@ -55,6 +55,7 @@ class MotionDetector():
         tc = CameraCfg().triggerConfig
         #logger.debug("Thread %s: MotionDetector._motionDetected - algo: %s", get_ident(), tc.motionDetectAlgo)
         motion = False
+        trigger = {}
         
         if tc.motionDetectAlgo == 1:
             (motion, trigger) = cls._motionAlgo_MeanSquare(fCur, fPrv)

@@ -23,5 +23,7 @@ def main():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
+    for c in cs:
+        c.status = Camera.cameraStatus(c.num)
     sc.curMenu = "info"
     return render_template("info/info.html", props=props, sm=sm, sc=sc, cp=cp, cs=cs, cfg=cfg)

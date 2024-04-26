@@ -794,6 +794,10 @@ class TriggerConfig():
         cc.evStart = None
         cc.calStart = None
         cc.notifyConOK = False
+        #Reset error
+        cc._error = None
+        cc._error2 = None
+        cc._errorSource = None
         return cc
 
 class CameraInfo():
@@ -804,6 +808,7 @@ class CameraInfo():
         self._rotation = 0
         self._id = ""
         self._num = 0
+        self._status = ""
 
     @property
     def model(self) -> str:
@@ -852,6 +857,14 @@ class CameraInfo():
     @num.setter
     def num(self, value: int):
         self._num = value
+
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @status.setter
+    def status(self, value: str):
+        self._status = value
 
 class CameraControls():
     def __init__(self):
@@ -2603,6 +2616,22 @@ class ServerConfig():
                 why = why + "<br>module matplotlib is not available"
         return why
     
+    @property
+    def processInfo(self) -> str:
+        pi = self._countThreads("raspiCamSrv")
+        # This subprocess runs in an own thread,
+        # So we need to reduce prcNlwp to get the real number of threads
+        threadCount = pi[2] - 1
+        return f"PID:{pi[0]} Start:{pi[1]} #Threads:{threadCount} CPU Process:{pi[3]} Threads:{pi[4]}"
+    
+    @property
+    def ffmpegProcessInfo(self) -> str:
+        pi = self._countThreads("ffmpeg")
+        if pi[2] == 0:
+            return f"No ffmpeg process active"
+        else:
+            return f"PID:{pi[0]} Start:{pi[1]} #Threads:{pi[2]} CPU Process:{pi[3]} Threads:{pi[4]}"
+    
     def _checkModule(self, moduleName: str):
         module = None
         try:
@@ -2997,6 +3026,110 @@ class ServerConfig():
         
         logger.debug("CameraCfg.getBoardRevision - boardRev = %s", boardRev)
         return boardRev
+
+    @staticmethod
+    def _lineGen(s):
+        """Generator to yield lines of a text
+        """
+        while len(s) > 0:
+            p = s.find("\n")
+            if p >= 0:
+                if p == 0:
+                    line = ""
+                else:
+                    line = s[:p]
+                s = s[p+1:]
+            else:
+                line = s
+                s = ""
+            yield line
+
+    def _countThreads(self, process: str=None):
+        """Count number of threads for a given process
+        
+        """
+        cntAll = -1
+        cntReq = 0
+        prcPid = 0
+        prcStime = ""
+        prcNlwp = 0
+        prcTime = ""
+        thrTime = ""
+        thrTimed = timedelta(0)
+        
+        try:
+            result = subprocess.run(["ps", "-e", "-L", "-f"], capture_output=True, text=True, check=True).stdout
+            for line in self._lineGen(result):
+                cntAll += 1
+                if cntAll > 0:
+                    uid = line[sUID:eUID].strip()
+                    pid = int(line[sPID:ePID].strip())
+                    ppid = int(line[sPPID:ePPID].strip())
+                    lwp = int(line[sLWP:eLWP].strip())
+                    c = int(line[sC:eC].strip())
+                    nlwp = int(line[sNLWP:eNLWP].strip())
+                    stime = line[sSTIME:eSTIME].strip()
+                    tty = line[sTTY:eTTY].strip()
+                    time = line[sTIME:eTIME].strip()
+                    cmd = line[sCMD:].strip()
+                    if not process is None:
+                        if cmd.find(process) >= 0:
+                            if pid == lwp:
+                                cntReq += 1
+                                prcPid = pid
+                                prcStime = stime
+                                prcNlwp = nlwp
+                                prcTime = time
+                            else:
+                                if pid == prcPid:
+                                    cntReq += 1
+                                    t = datetime.strptime(time, "%H:%M:%S")
+                                    td = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+                                    thrTimed += td
+                            if cntReq >= prcNlwp:
+                                break
+                else:
+                    p = 0
+                    p = line.find("UID", p)
+                    sUID = p
+                    p = line.find("PID", p + 3)
+                    ePID = p + 3
+                    sPID = ePID - 6
+                    eUID = sPID
+                    p = line.find("PPID", p + 3)
+                    ePPID = p + 4
+                    sPPID = ePID
+                    p = line.find("LWP", p + 4)
+                    eLWP = p + 3
+                    sLWP = ePPID
+                    p = line.find("C", p + 3)
+                    eC = p + 1
+                    sC = eLWP
+                    p = line.find("NLWP", p + 1)
+                    eNLWP = p + 4
+                    sNLWP = eC
+                    p = line.find("STIME", p + 4)
+                    eSTIME = p + 5
+                    sSTIME = eNLWP
+                    p = line.find("TTY", p + 5)
+                    sTTY = p - 1
+                    p = line.find("TIME", p + 3)
+                    eTTY = p - 5
+                    eTIME = p + 4
+                    sTIME = eTTY
+                    p = line.find("CMD", p + 4)
+                    sCMD = p
+                    
+        except CalledProcessError as e:
+            pass
+        except Exception as e:
+            pass
+        
+        if process is None:
+            return (cntAll,)
+        else:
+            thrTime = str(thrTimed)
+            return (prcPid, prcStime, prcNlwp, prcTime, thrTime)
     
     @classmethod                
     def initFromDict(cls, dict:dict):

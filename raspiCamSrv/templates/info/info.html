@@ -26,6 +26,16 @@
                 <td>{{sc.boardRevision}}</td>
                 <td></td>
             </tr>
+            <tr>
+                <td>Process Info</td>
+                <td>{{sc.processInfo}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>FFmpeg Info</td>
+                <td>{{sc.ffmpegProcessInfo}}</td>
+                <td></td>
+            </tr>
         </table>
         <p>&nbsp;</p>
         {% for cam in cs %}
@@ -86,6 +96,17 @@
                 </td>
                 <td>
                     ID of the camera
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Current Status
+                </td>
+                <td>
+                    {{ cam.status }}
+                </td>
+                <td>
+                    Current status of the camera
                 </td>
             </tr>
         </table>
