@@ -2,6 +2,32 @@
 
 [![Up](img/goup.gif)](../README.md)
 
+## Update Procedure
+
+1. Within a SSH session go to the **raspiCamSrv** root directory    
+```cd ~/prg/raspi-cam-srv```
+2. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
+```git pull```    
+As a result, you will see a summary of changes with respect to the previously installed version.
+3. Restart the service, depending on [how the service was installed](../README.md#service-configuration)    
+```sudo systemctl restart raspiCamSrv.service```    
+or    
+```systemctl --user restart raspiCamSrv.service```
+4. Check that the service started correctly     
+```sudo journalctl -e```    
+or    
+```journalctl --user -e```
+
+## V2.4.3
+
+### Bugfixes
+
+- When data for an ACTIVE [Photo Series](./PhotoSeries.md) were changed, the [status](./PhotoSeries.md#photo-series-state-chart) of the series was set back to "READY" but the thread was still active.    
+Now, for an ACTIVE or PAUSED series, the *Photo Type* and *Start* can no longer be changed.    
+The status will be promoted only for a NEW series.    
+For a series in status FINISHED, data can no longer be modified.
+- The ERROR ```Could not import SensorConfiguration from picamera2.configuration```, which occured on Bullseye systems was changed to INFO
+
 ## V2.4.2
 
 ### Bugfixes

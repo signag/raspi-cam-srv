@@ -52,7 +52,7 @@ class CameraController():
     def __init__(self):
         logger.debug("Thread %s: CameraController.__init__", get_ident())
         if not useSensorConfiguration:
-            logger.error("Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration")
+            logger.info("Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration")
         self._activeCfg:CameraConfiguration = None
         self._requestedCfg:CameraConfiguration = CameraConfiguration()
         self._activeEncoders = {}

@@ -414,66 +414,75 @@ def series_properties():
     sc.curMenu = "photoseries"
     if request.method == "POST":
         sc.lastPhotoSeriesTab = "series"
-        serOK = True
-        sertype = request.form["imgtype"]
-        serStartFormIso = request.form["serstart"]
-        sr.start = datetime.fromisoformat(serStartFormIso)
-        serEndFormIso = request.form["serend"]
-        serIntForm = float(request.form["serinterval"])
-        serShtForm = int(request.form["sernrshots"])
-        if request.form.get("isautocontinue") is None:
-            continueOnServerStart = False
-        else:
-            continueOnServerStart = True
-        # Iso date from form does not include seconds, 
-        # so we need to cut off the seconds from the stored series
-        serEndOldIso = sr.endIso
-        if len(serEndOldIso) > len(serEndFormIso):
-            serEndOldIso = serEndOldIso[:len(serEndFormIso)]
-        logger.debug("Series end Iso: old=%s form=%s", serEndOldIso, serEndFormIso)
-        if serEndFormIso != serEndOldIso:
-            # End time has been changed
-            serEnd = datetime.fromisoformat(serEndFormIso)
-            timedif = serEnd - sr.start
-            timedifSec = timedif.total_seconds()
-            if timedifSec <= 0:
-                msg = "Series end must be later than series start!"
-                flash(msg)
-                serOK = False
+        if sr.status != "FINISHED":
+            serOK = True
+            if sr.status == "ACTIVE" \
+            or sr.status == "PAUSED":
+                sertype = sr.type
             else:
-                if serIntForm != sr.interval:
-                    # Interval has been changed -> calculate nrShots
-                    serInt = serIntForm
-                    serNrShots = int(timedifSec / serInt)
-                elif serShtForm != sr.nrShots:
-                    # Nr shots has been changed -> calculate interval
-                    serNrShots = serShtForm
-                    serInt = int(10 * timedifSec / serNrShots) / 10
+                sertype = request.form["imgtype"]
+                serStartFormIso = request.form["serstart"]
+                sr.start = datetime.fromisoformat(serStartFormIso)
+            serEndFormIso = request.form["serend"]
+            serIntForm = float(request.form["serinterval"])
+            serShtForm = int(request.form["sernrshots"])
+            if request.form.get("isautocontinue") is None:
+                continueOnServerStart = False
+            else:
+                continueOnServerStart = True
+            # Iso date from form does not include seconds, 
+            # so we need to cut off the seconds from the stored series
+            serEndOldIso = sr.endIso
+            if len(serEndOldIso) > len(serEndFormIso):
+                serEndOldIso = serEndOldIso[:len(serEndFormIso)]
+            logger.debug("Series end Iso: old=%s form=%s", serEndOldIso, serEndFormIso)
+            if serEndFormIso != serEndOldIso:
+                # End time has been changed
+                serEnd = datetime.fromisoformat(serEndFormIso)
+                timedif = serEnd - sr.start
+                timedifSec = timedif.total_seconds()
+                if timedifSec <= 0:
+                    msg = "Series end must be later than series start!"
+                    flash(msg)
+                    serOK = False
                 else:
-                    # Onlie series end has been changed -> keep interval and calculate nr shots
-                    serInt = sr.interval
-                    serNrShots = int(timedifSec / serInt)
-        else:
-            # Series end not changed -> calculate it from other params
-            serInt = serIntForm
-            serNrShots = serShtForm
-            timedifSec = int(serInt * serNrShots)
-            delta = timedelta(seconds=timedifSec)
-            serEndRaw = sr.start + delta
-            serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
-            serEnd = serEnd + timedelta(minutes=1)
-        if serOK:
-            sr.type = sertype
-            sr.end = serEnd
-            sr.interval = serInt
-            sr.nrShots = serNrShots
-            if sr.isExposureSeries == False \
-            and sr.isFocusStackingSeries == False:
-                sr.continueOnServerStart = continueOnServerStart
+                    if serIntForm != sr.interval:
+                        # Interval has been changed -> calculate nrShots
+                        serInt = serIntForm
+                        serNrShots = int(timedifSec / serInt)
+                    elif serShtForm != sr.nrShots:
+                        # Nr shots has been changed -> calculate interval
+                        serNrShots = serShtForm
+                        serInt = int(10 * timedifSec / serNrShots) / 10
+                    else:
+                        # Only series end has been changed -> keep interval and calculate nr shots
+                        serInt = sr.interval
+                        serNrShots = int(timedifSec / serInt)
             else:
-                sr.continueOnServerStart = False
-            sr.nextStatus("configure")
-            sr.persist()
+                # Series end not changed -> calculate it from other params
+                serInt = serIntForm
+                serNrShots = serShtForm
+                timedifSec = int(serInt * serNrShots)
+                delta = timedelta(seconds=timedifSec)
+                serEndRaw = sr.start + delta
+                serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
+                serEnd = serEnd + timedelta(minutes=1)
+            if serOK:
+                sr.type = sertype
+                sr.end = serEnd
+                sr.interval = serInt
+                sr.nrShots = serNrShots
+                if sr.isExposureSeries == False \
+                and sr.isFocusStackingSeries == False:
+                    sr.continueOnServerStart = continueOnServerStart
+                else:
+                    sr.continueOnServerStart = False
+                if sr.status == "NEW":
+                    sr.nextStatus("configure")
+                sr.persist()
+        else:
+            msg = "The series is already FINISHED"
+            flash(msg)
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/attach_camera_cfg", methods=("GET", "POST"))
