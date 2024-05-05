@@ -9,6 +9,7 @@ Currently, only motion is supported as trigger.
 Motion detection is basic and based on frame-differencing with simple mean square difference analysis and a configurable threshold.
 
 Further reading:
+- [Motion Capturing](./TriggerMotion.md)
 - [Active Motion Capture](./TriggerActive.md)
 - [Event Viewer](./TriggerEventViewer.md)
 - [Notification](./TriggerNotification.md)
@@ -41,16 +42,6 @@ This setting prevents from being flooded with registered events, for example if 
 Data changes will not be persisted unless the **Submit** button has been pressed.
 
 For activation of motion capturing, see [Active Motion Capturing](./TriggerActive.md) 
-
-## Motion Configuration
-
-![Motion](./img/Trigger_Motion.jpg)
-
-This section allows specification of motion capturing aspects:
-
-- *Motion Detection Algorithm* allows selecting the algorithm by which the system will recognize motion through its camera.   
-Currently, *Mean Square Difference* is supported as frame-differencing algorithm.
-- *Mean Square Threshold* is the value of the mean square difference above which the system detects a motion event.
 
 ## Actions
 

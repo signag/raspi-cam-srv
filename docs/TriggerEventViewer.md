@@ -53,10 +53,20 @@ shows, from top to bottom:
 - Event date
 - Event time
 - Event trigger (Currently only "Motion Detection")
-- Event trigger algorithm
-- Trigger parameter   
-"msd" is the mean square deviation between successive frames.   
-you may use the information to fine tune the *Threshold* value on the [Motion](./Trigger.md#motion-configuration) tab.
+- Event trigger algorithm   
+[Mean Square Diff](./TriggerMotion.md)    
+[Frame Diff.](./TriggerMotion.md#test-for-frame-differencing-algorithm)    
+[Optical Flow](./TriggerMotion.md#test-for-optical-flow-algorithm)    
+[BG Subtraction](./TriggerMotion.md#test-for-background-subtraction-algorithm)
+- Trigger parameter (see [Motion](./TriggerMotion.md) tab)   
+msd : *Mean Square Threshold*    
+BBox_thr : *Bounding Box Threshold*    
+IOU_thr : *IOU Threshold*     
+Motion_thr : *Motion Threshold*    
+Model : *Background Subtraction Model* (1=MOG2, 2=KNN)
+
+
+You may use the information to fine tune the algorithm parameters on the [Motion](./TriggerMotion.md#motion-detection-configuration) tab.
 
 In case that photos have been taken together with videos, this is represented as shown below.   
 Videos show the video length in the footer.

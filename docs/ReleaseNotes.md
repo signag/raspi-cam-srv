@@ -18,6 +18,18 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.5.0
+
+### New Features
+
+- [Extended Motion Capturing Algorithms](./TriggerMotion.md) are available, including [Frame Differencing](./TriggerMotion.md#test-for-frame-differencing-algorithm), [Optical Flow](./TriggerMotion.md#test-for-optical-flow-algorithm) and [Background Subtraction](./TriggerMotion.md#test-for-background-subtraction-algorithm)
+- The [Extended Motion Capturing Algorithms](./TriggerMotion.md) can be run in a testing mode, showing live views of intermediate image processing results which can help for a better understanding of the algorithms and adjustment of their variable parameters.
+
+### Changes
+
+- For Motion Detection, Trigger Parameters (see [Database for Events](./TriggerActive.md#database)) have been changed from format "string" to Python Dictionary, allowing multiple parameters for the [Extended Motion Capturing Algorithms](./TriggerMotion.md).    
+Existing database entries with string format are still supported.
+
 ## V2.4.3
 
 ### Bugfixes

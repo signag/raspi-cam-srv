@@ -4,6 +4,7 @@ from subprocess import CalledProcessError
 import json
 import logging
 import os
+from ast import literal_eval
 from pathlib import Path
 from datetime import datetime
 from datetime import date
@@ -17,8 +18,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class TriggerConfig():
-    motionDetectAlgos = ["Mean Square Diff",]
+    motionDetectAlgos = ["Mean Square Diff", "Frame Differencing", "Optical Flow", "Background Subtraction"]
     videoRecorders = ["Normal", "Circular"]
+    backgroundSubtractionModels = ["MOG2", "KNN"]
     def __init__(self):
         self._triggeredByMotion = True
         self._triggeredBySound = False
@@ -32,7 +34,19 @@ class TriggerConfig():
         self._detectionDelaySec = 0
         self._detectionPauseSec = 20
         self._motionDetectAlgo = 1
+        self._motionRefTit = ""
+        self._motionRefURL = ""
         self._msdThreshold = 10
+        self._bboxThreshold = 400
+        self._nmsThreshold = 0.001
+        self._motionThreshold = 1
+        self._backSubModel = "MOG2"
+        self._videoBboxes = True
+        self._motionTestFrame1Title = ""
+        self._motionTestFrame2Title = ""
+        self._motionTestFrame3Title = ""
+        self._motionTestFrame4Title = ""
+        self._motionTestFramerate = 0
         self._actionVR = 1
         self._actionCircSize = 5
         self._actionPath = ""
@@ -174,6 +188,22 @@ class TriggerConfig():
         self._motionDetectAlgo = value
 
     @property
+    def motionRefTit(self) -> str:
+        return self._motionRefTit
+
+    @motionRefTit.setter
+    def motionRefTit(self, value: str):
+        self._motionRefTit = value
+
+    @property
+    def motionRefURL(self) -> str:
+        return self._motionRefURL
+
+    @motionRefURL.setter
+    def motionRefURL(self, value: str):
+        self._motionRefURL = value
+
+    @property
     def actionVideo(self) -> bool:
         return self._actionVideo
 
@@ -205,6 +235,86 @@ class TriggerConfig():
     def msdThreshold(self, value: int):
         self._msdThreshold = value
 
+    @property
+    def bboxThreshold(self) -> int:
+        return self._bboxThreshold
+
+    @bboxThreshold.setter
+    def bboxThreshold(self, value: int):
+        self._bboxThreshold = value
+
+    @property
+    def nmsThreshold(self) -> int:
+        return self._nmsThreshold
+
+    @nmsThreshold.setter
+    def nmsThreshold(self, value: int):
+        self._nmsThreshold = value
+
+    @property
+    def motionThreshold(self) -> int:
+        return self._motionThreshold
+
+    @motionThreshold.setter
+    def motionThreshold(self, value: int):
+        self._motionThreshold = value
+
+    @property
+    def backSubModel(self) -> str:
+        return self._backSubModel
+
+    @backSubModel.setter
+    def backSubModel(self, value: str):
+        self._backSubModel = value
+
+    @property
+    def videoBboxes(self) -> bool:
+        return self._videoBboxes
+
+    @videoBboxes.setter
+    def videoBboxes(self, value: bool):
+        self._videoBboxes = value
+
+    @property
+    def motionTestFrame1Title(self) -> str:
+        return self._motionTestFrame1Title
+
+    @motionTestFrame1Title.setter
+    def motionTestFrame1Title(self, value: str):
+        self._motionTestFrame1Title = value
+
+    @property
+    def motionTestFrame2Title(self) -> str:
+        return self._motionTestFrame2Title
+
+    @motionTestFrame2Title.setter
+    def motionTestFrame2Title(self, value: str):
+        self._motionTestFrame2Title = value
+
+    @property
+    def motionTestFrame3Title(self) -> str:
+        return self._motionTestFrame3Title
+
+    @motionTestFrame3Title.setter
+    def motionTestFrame3Title(self, value: str):
+        self._motionTestFrame3Title = value
+
+    @property
+    def motionTestFrame4Title(self) -> str:
+        return self._motionTestFrame4Title
+
+    @motionTestFrame4Title.setter
+    def motionTestFrame4Title(self, value: str):
+        self._motionTestFrame4Title = value
+
+    @property
+    def motionTestFramerate(self) -> float:
+        return self._motionTestFramerate
+
+    @motionTestFramerate.setter
+    def motionTestFramerate(self, value: str):
+        self._motionTestFramerate = value
+        
     @property
     def actionVR(self) -> int:
         return self._actionVR
@@ -504,7 +614,23 @@ class TriggerConfig():
             event["type"] = eventdb["type"]
             event["trigger"] = eventdb["trigger"]
             event["triggertype"] = eventdb["triggertype"]
-            event["triggerparam"] = eventdb["triggerparam"]
+            tps = eventdb["triggerparam"]
+            # Handle DB entries from previous releases where params were just strings and no dict
+            handleAsStr = True
+            tpd = {}
+            try:
+                tpdt = literal_eval(tps)
+                if isinstance(tpdt, dict):
+                    tpd = tpdt
+                    handleAsStr = False                   
+            except Exception:
+                pass
+            if handleAsStr == True:
+                if tps[:5] == "msd: ":
+                    tpd["msd"] = tps[5:]
+                else:
+                    tpd["par"] = tps
+            event["triggerparam"] = tpd
             eventContainer["event"] = event
             events.append(eventContainer)
             
@@ -2038,6 +2164,7 @@ class ServerConfig():
         self._isPhotoSeriesRecording = False
         self._isTriggerRecording = False
         self._isTriggerWaiting = False
+        self._isTriggerTesting = False
         self._isDisplayHidden = True
         self._displayPhoto = None
         self._displayFile = None
@@ -2453,6 +2580,14 @@ class ServerConfig():
         self._isTriggerWaiting = value
 
     @property
+    def isTriggerTesting(self) -> bool:
+        return self._isTriggerTesting
+
+    @isTriggerTesting.setter
+    def isTriggerTesting(self, value: bool):
+        self._isTriggerTesting = value
+
+    @property
     def buttonClear(self) -> str:
         return "Clr(" + str(self.displayBufferCount) + ")"
 
@@ -2597,6 +2732,12 @@ class ServerConfig():
         self._useHistograms = value
 
     @property
+    def supportsExtMotionDetection(self) -> bool:
+        sup = self.cv2Available \
+          and self.matplotlibAvailable \
+          and self.numpyAvailable
+        return sup
+    @property
     def supportsHistograms(self) -> bool:
         sup = self.cv2Available \
           and self.matplotlibAvailable \
@@ -2613,7 +2754,20 @@ class ServerConfig():
             if not self.matplotlibAvailable:
                 why = why + "<br>module matplotlib is not available"
             if not self.numpyAvailable:
+                why = why + "<br>module numpy is not available"
+        return why
+
+    @property
+    def whyNotsupportsExtMotionDetection(self) -> str:
+        why = ""
+        if not self.supportsExtMotionDetection:
+            why = "Extended motion detection is not supported because"
+            if not self.cv2Available:
+                why = why + "<br>module cv2 is not available"
+            if not self.matplotlibAvailable:
                 why = why + "<br>module matplotlib is not available"
+            if not self.numpyAvailable:
+                why = why + "<br>module numpy is not available"
         return why
     
     @property
@@ -3286,6 +3440,8 @@ class CameraCfg():
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 4
             cls._streamingCfg = {}
+            if cls._serverConfig.supportsExtMotionDetection == False:
+                cls._triggerConfig.motionDetectAlgos = ["Mean Square Diff",]
             cls._secrets = Secrets()
         return cls._instance
     

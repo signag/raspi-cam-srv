@@ -60,8 +60,7 @@ While events are registered and videos and photos are taken, the system maintain
 
 ![EventLog](./img/Trigger_Logfile.jpg)
 
-The log file of the above screenshot shows examples with and without delayed actions as well as with configurations with just one or with 4 photos in the *Photo Burst*.    
-There is also a situation represented where no more motion was detected after the configured delay pariod of 2 seconds. In this case, the event has been registered but no video or photo has been captured.
+The log file of the above screenshot shows examples without delayed actions as well as with configurations with 4 photos in the *Photo Burst*.    
 
 ## Database
 

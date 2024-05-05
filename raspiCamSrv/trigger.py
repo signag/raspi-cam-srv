@@ -4,6 +4,7 @@ from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.motionDetector import MotionDetector
 from raspiCamSrv.version import version
+from _thread import get_ident
 from datetime import datetime
 from datetime import timedelta
 
@@ -100,11 +101,174 @@ def motion():
     sc.lastTriggerTab = "trgmotion"
     if request.method == "POST":
         algo = int(request.form["motiondetectionalgo"])
-        logger.debug("algo: %s", algo)
-        thrsh = int(request.form["msdthreshold"])
         tc.motionDetectAlgo = algo
-        tc.msdThreshold = thrsh
+        if not request.form.get("msdthreshold") is None:
+            msdThreshold = int(request.form["msdthreshold"])
+            tc.msdThreshold = msdThreshold
+        if not request.form.get("bboxthreshold") is None:
+            bboxThreshold = int(request.form["bboxthreshold"])
+            tc.bboxThreshold = bboxThreshold
+        if not request.form.get("nmsthreshold") is None:
+            nmsThreshold = float(request.form["nmsthreshold"])
+            tc.nmsThreshold = nmsThreshold
+        if not request.form.get("motionthreshold") is None:
+            motionThreshold = int(request.form["motionthreshold"])
+            tc.motionThreshold = motionThreshold
+        if not request.form.get("backsubmodel") is None:
+            backSubModel = int(request.form["backsubmodel"])
+            tc.backSubModel = backSubModel
+        if request.form.get("videobboxes") is None:
+            tc.videoBboxes = False
+        else:
+            tc.videoBboxes = True
+        if sc.isTriggerTesting == True:
+            msg = "Please restart Motion Detection test to use the changed parameters!"
+            flash(msg)
+        else:
+            if sc.isTriggerRecording == True:
+                msg = "Please restart motion detection to use the changed parameters!"
+                flash(msg)
     return render_template("trigger/trigger.html", tc=tc, sc=sc)
+
+@bp.route("/test_motion_detection", methods=("GET", "POST"))
+@login_required
+def test_motion_detection():
+    logger.debug("In test_motion_detection")
+    cfg = CameraCfg()
+    g.hostname = request.host
+    g.version = version
+    sc = cfg.serverConfig
+    tc = cfg._triggerConfig
+    sc.lastTriggerTab = "trgmotion"
+    if request.method == "POST":
+        if tc.motionDetectAlgo != 1:
+            if tc.triggeredByMotion:
+                if sc.isTriggerRecording == True:
+                    MotionDetector().stopMotionDetection()
+                    sc.isTriggerRecording = False
+                err = None
+                sc.isTriggerTesting = True
+                MotionDetector().setAlgorithm()
+                MotionDetector().startMotionDetection()
+                if sc.error:
+                    logger.debug("In motion detection - test not started because of error")
+                    msg = "Error in " + sc.errorSource + ": " + sc.error
+                    flash(msg)
+                    if sc.error2:
+                        flash(sc.error2)
+                    err = None
+                elif tc.error:
+                    logger.debug("In motion detection - test not started because of error")
+                    msg = "Error in " + tc.errorSource + ": " + tc.error
+                    flash(msg)
+                    if tc.error2:
+                        flash(tc.error2)
+                    err = None
+                else:
+                    sc.isTriggerRecording = True
+                    logger.debug("In motion detection - test started")
+            else:
+                err = "Motion detection is not activated activated"
+            if err:
+                flash(err)
+        else:
+            msg = "For this Motion Detection Algoritm there is no test."
+            flash(msg)
+    return render_template("trigger/trigger.html", tc=tc, sc=sc)
+
+@bp.route("/stop_test_motion_detection", methods=("GET", "POST"))
+@login_required
+def stop_test_motion_detection():
+    logger.debug("In stop_test_motion_detection")
+    cfg = CameraCfg()
+    g.hostname = request.host
+    g.version = version
+    sc = cfg.serverConfig
+    tc = cfg._triggerConfig
+    sc.lastTriggerTab = "trgmotion"
+    if request.method == "POST":
+        if sc.isTriggerRecording:
+            MotionDetector().stopMotionDetection()
+            sc.isTriggerTesting = False
+            sc.isTriggerRecording = False
+            logger.debug("In motion - detection stopped")
+    return render_template("trigger/trigger.html", tc=tc, sc=sc)
+
+@bp.route("/test_frame1_feed")
+# @login_required
+def test_frame1_feed():
+    #logger.debug("Thread %s: In test_frame1_feed", get_ident())
+    Camera().startLiveStream()
+    md = MotionDetector()
+    return Response(gen_testFrame1(md),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+def gen_testFrame1(motionDetector):
+    """Video streaming generator function."""
+    #logger.debug("Thread %s: In gen_testFrame1", get_ident())
+    yield b'--frame\r\n'
+    while True:
+        frame = motionDetector.get_testFrame1()
+        if frame:
+            #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
+            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+
+@bp.route("/test_frame2_feed")
+# @login_required
+def test_frame2_feed():
+    #logger.debug("Thread %s: In test_frame2_feed", get_ident())
+    Camera().startLiveStream()
+    md = MotionDetector()
+    return Response(gen_testFrame2(md),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+def gen_testFrame2(motionDetector):
+    """Video streaming generator function."""
+    #logger.debug("Thread %s: In gen_testFrame2", get_ident())
+    yield b'--frame\r\n'
+    while True:
+        frame = motionDetector.get_testFrame2()
+        if frame:
+            #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
+            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+
+@bp.route("/test_frame3_feed")
+# @login_required
+def test_frame3_feed():
+    #logger.debug("Thread %s: In test_frame3_feed", get_ident())
+    Camera().startLiveStream()
+    md = MotionDetector()
+    return Response(gen_testFrame3(md),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+def gen_testFrame3(motionDetector):
+    """Video streaming generator function."""
+    #logger.debug("Thread %s: In gen_testFrame3", get_ident())
+    yield b'--frame\r\n'
+    while True:
+        frame = motionDetector.get_testFrame3()
+        if frame:
+            #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
+            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+
+@bp.route("/test_frame4_feed")
+# @login_required
+def test_frame4_feed():
+    #logger.debug("Thread %s: In test_frame4_feed", get_ident())
+    Camera().startLiveStream()
+    md = MotionDetector()
+    return Response(gen_testFrame4(md),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+def gen_testFrame4(motionDetector):
+    """Video streaming generator function."""
+    #logger.debug("Thread %s: In gen_testFrame4", get_ident())
+    yield b'--frame\r\n'
+    while True:
+        frame = motionDetector.get_testFrame4()
+        if frame:
+            #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
+            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 @bp.route("/action", methods=("GET", "POST"))
 @login_required
@@ -214,6 +378,7 @@ def start_triggered_capture():
     if request.method == "POST":
         err = None
         if tc.triggeredByMotion:
+            MotionDetector().setAlgorithm()
             MotionDetector().startMotionDetection()
             if sc.error:
                 logger.debug("In motion detection not started because of error")

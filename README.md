@@ -9,7 +9,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.4.3
+## Feature Overview V2.5.0
 For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
 For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
 
@@ -36,6 +36,7 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - The [Photos screen](docs/PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
 - With the [Photo Series](docs/PhotoSeries.md) screen, different kinds of photo series ([Exposure Series](./docs/PhotoSeriesExp.md), [Focus Stacks](./docs/PhotoSeriesFocus.md), [Timelapse Series](./docs/PhotoSeriesTimelapse.md)) can be configured, executed and monitored during their progress.
 - The [Photo Series](docs/PhotoSeries.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
+- Photo Series can be set to be [automatically continued](./docs/PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shotdown or reboot.
 - The [Settings screen](docs/Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
 - The Settings screen includes also functions to control the **raspiCamSrv** [Server Configuration](./docs/Settings.md#server-configuration).<br>The entire configuration can be persisted or loaded from stored configuration files.
 - It is also possible to configure the server to use the persisted configuration on server startup.
@@ -43,8 +44,9 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 
-**New in V2.4.0**
-- Photo Series can be set to be [automatically continued](./docs/PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shotdown or reboot.
+**New in V2.5.0**
+- [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) are available, including [Frame Differencing](./docs/TriggerMotion.md#test-for-frame-differencing-algorithm), [Optical Flow](./docs/TriggerMotion.md#test-for-optical-flow-algorithm) and [Background Subtraction](./docs/TriggerMotion.md#test-for-background-subtraction-algorithm)
+- The [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) can be run in a testing mode, showing live views of intermediate image processing results which can help for a better understanding of the algorithms and adjustment of their variable parameters.
 
 
 ## Known Issues
@@ -66,6 +68,8 @@ The software is still being tested and extended.
 - The implementation of live streaming with Flask has been inspired by <https://blog.miguelgrinberg.com/post/video-streaming-with-flask>
 - The detailed solution for the mjpeg_server is based on the example [mjpeg_server.py](https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py) of the [picamera2 repository](https://github.com/raspberrypi/picamera2)
 - The solution for drawing on the canvas for definition of AF Windows has been inspired by <https://codepen.io/AllenT871/pen/GVyXKp>
+- The [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) are based on work done by Isaac Berrios, published under [Introduction to Motion Detection: Part 1 - 3](https://medium.com/@itberrios6/introduction-to-motion-detection-part-1-e031b0bb9bb2)   
+The algorithm code has been taken from this source as well as its [GitHub Repository](https://github.com/itberrios/CV_projects/tree/main/motion_detection) and integrated into the **raspiCamSrv** environment.
 
 ## Setup / Getting Started
 
@@ -106,7 +110,7 @@ In case of problems during installation and usage, see [Troubleshooting](./docs/
 |7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
 |8.  | Make sure that picamera2 is available on the system:<br>```python```<br>```>>>import picamera2```<br>```>>>quit()```<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
 |9.  | Install Flask 3.0 **with the virtual environment activated**.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.0, which can be installed with<br>```pip install Flask==3.0.0```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.0.0'.<br><br>Make sure that Flask is really installed in the virtual environment:<br>```which flask``` should output<br>```/home/<user>/prg/raspi-cam-srv/.venv/bin/flask```
-|10.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>It is recommended to do the installation with an activated virtual environment (see step 7), although some of these packages might come preinstalled.<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): ```sudo apt-get install python3-opencv```<br>Install [numpy](https://numpy.org/): ```pip install numpy```<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): ```pip install matplotlib```
+|10.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>or if you are interesten in using [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md).<br>It is recommended to do the installation with an activated virtual environment (see step 7), although some of these packages might come preinstalled.<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): ```sudo apt-get install python3-opencv```<br>Install [numpy](https://numpy.org/): ```pip install numpy```<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): ```pip install matplotlib```
 |11.  | Initialize the database for Flask <br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv init-db```
 |12. | Check that the Flask default port 5000 is available<br>```sudo netstat -nlp \| grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
 |13. | Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```

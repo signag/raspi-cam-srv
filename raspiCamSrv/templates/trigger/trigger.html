@@ -16,7 +16,7 @@
         {% endif %}
         {% if sc.lastTriggerTab == "trgmotion" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgmotionbtn"
-            onclick="openTriggerTab('trgmotion', 'trgmotionbtn')">motion</button>
+            onclick="openTriggerTab('trgmotion', 'trgmotionbtn')">Motion</button>
         {% else %}
         <button class="w3-bar-item w3-button triggermenu" id="trgmotionbtn"
             onclick="openTriggerTab('trgmotion', 'trgmotionbtn')">Motion</button>
@@ -301,9 +301,9 @@
                             <label for="motiondetectionalgo">Motion Detection Algorithm:</label>
                         </td>
                         <td style="width:50%">
-                            <select name="motiondetectionalgo" id="motiondetectionalgo">
+                            <select name="motiondetectionalgo" id="motiondetectionalgo" onchange="motionDetectionAlgoChanged()">
                                 {% for algo in tc.motionDetectAlgos %}
-                                {% if tc.motionDetectAlgo == n %}
+                                {% if tc.motionDetectAlgo == loop.index %}
                                 <option value="{{ loop.index }}" selected>{{ algo }}</option>
                                 {% else %}
                                 <option value="{{ loop.index }}">{{ algo }}</option>
@@ -321,13 +321,179 @@
                             <label for="msdthreshold">Mean Square Threshold:</label>
                         </td>
                         <td style="width:50%">
+                            {% if tc.motionDetectAlgo == 1 %}
                             <input type="number" id="msdthreshold" name="msdthreshold" min="0" max="100" step="1" value="{{ tc.msdThreshold }}">
+                            {% else %}
+                            <input type="number" id="msdthreshold" name="msdthreshold" min="0" max="100" step="1" value="{{ tc.msdThreshold }}" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Minimum area for declaring a bounding box.
+                            </span>
+                            <label for="bboxthreshold">Bounding Box Threshold:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.motionDetectAlgo == 2 or tc.motionDetectAlgo == 3 or tc.motionDetectAlgo == 4 %}
+                            <input type="number" id="bboxthreshold" name="bboxthreshold" min="0" max="10000" step="1" value="{{ tc.bboxThreshold }}">
+                            {% else %}
+                            <input type="number" id="bboxthreshold" name="bboxthreshold" min="0" max="10000" step="1" value="{{ tc.bboxThreshold }}" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                IOU (Intersection over Union) threshold for computing Non-Maximal Supression
+                            </span>
+                            <label for="nmsthreshold">IOU Threshold:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.motionDetectAlgo == 2 or tc.motionDetectAlgo == 3 or tc.motionDetectAlgo == 4 %}
+                            <input type="number" id="nmsthreshold" name="nmsthreshold" min="0.000001" max="1" step="0.000001" value="{{ tc.nmsThreshold }}">
+                            {% else %}
+                            <input type="number" id="nmsthreshold" name="nmsthreshold" min="0.000001" max="1" step="0.000001" value="{{ tc.nmsThreshold }}" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Minimum flow threshold for motion
+                            </span>
+                            <label for="motionthreshold">Motion Threshold:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.motionDetectAlgo == 3 %}
+                            <input type="number" id="motionthreshold" name="motionthreshold" min="0" max="100" step="1" value="{{ tc.motionThreshold }}">
+                            {% else %}
+                            <input type="number" id="motionthreshold" name="motionthreshold" min="0" max="100" step="1" value="{{ tc.motionThreshold }}" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Background Subtraction Model:<br>
+                                MOG2: Mixture of Gaussians 2<br>
+                                KNN: K Nearest Neighbors
+                            </span>
+                            <label for="backsubmodel">Background Subtraction Model:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.motionDetectAlgo == 4 %}
+                            <select name="backsubmodel" id="backsubmodel">
+                            {% else %}
+                            <select name="backsubmodel" id="backsubmodel" disabled>
+                            {% endif %}
+                                {% for bsm in tc.backgroundSubtractionModels %}
+                                {% if tc.backSubModel == loop.index %}
+                                <option value="{{ loop.index }}" selected>{{ bsm }}</option>
+                                {% else %}
+                                <option value="{{ loop.index }}">{{ bsm }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Record video with bounding boxes instead of normal video.
+                            </span>
+                            <label for="videobboxes">Video with Bounding Boxes:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.videoBboxes == True %}
+                            <input type="checkbox" id="videobboxes" name="videobboxes" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="videobboxes" name="videobboxes" value="1">
+                            {% endif %}
                         </td>
                     </tr>
                 </table>
                 <p style="margin-bottom: 0"></p>
                 <input class="w3-button w3-black" type="submit" value="Submit">
             </form>
+            <hr>
+            {% if sc.isTriggerTesting == False %}
+            <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
+                <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection">
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('trigger.stop_test_motion_detection') }}">
+                <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop Test Motion Detection">
+            </form>
+            {% endif %}
+        </div>
+        <div class="w3-half" style="height:90vh; overflow: auto">
+            {% if sc.isTriggerTesting == True %}
+            <p> Reference: 
+            <a href="{{ tc.motionRefURL }}" target="_blank">{{ tc.motionRefTit }}</a>
+            </p>
+            <table>
+                <tr>
+                    <td>
+                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                            src="{{ url_for('trigger.test_frame1_feed') }}" 
+                            alt="Test stream 1">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p style="margin-top:0px; margin-bottom:5px; text-align:center">{{ tc.motionTestFrame1Title }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                            src="{{ url_for('trigger.test_frame2_feed') }}" 
+                            alt="Test stream 2">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p style="margin-top:0px; margin-bottom:5px; text-align:center">{{ tc.motionTestFrame2Title }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                            src="{{ url_for('trigger.test_frame3_feed') }}" 
+                            alt="Test stream 3">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p style="margin-top:0px; margin-bottom:5px; text-align:center">{{ tc.motionTestFrame3Title }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                            src="{{ url_for('trigger.test_frame4_feed') }}" 
+                            alt="Test stream 4">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p style="margin-top:0px; margin-bottom:5px; text-align:center">{{ tc.motionTestFrame4Title }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p style="text-align:center; display:inline-block">Current Framerate: {{ tc.motionTestFramerate|round(1) }} fps</p>
+                        <button class="w3-button w3-circle w3-green" 
+                                style="display:inline-block" 
+                                onclick="location.reload()">
+                                <span style="font-family: 'Wingdings 3'">&#x0050;</span>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+            {% endif %}
         </div>
     </div>
     {% if sc.lastTriggerTab == "trgaction" %}
@@ -714,7 +880,10 @@
                                         <p style="margin-top: 0;margin-bottom:0">{{ event.time }}</p>
                                         <p style="margin-top: 0;margin-bottom:0">{{ event.trigger }}</p>
                                         <p style="margin-top: 0;margin-bottom:0">{{ event.triggertype }}</p>
-                                        <p style="margin-top: 0;margin-bottom:0">{{ event.triggerparam }}</p>
+                                        {% set triggerparams = event.triggerparam %}
+                                        {% for key, val in triggerparams.items() %}
+                                        <p style="margin-top: 0;margin-bottom:0">{{ key }}:{{ val }}</p>
+                                        {% endfor %}
                                     </div>
                                 </div>
                             </td>
@@ -932,6 +1101,11 @@
 
         function showDetail(type, url, tgtPhoto, file, name) {
             var tgtP = document.getElementById(tgtPhoto);
+            var dType = type
+            if (file.substring(19) == ".GIF"){
+                type = "gif"
+            }
+
             if (type != "video") {
                 tag = "<img style='width: 100%; height: 900px; object-fit: scale-down'"
                 tag = tag + " src='" + url + "'"
@@ -967,6 +1141,48 @@
             var datefield = document.getElementById("selectedday");
             datefield.value = date
             document.getElementById("selecteddayfrm").submit();
+        }
+
+        function motionDetectionAlgoChanged() {
+            // Activate / deactivate fields depending on algorithm
+            var src = document.getElementById("motiondetectionalgo");
+            var val = src.value;
+            if (val == "1"){
+                // Mean Square Threshold
+                document.getElementById("msdthreshold").disabled = false;
+                document.getElementById("bboxthreshold").disabled = true;
+                document.getElementById("nmsthreshold").disabled = true;
+                document.getElementById("motionthreshold").disabled = true;
+                document.getElementById("backsubmodel").disabled = true;
+                document.getElementById("videobboxes").disabled = true;
+            }
+            if (val == "2"){
+                // Frame Differencing
+                document.getElementById("msdthreshold").disabled = true;
+                document.getElementById("bboxthreshold").disabled = false;
+                document.getElementById("nmsthreshold").disabled = false;
+                document.getElementById("motionthreshold").disabled = true;
+                document.getElementById("backsubmodel").disabled = true;
+                document.getElementById("videobboxes").disabled = false;
+            }
+            if (val == "3"){
+                // Optical Flow
+                document.getElementById("msdthreshold").disabled = true;
+                document.getElementById("bboxthreshold").disabled = false;
+                document.getElementById("nmsthreshold").disabled = false;
+                document.getElementById("motionthreshold").disabled = false;
+                document.getElementById("backsubmodel").disabled = true;
+                document.getElementById("videobboxes").disabled = false;
+            }
+            if (val == "4"){
+                // Background Subtraction
+                document.getElementById("msdthreshold").disabled = true;
+                document.getElementById("bboxthreshold").disabled = false;
+                document.getElementById("nmsthreshold").disabled = false;
+                document.getElementById("motionthreshold").disabled = true;
+                document.getElementById("backsubmodel").disabled = false;
+                document.getElementById("videobboxes").disabled = false;
+            }            
         }
     </script>
 {% endblock %}

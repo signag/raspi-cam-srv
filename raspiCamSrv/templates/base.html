@@ -89,7 +89,9 @@
                     {% endif %}
                     {% if sc.isTriggerRecording %}
                     {% if sc.isTriggerWaiting %}
-                    <img src="{{ url_for('static', filename='recording_trigger_wait.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    <img src="{{ url_for('static', filename='recording_trigger_wait.png') }}" class="w3-image" id="recording_active" alt="Recording paused" style="height:34px; width:34px">
+                    {% elif sc.isTriggerTesting %}
+                    <img src="{{ url_for('static', filename='recording_trigger_test.png') }}" class="w3-image" id="recording_active" alt="Recording testing" style="height:34px; width:34px">
                     {% else %}
                     <img src="{{ url_for('static', filename='recording_trigger_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
                     {% endif %}

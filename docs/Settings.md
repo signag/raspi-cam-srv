@@ -30,6 +30,20 @@ The system will automatically detect whether or not the required packages are in
 
 ![NoHistograms](img/Settings_noHistogram.jpg)
 
+## Extended Motion Detection Support
+
+In all installations, [Motion Capturing](./TriggerMotion.md) with the *Mean Square Difference* algorithm are supported.
+
+In order to also be able to use the extended algorithms, the following modules must be installed (see [Installation procedure, Step 10](../README.md#raspicamsrv-installation)):
+
+- OpenCV
+- numpy
+- matplotlib
+
+When the server starts up, it will be checked whether these modules can be imported.   
+If the import had failed, this will be indicated on the Settings screen in the same way as for [Histograms](#activating--deactivating-histograms), above.   
+Then, only the *Mean Square Difference* algorithm will be offered  for choice on the [Trigger/Motion](./TriggerMotion.md) tab.
+
 ## Recording Audio along with Video
 
 ### Preconditions

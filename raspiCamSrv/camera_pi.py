@@ -1168,10 +1168,17 @@ class Camera():
         Camera.startLiveStream2()
         logger.debug("Thread %s: Camera.restartLiveStream2: Live stream started", get_ident())
 
-    def getLiveViewBuffer(self):
+    def getLiveViewImageForMotionDetection(self):
         """ Capture and return a buffer
         """
-        return Camera.cam.capture_buffer(CameraCfg().liveViewConfig.stream)
+        cfg = CameraCfg()
+        if cfg.triggerConfig.motionDetectAlgo == 1:
+            buf = Camera.cam.capture_buffer(cfg.liveViewConfig.stream)
+            (w, h) = cfg.liveViewConfig.stream_size
+            buf = buf[:w * h].reshape(h, w)
+            return buf
+        else:
+            return Camera.cam.capture_array(cfg.liveViewConfig.stream)
 
     def get_frame(self):
         """Return the current camera frame."""

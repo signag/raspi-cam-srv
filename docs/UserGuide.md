@@ -27,16 +27,29 @@ On the right side, the title bar shows
 On the left side, the title bar shows the application name (raspiCamSrv) and the current screen.
 
 #### Main Menu
-The main menu (black background) allows navigation to different screens
+
+The main menu (black background) allows navigation to different screens:
 - **Live** shows the [Live Screen](./LiveScreen.md) which includes functionality for image control as well as photo- and video taking
 - **Config** gives access to camera [Configuration](./Configuration.md) where basic camera configurations can be specified for different scenarios.
 - **Info** opens the [Camera Information](./Information.md) page with information on installed cameras as well as Properties and Sensor Modes of the active camera.
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
-- **Trigger** Allows configuring and controlling [triggered video and/or photo taking](./Trigger.md)
+- **Trigger** Allows configuring and controlling [triggered video and/or photo taking](./Trigger.md), currently based on [Motion Capturing](./TriggerMotion.md)
 - **Web Cam** opens the [Web Cam](./Webcam.md) page showing web cam features of **raspiCamSrv**
 - **Settings** opens the [Settings](./Settings.md) page where some basic server parameters can be configured and where the active camera can be switched in case the Raspberry Pi device supprts multiple cameras (such as Pi 5).
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
+
+**NOTE:** Selecting an option on the main menue will issue a request to the server with a specific URL and, thus, refresh the screen.
+
+#### Submenue
+
+Many of the **raspiCamSrv** pages, selected by a [Main Menue](#main-menu) option have a submenue.    
+Submenues are indicated by a green background.
+
+**NOTE:** Selecting an option on a submenue will **not** issue a new request and, thus, will **not** refresh the screen with new information from the server.    
+Instead, submenue options activate different sections of the currently loaded page.   
+However, *Submit* buttons on a page section apply only to data shown on the active section and not to data on other sections of the same page.
+
 
 #### Process Status indicators
 
@@ -55,10 +68,15 @@ From right to left, these indicate the status of
 - [Motion Capture](./Trigger.md) thread
 - Live stream thread for the other camera, if available (see [Webcam](./Webcam.md))
 
-Red color indicates that a process is active whereas gray indicates that it is inactive.    
-In the case of motion capture, yellow color indicates that the process is active but currently not scheduled to register events
+Red color indicates that a process is active whereas gray indicates that it is inactive.   
 
-![MotionPaused](./img/ProcessIndicator8.jpg)
+In the case of [motion capture](./TriggerMotion.md),    
+- yellow color indicates that the process is active but currently not scheduled to register events
+- tuquoise color indicates that the motion capture process runs in [test mode](./TriggerMotion.md#testing-motion-capturing)
+
+![MotionPaused](./img/ProcessIndicator8.jpg)     
+![MotionPaused](./img/ProcessIndicator12.jpg)
+
 
 #### Message Line
 At the bottom of the screen, there is a message line where application messages will be shown when necessary.
