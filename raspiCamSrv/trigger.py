@@ -172,7 +172,7 @@ def test_motion_detection():
             if err:
                 flash(err)
         else:
-            msg = "For this Motion Detection Algoritm there is no test."
+            msg = f"For this Motion Detection Algoritm there is no test. Current framerate is {round(tc.motionTestFramerate, 1)} fps"
             flash(msg)
     return render_template("trigger/trigger.html", tc=tc, sc=sc)
 

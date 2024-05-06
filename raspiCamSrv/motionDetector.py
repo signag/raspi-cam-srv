@@ -583,7 +583,15 @@ class MotionDetector():
                                 timeDeltaSec = timeDelta.total_seconds()
                                 if timeDeltaSec > 0.5:
                                     tc.motionTestFramerate = count / timeDeltaSec
-                            
+                        else:
+                            count += 1
+                            timeDelta = datetime.now() - startTime
+                            timeDeltaSec = timeDelta.total_seconds()
+                            if timeDeltaSec > 0.5:
+                                tc.motionTestFramerate = count / timeDeltaSec
+                            if timeDeltaSec > 3600:
+                                count = 0
+                                startTime = datetime.now()
                         if motion:
                             #logger.debug("Thread %s: MotionDetector._motionThread - motion detected", get_ident())
                             cls._doAction(trigger)

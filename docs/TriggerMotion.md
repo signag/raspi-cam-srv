@@ -42,10 +42,14 @@ Changes will be effective after the Motion Capturing Process has been started th
 
 ## Testing Motion Capturing
 
-In order to optimize the parameters for the intended application, **raspiCamSrv** allows test runs for the selected algorithm (except for *Mean Square Difference*).    
+In order to optimize the parameters for the intended application, **raspiCamSrv** allows test runs for the selected algorithm.    
 During a test run, no events are generated. Instead, a preview of different aspects of the chosen algorithm is shown.    
 Detected motion events are indicated by the occurrence of bounding boxes.    
 An active test run is indicated by the turquoise status indicator.
+
+- For the *Mean Square Difference* algorithm, there is no test. However, pressing the **Test Motion Detection** button will show the current framerate in the message line, if motion detection is active.
+- For the other algorithms, pressing the **Test Motion Detection** button will stop an active Motion Detection server and start a test run.    
+A set of 4 intermediate images are presented which are calculated from the last, or the last two, frames. 
 
 ### Test for *Frame Differencing* Algorithm
 
@@ -75,6 +79,43 @@ The performance requirements for the different algorithms have an impact on the 
 In order to get information on the frame rates, these are measured during a test and displayed at the bottom of the screen.   
 Reliable values can only be obtained after the test has run some time. Therefore, it is necessary to refresh the screen using the button aside of the displayed value.
 
+Unfortunately, framerates had not been refreshed before recording the GIFs, above.
+
+The the following table shows framerates observed with a Pi 5 and a camera model 3:
+
+| Algorithm              | Stream | Sensor Mode | Stream Size | Framerate |
+|------------------------|--------|-------------|-------------|-----------|
+| Mean Square Diff       | lores  | default     |  640 x 360  | ~14       |
+| Frame Differencing     | lores  | default     |  640 x 360  | ~14       |
+| Optical Flow           | lores  | default     |  640 x 360  | ~5        |
+| Background Subtraction | lores  | default     |  640 x 360  | ~14       |
+|                        |        |             |             |           |
+| Mean Square Diff       | lores  | 0           | 1536 x 864  | ~14       |
+| Frame Differencing     | lores  | 0           | 1536 x 864  | ~14       |
+| Optical Flow           | lores  | 0           | 1536 x 864  | ~1        |
+| Background Subtraction | lores  | 0           | 1536 x 864  | ~5        |
+|                        |        |             |             |           |
+| Mean Square Diff       | lores  | 1           | 2304 x 1296 | ~10       |
+| Frame Differencing     | lores  | 1           | 2304 x 1296 | ~6        |
+| Optical Flow           | lores  | 1           | 2304 x 1296 | ~0.3      |
+| Background Subtraction | lores  | 1           | 2304 x 1296 | ~2        |
+   
+   
+Below is a load profile taken wit a Pi5, 8GB memory, built in a standard case with fan.   
+Steaming was never active and no motion was tracked during recording.   
+![Load Profile](./img/Trigger_LoadProfile.jpg)
+
+Motion tracking with different algorithms was run for 30 minutes in the following sequence:
+- 18:15 - System idle
+- 18.30 - Mean Square Diff
+- 19:00 - Frame Differencing
+- 19:30 - Background Subtraction
+- 20:00 - Optical Flow
+- 20:30 - Motion tracking stopped
+- 20:45 - raspiCamSrv stopped
+
+Although there is a significant impact on CPU utilization, especially for the *Optical Flow* algorithm, CPU temperature is within reasonable ranges.
+
 ### Recorded Videos
 
 If the option to record videos with bounding boxes has been chosen, the videos are generated frame by frame within the algorithm.   
@@ -83,4 +124,4 @@ Currently, the video is started when a motion event has been detected (final num
 
 This results in videos with motion speed close to real life.
 
-If, however, the achieved rates on a specific system differ from these values, the video speed may be timelapse slow-motion.
+If, however, the achieved rates on a specific system differ from these values, the video speed may be timelapse or slow-motion.

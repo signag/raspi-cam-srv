@@ -18,6 +18,12 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.5.1
+
+### New Features
+- During [Motion Capture](./TriggerMotion.md), framerates are also reported for the *Mean Square Diff* algorithm.    
+See [Testing Motion Capturing](./TriggerMotion.md#testing-motion-capturing)
+
 ## V2.5.0
 
 ### New Features
