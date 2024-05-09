@@ -18,6 +18,13 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.5.3
+
+## Bugfixes
+
+- The previous fix was not robust enough and really worked only with debugging activated..    
+Now, the camera is given a second more time after different steps of switching.
+
 ## V2.5.2
 
 ### Bugfixes

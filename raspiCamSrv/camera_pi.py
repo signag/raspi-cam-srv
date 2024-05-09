@@ -998,6 +998,8 @@ class Camera():
         if cls.cam2:
             cls.stopLiveStream2()
             logger.debug("Thread %s: Camera.switchCamera - Live Stream2 stopped", get_ident())
+            
+        time.sleep(1)
 
         activeCam = Camera.getActiveCamera()
         if Camera.cam is None:
@@ -1022,6 +1024,9 @@ class Camera():
                 logger.debug("Thread %s: Camera.switchCamera: Camera-specific configs were reset", get_ident())
             else:
                 logger.debug("Thread %s: Camera.switchCamera: Camera was already instantiated", get_ident())
+
+        time.sleep(1)
+
         cls.loadCameraSpecifics()
         cls.setSecondCamera()
         
