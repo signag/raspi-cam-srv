@@ -18,9 +18,17 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.5.2
+
+### Bugfixes
+
+- Switching the camera caused ```RuntimeError: Unable to stop preview.``` (see [raspi-cam-srv Issue #14](https://github.com/signag/raspi-cam-srv/issues/14)).    
+This is now fixed. Switching the camera can be done from the [Settings](./Settings.md#switching-the-active-camera) screen as well as from the [WebCam](./Webcam.md#-switch-cameras-) screen.
+
 ## V2.5.1
 
 ### New Features
+
 - During [Motion Capture](./TriggerMotion.md), framerates are also reported for the *Mean Square Diff* algorithm.    
 See [Testing Motion Capturing](./TriggerMotion.md#testing-motion-capturing)
 

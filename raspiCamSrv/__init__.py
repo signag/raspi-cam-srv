@@ -85,7 +85,7 @@ def create_app(test_config=None):
     prgLogTime = datetime.datetime.now()
     prgLogFilename = "prgLog_" + prgLogTime.strftime("%Y%m%d_%H%M%S") + ".log"
     prgLogFile = prgLogPath+ "/" + prgLogFilename
-    #>>>>> Uncomment the following 6 lines when code generation is activated (see below)
+    #>>>>> Uncomment the following 5 lines when code generation is activated (see below)
     #Path(prgLogFile).touch(exist_ok=True)
     #prgFilehandler = logging.FileHandler(prgLogFile)
     #prgFormatter = logging.Formatter('%(message)s')

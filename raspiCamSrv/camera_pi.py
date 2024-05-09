@@ -148,6 +148,7 @@ class CameraController():
             try:
                 if cam.is_open == False:
                     cam = Picamera2(camNum)
+                    prgLogger.debug("picam2 = Picamera2(%s)", camNum)
                 self._activeCfg = self.copyConfig(self._requestedCfg)
                 logger.debug("Thread %s: CameraController.requestStart - activeCfg b: %s", get_ident(), self._activeCfg)
                 wrkCfg = self.copyConfig(self._activeCfg)
@@ -217,18 +218,25 @@ class CameraController():
                     res = True
             else:
                 res = True
-            if close == True:
-                cam.close()
-                prgLogger.debug("picam2.close()")
-                logger.debug("Thread %s: CameraController.requestStop - Camera closed", get_ident())
-            gc.collect()
-            logger.debug("Thread %s: CameraController.requestStop - Garbage collection completed", get_ident())
             
         except TimeoutError:
-            raise()
+            raise
         except Exception as e:
             logger.error("Thread %s: CameraController.requestStop - error: %s", get_ident(), e)
-            raise()
+            raise
+
+        if close == True:
+            try:
+                if cam.is_open == True:
+                    logger.debug("Thread %s: CameraController.requestStop - About to close camera", get_ident())
+                    prgLogger.debug("picam2.close()")
+                    cam.close()
+                    logger.debug("Thread %s: CameraController.requestStop - Camera closed", get_ident())
+            except Exception as e:
+                logger.debug("Thread %s: CameraController.requestStop - Ignoring error while closing camera: %s", get_ident(), e)
+            gc.collect()
+            logger.debug("Thread %s: CameraController.requestStop - Garbage collection completed", get_ident())
+
         logger.debug("Thread %s: CameraController.requestStop: %s", get_ident(), res)
         return cam, res
 
