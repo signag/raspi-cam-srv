@@ -118,6 +118,7 @@ In case of problems during installation and usage, see [Troubleshooting](./docs/
 |15. | Before you can login, you first need to [register](docs/Authentication.md).<br>The first user will automatically be SuperUser who can later register other users ([User Management](docs/Authentication.md#user-management))
 |16. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
 |17. | Done!
+|18. | For usage of **raspiCamSrv**, please refer to the [User Guide](./docs/UserGuide.md)
 
 
 When the Flask server starts up, it will show a warning that this is a development server.   
