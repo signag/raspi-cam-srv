@@ -18,6 +18,17 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.5.4
+
+## Bugfixes
+
+- Avoid ```Error starting camera: lores stream dimensions may not exceed main stream```   
+Now, when specifying any [Camera Configuration](./Configuration.md), it is checked whether the specified *Stream Size* for the different use cases obey the restriction that stream size for 'lores' must be less than stream size for 'main' stream.    
+If the restriction is violated, an error message is shown and the previous values are restored.
+- In [Camera Configuration](./Configuration.md) for *Photo*, *Stream* could be changed to 'lores' in the dialog, but this change has not been stored. Now fixed
+- Fixed: --- Logging error --- ... camera_pi.py", line 793, in clearConfig
+
+
 ## V2.5.3
 
 ## Bugfixes

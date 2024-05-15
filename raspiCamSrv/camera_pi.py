@@ -790,7 +790,7 @@ class CameraController():
     def clearConfig(self):
         """ Clear the configuration
         """
-        logger.debug("Thread %s: CameraController.clearConfig: %s", get_ident())
+        logger.debug("Thread %s: CameraController.clearConfig", get_ident())
         self._requestedCfg = CameraConfiguration()
         
     def registerEncoder(self, task:str, encoder):

@@ -68,7 +68,6 @@ def liveViewCfg():
             queue = not request.form.get("LIVE_queue") is None
             cfglive.queue = queue
             stream = request.form["LIVE_stream"]
-            cfglive.stream = stream
             sensor_mode = request.form["LIVE_sensor_mode"]
             if sensor_mode == "custom":
                 size_width = int(request.form["LIVE_stream_size_width"])
@@ -77,15 +76,58 @@ def liveViewCfg():
                 size_height = int(request.form["LIVE_stream_size_height"])
                 if not (size_height % 2) == 0:
                     err = "Stream Size (width, height) must be even"
+                if stream == "lores":
+                    if cfgphoto.stream == "main":
+                        if size_width > cfgphoto.stream_size[0] \
+                        or size_height > cfgphoto.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Photo)"
+                    if not err \
+                    and cfgvideo.stream == "main":
+                        if size_width > cfgvideo.stream_size[0] \
+                        or size_height > cfgvideo.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Video)"
+                if stream == "main":
+                    if cfgphoto.stream == "lores":
+                        if size_width < cfgphoto.stream_size[0] \
+                        or size_height < cfgphoto.stream_size[1]:
+                            err = "lores Stream Size (Photo) must not exceed main Stream Size"
+                    if not err \
+                    and cfgvideo.stream == "lores":
+                        if size_width < cfgvideo.stream_size[0] \
+                        or size_height < cfgvideo.stream_size[1]:
+                            err = "lores Stream Size (Video) must not exceed main Stream Size"
                 if not err:
+                    cfglive.stream = stream
                     cfglive.sensor_mode = sensor_mode
                     cfglive.stream_size = (size_width, size_height)
                     cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
             else:
-                cfglive.sensor_mode = sensor_mode
                 mode = sm[int(sensor_mode)]
-                cfglive.stream_size = mode.size
-                cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
+                if stream == "lores":
+                    if cfgphoto.stream == "main":
+                        if mode.size[0] > cfgphoto.stream_size[0] \
+                        or mode.size[1] > cfgphoto.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Photo)"
+                    if not err \
+                    and cfgvideo.stream == "main":
+                        if mode.size[0] > cfgvideo.stream_size[0] \
+                        or mode.size[1] > cfgvideo.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Video)"
+                if stream == "main":
+                    if cfgphoto.stream == "lores":
+                        if mode.size[0] < cfgphoto.stream_size[0] \
+                        or mode.size[1] < cfgphoto.stream_size[1]:
+                            err = "lores Stream Size (Photo) must not exceed main Stream Size"
+                    if not err \
+                    and cfgvideo.stream == "lores":
+                        if mode.size[0] < cfgvideo.stream_size[0] \
+                        or mode.size[1] < cfgvideo.stream_size[1]:
+                            err = "lores Stream Size (Video) must not exceed main Stream Size"
+                if not err:
+                    cfglive.stream = stream
+                    cfglive.sensor_mode = sensor_mode
+                    cfglive.stream_size = mode.size
+                    cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
             format = request.form["LIVE_format"]
             cfglive.display = None
             cfglive.encode = cfglive.stream
@@ -230,6 +272,7 @@ def photoCfg():
             cfgphoto.buffer_count = buffer_count
             queue = not request.form.get("FOTO_queue") is None
             cfgphoto.queue = queue
+            stream = request.form["FOTO_stream"]
             sensor_mode = request.form["FOTO_sensor_mode"]
             if sensor_mode == "custom":
                 size_width = int(request.form["FOTO_stream_size_width"])
@@ -238,15 +281,58 @@ def photoCfg():
                 size_height = int(request.form["FOTO_stream_size_height"])
                 if not (size_height % 2) == 0:
                     err = "Stream Size (width, height) must be even"
+                if stream == "lores":
+                    if cfglive.stream == "main":
+                        if size_width > cfglive.stream_size[0] \
+                        or size_height > cfglive.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Live View)"
+                    if not err \
+                    and cfgvideo.stream == "main":
+                        if size_width > cfgvideo.stream_size[0] \
+                        or size_height > cfgvideo.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Video)"
+                if stream == "main":
+                    if cfglive.stream == "lores":
+                        if size_width < cfglive.stream_size[0] \
+                        or size_height < cfglive.stream_size[1]:
+                            err = "lores Stream Size (Live View) must not exceed main Stream Size"
+                    if not err \
+                    and cfgvideo.stream == "lores":
+                        if size_width < cfgvideo.stream_size[0] \
+                        or size_height < cfgvideo.stream_size[1]:
+                            err = "lores Stream Size (Video) must not exceed main Stream Size"
                 if not err:
+                    cfgphoto.stream = stream
                     cfgphoto.sensor_mode = sensor_mode
                     cfgphoto.stream_size = (size_width, size_height)
                     cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
             else:
-                cfgphoto.sensor_mode = sensor_mode
                 mode = sm[int(sensor_mode)]
-                cfgphoto.stream_size = mode.size
-                cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
+                if stream == "lores":
+                    if cfglive.stream == "main":
+                        if mode.size[0] > cfglive.stream_size[0] \
+                        or mode.size[1] > cfglive.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Live View)"
+                    if not err \
+                    and cfgvideo.stream == "main":
+                        if mode.size[0] > cfgvideo.stream_size[0] \
+                        or mode.size[1] > cfgvideo.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Video)"
+                if stream == "main":
+                    if cfglive.stream == "lores":
+                        if mode.size[0] < cfglive.stream_size[0] \
+                        or mode.size[1] < cfglive.stream_size[1]:
+                            err = "lores Stream Size (Live View) must not exceed main Stream Size"
+                    if not err \
+                    and cfgvideo.stream == "lores":
+                        if mode.size[0] < cfgvideo.stream_size[0] \
+                        or mode.size[1] < cfgvideo.stream_size[1]:
+                            err = "lores Stream Size (Video) must not exceed main Stream Size"
+                if not err:
+                    cfgphoto.stream = stream
+                    cfgphoto.sensor_mode = sensor_mode
+                    cfgphoto.stream_size = mode.size
+                    cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
             format = request.form["FOTO_format"]
             cfgphoto.format = format
             cfgphoto.display = None
@@ -492,6 +578,7 @@ def videoCfg():
             cfgvideo.buffer_count = buffer_count
             queue = not request.form.get("VIDO_queue") is None
             cfgvideo.queue = queue
+            stream = request.form["VIDO_stream"]
             sensor_mode = request.form["VIDO_sensor_mode"]
             if sensor_mode == "custom":
                 size_width = int(request.form["VIDO_stream_size_width"])
@@ -500,15 +587,58 @@ def videoCfg():
                 size_height = int(request.form["VIDO_stream_size_height"])
                 if not (size_height % 2) == 0:
                     err = "Stream Size (width, height) must be even"
+                if stream == "lores":
+                    if cfglive.stream == "main":
+                        if size_width > cfglive.stream_size[0] \
+                        or size_height > cfglive.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Live View)"
+                    if not err \
+                    and cfgphoto.stream == "main":
+                        if size_width > cfgphoto.stream_size[0] \
+                        or size_height > cfgphoto.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Photo)"
+                if stream == "main":
+                    if cfglive.stream == "lores":
+                        if size_width < cfglive.stream_size[0] \
+                        or size_height < cfglive.stream_size[1]:
+                            err = "lores Stream Size (Live View) must not exceed main Stream Size"
+                    if not err \
+                    and cfgphoto.stream == "lores":
+                        if size_width < cfgphoto.stream_size[0] \
+                        or size_height < cfgphoto.stream_size[1]:
+                            err = "lores Stream Size (Photo) must not exceed main Stream Size"
                 if not err:
+                    cfgvideo.stream = stream
                     cfgvideo.sensor_mode = sensor_mode
                     cfgvideo.stream_size = (size_width, size_height)
                     cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
             else:
-                cfgvideo.sensor_mode = sensor_mode
                 mode = sm[int(sensor_mode)]
-                cfgvideo.stream_size = mode.size
-                cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
+                if stream == "lores":
+                    if cfglive.stream == "main":
+                        if mode.size[0] > cfglive.stream_size[0] \
+                        or mode.size[1] > cfglive.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Live View)"
+                    if not err \
+                    and cfgphoto.stream == "main":
+                        if mode.size[0] > cfgphoto.stream_size[0] \
+                        or mode.size[1] > cfgphoto.stream_size[1]:
+                            err = "lores Stream Size must not exceed main Stream Size (Photo)"
+                if stream == "main":
+                    if cfglive.stream == "lores":
+                        if mode.size[0] < cfglive.stream_size[0] \
+                        or mode.size[1] < cfglive.stream_size[1]:
+                            err = "lores Stream Size (Live View) must not exceed main Stream Size"
+                    if not err \
+                    and cfgphoto.stream == "lores":
+                        if mode.size[0] < cfgphoto.stream_size[0] \
+                        or mode.size[1] < cfgphoto.stream_size[1]:
+                            err = "lores Stream Size (Photo) must not exceed main Stream Size"
+                if not err:
+                    cfgvideo.stream = stream
+                    cfgvideo.sensor_mode = sensor_mode
+                    cfgvideo.stream_size = mode.size
+                    cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
             format = request.form["VIDO_format"]
             cfgvideo.format = format
             cfgvideo.display = None
