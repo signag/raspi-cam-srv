@@ -18,9 +18,34 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.6.0
+
+### New Features
+
+- [Zoom and Pan](./ZoomPan.md) has been completely reworked.   
+It now takes regard of the [ScalerCrop](./ScalerCrop.md) specifics of Raspberry Pi cameras.    
+This allows full control of image areas also for cases with extreme aspect ratios.    
+**Note**: For cases where the height of the *Stream Size* is considerably larger than its width, the live stream in the [Live](./LiveScreen.md) screen may exceed the page height. This cannot currently be avoided without loosing the capability of graphical [focus](./FocusHandling.md#autofocus-windows) and [zoom](./ZoomPan.md#graphically-setting-the-zoom-window).
+- The [Config](./Configuration.md) screen now has an option to synchronize aspect reatios of *Stream Size*s across all configurations.    
+If this is activated and a non-standard aspect ratio is configured, for example, for the *Live View*, the *Stream Size*s for the other configurations will be adjusted to the same aspect ratio.    
+Then the Live Stream will no longer be distorted because the camera system will select a *ScalerCrop* with the same aspect ratio.
+- The [Info](./Information.md) screen in section [Camera x](./Information.md#camera-x) now shows the Sensor Mode in which the camera is currently operating if the camera is currently started.
+
+### Changes
+
+- Camera [Configuration](./Configuration.md#) for *Raw Photo* now allows *Custom* *Stream Size*.    
+However, if a *Stream Size* is specified which does not correspond to the output_size of one of the cameras Sensor Modes, the camera will automatically select a suitable Sensor Mode and produce a .dng file with the corresponding size.    
+The reason for this change was that the new option to automatically syncronize aspect ratios across configurations can lead to a *custom* *Stream Size* also for the *Raw Photo* configuration.
+- The parameter *Stream Size aligned with Sensor Modes* in the [Configuration](./Configuration.md#) now dafaults to False.    
+The reason for this change is that, when specifying identical *Stream Sizes* for *lores* and *main* streams, the camera could produce an error ```Error starting camera: lores stream dimensions may not exceed main stream``` because the automatic alignment might produce effective *Stream Sizes* which violate tis restriction.
+
+### Bugfixes
+- [Zooming](./ZoomPan.md) did not preserv image center
+
+
 ## V2.5.4
 
-## Bugfixes
+### Bugfixes
 
 - Avoid ```Error starting camera: lores stream dimensions may not exceed main stream```   
 Now, when specifying any [Camera Configuration](./Configuration.md), it is checked whether the specified *Stream Size* for the different use cases obey the restriction that stream size for 'lores' must be less than stream size for 'main' stream.    
@@ -31,7 +56,7 @@ If the restriction is violated, an error message is shown and the previous value
 
 ## V2.5.3
 
-## Bugfixes
+### Bugfixes
 
 - The previous fix was not robust enough and really worked only with debugging activated..    
 Now, the camera is given a second more time after different steps of switching.

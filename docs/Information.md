@@ -32,7 +32,7 @@ Each camera has an identifying number (0, 1, ...) shown in the title above each 
 
 When the server starts up, the first camera, which is not a USB camera, is selected.
 
-You may later switch to another non-USB camera on the [Settings](./Settings.md) screen
+You may later switch to another non-USB camera on the [Settings](./Settings.md) screen or the [Web Cam](./Webcam.md) screen
 
 The active camera is indicated in the list.
 
@@ -41,6 +41,10 @@ The active camera will also be shown in the title bar of the application after l
 *Current Status* shows the status of the camera:
 - open / closed
 - started / stopped
+- current [Sensor Mode](#sensor-modes)   
+This is only shown for the currently active camera if it is started.    
+If the Sensor Mode cannot currently be determined, 'unknown' is shown.    
+The Sensor Mode is usually automatically selected by the camera and normally corresponds to the largest [Stream Size](./Configuration.md#stream-size-width-height), requested by one of the [Camera Configurations](./Configuration.md).
 
 See [Camera Status and Number of Threads](#camera-status-and-number-of-threads)
 

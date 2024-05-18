@@ -509,6 +509,13 @@ RaspiCamSrv's Live page
                             <td style="padding-top:4px; padding-bottom:0px">
                             </td>
                             <td style="padding-top:4px; padding-bottom:0px">
+                                <form method="post" action="{{ url_for('home.zoom_default') }}">
+                                    {% if sc.isZoomModeDraw == False %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Default">
+                                    {% else %}
+                                    <input class="w3-button w3-black" style="width:80%; padding-bottom:6px; padding-top:6px" type="submit" value="Default" disabled>
+                                    {% endif %}
+                                </form>
                             </td>
                             <td style="padding-top:4px; padding-bottom:0px">
                             </td>
@@ -1384,7 +1391,10 @@ RaspiCamSrv's Live page
                 <tr>
                     <!-- The active Photo-->
                     <td colspan="5">
-                        <img style="max-height: 600px;" src="{{ url_for('static', filename=sc.displayPhoto) }}" class="w3-image">
+                        <img
+                            style="width: 100%; height: 480px; object-fit: scale-down"
+                            src="{{ url_for('static', filename=sc.displayPhoto) }}" 
+                            class="w3-image">
                     </td>
                 </tr>
                 {% endif %}

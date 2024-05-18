@@ -9,7 +9,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.5.4
+## Feature Overview V2.6.0
 For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
 For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
 
@@ -23,6 +23,8 @@ The non-active camera stream and photo can be accessed through endpoints ```http
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
 - [Event viewer](./docs/TriggerEventViewer.md) with calendar overview
 - Notification on captured events by e-Mail (see [Notification](./docs/TriggerNotification.md))
+- [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) are available, including [Frame Differencing](./docs/TriggerMotion.md#test-for-frame-differencing-algorithm), [Optical Flow](./docs/TriggerMotion.md#test-for-optical-flow-algorithm) and [Background Subtraction](./docs/TriggerMotion.md#test-for-background-subtraction-algorithm)
+- The [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) can be run in a testing mode, showing live views of intermediate image processing results which can help for a better understanding of the algorithms and adjustment of their variable parameters.
 - For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance (see [Focus handling](docs/FocusHandling.md)).
 - For zooming, the intended image section can be [drawn graphically](docs/ZoomPan.md#graphically-setting-the-zoom-window) on the live stream area.
 - Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](docs/LiveScreen.md) together with their metadata or alternatively with their histogram (see [Photo taking](docs/Phototaking.md)).
@@ -44,9 +46,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 
-**New in V2.5.0**
-- [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) are available, including [Frame Differencing](./docs/TriggerMotion.md#test-for-frame-differencing-algorithm), [Optical Flow](./docs/TriggerMotion.md#test-for-optical-flow-algorithm) and [Background Subtraction](./docs/TriggerMotion.md#test-for-background-subtraction-algorithm)
-- The [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) can be run in a testing mode, showing live views of intermediate image processing results which can help for a better understanding of the algorithms and adjustment of their variable parameters.
+**New in V2.6.0**
+- When modifying [Stream Sizes](./docs/Configuration.md#stream-size-width-height) to non-standard aspect ratios, an option can assure that this is syncronously done for all camera configurations, so that Live Stream, Photos, Raw Photos and Videos have all the same aspect ratio and are not distorted.
 
 
 ## Known Issues

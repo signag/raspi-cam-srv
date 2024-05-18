@@ -895,6 +895,7 @@ class Camera():
     stopRequested2 = False          # Request to stop the background thread for second camera
     stopVideoRequested = False      # Request to stop the video thread
     stopPhotoSeriesRequested = False  # Request to stop the photoseries thread
+    resetScalerCropRequested = False
     event = CameraEvent()
     event2 = None
     
@@ -1161,9 +1162,11 @@ class Camera():
     def restartLiveStream():
         logger.debug("Thread %s: Camera.restartLiveStream", get_ident())
         Camera.stopLiveStream()
+        time.sleep(0.5)
         logger.debug("Thread %s: Camera.restartLiveStream: Live stream stopped", get_ident())
         Camera.cam, done = Camera.ctrl.requestStop(Camera.cam)
         logger.debug("Thread %s: Camera.restartLiveStream: Camera stopped", get_ident())
+        time.sleep(0.5)
         Camera.ctrl.clearConfig()
         logger.debug("Thread %s: Camera.restartLiveStream: Config cleared", get_ident())
         Camera.startLiveStream()
@@ -1354,6 +1357,8 @@ class Camera():
             
             if cfgCtrls.include_scalerCrop == False:
                 cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
+                # This must be updated after the camera has been started
+                Camera.resetScalerCropRequested = True
             logger.debug("Thread %s: Camera.loadCameraSpecifics loaded to config", get_ident())
 
         # Load Sensor Modes
@@ -2025,6 +2030,9 @@ class Camera():
                 Camera.cam, excl = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg=None, forLiveStream=True)
             else:
                 logger.debug("Thread %s: Camera.frames - camera started", get_ident())
+
+            if Camera.resetScalerCropRequested == True:
+                Camera.resetScalerCrop()
 
             Camera.applyControls(Camera.ctrl.configuration)
             logger.debug("Thread %s: Camera.frames - controls applied", get_ident())
@@ -2732,6 +2740,14 @@ class Camera():
                 status = "open"
                 if cls.cam.started == True:
                     status = status + " - started"
+                    mode = "unknown"
+                    if useSensorConfiguration:
+                        sc = cls.cam.camera_config["sensor"]
+                        for sm in CameraCfg().sensorModes:
+                            if sc["output_size"] == sm.size \
+                            and sc["bit_depth"] == sm.bit_depth:
+                                mode = str(sm.id)
+                    status = status + " - current Sensor Mode: " + mode
                 else:
                     status = status + " - stopped"
             else:
@@ -2746,3 +2762,20 @@ class Camera():
             else:
                 status = "closed"
         return status
+    
+    @classmethod
+    def resetScalerCrop(cls):
+        logger.debug("Thread %s: Camera.resetScalerCrop", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        cc = cfg.controls
+        scInf = cls.cam.camera_controls["ScalerCrop"]
+        sc.scalerCropMin = scInf[0]
+        sc.scalerCropMax = scInf[1]
+        sc.scalerCropDef = scInf[2]
+        sc.zoomFactor = 100
+        sc.scalerCropLiveView = sc.scalerCropDef
+        cc.scalerCrop = sc.scalerCropDef
+        cc.include_scalerCrop = False
+        cls.resetScalerCropRequested = False
+        

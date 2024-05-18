@@ -33,6 +33,114 @@ def main():
     cfgrf = cfg.rawFormats
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
+def doSyncAspectRatio(ref: tuple, tgt: list) -> bool:
+    """ Synchronize the aspect ration of target configurations with reference
+    
+        Parameters:
+        ref:    reference size (width, height)
+        tgt:    list of configurations for which to adjust the aspect ratio
+        
+        Return:
+        True if Stream Size for Live View was changed
+    """
+    logger.debug("In doSyncAspectRatio")
+    ret = False
+    cfg = CameraCfg()
+    aspRatioRef = ref[0] / ref[1]
+    for conf in tgt:
+        if conf == "Live View":
+            size = cfg.liveViewConfig.stream_size
+        elif conf == "Photo":
+            size = cfg.photoConfig.stream_size
+        elif conf == "Raw Photo":
+            size = cfg.rawConfig.stream_size
+        elif conf == "Video":
+            size = cfg.videoConfig.stream_size
+        else:
+            size = None
+        if not size is None:
+            log = f"Changed Stream Size for {conf} from {size} to "
+            aspRatio = size[0] / size[1]
+            if aspRatio != aspRatioRef:
+                width = size[0]
+                height = round(size[0] / aspRatioRef)
+                if not (height % 2) == 0:
+                    height += 1
+                if height > cfg.cameraProperties.pixelArraySize[1]:
+                    height = cfg.cameraProperties.pixelArraySize[1]
+                    width = round(height * aspRatioRef)
+                    if not (width % 2) == 0:
+                        width += 1
+                size = (width, height)
+                
+                sm = "custom"
+                for mode in cfg.sensorModes:
+                    if mode.size[0] == width \
+                    and mode.size[1] == height:
+                        sm = str(mode.id)
+                        break
+                    
+                logger.debug(log + str(size))
+                if conf == "Live View":
+                    cfg.liveViewConfig.stream_size = size
+                    cfg.liveViewConfig.sensor_mode = sm
+                    ret = True
+                elif conf == "Photo":
+                    cfg.photoConfig.stream_size = size
+                    cfg.photoConfig.sensor_mode = sm
+                elif conf == "Raw Photo":
+                    cfg.rawConfig.stream_size = size
+                    cfg.rawConfig.sensor_mode = sm
+                elif conf == "Video":
+                    cfg.videoConfig.stream_size = size
+                    cfg.videoConfig.sensor_mode = sm
+                else:
+                    pass
+    logger.debug("doSyncAspectRatio %s", ret)
+    return ret
+
+@bp.route("/syncAspectRatio", methods=("GET", "POST"))
+@login_required
+def syncAspectRatio():
+    logger.debug("In syncAspectRatio")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    sc.lastConfigTab = "cfglive"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
+    if request.method == "POST":
+        syncAspectRatio = not request.form.get("syncaspectratio") is None
+        sc.syncAspectRatio = syncAspectRatio
+        if syncAspectRatio == True:
+            if sc.lastConfigTab == "cfglive":
+                aspRef = cfglive.stream_size
+                aspTgt = ["Photo", "Raw Photo", "Video"]
+                doSyncAspectRatio(aspRef, aspTgt)
+            elif sc.lastConfigTab == "cfgphoto":
+                aspRef = cfgphoto.stream_size
+                aspTgt = ["Live View", "Raw Photo", "Video"]
+                doSyncAspectRatio(aspRef, aspTgt)
+            elif sc.lastConfigTab == "cfgraw":
+                aspRef = cfgraw.stream_size
+                aspTgt = ["Live View", "Photo", "Video"]
+                doSyncAspectRatio(aspRef, aspTgt)
+            elif sc.lastConfigTab == "cfgvideo":
+                aspRef = cfgvideo.stream_size
+                aspTgt = ["Live View", "Photo", "Raw Photo"]
+                doSyncAspectRatio(aspRef, aspTgt)
+            else:
+                pass
+    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
 @login_required
 def liveViewCfg():
@@ -131,6 +239,8 @@ def liveViewCfg():
             format = request.form["LIVE_format"]
             cfglive.display = None
             cfglive.encode = cfglive.stream
+            doSyncAspectRatio(cfglive.stream_size, ["Photo", "Raw Photo", "Video"])
+            Camera.resetScalerCropRequested = True
             Camera().restartLiveStream()
 
             msg = ""
@@ -341,6 +451,9 @@ def photoCfg():
             if cc:
                 msg = "This modification will cause the live stream to be interrupted when a photo is taken!\nReason: " + cr
                 flash(msg)
+            doSyncAspectRatio(cfgphoto.stream_size, ["Live View", "Raw Photo", "Video"])
+            Camera.resetScalerCropRequested = True
+            Camera().restartLiveStream()
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
@@ -455,14 +568,31 @@ def rawCfg():
             queue = not request.form.get("PRAW_queue") is None
             cfgraw.queue = queue
             sensor_mode = request.form["PRAW_sensor_mode"]
+            if sensor_mode == "custom":
+                size_width = int(request.form["PRAW_stream_size_width"])
+                if not (size_width % 2) == 0:
+                    err = "Stream Size (width, height) must be even"
+                size_height = int(request.form["PRAW_stream_size_height"])
+                if not (size_height % 2) == 0:
+                    err = "Stream Size (width, height) must be even"
+                if not err:
+                    cfgraw.sensor_mode = sensor_mode
+                    cfgraw.stream_size = (size_width, size_height)
+                    cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
+            else:
+                mode = sm[int(sensor_mode)]
+                if not err:
+                    cfgraw.sensor_mode = sensor_mode
+                    cfgraw.stream_size = mode.size
+                    cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
             cfgraw.sensor_mode = sensor_mode
-            mode = sm[int(sensor_mode)]
-            cfgraw.stream_size = mode.size
-            cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
             format = request.form["PRAW_format"]
             cfgraw.format = format
             cfgraw.display = None
             cfgraw.encode = None
+            doSyncAspectRatio(cfgraw.stream_size, ["Live View", "Photo", "Video"])
+            Camera.resetScalerCropRequested = True
+            Camera().restartLiveStream()
         if err:
             flash(err)            
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
@@ -643,6 +773,9 @@ def videoCfg():
             cfgvideo.format = format
             cfgvideo.display = None
             cfgvideo.encode = "main"
+            doSyncAspectRatio(cfgvideo.stream_size, ["Live View", "Photo", "Raw Photo"])
+            Camera.resetScalerCropRequested = True
+            Camera().restartLiveStream()
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)

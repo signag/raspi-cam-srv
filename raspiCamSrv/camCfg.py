@@ -1776,7 +1776,7 @@ class CameraConfig():
         self._sensor_mode = "0"
         self._stream = "main"
         self._stream_size = None
-        self._stream_size_align = True
+        self._stream_size_align = False
         self._format = "RGB888"
         self._controls = {}
 
@@ -2151,6 +2151,10 @@ class ServerConfig():
         self._zoomFactor = 100
         self._zoomFactorStep = 10
         self._scalerCropLiveView = (0, 0, 4608, 2592)
+        self._scalerCropMin = (0, 0, 4608, 2592)
+        self._scalerCropMax = (0, 0, 4608, 2592)
+        self._scalerCropDef = (0, 0, 4608, 2592)
+        self._syncAspectRatio = True
         self._curMenu = "live"
         self._lastLiveTab = "focus"
         self._lastConfigTab = "cfglive"
@@ -2466,6 +2470,38 @@ class ServerConfig():
     @scalerCropLiveViewStr.setter
     def scalerCropLiveViewStr(self, value: str):
         self._scalerCropLiveView = CameraControls._parseRectTuple(value)
+
+    @property
+    def scalerCropMin(self) -> tuple:
+        return self._scalerCropMin
+
+    @scalerCropMin.setter
+    def scalerCropMin(self, value: tuple):
+        self._scalerCropMin = value
+
+    @property
+    def scalerCropMax(self) -> tuple:
+        return self._scalerCropMax
+
+    @scalerCropMax.setter
+    def scalerCropMax(self, value: tuple):
+        self._scalerCropMax = value
+
+    @property
+    def scalerCropDef(self) -> tuple:
+        return self._scalerCropDef
+
+    @scalerCropDef.setter
+    def scalerCropDef(self, value: tuple):
+        self._scalerCropDef = value
+
+    @property
+    def syncAspectRatio(self) -> bool:
+        return self._syncAspectRatio
+
+    @syncAspectRatio.setter
+    def syncAspectRatio(self, value: bool):
+        self._syncAspectRatio = value
 
     @property
     def curMenu(self) -> str:
@@ -3290,6 +3326,12 @@ class ServerConfig():
         sc = ServerConfig()
         for key, value in dict.items():
             if key == "_scalerCropLiveView":
+                setattr(sc, key, tuple(value))
+            elif key == "_scalerCropMin":
+                setattr(sc, key, tuple(value))
+            elif key == "_scalerCropMax":
+                setattr(sc, key, tuple(value))
+            elif key == "_scalerCropDef":
                 setattr(sc, key, tuple(value))
             elif key == "_displayMeta":
                 if value is None:

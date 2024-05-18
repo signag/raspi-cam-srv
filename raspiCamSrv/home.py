@@ -244,28 +244,74 @@ def zoom_in():
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         logger.debug("ScalerCrop old: %s", cc.scalerCrop)
-        xCenter = int((cc.scalerCrop[0] + cc.scalerCrop[2])/2)
-        yCenter = int((cc.scalerCrop[1] + cc.scalerCrop[3])/2)
+        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2]/2)
+        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3]/2)
         zfNext = sc.zoomFactor - sc.zoomFactorStep
+        msg = []
         if zfNext < sc.zoomFactorStep:
-            msg="WARNING: Minimum zoom factor reached!"
-            flash(msg)
+            msg.append("WARNING: Minimum zoom factor reached!")
             zfNext = sc.zoomFactorStep
-        width = int(cp.pixelArraySize[0] * zfNext / 100)
-        height = int(cp.pixelArraySize[1] * zfNext / 100)
+        width = int(sc.scalerCropDef[2] * zfNext / 100)
+        height = int(sc.scalerCropDef[3] * zfNext / 100)
+
+        if width < sc.scalerCropMin[2]:
+            height = int(height * sc.scalerCropMin[2] / width)
+            width = sc.scalerCropMin[2]
+            msg.append("WARNING: Smallest ScalerCrop width reached")
+        if height < sc.scalerCropMin[3]:
+            width = int(width * sc.scalerCropMin[3] / height)
+            height = sc.scalerCropMin[3]
+            msg.append("WARNING: Smallest ScalerCrop height reached")
+
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
+            
         sccrop = (int(xCenter - width/2), int(yCenter - height/2), width, height)
         sc.zoomFactor = zfNext
         cc.scalerCrop = sccrop
-        if zfNext < 100:
-            cc.include_scalerCrop = True
-        else:
-            cc.include_scalerCrop = False
+        cc.include_scalerCrop = True
         logger.debug("ScalerCrop new: %s", cc.scalerCrop)
         Camera().applyControlsForLivestream()
         time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
+def checkScalerCrop(crop: tuple, range: tuple) -> tuple:
+    """Check given cropping rectangle with respect to maximum rectangle
+    
+    Params:
+        crop:   cropping rectangle to be tested (xOffset, yOffset, width, height)
+        range:  allowed range (xOffset, yOffset, width, height)
+        
+    Return:
+        crop: cropping rectangle with initial dimensions but eventually adjusted offset
+        msg:  Message list with modifications made
+    """
+    res = crop
+    msg = []
+    x0 = crop[0]
+    y0 = crop[1]
+    width = crop[2]
+    height = crop[3]
+    if x0 < range[0]:
+        msg.append("WARNING: left border reached")
+        x0 = range[0]
+    if y0 < range[1]:
+        msg.append("WARNING: upper border reached")
+        y0 = range[1]
+    if x0 + width > range[0] + range[2]:
+        msg.append("WARNING: right border reached")
+        x0 = range[0] + range[2] - width
+    if y0 + height > range[1] + range[3]:
+        msg.append("WARNING: lower border reached")
+        y0 = range[1] + range[3] - height
+    return ((x0, y0, crop[2], crop[3]), msg)
     
 @bp.route("/zoom_out", methods=("GET", "POST"))
 @login_required
@@ -279,40 +325,36 @@ def zoom_out():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        xCenter = int((cc.scalerCrop[0] + cc.scalerCrop[2])/2)
-        yCenter = int((cc.scalerCrop[1] + cc.scalerCrop[3])/2)
+        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2]/2)
+        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3]/2)
         zfNext = sc.zoomFactor + sc.zoomFactorStep
+        msg0 = ""
         if zfNext >= 100:
             zfNext = 100
-            width = cp.pixelArraySize[0]
-            height = cp.pixelArraySize[1]
-            sccrop = (0, 0, width, height)
+            width = sc.scalerCropDef[2]
+            height = sc.scalerCropDef[3]
+            msg0 = "WARNING: Maximum zoom reached"
         else:
-            width = int(cp.pixelArraySize[0] * zfNext / 100)
-            height = int(cp.pixelArraySize[1] * zfNext / 100)
-            if width > cp.pixelArraySize[0]:
-                width = cp.pixelArraySize[0]
-                xOffset = 0
-            else:
-                xOffset = int(xCenter - width/2)
-                if xOffset < 0:
-                    xOffset = 0
-            if height > cp.pixelArraySize[1]:
-                height = cp.pixelArraySize[1]
-                yOffset = 0
-            else:
-                yOffset = int(yCenter - height/2)
-                if yOffset < 0:
-                    yOffset = 0
-            sccrop = (xOffset, yOffset, width, height)
+            width = int(sc.scalerCropDef[2] * zfNext / 100)
+            height = int(sc.scalerCropDef[3] * zfNext / 100)
+            
+        ll = (xCenter - int(width / 2), yCenter - int(height / 2))
+        sccrop = (ll[0], ll[1], width, height)
+        (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
+        if msg0 != "":
+            msg.append(msg0)
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
         sc.zoomFactor = zfNext
         cc.scalerCrop = sccrop
-        if zfNext < 100:
+        cc.include_scalerCrop = True
+        Camera().applyControlsForLivestream()
+        time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControlsForLivestream()
-        time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -331,13 +373,27 @@ def zoom_full():
     if request.method == "POST":
         sc.isZoomModeDraw = False
         sc.zoomFactor = 100
-        sccrop = (0, 0, cp.pixelArraySize[0], cp.pixelArraySize[1])
+        width = sc.scalerCropDef[2]
+        height = sc.scalerCropDef[3]
+        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2]/2)
+        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3]/2)
+        xOffset = int(xCenter - width / 2)
+        yOffset = int(yCenter - height / 2)
+        sccrop = (xOffset, yOffset, width, height)
+        (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
         cc.scalerCrop = sccrop
+        cc.include_scalerCrop = True
         Camera().applyControlsForLivestream()
         time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
-        cc.include_scalerCrop = False
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_up", methods=("GET", "POST"))
@@ -352,20 +408,21 @@ def pan_up():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
         yOffset = cc.scalerCrop[1] - step
-        if yOffset < 0:
-            yOffset = 0
-            msg="WARNING: Upper border reached!"
-            flash(msg)
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
+        (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
         cc.scalerCrop = sccrop
-        if sc.zoomFactor < 100:
+        cc.include_scalerCrop = True
+        Camera().applyControlsForLivestream()
+        time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControlsForLivestream()
-        time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -382,20 +439,27 @@ def pan_left():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
         xOffset = cc.scalerCrop[0] - step
-        if xOffset < 0:
-            xOffset = 0
-            msg="WARNING: Left border reached!"
-            flash(msg)
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
+        logger.debug("pan_left - scalarCropDef   : %s", sc.scalerCropDef)
+        logger.debug("pan_left - scalarCrop old  : %s", cc.scalerCrop)
+        logger.debug("pan_left - scalarCrop Max  : %s", sc.scalerCropMax)
+        logger.debug("pan_left - step: %s xOffset: %s", step, xOffset)
+        logger.debug("pan_left - scalarCrop Init : %s", sccrop)
+        (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
+        logger.debug("pan_left - scalarCrop Final: %s", sccrop)
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
         cc.scalerCrop = sccrop
-        if sc.zoomFactor < 100:
+        cc.include_scalerCrop = True
+        Camera().applyControlsForLivestream()
+        time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControlsForLivestream()
-        time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -412,20 +476,26 @@ def pan_center():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        xOffset = int((cp.pixelArraySize[0] - cc.scalerCrop[2])/2)
-        if xOffset < 0:
-            xOffset = 0
-        yOffset = int((cp.pixelArraySize[1] - cc.scalerCrop[3])/2)
-        if yOffset < 0:
-            yOffset = 0
+        logger.debug("pan_center scalerCropDef: %s", sc.scalerCropDef)
+        logger.debug("pan_center scalerCrop   : %s", cc.scalerCrop)
+        xOffset = int(sc.scalerCropDef[0] + sc.scalerCropDef[2]/2 - cc.scalerCrop[2]/2)
+        yOffset = int(sc.scalerCropDef[1] + sc.scalerCropDef[3]/2 - cc.scalerCrop[3]/2)
+        logger.debug("pan_center xOffset: %s, yOffset: %s", xOffset, yOffset)
         sccrop = (xOffset, yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
+        logger.debug("pan_center - sccrop initial: %s", sccrop)
+        (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
+        logger.debug("pan_center - sccrop final  : %s", sccrop)
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
         cc.scalerCrop = sccrop
-        if sc.zoomFactor < 100:
+        cc.include_scalerCrop = True
+        Camera().applyControlsForLivestream()
+        time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControlsForLivestream()
-        time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -442,20 +512,21 @@ def pan_right():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
         xOffset = cc.scalerCrop[0] + step
-        if xOffset + cc.scalerCrop[2] > cp.pixelArraySize[0]:
-            xOffset = cp.pixelArraySize[0] - cc.scalerCrop[2]
-            msg="WARNING: Right border reached!"
-            flash(msg)
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
+        (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
         cc.scalerCrop = sccrop
-        if sc.zoomFactor < 100:
+        cc.include_scalerCrop = True
+        Camera().applyControlsForLivestream()
+        time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
-        Camera().applyControlsForLivestream()
-        time.sleep(0.5)
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -472,20 +543,45 @@ def pan_down():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((cp.pixelArraySize[1] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
         yOffset = cc.scalerCrop[1] + step
-        if yOffset + cc.scalerCrop[3] > cp.pixelArraySize[1]:
-            yOffset = cp.pixelArraySize[1] - cc.scalerCrop[3]
-            msg="WARNING: bottom border reached!"
-            flash(msg)
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
+        (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
+        if len(msg) > 0:
+            for m in msg:
+                flash(m)
         cc.scalerCrop = sccrop
-        if sc.zoomFactor < 100:
+        cc.include_scalerCrop = True
+        Camera().applyControlsForLivestream()
+        time.sleep(0.5)
+        if cc.scalerCrop != sc.scalerCropDef:
             cc.include_scalerCrop = True
         else:
             cc.include_scalerCrop = False
+        metadata = Camera().getMetaData()
+        sc.scalerCropLiveView = metadata["ScalerCrop"]
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+    
+@bp.route("/zoom_default", methods=("GET", "POST"))
+@login_required
+def zoom_default():
+    logger.debug("In zoom_default")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.lastLiveTab = "zoom"
+    if request.method == "POST":
+        sc.isZoomModeDraw = False
+        sc.zoomFactor = 100
+        sccrop = sc.scalerCropDef
+        cc.scalerCrop = sccrop
+        cc.include_scalerCrop = True
         Camera().applyControlsForLivestream()
         time.sleep(0.5)
+        cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)

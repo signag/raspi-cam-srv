@@ -31,7 +31,8 @@ For more details, see [raspiCamSrv Tasks and Background Processes](./Background%
 
 ## Configuration Tab
 
-An individual configuration tab is available for each use case. All tabs have essentially the same structure:
+An individual configuration tab is available for each use case. All tabs have essentially the same structure:   
+As a general aspect, the green [Submenue](./UserGuide.md#submenue) bar includes an option to synchronize the aspect ratio of [stream sizes](#stream-size-width-height) across all configurations if this has been changed for the current configuration.
 
 ![Configuration](img/Config.jpg)
 
@@ -88,6 +89,11 @@ If a standard Sensor Mode has been selected, the size related to the mode is sho
 
 If "Custom" has been selected as sensor mode, you may enter any size here (except for *Raw Photos*).   
 Produced photos or videos will then be in the specified format.
+
+If the option to synchronize aspect ratios (right side of green Submenue bar) is selected, the *Stream Size*s for all other configurations will be adjusted to reproduce the aspect ratio of the current configuration.
+
+**NOTE:** If, after submitting a *Live View* configuration, you get an error message ```
+lores Stream Size must not exceed main Stream Size (Photo)```, you need to go to the *Photo* configuration and adjust its *Stream Size* to the desired value.
 
 ### Stream size aligned with Sensor Modes
 
