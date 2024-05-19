@@ -54,19 +54,18 @@ The strategies by which the camera operates are not fully documented in detail.
 However, systematic experiments with the relevant parameters show the following bahavior:
 
 - Use the [Camera Configuration](./Configuration.md) to specify the **Stream Sizes** for different use cases.    
-The most relevant configuration is the *Raw Photo* configuration by which the *Stream Size* for the raw stream is configured.    
+The most 'relevant' configuration seems to be the one with the largest stream size (main or raw stream).    
 A special option (*Sync Aspect Ratio*) assures consistent aspect ratios for all configurations.
-- Depending on the configured Stream Size, the camera will automatically choose a suitable Sensor Mode.    
-The active Sensor Mode can be seen in the [Installed Cameras](./Information.md#camera-x) section of the [Info](./Information.md) screen for the active camera if it is currently open and started.   
-The camera uses with priority the *Stream Size* of the raw stream for selection of the *Sensor Mode*.    
-If the raw stream is not configured, the main stream will be taken.
-- From the Crop Limits of the Sensor Mode the ScalerCrop Maximum rectangle is determined 
-- The ScelerCrop Default is the largest rectangle,    
-which has the aspect ratio of the relevant (raw stream) Stream Size,    
-and which is fully inside the Crop Limits   
-and which is horizonally or vertically centered.
+- Depending on the 'relevant' (largest of raw, main) Stream Size, the camera will automatically choose a suitable Sensor Mode.    
+The active Sensor Mode can be seen in the [Installed Cameras](./Information.md#camera-x) section of the [Info](./Information.md) screen for the active camera if it is currently open and started.    
+**NOTE**: **raspiCamSrv** will normally use configurations where all 3 streams (raw, main, lores) are configured in order to allow simultaneous camera access for different intents.
+- From the Crop Limits of the Sensor Mode the ScalerCrop Maximum rectangle is determined. 
+- The ScalerCrop Default is the largest rectangle,    
+which has the aspect ratio of the 'relevant' Stream Size,    
+and which is fully inside the Crop Limits of the active Sensor Mode,   
+and which is horizontally and vertically centered.
 - Zooming and Panning allows scaling the rectangle and panning it within the area of the ScalerCrop Maximum rectangle.    
 Zooming and Panning with **raspiCamSrv** always preserves the aspect ratio.
-- Finally, the effective ScalerCrop area is scalet to the *Stream Size* of the different streams
+- Finally, the effective ScalerCrop area is scaled to the *Stream Size* of the different streams
 
-Because the apect ratio of the ScalerCrop Zoom/Pan rectangle is determined from the aspect ratio of the raw stream, the Live Stream will be distorted if the aspect ratio of for the *Live View* configuration is different from that of the *Raw Photo* configuration.
+Because the apect ratio of the ScalerCrop Zoom/Pan rectangle is determined from the aspect ratio of the 'relevant' stream, the Live Stream will be distorted if the aspect ratio of for the *Live View* configuration is different from that of the *Raw Photo* configuration.

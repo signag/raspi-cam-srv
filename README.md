@@ -3,13 +3,13 @@
 The Raspberry Pi Camera Server (raspiCamSrv) is a web server which can be deployed on a Raspberry Pi device giving access to installed cameras and allows to control these.
 
 It can be installed on all Raspberry Pi platforms which allow connection of one or multiple cameras and supports the currently existing camera types.
-Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2, 3 and HQ. On Pi 5, also parallel installation of two different cameras was tested.
+Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2, 3, HQ and GS. On Pi 5, also parallel installation of two different cameras was tested.
 
 **raspiCamSrv** is built with [Flask 3.0](https://flask.palletsprojects.com/en/3.0.x/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.6.0
+## Feature Overview V2.6.1
 For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
 For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
 
@@ -82,7 +82,7 @@ The algorithm code has been taken from this source as well as its [GitHub Reposi
 - A suitable **power supply**<br>For Pi Zero W or Pi Zero 2 W, a normal mobile phone charger is sufficient as long as it has a Micro-USB connector
 - Optionally, a **case** for the specific model may ease handling.<br>For Pi Zero W or Zero 2 W, offerings for the official case (e.g. [here](https://www.reichelt.de/gehaeuse-fuer-raspberry-pi-zero-rot-weiss-rpiz-case-whrd-p223607.html?PROVID=2788&gclid=EAIaIQobChMI2JfM3vjcgwMVSxYGAB1pSQBOEAYYASABEgL_GPD_BwE)) should include a special short camera cable.<br>The cover for the camera is fine for camera models 1 and 2. For camera model 3, some handwork is necessary to enlarge the hole to a square for the camera body.
 - A **Wifi network** with internet access and known access credentials (**SSID**, **password**)
-- A **PC** with network access and **(micro)SD** card reader
+- A **PC or Mac** with network access and **(micro)SD** card reader
 
 The setup description, below, assumes a completely autonomous or 'headless' setup, where the Raspberry Pi requires nothing but a power supply cable without any necessity to ever connect it to a display, keyboard or mouse.   
 ![Pi Zero Cover](docs/img/pi_zero_cover.jpg)<br>Here, the camera model 2 is installed.
@@ -97,6 +97,8 @@ Once the SD card is written, insert it into the Raspberry Pi and power it up.
 Initially, it will take several minutes until it is visible in the network.
 
 ### RaspiCamSrv Installation
+
+If you want to update an existing installation to the latest version, see [Update Procedure](./docs/ReleaseNotes.md#update-procedure).
 
 In case of problems during installation and usage, see [Troubleshooting](./docs/Troubelshooting.md)
 

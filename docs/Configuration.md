@@ -32,7 +32,9 @@ For more details, see [raspiCamSrv Tasks and Background Processes](./Background%
 ## Configuration Tab
 
 An individual configuration tab is available for each use case. All tabs have essentially the same structure:   
-As a general aspect, the green [Submenue](./UserGuide.md#submenue) bar includes an option to synchronize the aspect ratio of [stream sizes](#stream-size-width-height) across all configurations if this has been changed for the current configuration.
+
+As a general aspect, the green [Submenue](./UserGuide.md#submenue) bar includes an option to synchronize the aspect ratio of [stream sizes](#stream-size-width-height) across all configurations if this has been changed for the current configuration.   
+If this option is activated after it was previously deactivated, all aspect ratios will be set to the one of the current configuration. 
 
 ![Configuration](img/Config.jpg)
 

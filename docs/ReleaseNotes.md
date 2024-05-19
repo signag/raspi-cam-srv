@@ -18,6 +18,14 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.6.1
+
+### Bugfixes
+
+- With deactivated [Sync Aspect Ratio](./Configuration.md), the aspect ratio of different configurations was nevertheless synced. This is now fixed.
+- When activating [Sync Aspect Ratio](./Configuration.md), after it was previously deactivated, all aspect ratios were set to the one of *Live View* and not to the currently selected configuration.
+- When activating [Sync Aspect Ratio](./Configuration.md), after it was previously deactivated, ScalerCrop was not automatically updated.
+
 ## V2.6.0
 
 ### New Features

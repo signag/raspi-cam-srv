@@ -110,7 +110,6 @@ def syncAspectRatio():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
-    sc.lastConfigTab = "cfglive"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
@@ -118,27 +117,35 @@ def syncAspectRatio():
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
     if request.method == "POST":
+        lastTab = sc.lastConfigTab
+        selTab = request.form.get("activecfgtab")
+        if selTab != "-":
+            lastTab = selTab
+        sc.lastConfigTab = lastTab
         syncAspectRatio = not request.form.get("syncaspectratio") is None
         sc.syncAspectRatio = syncAspectRatio
+        logger.debug("syncAspectRatio - lastTab: %s", lastTab)
         if syncAspectRatio == True:
-            if sc.lastConfigTab == "cfglive":
+            if lastTab == "cfglive":
                 aspRef = cfglive.stream_size
                 aspTgt = ["Photo", "Raw Photo", "Video"]
                 doSyncAspectRatio(aspRef, aspTgt)
-            elif sc.lastConfigTab == "cfgphoto":
+            elif lastTab == "cfgphoto":
                 aspRef = cfgphoto.stream_size
                 aspTgt = ["Live View", "Raw Photo", "Video"]
                 doSyncAspectRatio(aspRef, aspTgt)
-            elif sc.lastConfigTab == "cfgraw":
+            elif lastTab == "cfgraw":
                 aspRef = cfgraw.stream_size
                 aspTgt = ["Live View", "Photo", "Video"]
                 doSyncAspectRatio(aspRef, aspTgt)
-            elif sc.lastConfigTab == "cfgvideo":
+            elif lastTab == "cfgvideo":
                 aspRef = cfgvideo.stream_size
                 aspTgt = ["Live View", "Photo", "Raw Photo"]
                 doSyncAspectRatio(aspRef, aspTgt)
             else:
                 pass
+            Camera.resetScalerCropRequested = True
+            Camera().restartLiveStream()
     return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
 
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
@@ -239,7 +246,8 @@ def liveViewCfg():
             format = request.form["LIVE_format"]
             cfglive.display = None
             cfglive.encode = cfglive.stream
-            doSyncAspectRatio(cfglive.stream_size, ["Photo", "Raw Photo", "Video"])
+            if sc.syncAspectRatio == True:
+                doSyncAspectRatio(cfglive.stream_size, ["Photo", "Raw Photo", "Video"])
             Camera.resetScalerCropRequested = True
             Camera().restartLiveStream()
 
@@ -451,7 +459,8 @@ def photoCfg():
             if cc:
                 msg = "This modification will cause the live stream to be interrupted when a photo is taken!\nReason: " + cr
                 flash(msg)
-            doSyncAspectRatio(cfgphoto.stream_size, ["Live View", "Raw Photo", "Video"])
+            if sc.syncAspectRatio == True:
+                doSyncAspectRatio(cfgphoto.stream_size, ["Live View", "Raw Photo", "Video"])
             Camera.resetScalerCropRequested = True
             Camera().restartLiveStream()
         if err:
@@ -590,7 +599,8 @@ def rawCfg():
             cfgraw.format = format
             cfgraw.display = None
             cfgraw.encode = None
-            doSyncAspectRatio(cfgraw.stream_size, ["Live View", "Photo", "Video"])
+            if sc.syncAspectRatio == True:
+                doSyncAspectRatio(cfgraw.stream_size, ["Live View", "Photo", "Video"])
             Camera.resetScalerCropRequested = True
             Camera().restartLiveStream()
         if err:
@@ -773,7 +783,8 @@ def videoCfg():
             cfgvideo.format = format
             cfgvideo.display = None
             cfgvideo.encode = "main"
-            doSyncAspectRatio(cfgvideo.stream_size, ["Live View", "Photo", "Raw Photo"])
+            if sc.syncAspectRatio == True:
+                doSyncAspectRatio(cfgvideo.stream_size, ["Live View", "Photo", "Raw Photo"])
             Camera.resetScalerCropRequested = True
             Camera().restartLiveStream()
         if err:

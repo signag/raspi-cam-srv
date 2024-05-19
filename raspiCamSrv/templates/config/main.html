@@ -39,6 +39,9 @@
             <form method="post" id="syncaspectratiofrm" action="{{ url_for('config.syncAspectRatio') }}">
                 <table>
                     <tr>
+                        <td>
+                            <input id="activecfgtab" name="activecfgtab" value="-" style="display: none">
+                        </td>
                         <td class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                If checked, Stream Size for all other configurations will be adjusted 
@@ -1544,9 +1547,11 @@
                 b[i].classList = "w3-bar-item w3-button configmenu";
             }
             document.getElementById(cfgTabButton).classList = "w3-bar-item w3-button configmenu w3-light-green";
+
+            document.getElementById("activecfgtab").value = cfgTabName
+
         }
-    </script>
-    <script>
+
         function sensorModeChanged(srcId, tgtId, ref1Id, ref2Id, ref3Id) {
             // React on a value change of sensorMode
             // srcId: id of source element (sensor mode selection)
@@ -1570,6 +1575,7 @@
                 document.getElementById(ref3Id).disabled = true;
             }
         }
+        
         function syncAspectRatio(form) {
             document.getElementById(form).submit();
     }
