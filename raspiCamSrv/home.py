@@ -958,7 +958,7 @@ def clear_buffer():
 @bp.route("/take_photo", methods=("GET", "POST"))
 @login_required
 def take_photo():
-    logger.debug("In take_photo")
+    logger.debug("Thread %s: In take_photo", get_ident())
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -991,7 +991,7 @@ def take_photo():
 @bp.route("/take_raw_photo", methods=("GET", "POST"))
 @login_required
 def take_raw_photo():
-    logger.debug("In take_raw_photo")
+    logger.debug("Thread %s: In take_raw_photo", get_ident())
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -1021,7 +1021,7 @@ def take_raw_photo():
 @bp.route("/record_video", methods=("GET", "POST"))
 @login_required
 def record_video():
-    logger.debug("In record_video")
+    logger.debug("Thread %s: In record_video", get_ident())
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -1034,13 +1034,14 @@ def record_video():
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Recording a video %s", filenameVid)
         fp = Camera().recordVideo(filenameVid, filename)
+        #TODO: Check sleep time. This might lead to errors when stopping video within that time
         time.sleep(4)
         if not sc.error:
             if sc.displayContent == "hist":
                 if sc.displayHistogram is None:
                     if sc.displayPhoto:
                         generateHistogram(sc)
-            # Check whether vido is being recorded
+            # Check whether video is being recorded
             if Camera.isVideoRecording():
                 logger.debug("Video recording started")
                 sc.isVideoRecording = True
@@ -1064,7 +1065,7 @@ def record_video():
 @bp.route("/stop_recording", methods=("GET", "POST"))
 @login_required
 def stop_recording():
-    logger.debug("In stop_recording")
+    logger.debug("Thread %s: In stop_recording", get_ident())
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()

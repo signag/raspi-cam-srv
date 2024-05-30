@@ -4,6 +4,14 @@
 
 ## Update Procedure
 
+Before updating, make sure that
+- [video recording](./Phototaking.md#video) is stopped
+- there are no active [photoseries](./PhotoSeries.md)
+- [triggered capture](./Trigger.md) (motion tracking) is stopped
+- server will not [start with stored configuration](./Settings.md#server-configuration)
+
+For update, proceed as follows:
+
 1. Within a SSH session go to the **raspiCamSrv** root directory    
 ```cd ~/prg/raspi-cam-srv```
 2. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
@@ -17,6 +25,23 @@ or
 ```sudo journalctl -e```    
 or    
 ```journalctl --user -e```
+
+## V2.6.2
+
+### Bugfixes
+
+- Fixed ```Exception: 'NoneType' object has no attribute 'get'``` which occurred when taking a video which requres exclusive camera access.     
+The reason was that, while stopping the live stream, it was not recognized that video recording was intended. As a result, the camera was closed and access to the camera during video recording lead to this error.   
+Refers to: [raspi-cam-srv Issue #18](https://github.com/signag/raspi-cam-srv/issues/18).
+- Fixed ```AttributeError: 'NoneType' object has no attribute 'requestStop'``` which could occur after applying *Reset Server* in the [Settings](./Settings.md) screen.
+
+### Changes
+
+- For Raspberry Pi models lower than model 5 (Zero, 1, 2, 3, 4),    
+the [Configuration](./Configuration.md) for *Photo* is initialized with the lowest *Sensor Mode*    
+and the *Buffer Count* for *Video* is set to 2, identical with *Live View*.    
+This makes all configurations compatible and allows for the Live Stream parallel to Video Recording, when using the default configuration.    
+Refers to: [raspi-cam-srv Issue #18](https://github.com/signag/raspi-cam-srv/issues/18).
 
 ## V2.6.1
 

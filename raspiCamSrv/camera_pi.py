@@ -985,7 +985,8 @@ class Camera():
         and sc.isLiveStream == False:
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
         if sc.isLiveStream2 == False:
-            Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
+            if Camera.cam2:
+                Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
 
     @classmethod
     def switchCamera(cls):
@@ -1415,11 +1416,16 @@ class Camera():
                 cfg.rawConfig.format = str(cfgSensorModes[maxModei].format)
             # For Video
             if cfg.videoConfig.stream_size is None:
-                # For Pi Zero set video resolution to lowest value
+                # For Pi < 5 set video and photo resolution to lowest value
                 if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
                 or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
                     cfg.videoConfig.sensor_mode = 0
                     cfg.videoConfig.stream_size = cfgSensorModes[0].size
+                    cfg.photoConfig.sensor_mode = 0
+                    cfg.photoConfig.stream_size = cfgSensorModes[0].size
                 else:
                     cfg.videoConfig.sensor_mode = maxMode
                     cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
@@ -1518,11 +1524,16 @@ class Camera():
                 videoConfig.buffer_count = 6
                 videoConfig.encode = "main"
                 videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
-                
+
                 if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
                 or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
                     videoConfig.sensor_mode = 0
                     videoConfig.stream_size = sensorModes[0]["size"]
+                    videoConfig.buffer_count = 2
+                    liveViewConfig.buffer_count = 2
                 else:
                     videoConfig.sensor_mode = str(maxMode)
                     videoConfig.stream_size = sensorModes[maxMode]["size"]
@@ -1953,22 +1964,27 @@ class Camera():
         sc = CameraCfg().serverConfig
         
         closeCam = True
-        if sc.isVideoRecording == True:
+        if sc.isVideoRecording == True \
+        or cls.isVideoRecording() == True:
             closeCam = False
+            logger.debug("Thread %s: Camera._thread - isVideoRecording -> Camera not closing", get_ident())
         if sc.isPhotoSeriesRecording == True:
             ser = Camera.photoSeries
             if ser:
                 if ser.isExposureSeries == True \
                 or ser.isFocusStackingSeries == True:
                     closeCam = False
+                    logger.debug("Thread %s: Camera._thread - Exposure- or PhotoStack series -> Camera not closing", get_ident())
                 else:
                     nextTime = ser.nextTime()
                     curTime = datetime.datetime.now()
                     timedif = nextTime - curTime
                     timedifSec = timedif.total_seconds()
                     if timedifSec < 60:
+                        logger.debug("Thread %s: Camera._thread - Photo series next shot within 60 sec -> Camera not closing", get_ident())
                         closeCam = False
         if closeCam == True:
+            logger.debug("Thread %s: Camera._thread - Closing camera", get_ident())
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
         sc.isLiveStream = False
 

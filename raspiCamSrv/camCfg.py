@@ -3480,7 +3480,7 @@ class CameraCfg():
             or cls._serverConfig.raspiModelFull.startswith("Raspberry Pi 1"):
                 # For Pi Zero and 4 reduce buffer_count defaults for live view and video
                 cls._liveViewConfig.buffer_count = 2
-                cls._videoConfig.buffer_count = 4
+                cls._videoConfig.buffer_count = 2
             cls._streamingCfg = {}
             if cls._serverConfig.supportsExtMotionDetection == False:
                 cls._triggerConfig.motionDetectAlgos = ["Mean Square Diff",]

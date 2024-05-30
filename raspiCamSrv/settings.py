@@ -159,7 +159,7 @@ def resetServer():
         or sc.raspiModelFull.startswith("Raspberry Pi 1"):
             # For Pi Zero and 4 reduce buffer_count defaults for live view and video
             cfg.liveViewConfig.buffer_count = 2
-            cfg.videoConfig.buffer_count = 4
+            cfg.videoConfig.buffer_count = 2
         cfg.streamingCfg = {}
         
         sc.isVideoRecording = False
