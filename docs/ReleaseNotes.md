@@ -14,17 +14,26 @@ For update, proceed as follows:
 
 1. Within a SSH session go to the **raspiCamSrv** root directory    
 ```cd ~/prg/raspi-cam-srv```
-2. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
+2. If you have made local changes (e.g. logging), you may need to reset the workspace with   
+```git reset --hard```
+3. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
 ```git pull```    
 As a result, you will see a summary of changes with respect to the previously installed version.
-3. Restart the service, depending on [how the service was installed](../README.md#service-configuration)    
+4. Restart the service, depending on [how the service was installed](../README.md#service-configuration)    
 ```sudo systemctl restart raspiCamSrv.service```    
 or    
 ```systemctl --user restart raspiCamSrv.service```
-4. Check that the service started correctly     
+5. Check that the service started correctly     
 ```sudo journalctl -e```    
 or    
 ```journalctl --user -e```
+
+## V2.6.3
+
+### Bugfixes
+
+- Fixed ```Error starting camera: main stream should be a dictionary``` which accurred at server start, if an active [Photoseries](./PhotoSeries.md) with *Photo Type* "raw+jpg" was configured to be *Continued on Server Start*.
+- When a [Photoseries](./PhotoSeries.md) is automatically continued on server start/restart, previous versions did not allow seeing the live stream while the Photoseries was active. Now, if the photo series configuration is compatible with live stream configuration, you will see the live stream also after automatic continuation of the series.
 
 ## V2.6.2
 

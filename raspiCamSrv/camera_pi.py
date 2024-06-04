@@ -407,6 +407,23 @@ class CameraController():
                     rstream.stride = None
                     rstream.framesize = None
                     cfgRef.raw = rstream
+            if cfgPhoto:
+                if cfgRef.main:
+                    if cfgRef.main.size != cfgPhoto.stream_size:
+                        configChange = True
+                        configChangeReason += "main.size,"
+                    if cfgRef.main.format != cfgPhoto.format:
+                        configChange = True
+                        configChangeReason += "main.format,"
+                else:
+                    if not test:
+                        mstream = StreamConfiguration()
+                        mstream.size = cfgPhoto.stream_size
+                        mstream.format = cfgPhoto.format
+                        mstream.stride = None
+                        mstream.framesize = None
+                        cfgRef.main = mstream
+
         if not test:
             if cfgRef.controls:
                 for key, value in cfg.controls.items():
