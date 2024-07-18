@@ -36,7 +36,7 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - For raw photos and videos, a jpeg placeholder is shown
 - The photos taken may be added to a display buffer for inspection of photos and metadata and for comparison (see [Photo Display](docs/Phototaking.md#photo-display))
 - On the [Config screen](docs/Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
-- The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
+- When modifying [Stream Sizes](./docs/Configuration.md#stream-size-width-height) to non-standard aspect ratios, an option can assure that this is syncronously done for all camera configurations, so that Live Stream, Photos, Raw Photos and Videos have all the same aspect ratio and are not distorted.- The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
 - The [Photos screen](docs/PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
 - With the [Photo Series](docs/PhotoSeries.md) screen, different kinds of photo series ([Exposure Series](./docs/PhotoSeriesExp.md), [Focus Stacks](./docs/PhotoSeriesFocus.md), [Timelapse Series](./docs/PhotoSeriesTimelapse.md)) can be configured, executed and monitored during their progress.
 - The [Photo Series](docs/PhotoSeries.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
@@ -48,8 +48,9 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 
-**New in V2.6.0**
-- When modifying [Stream Sizes](./docs/Configuration.md#stream-size-width-height) to non-standard aspect ratios, an option can assure that this is syncronously done for all camera configurations, so that Live Stream, Photos, Raw Photos and Videos have all the same aspect ratio and are not distorted.
+**New in V2.7.0**
+- This version introduces configurability for access to streaming with or without authentication.
+
 
 
 ## Known Issues
