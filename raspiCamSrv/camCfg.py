@@ -2188,6 +2188,7 @@ class ServerConfig():
         self._numpyAvailable = False
         self._matplotlibAvailable = False
         self._useHistograms = False
+        self._requireAuthForStreaming = False
         
         # Check access of microphone
         self.checkMicrophone()
@@ -2805,6 +2806,15 @@ class ServerConfig():
             if not self.numpyAvailable:
                 why = why + "<br>module numpy is not available"
         return why
+
+
+    @property
+    def requireAuthForStreaming(self) -> bool:
+        return self._requireAuthForStreaming
+
+    @requireAuthForStreaming.setter
+    def requireAuthForStreaming(self, value: bool):
+        self._requireAuthForStreaming = value
     
     @property
     def processInfo(self) -> str:

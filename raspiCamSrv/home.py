@@ -1,6 +1,6 @@
 from flask import current_app, Blueprint, Response, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import abort
-from raspiCamSrv.auth import login_required
+from raspiCamSrv.auth import login_required, login_for_streaming
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, ServerConfig
 from raspiCamSrv.version import version
@@ -59,7 +59,7 @@ def gen2(camera):
             yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 @bp.route("/video_feed")
-# @login_required
+@login_for_streaming
 def video_feed():
     logger.debug("Thread %s: In video_feed", get_ident())
     Camera().startLiveStream()
@@ -67,7 +67,7 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @bp.route("/video_feed2")
-# @login_required
+@login_for_streaming
 def video_feed2():
     logger.debug("Thread %s: In video_feed2", get_ident())
     Camera().startLiveStream2()

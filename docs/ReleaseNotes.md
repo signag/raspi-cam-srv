@@ -28,6 +28,17 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.7.0
+
+### New Features
+
+- For streaming access, it can now be configured in the [Settings](./Settings.md) screen whether authentication is required or not.   
+The default is that authentication is not required, as before.   
+This modification has been made for Feature Request [#20](https://github.com/signag/raspi-cam-srv/issues/20)
+
+### Changes
+- The default log level for libcamera was set to ERROR instead of WARNING in order to suppress V4L2 pixel format warnings.
+
 ## V2.6.3
 
 ### Bugfixes

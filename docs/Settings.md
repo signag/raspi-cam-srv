@@ -13,6 +13,19 @@ Only non-USB cameras are offered for selection (see also [Information](./Informa
 
 ![Camera Switch](img/Settings_CamSel.jpg)
 
+## Configuring Authentication for Streaming
+
+It can be configured whether streaming of videos or photos requires authentication:
+
+![Settings](img/Settings_Auth_Streaming.jpg)
+
+- If the checkbox is not checked, the system allows access to video streams or photos for everybody without authentication.
+- If the checkbox is checked, video streams or photos can only be accessed if a valid session is active.   
+If a streaming URL is entered in a browser and there is no valid Flask session, the login screen is shown and, after having entered valid credentials, the [Live](./LiveScreen.md) screen is shown. Now, the desired streaming URL can be directly entered or selected from the [Web Cam](./Webcam.md) screen.   
+A valid Flask session exists, if login has been passed once within an active browser instance, either in another tab of the browser window intended for streaming or within another window of the **same** browser.   
+Closing all windows of a browser kills the session. 
+
+
 ## Activating / Deactivating Histograms
 
 **raspiCamSrv** can show histograms for photos.   

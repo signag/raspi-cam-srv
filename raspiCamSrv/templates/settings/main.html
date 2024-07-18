@@ -249,6 +249,23 @@
                     {% endif %}
                     </td>
                 </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Select whether streaming requires authentication.
+                        </span>
+                        <label for="requireAuthForStreaming">Req. Authentication for Streaming:</label>
+                    </td>
+                    <td style="width:70%">
+                        {% if sc.requireAuthForStreaming == True %}
+                        <input type="checkbox" id="requireAuthForStreaming" name="requireAuthForStreaming" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="requireAuthForStreaming" name="requireAuthForStreaming" value="0">
+                        {% endif %}
+                    </td>
+                </tr>
             </table>
             <p style="margin-bottom: 0"></p>
             <input class="w3-button w3-black" type="submit" value="Submit">

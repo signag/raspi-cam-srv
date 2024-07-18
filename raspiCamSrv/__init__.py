@@ -73,7 +73,7 @@ def create_app(test_config=None):
     #logging.getLogger("picamera2").addHandler(filehandler)
         
     #>>>>> Set log level for libcamera (0:DEBUG, 1:INFO, 2:WARNING, 3:ERROR, 4:FATAL)
-    os.environ["LIBCAMERA_LOG_LEVELS"] = "*:2"
+    os.environ["LIBCAMERA_LOG_LEVELS"] = "*:3"
 
     #Configure the logger for generation of program code
     #This logger generates an executable Picamera2 Python application program

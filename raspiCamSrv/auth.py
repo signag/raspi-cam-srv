@@ -273,3 +273,26 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
+
+def login_for_streaming(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
+        sc = CameraCfg().serverConfig
+        if sc.requireAuthForStreaming == True:
+            if g.user is None:
+                db = get_db()
+                nrUsers = 0
+                try:
+                    nrUsers = db.execute("SELECT COUNT(*) from user").fetchone()[0]
+                except db.Error as e:
+                    logger.error("Database error: %s", e)
+                    nrUsers = 0
+                if nrUsers == 0:
+                    return redirect(url_for("auth.register"))
+                else:
+                    return redirect(url_for("auth.login"))
+
+        return view(**kwargs)
+
+    return wrapped_view

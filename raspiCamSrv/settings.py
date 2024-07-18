@@ -83,6 +83,7 @@ def serverconfig():
             if not useHist:
                 sc.displayContent = "meta"
             sc.useHistograms = useHist
+            sc.requireAuthForStreaming = not request.form.get("requireAuthForStreaming") is None
         if msg:
             flash(msg)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)

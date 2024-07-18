@@ -9,15 +9,17 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.6.3
+## Feature Overview V2.7.0
 For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
 For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
 
 ![Live Overview](docs/img/Live.jpg)
 
 - The [Live screen](docs/LiveScreen.md) shows a live stream of the active camera and allows individually selecting and setting all [camera controls](docs/CameraControls.md) supported by Picamera2.
-- The **live stream** (MJPEG stream) can also be directly accessed through the endpoint ```http://<server>:<port>/video_feed``` without authentication.
-- Web access to photo snapshots is achieved through the URL ```http://<server>:<port>/photo_feed``` without authentication.
+- The **live stream** (MJPEG stream) can also be directly accessed through the endpoint ```http://<server>:<port>/video_feed```.   
+It can be configured whether or not authentication is required.
+- Web access to photo snapshots is achieved through the URL ```http://<server>:<port>/photo_feed```.   
+The setting for necessity of authentication applies also to photo snapshots.
 - For systems with 2 Raspberry Pi cameras (currently Pi 5) both cameras can stream simultaneously.    
 The non-active camera stream and photo can be accessed through endpoints ```http://<server>:<port>/video_feed2``` and ```http://<server>:<port>/photo_feed2```, respectively.
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
