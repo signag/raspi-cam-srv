@@ -28,6 +28,15 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.7.1
+
+### Bugfixes
+
+- Images from a photo snapshot URL (see [Web Cam](./Webcam.md)) could not be saved using 'save as' from the context menu.   
+The reason was that these images still contained the framing and mime type from MJPEG streaming.   
+This is now fixed.   
+This solves [raspi-cam-srv Issue #22](https://github.com/signag/raspi-cam-srv/issues/22)
+
 ## V2.7.0
 
 ### New Features

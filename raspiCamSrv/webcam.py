@@ -97,34 +97,16 @@ def switch_cameras():
             logger.debug("switch_cameras - active camera set to %s", sc.activeCamera)
     return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2)
 
-def genPhoto(camera):
-    """photo taking function."""
-    logger.debug("Thread %s: In genPhoto", get_ident())
-    yield b'--frame\r\n'
-    frame = camera.get_photoFrame()
-    if frame:
-        logger.debug("Thread %s: genPhoto - Got frame of length %s", get_ident(), len(frame))
-        yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
-
-def genPhoto2(camera):
-    """photo taking function."""
-    logger.debug("Thread %s: In genPhoto", get_ident())
-    yield b'--frame\r\n'
-    frame = camera.get_photoFrame2()
-    if frame:
-        logger.debug("Thread %s: genPhoto - Got frame of length %s", get_ident(), len(frame))
-        yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
-
 @bp.route("/photo_feed")
 @login_for_streaming
 def photo_feed():
     logger.debug("Thread %s: In photo_feed", get_ident())
     Camera().startLiveStream()
-    return Response(genPhoto(Camera()), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(Camera().get_photoFrame(), mimetype='image/jpeg')
 
 @bp.route("/photo_feed2")
 @login_for_streaming
 def photo_feed2():
     logger.debug("Thread %s: In photo_feed2", get_ident())
     Camera().startLiveStream2()
-    return Response(genPhoto2(Camera()), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(Camera().get_photoFrame2(), mimetype='image/jpeg')
