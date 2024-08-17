@@ -28,6 +28,11 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.8.3
+
+### Bugfix
+- Fixed layout issues in screen [Settings](./Settings.md) for cases where **Show Histograms** and/or **Ext Motion Detection** are not supportet.
+
 ## V2.8.2
 
 ### Bugfix
