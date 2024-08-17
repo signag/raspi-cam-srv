@@ -28,6 +28,11 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.8.1
+
+### Changes
+- Removed alternate type hints in module sun.<br>These were introduced in Python 3.10.<br>However in Raspberry Pi Zero systems Python 3.9 is installed.
+
 ## V2.8.0
 
 ### New Features

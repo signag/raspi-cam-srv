@@ -26,24 +26,24 @@ class Sun():
         self._elevation = elevation
         self._timezone = timezone
         
-    def _ts2human(self, ts: int | float, debugtz: tzinfo | None) -> str:
+    def _ts2human(self, ts: float, debugtz: tzinfo) -> str:
         return str(datetime.fromtimestamp(ts, debugtz))
 
 
-    def _j2ts(self, j: float | int) -> float:
+    def _j2ts(self, j: float) -> float:
         return (j - 2440587.5) * 86400
 
 
-    def _ts2j(self, ts: float | int) -> float:
+    def _ts2j(self, ts: float) -> float:
         return ts / 86400.0 + 2440587.5
 
 
-    def _j2human(self, j: float | int, debugtz: tzinfo | None) -> str:
+    def _j2human(self, j: float, debugtz: tzinfo) -> str:
         ts = self._j2ts(j)
         return f'{ts} = {self._ts2human(ts, debugtz)}'
 
 
-    def _deg2human(self, deg: float | int) -> str:
+    def _deg2human(self, deg: float) -> str:
         x = int(deg * 3600.0)
         num = f'∠{deg:.3f}°'
         rad = f'∠{radians(deg):.3f}rad'
@@ -58,8 +58,8 @@ class Sun():
             l_w: float,
             elevation: float = 0.0,
             *,
-            debugtz: tzinfo | None = None,
-    ) -> tuple[float, float, None] | tuple[None, None, bool]:
+            debugtz: tzinfo = None,
+    ) -> tuple:
         log.debug(f'Latitude               f       = {self._deg2human(f)}')
         log.debug(f'Longitude              l_w     = {self._deg2human(l_w)}')
         log.debug(f'Now                    ts      = {self._ts2human(current_timestamp, debugtz)}')
