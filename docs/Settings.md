@@ -4,6 +4,8 @@
 
 This screen allows for some basic configurations, such as selecting the standard file types for photos, raw photos and videos.
 
+Also the geo-coordinates and timezone, required for sun-calculations in [Sun-controlled Timelapse Photo Series](./PhotoSeriesTimelapse.md) need to be specified here.
+
 ![Settings](img/Settings.jpg)
 
 ## Switching the active Camera

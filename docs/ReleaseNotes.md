@@ -28,6 +28,16 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.8.0
+
+### New Features
+
+- For [Photo Series](./PhotoSeries.md), the page [Timelapse Series](./PhotoSeriesTimelapse.md) now allows specification of up to two daily periods depending on sunrise and sunset.<br>Refers to [Discussion #21](https://github.com/signag/raspi-cam-srv/discussions/21).
+- On the [Settings](./Settings.md) screen, new parameters for geographical latitude, longitude and elevation as well as a time zone selector have been added.<br>Non-zero settings for these parameters are required for using [Sun-controlled Photo Series](./PhotoSeriesTimelapse.md)
+
+### Bugfixes
+- For [Motion Detection](./TriggerMotion.md), the list of supported algorithms had shown only "Mean Square Diff", even if **Ext. Motion Detection supported** was activated in the [Settings](./Settings.md) screen.<br>Now all available algorithms can be selected and used if the modules cv2, matplotlib and numpy are installed on the system (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation), step 10)
+
 ## V2.7.1
 
 ### Bugfixes

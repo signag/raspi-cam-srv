@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timedelta
 from raspiCamSrv.camCfg import CameraCfg, CameraConfig, CameraControls
 import raspiCamSrv.camera_pi
+from raspiCamSrv.sun import Sun
 import os
 import csv
 import copy
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 class Series():
     PHOTODIGITS = 6     # Number of digits for photo number in filename
     HISTOGRAMFOLDER = "hist"
+    SUNCONTROLMODES = ["DAY", "NIGHT"]
     def __init__(self):
         self._name = ""
         self._status = "NE"
@@ -49,6 +51,22 @@ class Series():
         self._focalDistStart = 0
         self._focalDistStop = 0
         self._focalDistStep = 0
+        self._isSunControlledSeries = False
+        self._sunCtrlPeriods = 1
+        self._sunrise = None
+        self._sunset = None
+        self._sunCtrlStart1Trg = 1
+        self._sunCtrlStart1Shft = 0
+        self._sunCtrlStart1 = None
+        self._sunCtrlEnd1Trg = 2
+        self._sunCtrlEnd1Shft = 0
+        self._sunCtrlEnd1 = None
+        self._sunCtrlStart2Trg = 0
+        self._sunCtrlStart2Shft = 0
+        self._sunCtrlStart2 = None
+        self._sunCtrlEnd2Trg = 0
+        self._sunCtrlEnd2Shft = 0
+        self._sunCtrlEnd2 = None
         self._error = None
         self._error2 = None
         self._errorSource = None
@@ -409,6 +427,182 @@ class Series():
     @focalDistStep.setter
     def focalDistStep(self, value: float):
         self._focalDistStep = value
+    
+    @property
+    def isSunControlledSeries(self) -> bool:
+        return self._isSunControlledSeries
+
+    @isSunControlledSeries.setter
+    def isSunControlledSeries(self, value: bool):
+        self._isSunControlledSeries = value
+    
+    @property
+    def sunCtrlPeriods(self) -> int:
+        return self._sunCtrlPeriods
+
+    @sunCtrlPeriods.setter
+    def sunCtrlPeriods(self, value: int):
+        self._sunCtrlPeriods = value
+    
+    @property
+    def sunrise(self) -> datetime:
+        return self._sunrise
+
+    @sunrise.setter
+    def sunrise(self, value: datetime):
+        if value is None:
+            self._sunrise = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._sunrise = dt
+    
+    @property
+    def sunriseIso(self) -> str:
+        return self._sunrise.isoformat()
+    
+    @property
+    def sunset(self) -> datetime:
+        return self._sunset
+
+    @sunset.setter
+    def sunset(self, value: datetime):
+        if value is None:
+            self._sunset = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._sunset = dt
+    
+    @property
+    def sunsetIso(self) -> str:
+        return self._sunset.isoformat()
+    
+    @property
+    def sunCtrlStart1Trg(self) -> int:
+        return self._sunCtrlStart1Trg
+
+    @sunCtrlStart1Trg.setter
+    def sunCtrlStart1Trg(self, value: int):
+        self._sunCtrlStart1Trg = value
+    
+    @property
+    def sunCtrlStart1Shft(self) -> int:
+        return self._sunCtrlStart1Shft
+
+    @sunCtrlStart1Shft.setter
+    def sunCtrlStart1Shft(self, value: int):
+        self._sunCtrlStart1Shft = value
+    
+    @property
+    def sunCtrlStart1(self) -> datetime:
+        return self._sunCtrlStart1
+
+    @sunCtrlStart1.setter
+    def sunCtrlStart1(self, value: datetime):
+        if value is None:
+            self._sunset = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._sunCtrlStart1 = dt
+    
+    @property
+    def sunCtrlStart1Iso(self) -> str:
+        return self._sunCtrlStart1.isoformat()
+    
+    @property
+    def sunCtrlEnd1Trg(self) -> int:
+        return self._sunCtrlEnd1Trg
+
+    @sunCtrlEnd1Trg.setter
+    def sunCtrlEnd1Trg(self, value: int):
+        self._sunCtrlEnd1Trg = value
+    
+    @property
+    def sunCtrlEnd1Shft(self) -> int:
+        return self._sunCtrlEnd1Shft
+
+    @sunCtrlEnd1Shft.setter
+    def sunCtrlEnd1Shft(self, value: int):
+        self._sunCtrlEnd1Shft = value
+    
+    @property
+    def sunCtrlEnd1(self) -> datetime:
+        return self._sunCtrlEnd1
+
+    @sunCtrlEnd1.setter
+    def sunCtrlEnd1(self, value: datetime):
+        if value is None:
+            self._sunset = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._sunCtrlEnd1 = dt
+    
+    @property
+    def sunCtrlEnd1Iso(self) -> str:
+        return self._sunCtrlEnd1.isoformat()
+    
+    @property
+    def sunCtrlStart2Trg(self) -> int:
+        return self._sunCtrlStart2Trg
+
+    @sunCtrlStart2Trg.setter
+    def sunCtrlStart2Trg(self, value: int):
+        self._sunCtrlStart2Trg = value
+    
+    @property
+    def sunCtrlStart2Shft(self) -> int:
+        return self._sunCtrlStart2Shft
+
+    @sunCtrlStart2Shft.setter
+    def sunCtrlStart2Shft(self, value: int):
+        self._sunCtrlStart2Shft = value
+    
+    @property
+    def sunCtrlStart2(self) -> datetime:
+        return self._sunCtrlStart2
+
+    @sunCtrlStart2.setter
+    def sunCtrlStart2(self, value: datetime):
+        if value is None:
+            self._sunset = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._sunCtrlStart2 = dt
+    
+    @property
+    def sunCtrlStart2Iso(self) -> str:
+        return self._sunCtrlStart2.isoformat()
+    
+    @property
+    def sunCtrlEnd2Trg(self) -> int:
+        return self._sunCtrlEnd2Trg
+
+    @sunCtrlEnd2Trg.setter
+    def sunCtrlEnd2Trg(self, value: int):
+        self._sunCtrlEnd2Trg = value
+    
+    @property
+    def sunCtrlEnd2Shft(self) -> int:
+        return self._sunCtrlEnd2Shft
+
+    @sunCtrlEnd2Shft.setter
+    def sunCtrlEnd2Shft(self, value: int):
+        self._sunCtrlEnd2Shft = value
+    
+    @property
+    def sunCtrlEnd2(self) -> datetime:
+        return self._sunCtrlEnd2
+
+    @sunCtrlEnd2.setter
+    def sunCtrlEnd2(self, value: datetime):
+        if value is None:
+            self._sunset = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._sunCtrlEnd2 = dt
+    
+    @property
+    def sunCtrlEnd2Iso(self) -> str:
+        return self._sunCtrlEnd2.isoformat()
 
     @property
     def cameraConfig(self) -> CameraConfig:
@@ -487,32 +681,121 @@ class Series():
     def nextTimeOnlyAsStr(self) -> str: 
         """ Returns just the time for the next shot
         """
-        t = str(self.nextTime())
+        t = str(self.nextTime(test=True))
         return t[11:]
     
     def nextTimeIso(self) -> str: 
         """ Returns the time for the next shot in ISO format
         """
-        t = self.nextTime()
+        t = self.nextTime(test=True)
         return t.isoformat()
     
-    def nextTime(self, lastTime=None) -> datetime:
+    def calcSunCtrlData(self, dat: str):
+        """Calulate data for sun control for the given date
+
+        Args:
+            - dat (str): Date in isoformat for which to to calculate sun-control data
+        """
+        logger.debug("Series.calcSunCtrlData - dat: %s", dat)
+        tim = datetime.fromisoformat(dat)
+        sc = CameraCfg().serverConfig
+        sun = Sun(sc.locLatitude, sc.locLongitude, sc.locElevation, sc.locTzKey)
+        self.sunrise, self.sunset = sun.sunrise_sunset(tim)
+        if self.sunCtrlStart1Trg == 1:
+            self.sunCtrlStart1 = self.sunrise + timedelta(minutes=self.sunCtrlStart1Shft)
+        if self.sunCtrlStart1Trg == 2:
+            self.sunCtrlStart1 = self.sunset + timedelta(minutes=self.sunCtrlStart1Shft)
+        if self.sunCtrlEnd1Trg == 1:
+            self.sunCtrlEnd1 = self.sunrise + timedelta(minutes=self.sunCtrlEnd1Shft)
+        if self.sunCtrlEnd1Trg == 2:
+            self.sunCtrlEnd1 = self.sunset + timedelta(minutes=self.sunCtrlEnd1Shft)
+
+        if self.sunCtrlStart2Trg > 0 and self.sunCtrlEnd2Trg > 0:
+            if self.sunCtrlStart2Trg == 1:
+                self.sunCtrlStart2 = self.sunrise + timedelta(minutes=self.sunCtrlStart2Shft)
+            if self.sunCtrlStart2Trg == 2:
+                self.sunCtrlStart2 = self.sunset + timedelta(minutes=self.sunCtrlStart2Shft)
+            if self.sunCtrlEnd2Trg == 1:
+                self.sunCtrlEnd2 = self.sunrise + timedelta(minutes=self.sunCtrlEnd2Shft)
+            if self.sunCtrlEnd2Trg == 2:
+                self.sunCtrlEnd2 = self.sunset + timedelta(minutes=self.sunCtrlEnd2Shft)
+        else:
+            self.sunCtrlStart2 = None
+            self.sunCtrlEnd2 = None
+        
+    
+    def nextTimeSunCtrl(self) -> datetime:
+        """Calculate the time for the next photo of a sun-controlled series
+
+        Returns:
+            datetime: Time for next photo
+        """
+        logger.debug("Series.nextTimeSunCtrl")
+        # Check whether sunrise/sunset needs to be calculated
+        next = None
+        now = datetime.now()
+        dat = now.strftime("%Y-%m-%d")
+        if self.sunrise is None:
+            self.calcSunCtrlData(dat)
+        last = self.sunCtrlEnd1
+        if self.sunCtrlStart2Trg > 0 and self.sunCtrlEnd2Trg > 0:
+            last = self.sunCtrlEnd2
+        if now > last:
+            now += timedelta(days=1)
+            dat = now.strftime("%Y-%m-%d")
+            self.calcSunCtrlData(dat)
+            next = self.sunCtrlStart1
+        else:
+            if now < self.sunCtrlStart1:
+                next = self.sunCtrlStart1
+            else:
+                timedif = now - self.sunCtrlStart1
+                timedifSec = timedif.total_seconds()
+                nrint = int(timedifSec / self._interval)
+                next = self.sunCtrlStart1 + timedelta(seconds = (nrint + 1)*self.interval)
+            if next > self.sunCtrlEnd1:
+                if self.sunCtrlStart2Trg > 0 and self.sunCtrlEnd2Trg > 0:
+                    if now < self.sunCtrlStart2:
+                        next = self.sunCtrlStart2
+                    else:
+                        timedif = now - self.sunCtrlStart2
+                        timedifSec = timedif.total_seconds()
+                        nrint = int(timedifSec / self._interval)
+                        next = self.sunCtrlStart2 + timedelta(seconds = (nrint + 1)*self.interval)
+                    if next > self.sunCtrlEnd2:
+                        dat += timedelta(days=1)
+                        self.calcSunCtrlData(dat)
+                        next = self.sunCtrlStart1
+                else:
+                    dat += timedelta(days=1)
+                    self.calcSunCtrlData(dat)
+                    next = self.sunCtrlStart1
+        if not next:
+            next = datetime.now()
+        logger.debug("Series.nextTimeSunCtrl - returning: %s", next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
+        return next
+    
+    def nextTime(self, lastTime=None, test=False) -> datetime:
         """ Calculate and return the time when the next photo must be taken
+        
             lastTime: time when the last photo has been taken
         """
         logger.debug("Series.nextTime - lastTime: %s", lastTime)
         next = None
         curTime = datetime.now()
         if curTime <= self.end:
-            if curTime < self.start:
-                next = self.start
+            if self.isSunControlledSeries == True:
+                next = self.nextTimeSunCtrl()
             else:
-                timedif = curTime - self.start
-                timedifSec = timedif.total_seconds()
-                nrint = int(timedifSec / self._interval)
-                next = self.start + timedelta(seconds = (nrint + 1)*self.interval)
+                if curTime < self.start:
+                    next = self.start
+                else:
+                    timedif = curTime - self.start
+                    timedifSec = timedif.total_seconds()
+                    nrint = int(timedifSec / self._interval)
+                    next = self.start + timedelta(seconds = (nrint + 1)*self.interval)
         else:
-            if self.ended is None:
+            if self.ended is None and test == False:
                 logger.debug("Series.nextTime - Finishing series")
                 dt = datetime.now()
                 dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
@@ -794,7 +1077,13 @@ class Series():
             if key == "_start" \
             or key == "_started" \
             or key == "_end" \
-            or key == "_ended":
+            or key == "_ended" \
+            or key == "_sunrise" \
+            or key == "_sunset" \
+            or key == "_sunCtrlStart1" \
+            or key == "_sunCtrlEnd1" \
+            or key == "_sunCtrlStart2" \
+            or key == "_sunCtrlEnd2":
                 if value is None:
                     setattr(ser, key, value)
                 else:

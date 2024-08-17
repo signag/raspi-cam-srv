@@ -4,12 +4,14 @@ from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.photoseriesCfg import PhotoSeriesCfg
 from raspiCamSrv.photoseriesCfg import Series
 from raspiCamSrv.camera_pi import Camera
+from raspiCamSrv.sun import Sun
 from raspiCamSrv.version import version
 import os
 import copy
 from pathlib import Path
 from datetime import datetime
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 import time
 
 from raspiCamSrv.auth import login_required
@@ -33,7 +35,8 @@ def main():
     sr = tl.curSeries
     cp = cfg.cameraProperties
     sc.curMenu = "photoseries"
-    sc.lastPhotoSeriesTab = "series"
+    if sc.lastPhotoSeriesTab == "":
+        sc.lastPhotoSeriesTab = "series"
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/new_series", methods=("GET", "POST"))
@@ -582,6 +585,191 @@ def hide_preview():
         sr.showPreview = False
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
+def calcSunControlledSeries(sr: Series, sun: Sun):
+    """Determine series end and # shots for sun-controlled series
+
+    Args:
+        - sr (Series): The series to be processed
+    """
+    logger.debug("In calcSunControlledSeries")
+    if sr.isSunControlledSeries == True:
+        serend = sr.end
+        dayStart = sr.start.astimezone(ZoneInfo(sun.sunTimezone()))
+        now = datetime.now(tz=ZoneInfo(sun.sunTimezone()))
+        if dayStart < now:
+            dayStart = now
+        logger.debug("Start at %s with interval %s", dayStart, sr.interval)
+        day = 1
+        cnt = sr.curShots
+        if not cnt:
+            cnt = 0
+        while day <= sr.sunCtrlPeriods:
+            dat = dayStart.strftime("%Y-%m-%d")
+            tim = datetime.fromisoformat(dat)
+            sunrise, sunset = sun.sunrise_sunset(tim)
+            if sr.sunCtrlStart1Trg == 1:
+                start1 = sunrise + timedelta(minutes=sr.sunCtrlStart1Shft)
+            if sr.sunCtrlStart1Trg == 2:
+                start1 = sunset + timedelta(minutes=sr.sunCtrlStart1Shft)
+            if sr.sunCtrlEnd1Trg == 1:
+                end1 = sunrise + timedelta(minutes=sr.sunCtrlEnd1Shft)
+            if sr.sunCtrlEnd1Trg == 2:
+                end1 = sunset + timedelta(minutes=sr.sunCtrlEnd1Shft)
+            serend = end1
+            start = dayStart
+            if start < start1:
+                start = start1
+            while start < end1:
+                cnt += 1
+                start += timedelta(seconds=sr.interval)
+            if start <= end1:
+                cnt += 1
+            logger.debug("Day: %s - Period 1: %s to %s - #shots: %s", day, start1, end1, cnt)
+            if sr.sunCtrlStart2Trg > 0 and sr.sunCtrlEnd2Trg > 0:
+                if sr.sunCtrlStart2Trg == 1:
+                    start2 = sunrise + timedelta(minutes=sr.sunCtrlStart2Shft)
+                if sr.sunCtrlStart2Trg == 2:
+                    start2 = sunset + timedelta(minutes=sr.sunCtrlStart2Shft)
+                if sr.sunCtrlEnd2Trg == 1:
+                    end2 = sunrise + timedelta(minutes=sr.sunCtrlEnd2Shft)
+                if sr.sunCtrlEnd2Trg == 2:
+                    end2 = sunset + timedelta(minutes=sr.sunCtrlEnd2Shft)
+                if end2 > serend:
+                    serend = end2
+                if start < start2:
+                    start = start2
+                while start < end2:
+                    cnt += 1
+                    start += timedelta(seconds=sr.interval)
+                if start <= end2:
+                    cnt += 1
+                logger.debug("Day: %s - Period 2: %s to %s - #shots: %s", day, start2, end2, cnt)
+            if cnt > 0:
+                day += 1
+            dayStart += timedelta(days=1)
+            dayStart = dayStart.strftime("%Y-%m-%d")
+            dayStart = datetime.fromisoformat(dayStart)
+            dayStart = dayStart.astimezone(ZoneInfo(sun.sunTimezone()))
+        sr.end = serend
+        sr.nrShots = cnt
+        logger.debug("calcSunControlledSeries - sr.end=%s, sr.nrShots=%s", sr.end, sr.nrShots)
+
+@bp.route("/tlseries_properties", methods=("GET", "POST"))
+@login_required
+def tlseries_properties():
+    logger.debug("In tlseries_properties")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera().cam
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    tl = PhotoSeriesCfg()
+    sr = tl.curSeries
+    cp = cfg.cameraProperties
+    sc.curMenu = "photoseries"
+    if request.method == "POST":
+        ok = True
+        sc.lastPhotoSeriesTab = "tldetails"
+        locked = True
+        if sr.status == "NEW" or sr.status == "READY":
+            locked = False
+        if request.form.get("issuncontrolled") is None:
+            if sr.isSunControlledSeries == True:
+                if not locked:
+                    sr.isSunControlledSeries = False
+                else:
+                    ok = False
+                    msg="Series Type cannot be changed for a Series with status " + sr.status + "."
+                    flash(msg)
+        else:
+            msg = ""
+            if sr.isFocusStackingSeries or sr.isExposureSeries:
+                ok = False
+                if sr.isFocusStackingSeries:
+                    msg = "The series is already marked as Focus Stack"
+                if sr.isExposureSeries:
+                    msg = "The series is already marked as Exposure Series"
+            else:
+                if sr.isSunControlledSeries == False:
+                    if locked:
+                        ok = False
+                        msg="Series Type cannot be changed for a Series with status " + sr.status + "."
+                if ok:
+                    if sc.locLatitude == 0.0 \
+                    and sc.locLongitude == 0.0 \
+                    and sc.locElevation == 0.0:
+                        ok = False
+                        msg = "Please go to 'Settings' and set Latitude, Longitude, Elevation and Time Zone"
+                if ok:
+                    sr.isSunControlledSeries = True
+                    interval = float(request.form["serinterval2"])
+                    nrDays = int(request.form["sunctrlperiods"])
+                    
+                    p1StartRef = int(request.form["sunctrlstart1trg"])
+                    p1StartShift = int(request.form["sunctrlstart1shft"])
+                    p1EndRef = int(request.form["sunctrlend1trg"])
+                    p1EndShift = int(request.form["sunctrlend1shft"])
+                    p2StartRef = int(request.form["sunctrlstart2trg"])
+                    p2StartShift = int(request.form["sunctrlstart2shft"])
+                    p2EndRef = int(request.form["sunctrlend2trg"])
+                    p2EndShift = int(request.form["sunctrlend2shft"])
+                    if p1StartRef == 0 or p1EndRef == 0:
+                        ok = False
+                        msg = "Please specify Reference for Start and End for Period 1!"
+                    else:
+                        if p1StartRef == p1EndRef and p1StartShift >= p1EndShift:
+                            ok = False
+                            msg = "The specification for Period 1 is invalid!"
+                    if p2StartRef != 0 or p2EndRef != 0:
+                        if p2StartRef == 0 or p2EndRef == 0:
+                            ok = False
+                            msg = "Please specify Reference for Start and End for Period 2 or set both to Unused!"
+                        else:
+                            if p2StartRef == p2EndRef and p2StartShift >= p2EndShift:
+                                ok = False
+                                msg = "The specification for Period 2 is invalid!"
+            if ok:
+                sr.interval = interval
+                sun = Sun(sc.locLatitude, sc.locLongitude, sc.locElevation, sc.locTzKey)
+                now = datetime.now()
+                dat = now.strftime("%Y-%m-%d")
+                tim = datetime.fromisoformat(dat)
+                sr.sunrise, sr.sunset = sun.sunrise_sunset(tim)
+                sr.sunCtrlPeriods = nrDays
+                sr.sunCtrlStart1Trg = p1StartRef
+                sr.sunCtrlStart1Shft = p1StartShift
+                if p1StartRef == 1:
+                    sr.sunCtrlStart1 = sr.sunrise + timedelta(minutes=p1StartShift)
+                if p1StartRef == 2:
+                    sr.sunCtrlStart1 = sr.sunset + timedelta(minutes=p1StartShift)
+                sr.sunCtrlEnd1Trg = p1EndRef
+                sr.sunCtrlEnd1Shft = p1EndShift
+                if p1EndRef == 1:
+                    sr.sunCtrlEnd1 = sr.sunrise + timedelta(minutes=p1EndShift)
+                if p1EndRef == 2:
+                    sr.sunCtrlEnd1 = sr.sunset + timedelta(minutes=p1EndShift)
+                sr.sunCtrlStart2Trg = p2StartRef
+                sr.sunCtrlStart2Shft = p2StartShift
+                if p2StartRef == 1:
+                    sr.sunCtrlStart2 = sr.sunrise + timedelta(minutes=p2StartShift)
+                if p2StartRef == 2:
+                    sr.sunCtrlStart2 = sr.sunset + timedelta(minutes=p2StartShift)
+                sr.sunCtrlEnd2Trg = p2EndRef
+                sr.sunCtrlEnd2Shft = p2EndShift
+                if p2EndRef == 1:
+                    sr.sunCtrlEnd2 = sr.sunrise + timedelta(minutes=p2EndShift)
+                if p2EndRef == 2:
+                    sr.sunCtrlEnd2 = sr.sunset + timedelta(minutes=p2EndShift)
+                    
+                calcSunControlledSeries(sr, sun)
+            else:
+                flash(msg)
+        if ok:
+            if not locked:
+                sr.nextStatus("configure")
+            sr.persist()
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+
 def calcExpSeries(start, stop, int):
     """ Iterate an Exposure Series and return number of shots and stop
     """
@@ -603,7 +791,7 @@ def calcExpSeries(start, stop, int):
     if v < stop:
         nrShot += 1
         v = v * fact
-    return nrShot, v        
+    return nrShot, v
 
 @bp.route("/expseries_properties", methods=("GET", "POST"))
 @login_required
@@ -625,9 +813,12 @@ def expseries_properties():
             sr.isExposureSeries = False
         else:
             msg = ""
-            if sr.isFocusStackingSeries:
+            if sr.isFocusStackingSeries or sr.isSunControlledSeries:
                 ok = False
-                msg = "The series is already marked as Focus Stack"
+                if sr.isFocusStackingSeries:
+                    msg = "The series is already marked as Focus Stack"
+                if sr.isSunControlledSeries:
+                    msg = "The series is already marked as sun-controlled Timelapse Series"
             else:
                 sr.isExposureSeries = True
                 sr.continueOnServerStart = False
@@ -715,9 +906,12 @@ def focusstack_properties():
             sr.isFocusStackingSeries = False
         else:
             msg = ""
-            if sr.isExposureSeries:
+            if sr.isExposureSeries or sr.isSunControlledSeries:
                 ok = False
-                msg = "The series is already marked as Exposure Series!"
+                if sr.isExposureSeries:
+                    msg = "The series is already marked as Exposure Series!"
+                if sr.isSunControlledSeries:
+                    msg = "The series is already marked as sun-controlled Timelapse Series!"
             else:
                 focusStart = float(request.form["focaldiststart"])
                 focusStop = float(request.form["focaldiststop"])

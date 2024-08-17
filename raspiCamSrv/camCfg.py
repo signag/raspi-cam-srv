@@ -14,6 +14,7 @@ import raspiCamSrv.dbx as dbx
 import smtplib
 from flask import g
 from pathlib import Path
+import zoneinfo
 
 logger = logging.getLogger(__name__)
 
@@ -243,6 +244,7 @@ class TriggerConfig():
     def bboxThreshold(self, value: int):
         self._bboxThreshold = value
 
+    # TODO: int->float
     @property
     def nmsThreshold(self) -> int:
         return self._nmsThreshold
@@ -2189,6 +2191,10 @@ class ServerConfig():
         self._matplotlibAvailable = False
         self._useHistograms = False
         self._requireAuthForStreaming = False
+        self._locLongitude = 0.0
+        self._locLatitude = 0.0
+        self._locElevation = 0.0
+        self._locTzKey = "localtime"
         
         # Check access of microphone
         self.checkMicrophone()
@@ -2807,7 +2813,6 @@ class ServerConfig():
                 why = why + "<br>module numpy is not available"
         return why
 
-
     @property
     def requireAuthForStreaming(self) -> bool:
         return self._requireAuthForStreaming
@@ -2815,6 +2820,46 @@ class ServerConfig():
     @requireAuthForStreaming.setter
     def requireAuthForStreaming(self, value: bool):
         self._requireAuthForStreaming = value
+
+    @property
+    def locLongitude(self) -> float:
+        return self._locLongitude
+
+    @locLongitude.setter
+    def locLongitude(self, value: float):
+        self._locLongitude = value
+
+    @property
+    def locLatitude(self) -> float:
+        return self._locLatitude
+
+    @locLatitude.setter
+    def locLatitude(self, value: float):
+        self._locLatitude = value
+
+    @property
+    def locElevation(self) -> float:
+        return self._locElevation
+
+    @locElevation.setter
+    def locElevation(self, value: float):
+        self._locElevation = value
+
+    @property
+    def locTzKey(self) -> str:
+        return self._locTzKey
+
+    @locTzKey.setter
+    def locTzKey(self, value: str):
+        self._locTzKey = value
+        
+    def timeZoneKeys(self) -> list:
+        tzl = []
+        tzs = zoneinfo.available_timezones()
+        for tz in tzs:
+            tzl.append(tz)
+        tzl.sort()
+        return tzl
     
     @property
     def processInfo(self) -> str:
@@ -2861,6 +2906,10 @@ class ServerConfig():
         else:
             self.useHistograms = False
         logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable)
+
+        if self.supportsExtMotionDetection == False:
+            logger.debug("motionDetectAlgos reduced to ['Mean Square Diff',]")
+            self._triggerConfig.motionDetectAlgos = ["Mean Square Diff",]
 
     @property
     def paginationPagesPhoto(self) -> list:
@@ -3492,8 +3541,6 @@ class CameraCfg():
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 2
             cls._streamingCfg = {}
-            if cls._serverConfig.supportsExtMotionDetection == False:
-                cls._triggerConfig.motionDetectAlgos = ["Mean Square Diff",]
             cls._secrets = Secrets()
         return cls._instance
     

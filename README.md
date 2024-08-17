@@ -9,7 +9,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.7.1
+## Feature Overview V2.8.0
 For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
 For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
 
@@ -48,8 +48,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 
-**New in V2.7.0**
-- This version introduces configurability for access to streaming with or without authentication.
+**New in V2.8.0**
+- This version introduces [Sun-controlled Photo Series](./docs/PhotoSeriesTimelapse.md) where you can specify up to two periods per day where photo shooting will be active.
 
 
 

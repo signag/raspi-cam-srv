@@ -84,6 +84,10 @@ def serverconfig():
                 sc.displayContent = "meta"
             sc.useHistograms = useHist
             sc.requireAuthForStreaming = not request.form.get("requireAuthForStreaming") is None
+            sc.locLatitude = float(request.form["loclatitude"])
+            sc.locLongitude = float(request.form["loclongitude"])
+            sc.locElevation = float(request.form["locelevation"])
+            sc.locTzKey = request.form["loctzkey"]
         if msg:
             flash(msg)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)

@@ -256,7 +256,7 @@
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Select whether streaming requires authentication.
                         </span>
-                        <label for="requireAuthForStreaming">Req. Authentication for Streaming:</label>
+                        <label for="requireAuthForStreaming">Req. Auth for Streaming:</label>
                     </td>
                     <td style="width:70%">
                         {% if sc.requireAuthForStreaming == True %}
@@ -264,6 +264,73 @@
                         {% else %}
                         <input type="checkbox" id="requireAuthForStreaming" name="requireAuthForStreaming" value="0">
                         {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Geographic Latitude of camera position.<br>
+                            (Required for sunrise/sunset calculation)
+                        </span>
+                        <label for="loclatitude">Latitude:</label>
+                    </td>
+                    <td style="width:70%" colspan="2">
+                        <input type="number" id="loclatitude" name="loclatitude" min="-90.000000" max="90.000000" step="0.000001"
+                            value="{{ sc.locLatitude }}">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Geographic Longitude of camera position.<br>
+                            (Required for sunrise/sunset calculation)
+                        </span>
+                        <label for="loclongitude">Longitude:</label>
+                    </td>
+                    <td style="width:70%" colspan="2">
+                        <input type="number" id="loclongitude" name="loclongitude" min="-180.000000" max="180.000000" step="0.000001"
+                            value="{{ sc.locLongitude }}">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Geographic Elevation of camera position (in m).<br>
+                            (Required for sunrise/sunset calculation)
+                        </span>
+                        <label for="locelevation">Elevation:</label>
+                    </td>
+                    <td style="width:70%" colspan="2">
+                        <input type="number" id="locelevation" name="locelevation" min="-1000.0" max="9000.0" step="0.1"
+                            value="{{ sc.locElevation }}">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:25%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Time zone of camera position.<br>
+                            (Required for sunrise/sunset calculation)
+                        </span>
+                        <label for="loctzkey">Time Zone:</label>
+                    </td>
+                    <td style="width:70%" colspan="2">
+                        <select name="loctzkey" id="loctzkey">
+                            {% for tz in sc.timeZoneKeys() %}
+                            {% if sc.locTzKey == tz %}
+                            <option value="{{ tz }}" selected>{{ tz }}</option>
+                            {% else %}
+                            <option value="{{ tz }}">{{ tz }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
                     </td>
                 </tr>
             </table>

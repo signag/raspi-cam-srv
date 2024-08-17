@@ -51,6 +51,7 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.motionDetector"),
         logging.getLogger("raspiCamSrv.motionAlgoIB"),
         logging.getLogger("raspiCamSrv.webcam"),
+        logging.getLogger("raspiCamSrv.sun"),
     ):
         logger.setLevel(logging.ERROR)
 
@@ -64,7 +65,9 @@ def create_app(test_config=None):
     #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.webcam").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.trigger").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.photoseriesCfg").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.photoseries").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.sun").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.motionAlgoIB").setLevel(logging.DEBUG)
     
     #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
