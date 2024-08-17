@@ -2907,10 +2907,6 @@ class ServerConfig():
             self.useHistograms = False
         logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable)
 
-        if self.supportsExtMotionDetection == False:
-            logger.debug("motionDetectAlgos reduced to ['Mean Square Diff',]")
-            self._triggerConfig.motionDetectAlgos = ["Mean Square Diff",]
-
     @property
     def paginationPagesPhoto(self) -> list:
         if self.lastPagePhoto > self.nrPagesPhoto:

@@ -28,6 +28,11 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.8.2
+
+### Bugfix
+- The Bugfix introduced in [V2.8.0](#v280) caused an error on systems like Pi Zero where modules cv2, matplotlib or numpy cannot be installed.<br>This error is now fixed.<br>If in your system the [Settings](./Settings.md) screen shows that **Ext. Motion Detection supported** is checked and in screen [Trigger/Motion](./TriggerMotion.md) the **Motion Detection Algorithm** list only shows "Mean Square Diff", you can try the following:<br>Edit file ```prg/raspi-cam-srv/raspiCamSrv/static/config/triggerConfig.json```<br>Remove the part highlighted in the following screenshot, if it exists:<br>![Fix282](./img/RN282_img1.jpg)
+
 ## V2.8.1
 
 ### Changes

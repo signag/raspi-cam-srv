@@ -116,6 +116,8 @@ def create_app(test_config=None):
     sc.photoRoot = app.static_folder
     sc.prgOutputPath = prgOutPath
     sc.checkEnvironment()
+    if sc.supportsExtMotionDetection == False:
+        cfg.triggerConfig.motionDetectAlgos = ["Mean Square Diff",]
     cfgPath = app.static_folder + "/config"
     if settings.getLoadConfigOnStart(cfgPath):
         cfg.loadConfig(cfgPath)
