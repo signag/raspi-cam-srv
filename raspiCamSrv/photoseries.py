@@ -99,7 +99,7 @@ def new_series():
                 msg = "Unable to create .log or .cfg or .cam File: " + ser.logFile
                 flash(msg)
         if serOK:
-            dt = datetime.now()
+            dt = datetime.now() + timedelta(minutes=1)
             dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
             ser.start = dt
             ser.end = ser.start
@@ -189,15 +189,16 @@ def start_series():
                 startnow = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
                 startnow = startnow + timedelta(minutes=0)
                 logger.debug("now: %s  startnow: %s  sr.start: %s", datetime.now(), startnow, sr.start)
-                if sr.start <= startnow:
-                    logger.debug("Start immediately")
-                    sr.start = startnow
-                    timedifSec = int(sr.interval * sr.nrShots)
-                    delta = timedelta(seconds=timedifSec)
-                    serEndRaw = sr.start + delta
-                    serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
-                    serEnd = serEnd + timedelta(minutes=2)
-                    sr.end = serEnd
+                if sr.isSunControlledSeries == False:
+                    if sr.start <= startnow:
+                        logger.debug("Start immediately")
+                        sr.start = startnow
+                        timedifSec = int(sr.interval * sr.nrShots)
+                        delta = timedelta(seconds=timedifSec)
+                        serEndRaw = sr.start + delta
+                        serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
+                        serEnd = serEnd + timedelta(minutes=2)
+                        sr.end = serEnd
                 
                 tlOK = True
                 Camera.startPhotoSeries(sr)
@@ -341,15 +342,16 @@ def continue_series():
                     ctrl = cfg.controls
                     ctrl.afMode = 0
 
-                #Adjust end time of series
-                logger.debug("Start immediately")
-                timedifSec = int(sr.interval * (sr.nrShots - sr.curShots + 1))
-                delta = timedelta(seconds=timedifSec)
-                serEndRaw = datetime.now() + delta
-                serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
-                serEnd = serEnd + timedelta(minutes=2)
-                sr.end = serEnd
-                logger.debug("Adjusted series end time to %s", sr.end)
+                if sr.isSunControlledSeries == False:
+                    #Adjust end time of series
+                    logger.debug("Start immediately")
+                    timedifSec = int(sr.interval * (sr.nrShots - sr.curShots + 1))
+                    delta = timedelta(seconds=timedifSec)
+                    serEndRaw = datetime.now() + delta
+                    serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)
+                    serEnd = serEnd + timedelta(minutes=2)
+                    sr.end = serEnd
+                    logger.debug("Adjusted series end time to %s", sr.end)
 
                 tlOK = True
                 Camera.startPhotoSeries(sr)
@@ -472,7 +474,8 @@ def series_properties():
                 serEnd = serEnd + timedelta(minutes=1)
             if serOK:
                 sr.type = sertype
-                sr.end = serEnd
+                if sr.isSunControlledSeries == False:
+                    sr.end = serEnd
                 sr.interval = serInt
                 sr.nrShots = serNrShots
                 if sr.isExposureSeries == False \

@@ -45,7 +45,7 @@ When submitting entries with a reasonable interval and Number of Days, the syste
 The algorithm for the sunrise/sunset equation has been taken from Wikipedia:   
 [https://en.wikipedia.org/wiki/Sunrise_equation](https://en.wikipedia.org/wiki/Sunrise_equation)
 
-This article also publishes Python code which has been taken as is (version from August 11, 14:18) and integrated with minor technical adjustments into the RaspiCamSrv Flask server code.
+This article also publishes Python code which has been taken as is (version from August 11, 2024, 14:18) and integrated with minor technical adjustments into the RaspiCamSrv Flask server code.
 
 Comparison of the results from this algorithm with those from the "NOAA Solar Calculator" ([https://gml.noaa.gov/grad/solcalc/](https://gml.noaa.gov/grad/solcalc/)) for the time of writing at the author's location showed a deviation of -2 Minutes for sunrise and +3 Minutes for sunset.   
 However, the NOAA Calculator does not seem to take elevation into account.

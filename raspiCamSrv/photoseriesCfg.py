@@ -3,6 +3,7 @@ from datetime import timedelta
 from raspiCamSrv.camCfg import CameraCfg, CameraConfig, CameraControls
 import raspiCamSrv.camera_pi
 from raspiCamSrv.sun import Sun
+from _thread import get_ident
 import os
 import csv
 import copy
@@ -647,18 +648,25 @@ class Series():
     def errorSource(self, value: str):
         self._errorSource = value
     
-    @property
-    def nextPhoto(self) -> str:
-        logger.debug("Series.nextPhoto")
+    def nextPhoto(self) -> tuple[int, str]:
+        """Return number and name for the next photo of the series
+
+        Returns:
+            - tuple[int, str]: 
+            -- number of next photo
+            -- name of next photo
+        """
+        logger.debug("Thread %s: Series.nextPhoto", get_ident())
         name = ""
         if self.curShots is None:
             self.curShots = 0
         if self.curShots < self.nrShots:
-            self.curShots += 1
-            name = self.name + "_" + str(self.curShots).zfill(Series.PHOTODIGITS)
+            curShots = self.curShots + 1
+            name = self.name + "_" + str(curShots).zfill(Series.PHOTODIGITS)
         else:
+            curShots = self.curShots
             if self.ended is None:
-                logger.debug("Series.nextPhoto - Finishing series")
+                logger.debug("Thread %s: Series.nextPhoto - Finishing series", get_ident())
                 dt = datetime.now()
                 dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
                 self.ended = dt
@@ -668,15 +676,15 @@ class Series():
                 if CameraCfg().controlsBackup:
                     CameraCfg().controls = copy.deepcopy(CameraCfg().controlsBackup)
                     CameraCfg().controlsBackup = None
-                    logger.debug("Series.nextPhoto - Restored controls backup: %s", CameraCfg().controls.__dict__)
+                    logger.debug("Thread %s: Series.nextPhoto - Restored controls backup: %s", get_ident(), CameraCfg().controls.__dict__)
                     wait = None
                     if self.isExposureSeries:
                         #For an exposure series wait for the longest exposure time
                         if self.isExpGainFix:
                             wait = 0.2 + self.expTimeStop / 1000000
                     raspiCamSrv.camera_pi.Camera().applyControlsForLivestream(wait)
-        logger.debug("Series.nextPhoto - returning: %s", name)
-        return name
+        logger.debug("Thread %s: Series.nextPhoto - returning: %s, %s", get_ident(), curShots, name)
+        return curShots, name
     
     def nextTimeOnlyAsStr(self) -> str: 
         """ Returns just the time for the next shot
@@ -730,7 +738,7 @@ class Series():
         Returns:
             datetime: Time for next photo
         """
-        logger.debug("Series.nextTimeSunCtrl")
+        logger.debug("Thread %s: Series.nextTimeSunCtrl", get_ident())
         # Check whether sunrise/sunset needs to be calculated
         next = None
         now = datetime.now()
@@ -772,7 +780,7 @@ class Series():
                     next = self.sunCtrlStart1
         if not next:
             next = datetime.now()
-        logger.debug("Series.nextTimeSunCtrl - returning: %s", next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
+        logger.debug("Thread %s: Series.nextTimeSunCtrl - returning: %s", get_ident(), next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
         return next
     
     def nextTime(self, lastTime=None, test=False) -> datetime:
@@ -780,7 +788,7 @@ class Series():
         
             lastTime: time when the last photo has been taken
         """
-        logger.debug("Series.nextTime - lastTime: %s", lastTime)
+        logger.debug("Thread %s: Series.nextTime - lastTime: %s", get_ident(), lastTime)
         next = None
         curTime = datetime.now()
         if curTime <= self.end:
@@ -796,7 +804,7 @@ class Series():
                     next = self.start + timedelta(seconds = (nrint + 1)*self.interval)
         else:
             if self.ended is None and test == False:
-                logger.debug("Series.nextTime - Finishing series")
+                logger.debug("Thread %s: Series.nextTime - Finishing series", get_ident())
                 dt = datetime.now()
                 dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
                 self.ended = dt
@@ -806,7 +814,7 @@ class Series():
                 if CameraCfg().controlsBackup:
                     CameraCfg().controls = copy.deepcopy(CameraCfg().controlsBackup)
                     CameraCfg().controlsBackup = None
-                    logger.debug("Series.nextTime - Restored controls backup: %s", CameraCfg().controls.__dict__)
+                    logger.debug("Thread %s: Series.nextTime - Restored controls backup: %s", get_ident(), CameraCfg().controls.__dict__)
                     wait = None
                     if self.isExposureSeries:
                         #For an exposure series wait for the longest exposure time
@@ -815,7 +823,7 @@ class Series():
                     raspiCamSrv.camera_pi.Camera().applyControlsForLivestream(wait)
         if not next:
             next = datetime.now()
-        logger.debug("Series.nextTime - returning: %s", next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
+        logger.debug("Thread %s: Series.nextTime - returning: %s", get_ident(), next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
         return next
     
     def getPreviewList(self):

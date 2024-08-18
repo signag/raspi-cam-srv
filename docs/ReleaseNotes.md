@@ -28,6 +28,18 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.8.4
+
+### Bugfixes
+- When a [Sun-controlled Photo Series](./PhotoSeriesTimelapse.md) was started, it could happen that the series end was recalculated without considering the configured time periods.<br>Typically, this happened when the configured start time was earlier than the time when the series was actually started.<br>Because this end time was in many cases earlier than the start of the next time slot, the series may have immediately stopped when the next period started.<br>This is now fixed.
+- In some cases when a series was finished because the configured end time has been reached, the background process did not stop and continued to produce photos with zero interval until the configured number of shots has been reached.
+- When a [Photo Series](./PhotoSeries.md) was paused and continued afterwards, the **Current shots** was incremented without taking a photo with this number. Therefore **current shots** did not represent the real number of photos and the series would be stopped before reaching the configured **Number of shots**<br>Now, **Current shots** is only incremented if a photo has been taken.
+- When the waiting time for the next shot in a [Photo Series](./PhotoSeries.md) is larger than 60 sec, RaspiCamSrv stops the camera and restarts it when the time is reached.<br>However, the restart requires 1.5 sec waiting time to allow the camera to collect statistics for auto-exposure algos.<br>Therefore, the phototaking is delayed by at least 1.5 sec with respect to the expected times.<br>This is now compensated.<br>The observed delay is now considerable smaller and ranges from ~0.2 sec for the first photo to ~0.04 sec for the next ones.
+
+## Changes
+
+- When a new [Photo Series](./PhotoSeries.md) is created, the start time is delayed by 1 minute with respect to the current time to give time for further configurations.
+
 ## V2.8.3
 
 ### Bugfix

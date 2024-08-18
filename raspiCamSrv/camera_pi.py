@@ -2627,9 +2627,10 @@ class Camera():
             stop = False
             while not stop:
                 nextTime = ser.nextTime(lastTime)
-                nextPhoto = ser.nextPhoto
+                curShots, nextPhoto = ser.nextPhoto()
                 logger.debug("Thread %s: Camera._photoSeriesThread - nextPhoto: %s nextTime %s", get_ident(), nextPhoto, str(nextTime))
-                if nextPhoto == "" or nextTime is None:
+                if nextPhoto == "" or nextTime is None or ser.status == "FINISHED":
+                    logger.debug("Thread %s: Camera._photoSeriesThread - Series done: nextPhoto=%s, nextTime=%s, status=%s", get_ident(), nextPhoto, str(nextTime), ser.status)
                     stop = True
                 else:
                     curTime = datetime.datetime.now()
@@ -2650,6 +2651,9 @@ class Camera():
                         curTime = datetime.datetime.now()
                         timedif = nextTime - curTime
                         timedifSec = timedif.total_seconds()
+                        if camClosed:
+                            timedifSec -= 1.5
+                            
                         if Camera.stopPhotoSeriesRequested:
                             stop = True
                             break
@@ -2671,11 +2675,11 @@ class Camera():
                             logger.debug("Thread %s: Camera._photoSeriesThread - selected controls applied", get_ident())
                             
                         logger.debug("Thread %s: Camera._photoSeriesThread - Preparing request", get_ident())
+                        lastTime = datetime.datetime.now()
                         request = Camera.cam.capture_request()
                         prgLogger.debug("request = picam2.capture_request()")
                         fpjpg = ser.path + "/" + nextPhoto + ".jpg"
                         fpraw = ser.path + "/" + nextPhoto + ".dng"
-                        lastTime = datetime.datetime.now()
                         request.save("main", fpjpg)
                         prgLogger.debug("request.save(\"main\", \"%s\")", sc.prgOutputPath + "/" + nextPhoto + ".jpg")
                         if ser.type == "raw+jpg":
@@ -2686,6 +2690,7 @@ class Camera():
                         request.release()
                         prgLogger.debug("request.release()")
                         logger.debug("Thread %s: Camera._photoSeriesThread - Request released", get_ident())
+                        ser.curShots = curShots
                         ser.logPhoto(nextPhoto, lastTime, metadata)
                     except Exception as e:
                         ser.nextStatus("pause")
