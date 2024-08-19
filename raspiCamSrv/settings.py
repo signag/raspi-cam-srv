@@ -73,8 +73,6 @@ def serverconfig():
                 Camera.switchCamera()
                 msg = "Camera switched to " + sc.activeCameraInfo
                 logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
-            chnk = int(request.form["chunkSizePhoto"])
-            sc.chunkSizePhoto = chnk
             recordAudio = not request.form.get("recordaudio") is None
             sc.recordAudio = recordAudio        
             audioSync = request.form["audiosync"]
@@ -308,6 +306,9 @@ def store_config():
     los = getLoadConfigOnStart(cfgPath)
     if request.method == "POST":
         cfgPath = current_app.static_folder + "/config"
+        # Initialize the Photo viewer list
+        sc = cfg.serverConfig
+        sc.pvList = []
         cfg.persist(cfgPath)
         msg = "Configuration stored under " + cfgPath
         flash(msg)

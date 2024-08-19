@@ -28,6 +28,12 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.9.0
+
+### New Features
+
+- The [Photo Viewer](./PhotoViewer.md) has been enabled to download photos and to delete photos from the Raspberry Pi.
+
 ## V2.8.4
 
 ### Bugfixes

@@ -5,54 +5,135 @@
 {% endblock %}
 
 {% block content %}
-<h3>Photos from {{ sc.activeCameraInfo }} in reverse order (newest first)</h3>
+<div class="w3-row">
+    <!-- Controls -->
+    <p style="height: 15px; margin:0"></p>
+    <table>
+        <tr>
+            <form method="post" id="pvcontrol" action="{{ url_for('images.control') }}">
+                <td>
+                    Camera:
+                </td>
+                <td>
+                    <select name="camera" id="camera" onchange="dosubmit('pvcontrol')">
+                        {% for cam in cs %}
+                        {% if cam.isUsb == false %}
+                        {% if sc.pvCamera == cam.num %}
+                        <option value="{{ cam.num }}" selected>{{ cam.num }}: {{ cam.model }}</option>
+                        {% else %}
+                        <option value="{{ cam.num }}">{{ cam.num }}: {{ cam.model }}</option>
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    &nbsp;From:
+                </td>
+                <td>
+                    <input style="width:100%" type="date" onchange="dosubmit('pvcontrol')" id="pvfrom" name="pvfrom"
+                        value="{{ sc.pvFromStr }}">
+                </td>
+                <td>
+                    &nbsp;To:
+                </td>
+                <td>
+                    <input style="width:100%" type="date" onchange="dosubmit('pvcontrol')" id="pvto" name="pvto"
+                        value="{{ sc.pvToStr }}">
+                </td>
+            </form>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                <form style="display:inline-block" id="setevstartnow" method="post" action="{{ url_for('images.today') }}">
+                    <input class="w3-button w3-sand" type="submit" value="Today">
+                </form>
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                <form style="display:inline-block" method="post" action="{{ url_for('images.all') }}">
+                    <input class="w3-button w3-sand" type="submit" value="All">
+                </form>
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                <form style="display:inline-block" method="post" action="{{ url_for('images.select_all') }}">
+                    <input style="display:inline-block" class="w3-button w3-green w3-round-xxlarge" type="submit" 
+                        value="Select all">
+                </form>
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                <form style="display:inline-block" method="post" action="{{ url_for('images.deselect_all') }}">
+                    <input style="display:inline-block" class="w3-button w3-green w3-round-xxlarge" type="submit"
+                        value="Deselect all">
+                </form>
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                <form style="display:inline-block" id="deleteselected" method="post" action="{{ url_for('images.delete_selected') }}">
+                    <input style="display:inline-block" class="w3-button w3-green w3-round-xxlarge" type="submit"
+                        onclick="confirmDelete('deleteselected')" value="Delete">
+                </form>
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                <form style="display:inline-block" id="downloadselected" method="post" action="{{ url_for('images.download_selected') }}">
+                    <input style="display:inline-block" class="w3-button w3-green w3-round-xxlarge" type="submit"
+                        onclick="confirmDownload('downloadselected')" value="Download">
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+<hr>
 <div class="w3-row">
     <!-- Images and Videos -->
-    <div class="w3-quarter">
+    <div class="w3-quarter" style="height:1000px; overflow: auto">
         <!-- Overview tab-->
-        <table>
-            {% for entry in dl %}
-            {% set urlMini=url_for('static', filename=entry['path']) %}
-            {% set urlDetail=url_for('static', filename=entry['detailPath']) %}
-            {% set file=entry['file'] %}
-            {% set name=entry['name'] %}
-            {% set type=entry['type'] %}
-            <tr>
-                <td style="width: 10%"></td>
-                <td style="width: 90%">
-                    <div class="w3-display-container w3-text-white">
-                        <img 
-                            style="width: 100%; height: 110px; object-fit: scale-down"
-                            src="{{ urlMini }}" 
-                            alt="{{ name }}" 
-                            onclick="showDetail('{{ type }}', '{{ urlDetail }}', 'detailphoto', '{{ file }}', '{{ name }}')"
-                        >
-                        <div class="w3-display-bottommiddle w3-container"><p>{{ file }}</p></div>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-        <div class="w3-bar">
-            <!-- Pagination -->
-            {% if sc.curPagePhoto > 1 %}
-            <a href="{{ url_for('images.backwards') }}" class="w3-button">&laquo;</a>
-            {% else %}
-            <a class="w3-button">&laquo;</a>
-            {% endif %}
-            {% for pg in sc.paginationPagesPhoto %}
-            {% if pg == sc.curPagePhoto %}
-            <a class="w3-button w3-green">{{ pg }}</a>
-            {% else %}
-            <a href="{{ url_for('images.page', pagenr=pg) }}" class="w3-button">{{ pg }}</a>
-            {% endif %}
-            {% endfor %}
-            {% if sc.curPagePhoto < sc.nrPagesPhoto %}
-            <a href="{{ url_for('images.forwards') }}" class="w3-button">&raquo;</a>
-            {% else %}
-            <a class="w3-button">&raquo;</a>
-            {% endif %}
-        </div>
+        <form method="post" id="pvselect" action="{{ url_for('images.select') }}">
+            <table>
+                {% for entry in sc.pvList %}
+                {% set urlMini=url_for('static', filename=entry['path']) %}
+                {% set urlDetail=url_for('static', filename=entry['detailPath']) %}
+                {% set file=entry['file'] %}
+                {% set name=entry['name'] %}
+                {% set type=entry['type'] %}
+                {% set sel=entry['sel'] %}
+                <tr>
+                    <td style="width: 10%">
+                        {% if sel == True %}
+                        <input form="pvselect" type="checkbox" onchange="dosubmit('pvselect')" id=photo_{{ name }} name=photo_{{ name }} value="1" checked>
+                        {% else %}
+                        <input form="pvselect" type="checkbox" onchange="dosubmit('pvselect')" id=photo_{{ name }} name=photo_{{ name }} value="0">
+                        {% endif %}
+                    </td>
+                    <td style="width: 90%">
+                        <div class="w3-display-container w3-text-white">
+                            <img 
+                                style="width: 100%; height: 110px; object-fit: scale-down"
+                                src="{{ urlMini }}" 
+                                alt="{{ name }}" 
+                                onclick="showDetail('{{ type }}', '{{ urlDetail }}', 'detailphoto', '{{ file }}', '{{ name }}')"
+                            >
+                            <div class="w3-display-bottommiddle w3-container"><p>{{ file }}</p></div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </form>
     </div>
     <div class="w3-threequarter">
         <!-- Detail-->
@@ -60,12 +141,6 @@
         </div>
 
     </div>
-</div>
-<div class="w3-row">
-    <!-- Pagination -->
-</div>
-<div class="w3-row">
-    <!-- Actions -->
 </div>
 <script>
     function showDetail(type, url, tgtPhoto, file, name) {
@@ -91,6 +166,29 @@
             tgtP.innerHTML = tag
         }
     }
+
+    function dosubmit(form) {
+        document.getElementById(form).submit();
+    }
+
+    function confirmDelete(form) {
+        if (confirm("Do you want to permanently delete the selected photos?")) {
+            document.getElementById(form).method = "post";
+            document.getElementById(form).submit();
+        } else {
+            document.getElementById(form).method = "get";
+        }
+    }
+
+    function confirmDownload(form) {
+        if (confirm("Do you want to download the selected photos?")) {
+            document.getElementById(form).method = "post";
+            document.getElementById(form).submit();
+        } else {
+            document.getElementById(form).method = "get";
+        }
+    }
+
 </script>
 
 {% endblock %}

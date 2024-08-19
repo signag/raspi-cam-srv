@@ -63,6 +63,7 @@ def create_app(test_config=None):
     #logging.getLogger("raspiCamSrv.auth").setLevel(logging.ERROR)
     #logging.getLogger("raspiCamSrv.camCfg").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.images").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.webcam").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.trigger").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.photoseriesCfg").setLevel(logging.DEBUG)

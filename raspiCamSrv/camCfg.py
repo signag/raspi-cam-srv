@@ -2180,12 +2180,6 @@ class ServerConfig():
         self._displayHistogram = None
         self._displayContent = "meta"
         self._displayBuffer = {}
-        self._chunkSizePhoto = 9
-        self._firstPagePhoto = 1
-        self._lastPagePhoto = 4
-        self._curPagePhoto = 1
-        self._nrPagesPhoto = 0
-        self._nrEntriesPhoto = 0
         self._cv2Available = False
         self._numpyAvailable = False
         self._matplotlibAvailable = False
@@ -2195,6 +2189,10 @@ class ServerConfig():
         self._locLatitude = 0.0
         self._locElevation = 0.0
         self._locTzKey = "localtime"
+        self._pvCamera = None
+        self._pvFrom = None
+        self._pvTo = None
+        self._pvList = []
         
         # Check access of microphone
         self.checkMicrophone()
@@ -2695,54 +2693,6 @@ class ServerConfig():
             self._displayContent = "meta"
 
     @property
-    def chunkSizePhoto(self) -> int:
-        return self._chunkSizePhoto
-
-    @chunkSizePhoto.setter
-    def chunkSizePhoto(self, value: int):
-        self._chunkSizePhoto = value
-
-    @property
-    def firstPagePhoto(self) -> int:
-        return self._firstPagePhoto
-
-    @firstPagePhoto.setter
-    def firstPagePhoto(self, value: int):
-        self._firstPagePhoto = value
-
-    @property
-    def lastPagePhoto(self) -> int:
-        return self._lastPagePhoto
-
-    @lastPagePhoto.setter
-    def lastPagePhoto(self, value: int):
-        self._lastPagePhoto = value
-
-    @property
-    def curPagePhoto(self) -> int:
-        return self._curPagePhoto
-
-    @curPagePhoto.setter
-    def curPagePhoto(self, value: int):
-        self._curPagePhoto = value
-
-    @property
-    def nrPagesPhoto(self) -> int:
-        return self._nrPagesPhoto
-
-    @nrPagesPhoto.setter
-    def nrPagesPhoto(self, value: int):
-        self._nrPagesPhoto = value
-
-    @property
-    def nrEntriesPhoto(self) -> int:
-        return self._nrEntriesPhoto
-
-    @nrEntriesPhoto.setter
-    def nrEntriesPhoto(self, value: int):
-        self._nrEntriesPhoto = value
-
-    @property
     def cv2Available(self) -> bool:
         return self._cv2Available
 
@@ -2860,6 +2810,64 @@ class ServerConfig():
             tzl.append(tz)
         tzl.sort()
         return tzl
+
+    @property
+    def pvCamera(self) -> int:
+        return self._pvCamera
+
+    @pvCamera.setter
+    def pvCamera(self, value: int):
+        self._pvCamera = value
+ 
+    @property
+    def pvFrom(self) -> date:
+        return self._pvFrom
+
+    @pvFrom.setter
+    def pvFrom(self, value: date):
+        self._pvFrom = value
+
+    @property
+    def pvFromStr(self) -> str:
+        return self._pvFrom.isoformat()[:10]
+
+    @pvFromStr.setter
+    def pvFromStr(self, value: str):
+        try:
+            d = date.fromisoformat(value)
+        except ValueError:
+            d = datetime.now()
+        v = datetime(year=d.year, month=d.month, day=d.day, hour=0, minute=0)     
+        self._pvFrom = v
+ 
+    @property
+    def pvTo(self) -> date:
+        return self._pvTo
+
+    @pvTo.setter
+    def pvTo(self, value: date):
+        self._pvTo = value
+
+    @property
+    def pvToStr(self) -> str:
+        return self._pvTo.isoformat()[:10]
+
+    @pvToStr.setter
+    def pvToStr(self, value: str):
+        try:
+            d = date.fromisoformat(value)
+        except ValueError:
+            d = datetime.now()
+        v = datetime(year=d.year, month=d.month, day=d.day, hour=23, minute=59, second=59)        
+        self._pvTo = v
+ 
+    @property
+    def pvList(self) -> list:
+        return self._pvList
+
+    @pvList.setter
+    def pvList(self, value: list):
+        self._pvList = value
     
     @property
     def processInfo(self) -> str:
@@ -2906,15 +2914,6 @@ class ServerConfig():
         else:
             self.useHistograms = False
         logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable)
-
-    @property
-    def paginationPagesPhoto(self) -> list:
-        if self.lastPagePhoto > self.nrPagesPhoto:
-            self.lastPagePhoto = self.nrPagesPhoto
-        res = []
-        for i in range(self.firstPagePhoto, self.lastPagePhoto + 1):
-            res.append(i)
-        return res
     
     @property
     def displayBufferCount(self) -> int:
@@ -3451,6 +3450,16 @@ class ServerConfig():
                                 belt[belmetakey] = belmetavalue
                         dbt[bkey] = belt
                     setattr(sc, key, dbt)
+            elif key == "_pvList":
+                # Photo viewer list shall not be imported
+                # It will be filled on demand
+                setattr(sc, key, [])
+            elif key == "_pvCamera":
+                setattr(sc, key, None)
+            elif key == "_pvFrom":
+                setattr(sc, key, None)
+            elif key == "_pvTo":
+                setattr(sc, key, None)
             else:
                 setattr(sc, key, value)
         # Reset process status variables
