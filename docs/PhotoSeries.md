@@ -75,6 +75,33 @@ In the *Preview* area, the time for the next photo to be taken is shown and the 
 
 When the photo time is reached, the page will be reloaded and the latest photo will be shown on top. The last 20 photos are available in the scroll area.
 
+## Downloading a Series
+
+A series can be downloaded at any time after it has been created.
+
+Whether or not a series has been downloaded is shown under *Downloaded* which is either "Never" or the time of the last download.   
+
+Pushing the *Download* button will require a confirmation before download will be executed.
+
+The download will be named ```raspiCamSrvSeries_<name>_<YYYYMMDDHHMMSS>``` with the timestamp of the download.
+
+The download is a zip archive including the entire folder structure of the series (see [Photo Series in the File System](#photo-series-in-the-file-system)):
+
+- All photos taken until the time of download
+- The [Series Cofiguration file](#series-configuration-file)
+- The [Series Camera File](#series-camera-file) (which will be empty if no camera configuration has been attached to the series)
+- The [Series Log File](#series-log-file) (which will be empty if the series has not yet been started)
+- A subfolder ```hist``` containing histograms, in case the series has been an [Exposure Series](./PhotoSeriesExp.md)
+
+
+## Finished Series
+
+When a series has ended or after it has been actively finished with the *Finish* button, its status is shown as "FINISHED":
+
+![Series End](img/Photoseries2b.jpg)
+
+If the series has been downloaded after it had ended, can be seen by comparing the respective timestamps.
+
 ## Live Stream
 
 ### Active Live Stream

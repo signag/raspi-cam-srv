@@ -53,7 +53,7 @@ However, *Submit* buttons on a page section apply only to data shown on the acti
 
 #### Process Status indicators
 
-On the right side of the menu bar there is a group of statis indicators for the different [background ptocesses](./Background%20Processes.md):
+On the right side of the menu bar there is a group of status indicators for the different [background processes](./Background%20Processes.md):
 
 ![Status Indicators](./img/ProcessIndicator1.jpg)
 
@@ -88,7 +88,8 @@ At the bottom of the screen, there is a message line where application messages 
 The straming URL is   
 ```http://<server>:<port>/video_feed``` for MJPEG video   
 ```http://<server>:<port>/photo_feed``` for photo snapshots      
-Both URLs can be accessed without authentication.
+Both URLs can be accessed without authentication if the checkbox *Req. Auth for Streaming* on the [Settings](./Settings.md) screen is deactivated.   
+If this checkbox is activated, a user must have logged in to raspiCamSrv once in the same browser session which shall be used for streaming. A streaming request in a browser session without login will redirect to the login screen.
 
 In the web client, an active streaming server is indicated with the process status indicators as    
 ![ProcessStatusIndicator](./img/ProcessIndicator1.jpg) if only the active camera is streaming or   

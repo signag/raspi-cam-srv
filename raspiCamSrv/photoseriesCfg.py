@@ -26,6 +26,7 @@ class Series():
         self._started = None
         self._end = None
         self._ended = None
+        self._downloaded= None
         self._interval = None
         self._nrShots = None
         self._curShots = None
@@ -208,6 +209,25 @@ class Series():
             return None
         else:
             return self._ended.isoformat()
+    
+    @property
+    def downloaded(self) -> datetime:
+        return self._downloaded
+
+    @downloaded.setter
+    def downloaded(self, value: datetime):
+        if value is None:
+            self.downloaded = None
+        else:
+            dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+            self._downloaded = dt
+    
+    @property
+    def downloadedIso(self) -> str:
+        if self._downloaded is None:
+            return None
+        else:
+            return self._downloaded.isoformat()
     
     @property
     def interval(self) -> float:

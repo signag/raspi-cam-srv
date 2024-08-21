@@ -28,6 +28,12 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.9.1
+
+### New Feature
+
+- [Photo Series](./PhotoSeries.md) can be downloaded (see [Downloading a Series](./PhotoSeries.md#downloading-a-series))
+
 ## V2.9.0
 
 ### New Features

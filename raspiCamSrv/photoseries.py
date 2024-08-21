@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
+from flask import send_file
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.photoseriesCfg import PhotoSeriesCfg
@@ -12,6 +13,8 @@ from pathlib import Path
 from datetime import datetime
 from datetime import timedelta
 from zoneinfo import ZoneInfo
+from io import BytesIO
+from zipfile import ZipFile
 import time
 
 from raspiCamSrv.auth import login_required
@@ -402,6 +405,50 @@ def remove_series():
         sr = tl.curSeries
         msg = "Photoseries " + nam + " removed. Path: " + path
         flash(msg)
+    return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+
+@bp.route("/download_series", methods=("GET", "POST"))
+@login_required
+def download_series():
+    logger.debug("In download_series")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera().cam
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    tl = PhotoSeriesCfg()
+    sr = tl.curSeries
+    cp = cfg.cameraProperties
+    sc.curMenu = "photoseries"
+    if request.method == "POST":
+        logger.debug("download_series - Preparing archive")
+        sc.lastPhotoSeriesTab = "series"
+        nam = sr.name
+        path = sr.path
+        dt = datetime.now()
+        dt = datetime(year=dt.year, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute)
+        sr.downloaded = dt
+        sr.persist()
+        stream = BytesIO()
+        with ZipFile(stream, 'w') as zf:
+            for root, dirs, files in os.walk(path):
+                for file in files:
+                    zf.write(os.path.join(root, file), 
+                            os.path.relpath(os.path.join(root, file), 
+                                            os.path.join(path, '..')))
+        stream.seek(0)
+        logger.debug("download_series - archive done")
+
+        now = datetime.now()
+        zipName = "raspiCamSrvSeries_" + nam + "_" + now.strftime("%Y%m%d_%H%M%S") + ".zip"
+        logger.debug("images/download_selected - downloading as %s", zipName)
+        msg = f"Downloading archive {zipName}."
+        flash(msg)
+        return send_file(
+            stream,
+            as_attachment=True,
+            download_name=zipName
+        )
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 @bp.route("/series_properties", methods=("GET", "POST"))

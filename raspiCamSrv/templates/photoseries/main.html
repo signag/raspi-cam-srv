@@ -56,27 +56,31 @@
                         <td style="width:25%">
                             <input type="text" id="tlnewseries" name="tlnewseries" value="" aria-label="Name for new series">
                         </td>
-                        <td style="width:25%">
+                        <td style="width:13%">
                             <input class="w3-button w3-black" style="width:95px" type="submit" value="Create">
                         </td>
                     </form>
-                    <td style="width:25%">
+                    <td style="width:12%">
+                    </td>
+                    <td style="width:13%">
+                    </td>
+                    <td style="width:12%">
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="4" style="padding-top: 0px; padding-bottom: 0px">
+                    <td colspan="6" style="padding-top: 0px; padding-bottom: 0px">
                         &nbsp;
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="4" class="w3-border-top w3-border-black">
+                    <td colspan="6" class="w3-border-top w3-border-black">
                         &nbsp; 
                     </td>
                 </tr>
                 <tr>
                     {% if tl.hasCurSeries == True %}
                     <form method="post" id="series" action="{{ url_for('photoseries.select_series') }}">
-                        <td style="width:25%" class="w3-tooltip">
+                        <td style="width:13%" class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 {% if sr.status == "NEW" %}
                                 The photo series is new and needs to be configured (see below).
@@ -92,7 +96,7 @@
                             </span>
                             <label for="series">Status: {{ sr.status }}</label>
                         </td>
-                        <td style="width:25%">
+                        <td style="width:12%">
                             <select style="width:100%; height:28px" name="selectseries" id="selectseries">
                                 {% for sername in tl.seriesNames %}
                                 {% if sername == sr.name %}
@@ -104,7 +108,7 @@
                             </select>
                         </td>
                     </form>
-                    <td style="width:25%">
+                    <td style="width:13%">
                         {% for action in sr.nextActions %}
                         {% if action == "start" %}
                         <form method="post" id="startseries" action="{{ url_for('photoseries.start_series') }}">
@@ -125,7 +129,7 @@
                         {% endif %}
                         {% endfor %}
                     </td>
-                    <td style="width:25%">
+                    <td style="width:12%">
                         {% for action in sr.nextActions %}
                         {% if (sr.status != "NEW" and action == "remove" and sr.nextActions|length > 1) %}
                         <form method="post" id="removeseries2" action="{{ url_for('photoseries.remove_series') }}">
@@ -137,6 +141,11 @@
                         </form>
                         {% endif %}
                         {% endfor %}
+                    </td>
+                    <td colspan="2" style="width: 25;">
+                        <form method="post" id="downloadseries" action="{{ url_for('photoseries.download_series') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Download" onclick="confirmDownload('downloadseries')">
+                        </form>
                     </td>
                     {% endif %}
                 </tr>
@@ -160,9 +169,9 @@
                             <input style="width:100%" type="text" id="sertype" name="sertype" value="Normal" disabled>
                             {% endif %}
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                     <tr>
@@ -176,9 +185,9 @@
                         <td style="width:25%">
                             <input style="width:100%" type="text" id="sername" name="sername" value="{{ sr.name }}" disabled>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                     <tr>
@@ -202,9 +211,9 @@
                         <td style="width:25%">
                             <input style="width:100%" type="text" id="serlog" name="serlog" value="{{ sr.logFileName }}" disabled>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                     <tr>
@@ -217,9 +226,9 @@
                         <td style="width:25%">
                             <input style="width:100%" type="text" id="sercfg" name="sercfg" value="{{ sr.cfgFileName }}" disabled>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                     <tr>
@@ -232,9 +241,9 @@
                         <td style="width:25%">
                             <input style="width:100%" type="text" id="sercfg" name="sercfg" value="{{ sr.camFileName }}" disabled>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                     <tr>
@@ -258,9 +267,9 @@
                                 {% endif %}
                             </select>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                     <tr>
@@ -275,19 +284,19 @@
                             <input style="width:100%" type="datetime-local" id="serstart" name="serstart" value="{{ sr.startIso }}">
                         </td>
                         {% if sr.startedIso is not none %}
-                        <td style="width:25%" class="w3-tooltip w3-right-align">
+                        <td colspan="2" style="width:25%" class="w3-tooltip w3-right-align">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Date and time when the series has been started.
                             </span>
                             <label for="serstarted">Started:</label>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                             <input style="width:100%" type="datetime-local" id="serstarted" name="serstarted" value="{{ sr.startedIso }}" disabled>
                         </td>
                         {% else %}
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                         {% endif %}
                     </tr>
@@ -303,19 +312,41 @@
                             <input style="width:100%" type="datetime-local" id="serend" name="serend" value="{{ sr.endIso }}">
                         </td>
                         {% if sr.endedIso is not none %}
-                        <td style="width:25%" class="w3-tooltip w3-right-align">
+                        <td colspan="2" style="width:25%" class="w3-tooltip w3-right-align">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Date and time when the series has been ended.
                             </span>
                             <label for="serended">Ended:</label>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                             <input style="width:100%" type="datetime-local" id="serended" name="serended" value="{{ sr.endedIso }}" disabled>
                         </td>
                         {% else %}
+                        <td colspan="2" style="width:25%">
+                        </td>
+                        <td colspan="2" style="width:25%">
+                        </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
                         <td style="width:25%">
                         </td>
                         <td style="width:25%">
+                        </td>
+                        <td colspan="2" style="width:25%" class="w3-tooltip w3-right-align">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Date and time when the series has been downloaded.
+                            </span>
+                            <label for="serdownloaded">Downloaded:</label>
+                        </td>
+                        {% if sr.downloadedIso is not none %}
+                        <td colspan="2" style="width:25%">
+                            <input style="width:100%" type="datetime-local" id="serdownloaded" name="serdownloaded" value="{{ sr.downloadedIso }}"
+                                disabled>
+                        </td>
+                        {% else %}
+                        <td colspan="2" style="width:25%">
+                            Never
                         </td>
                         {% endif %}
                     </tr>
@@ -330,9 +361,9 @@
                         <td style="width:25%">
                             <input style="width:100%" type="number" id="serinterval" name="serinterval" min="0.1" max="999999" step="0.1" value="{{ sr.interval }}">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                     <tr>
@@ -347,19 +378,19 @@
                             <input style="width:100%" type="number" id="sernrshots" name="sernrshots" min="1" max="99999" step="1" value="{{ sr.nrShots }}">
                         </td>
                         {% if sr.curShots is not none %}
-                        <td style="width:25%" class="w3-tooltip w3-right-align">
+                        <td colspan="2" style="width:25%" class="w3-tooltip w3-right-align">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Current number of shots.
                             </span>
                             <label for="sercurshots">Current shots:</label>
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                             <input style="width:100%" type="number" id="sercurshots" name="sercurshots" min="1" max="99999" step="1" value="{{ sr.curShots }}" disabled>
                         </td>
                         {% else %}
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                         {% endif %}
                     </tr>
@@ -378,13 +409,13 @@
                             <input type="checkbox" id="isautocontinue" name="isautocontinue" value="0">
                             {% endif %}
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:20%">
+                        <td colspan="2" style="width:20%">
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="4">
+                        <td colspan="6">
                             &nbsp;
                         </td>
                     </tr>
@@ -394,14 +425,14 @@
                         </td>
                         <td style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
-                        <td style="width:25%">
+                        <td colspan="2" style="width:25%">
                         </td>
                     </tr>
                 </form>
                 <tr>
-                    <td colspan="4" style="width:25%">
+                    <td colspan="6" style="width:25%">
                         <form method="post" id="attachcamcfg" action="{{ url_for('photoseries.attach_camera_cfg') }}">
                             {% if sr.cameraConfig is none %}
                             <input class="w3-button w3-black" type="submit" value="Attach Camera Config">
@@ -412,7 +443,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="4" style="width:25%">
+                    <td colspan="6" style="width:25%">
                         {% if sr.cameraConfig %}
                         <form method="post" id="activatecamcfg" action="{{ url_for('photoseries.activate_camera_cfg') }}">
                             <input class="w3-button w3-black" type="submit" value="Activate attached Camera Config" onclick="confirmActivateConfig('activatecamcfg')">
@@ -1473,6 +1504,15 @@
         function confirmActivateConfig(form) {
             if (confirm("Do you want to replace the active 'Photo'/Raw Photo' configuration and controls\n"
                       + "with the settings attached to the Photo Series?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+
+        function confirmDownload(form) {
+            if (confirm("Do you want to download the active series?")) {
                 document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
             } else {

@@ -373,7 +373,7 @@ def download_selected():
             now = datetime.now()
             zipName = "raspiCamSrvMedia_" + now.strftime("%Y%m%d_%H%M%S") + ".zip"
             logger.debug("images/download_selected - downloading as %s", zipName)
-            msg = f"Downloading arhive {zipName} with {cntPhoto} photos, {cntRaw} raw photos and {cntVideo} videos."
+            msg = f"Downloading archive {zipName} with {cntPhoto} photos, {cntRaw} raw photos and {cntVideo} videos."
             flash(msg)
             return send_file(
                 stream,
