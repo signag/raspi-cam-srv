@@ -28,6 +28,12 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.9.2
+
+### Bugdixes
+
+- Disallow changing parameters of a [Photo Series](./PhotoSeries.md) after it had already been started.
+
 ## V2.9.1
 
 ### New Feature

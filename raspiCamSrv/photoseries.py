@@ -859,65 +859,72 @@ def expseries_properties():
     if request.method == "POST":
         ok = True
         sc.lastPhotoSeriesTab = "exposure"
-        if request.form.get("isexposure") is None:
-            sr.isExposureSeries = False
-        else:
-            msg = ""
-            if sr.isFocusStackingSeries or sr.isSunControlledSeries:
-                ok = False
-                if sr.isFocusStackingSeries:
-                    msg = "The series is already marked as Focus Stack"
-                if sr.isSunControlledSeries:
-                    msg = "The series is already marked as sun-controlled Timelapse Series"
+        locked = True
+        if sr.status == "NEW" or sr.status == "READY":
+            locked = False
+        if not locked:
+            if request.form.get("isexposure") is None:
+                sr.isExposureSeries = False
             else:
-                sr.isExposureSeries = True
-                sr.continueOnServerStart = False
-                if request.form.get("isexptimefix") is None:
-                    sr.isExpExpTimeFix = False
-                    if request.form.get("isexpgainfix") is None:
-                        msg = "Select exactly one parameter as fix."
-                        ok = False
-                    else:
-                        sr.isExpGainFix = True
+                msg = ""
+                if sr.isFocusStackingSeries or sr.isSunControlledSeries:
+                    ok = False
+                    if sr.isFocusStackingSeries:
+                        msg = "The series is already marked as Focus Stack"
+                    if sr.isSunControlledSeries:
+                        msg = "The series is already marked as sun-controlled Timelapse Series"
                 else:
-                    sr.isExpExpTimeFix = True
-                    if request.form.get("isexpgainfix") is None:
-                        sr.isExpGainFix = False
+                    sr.isExposureSeries = True
+                    sr.continueOnServerStart = False
+                    if request.form.get("isexptimefix") is None:
+                        sr.isExpExpTimeFix = False
+                        if request.form.get("isexpgainfix") is None:
+                            msg = "Select exactly one parameter as fix."
+                            ok = False
+                        else:
+                            sr.isExpGainFix = True
                     else:
-                        msg = "Select exactly one parameter as fix."
-                        ok = False
+                        sr.isExpExpTimeFix = True
+                        if request.form.get("isexpgainfix") is None:
+                            sr.isExpGainFix = False
+                        else:
+                            msg = "Select exactly one parameter as fix."
+                            ok = False
+                if ok:
+                    if sr.isExpGainFix:
+                        expTimeStart = int(request.form["exptimestart"])
+                        expTimeStop = int(request.form["exptimestop"])
+                        expTimeStep = int(request.form["exptimestep"])
+                        nrShots, expTimeStop = calcExpSeries(expTimeStart, expTimeStop, expTimeStep)
+                        expGainFix = float(request.form["expgainstart"])
+                        sr.nrShots = nrShots
+                        sr.expTimeStart = expTimeStart
+                        sr.expTimeStop = int(expTimeStop)
+                        sr.expTimeStep = expTimeStep
+                        sr.expGainStart = expGainFix
+                        sr.expGainStop = expGainFix
+                        sr.expGainStep = 0
+                    if sr.isExpExpTimeFix:
+                        expGainStart = float(request.form["expgainstart"])
+                        expGainStop = float(request.form["expgainstop"])
+                        expGainStep = int(request.form["expgainstep"])
+                        nrShots, expGainStop = calcExpSeries(expGainStart, expGainStop, expGainStep)
+                        expTimeFix = int(request.form["exptimestart"])
+                        sr.nrShots = nrShots
+                        sr.expGainStart = expGainStart
+                        sr.expGainStop = expGainStop
+                        sr.expGainStep = expGainStep
+                        sr.expTimeStart = expTimeFix
+                        sr.expTimeStop = expTimeFix
+                        sr.expGTimeStep = 0
+                else:
+                    flash(msg)
             if ok:
-                if sr.isExpGainFix:
-                    expTimeStart = int(request.form["exptimestart"])
-                    expTimeStop = int(request.form["exptimestop"])
-                    expTimeStep = int(request.form["exptimestep"])
-                    nrShots, expTimeStop = calcExpSeries(expTimeStart, expTimeStop, expTimeStep)
-                    expGainFix = float(request.form["expgainstart"])
-                    sr.nrShots = nrShots
-                    sr.expTimeStart = expTimeStart
-                    sr.expTimeStop = int(expTimeStop)
-                    sr.expTimeStep = expTimeStep
-                    sr.expGainStart = expGainFix
-                    sr.expGainStop = expGainFix
-                    sr.expGainStep = 0
-                if sr.isExpExpTimeFix:
-                    expGainStart = float(request.form["expgainstart"])
-                    expGainStop = float(request.form["expgainstop"])
-                    expGainStep = int(request.form["expgainstep"])
-                    nrShots, expGainStop = calcExpSeries(expGainStart, expGainStop, expGainStep)
-                    expTimeFix = int(request.form["exptimestart"])
-                    sr.nrShots = nrShots
-                    sr.expGainStart = expGainStart
-                    sr.expGainStop = expGainStop
-                    sr.expGainStep = expGainStep
-                    sr.expTimeStart = expTimeFix
-                    sr.expTimeStop = expTimeFix
-                    sr.expGTimeStep = 0
-            else:
-                flash(msg)
-        if ok:
-            sr.nextStatus("configure")
-            sr.persist()
+                sr.nextStatus("configure")
+                sr.persist()
+        else:
+            msg = "Series parameters can not be changed for a series in status " + sr.status
+            flash(msg)
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 def calcFocusSeries(start, stop, intv):
@@ -952,50 +959,57 @@ def focusstack_properties():
     if request.method == "POST":
         ok = True
         sc.lastPhotoSeriesTab = "focusstack"
-        if request.form.get("isfocusstack") is None:
-            sr.isFocusStackingSeries = False
-        else:
-            msg = ""
-            if sr.isExposureSeries or sr.isSunControlledSeries:
-                ok = False
-                if sr.isExposureSeries:
-                    msg = "The series is already marked as Exposure Series!"
-                if sr.isSunControlledSeries:
-                    msg = "The series is already marked as sun-controlled Timelapse Series!"
+        locked = True
+        if sr.status == "NEW" or sr.status == "READY":
+            locked = False
+        if not locked:
+            if request.form.get("isfocusstack") is None:
+                sr.isFocusStackingSeries = False
             else:
-                focusStart = float(request.form["focaldiststart"])
-                focusStop = float(request.form["focaldiststop"])
-                focusStep = float(request.form["focaldiststep"])
-                if focusStart <= 0.0:
-                    msg = "The start value must be > 0!"
+                msg = ""
+                if sr.isExposureSeries or sr.isSunControlledSeries:
                     ok = False
+                    if sr.isExposureSeries:
+                        msg = "The series is already marked as Exposure Series!"
+                    if sr.isSunControlledSeries:
+                        msg = "The series is already marked as sun-controlled Timelapse Series!"
                 else:
-                    if focusStop > focusStart:
-                        if focusStep > 0.0:
-                            pass
-                        else:
-                            msg = "If Stop > Start, Interval must be > 0!"
-                            ok = False
-                    elif focusStop == 0.0:
-                        msg = "Stop must not be 0!"
+                    focusStart = float(request.form["focaldiststart"])
+                    focusStop = float(request.form["focaldiststop"])
+                    focusStep = float(request.form["focaldiststep"])
+                    if focusStart <= 0.0:
+                        msg = "The start value must be > 0!"
                         ok = False
                     else:
-                        if focusStep < 0.0:
-                            pass
-                        else:
-                            msg = "If Stop < Start, Interval must be < 0!"
+                        if focusStop > focusStart:
+                            if focusStep > 0.0:
+                                pass
+                            else:
+                                msg = "If Stop > Start, Interval must be > 0!"
+                                ok = False
+                        elif focusStop == 0.0:
+                            msg = "Stop must not be 0!"
                             ok = False
+                        else:
+                            if focusStep < 0.0:
+                                pass
+                            else:
+                                msg = "If Stop < Start, Interval must be < 0!"
+                                ok = False
+                if ok:
+                    sr.isFocusStackingSeries = True
+                    sr.continueOnServerStart = False
+                    nrShots, focusStop = calcFocusSeries(focusStart, focusStop, focusStep)
+                    sr.focalDistStart = focusStart
+                    sr.focalDistStop = focusStop
+                    sr.focalDistStep = focusStep
+                    sr.nrShots = nrShots
+                else:
+                    flash(msg)
             if ok:
-                sr.isFocusStackingSeries = True
-                sr.continueOnServerStart = False
-                nrShots, focusStop = calcFocusSeries(focusStart, focusStop, focusStep)
-                sr.focalDistStart = focusStart
-                sr.focalDistStop = focusStop
-                sr.focalDistStep = focusStep
-                sr.nrShots = nrShots
-            else:
-                flash(msg)
-        if ok:
-            sr.nextStatus("configure")
-            sr.persist()
+                sr.nextStatus("configure")
+                sr.persist()
+        else:
+            msg = "Series parameters can not be changed for a series in status " + sr.status
+            flash(msg)
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
