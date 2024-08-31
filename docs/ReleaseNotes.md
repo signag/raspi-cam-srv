@@ -28,6 +28,12 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.10.1
+
+### Bugfix
+
+- Fixed an issue with platform-specific search of tuning files.
+
 ## V2.10.0
 
 ### New Features

@@ -5,13 +5,20 @@ from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.version import version
 from picamera2 import Picamera2
-#import picamera2.platform as Platform
 import os
 import shutil
 import json
 
 from raspiCamSrv.auth import login_required
 import logging
+
+# Try to import platform, which does not exist in Bullseye Picamera2 distributions
+try:
+    import picamera2.platform as Platform
+    usePlatform = True
+except ImportError:
+    usePlatform = False
+
 
 bp = Blueprint("config", __name__)
 
@@ -181,14 +188,15 @@ def findTuningFile(tuning_file: str, dir=None) -> str:
     if dir is not None:
         dirs = [dir]
     else:
-        #platform_dir = "vc4" if Picamera2.platform == Platform.Platform.VC4 else "pisp"
-        dirs = [os.path.expanduser("~/libcamera/src/ipa/rpi/" + "pisp" + "/data"),
-                "/usr/local/share/libcamera/ipa/rpi/" + "pisp",
-                "/usr/share/libcamera/ipa/rpi/" + "pisp",
-                os.path.expanduser("~/libcamera/src/ipa/rpi/" + "vc4" + "/data"),
-                "/usr/local/share/libcamera/ipa/rpi/" + "vc4",
-                "/usr/share/libcamera/ipa/rpi/" + "vc4"
-                ]
+        if usePlatform:
+            platform_dir = "vc4" if Picamera2.platform == Platform.Platform.VC4 else "pisp"
+            dirs = [os.path.expanduser("~/libcamera/src/ipa/rpi/" + platform_dir + "/data"),
+                    "/usr/local/share/libcamera/ipa/rpi/" + platform_dir,
+                    "/usr/share/libcamera/ipa/rpi/" + platform_dir]
+        else: 
+             dirs = [os.path.expanduser("~/libcamera/src/ipa/rpi/vc4/data"),
+                    "/usr/local/share/libcamera/ipa/rpi/vc4",
+                    "/usr/share/libcamera/ipa/rpi/vc4"]                       
     for directory in dirs:
         file = os.path.join(directory, tuning_file)
         if os.path.isfile(file):
