@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import abort
 from raspiCamSrv.camera_pi import Camera
-from raspiCamSrv.camCfg import CameraCfg
+from raspiCamSrv.camCfg import CameraCfg, TuningConfig
 from raspiCamSrv.version import version
 from _thread import get_ident
 import copy
@@ -57,6 +57,7 @@ def store_streaming_config():
     sc.curMenu = "webcam"
     if request.method == "POST":
         scfg = cfg.streamingCfg[str(sc.activeCamera)]
+        scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
         scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
         scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
         scfg["controls"] = copy.deepcopy(cfg.controls)
@@ -83,14 +84,26 @@ def switch_cameras():
                 if activeCam != cm.num:
                     newCam = cm.num
                     newCamInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
+                    newCamModel = cm.model
                     break
         if newCam != sc.activeCamera:
             sc.activeCameraInfo = newCamInfo
+            sc.activeCameraModel = newCamModel
             cfg.liveViewConfig.stream_size = None
             cfg.photoConfig.stream_size = None
             cfg.rawConfig.stream_size = None
             cfg.videoConfig.stream_size = None
             sc.activeCamera = newCam
+            strCfg = cfg.streamingCfg
+            newCamStr = str(newCam)
+            if newCamStr in strCfg:
+                ncfg = strCfg[newCamStr]
+                if "tuningconfig" in ncfg:
+                    cfg.tuningConfig = ncfg["tuningconfig"]
+                else:
+                    cfg.tuningConfig = TuningConfig
+            else:
+                cfg.tuningConfig = TuningConfig
             Camera.switchCamera()
             if sc.isLiveStream2:
                 str2 = cfg.streamingCfg[str(Camera().camNum2)]

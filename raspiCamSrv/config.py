@@ -1,8 +1,14 @@
-from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for, current_app
+from flask import send_file
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.version import version
+from picamera2 import Picamera2
+#import picamera2.platform as Platform
+import os
+import shutil
+import json
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -24,6 +30,7 @@ def main():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.curMenu = "config"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -31,7 +38,12 @@ def main():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 def doSyncAspectRatio(ref: tuple, tgt: list) -> bool:
     """ Synchronize the aspect ration of target configurations with reference
@@ -110,12 +122,18 @@ def syncAspectRatio():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         lastTab = sc.lastConfigTab
         selTab = request.form.get("activecfgtab")
@@ -146,7 +164,467 @@ def syncAspectRatio():
                 pass
             Camera.resetScalerCropRequested = True
             Camera().restartLiveStream()
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+
+def findTuningFile(tuning_file: str, dir=None) -> str:
+    """Find the given tuning file and return its path
+
+    Code has been copied from Picamera2.load_tuning_file(...)
+    Args:
+        - tuning_file (str): filename of tuning file
+        - dir (str, optional): Directory to search. If None, search standard installation dirs
+
+    Returns:
+        - str: Path of tuning file; None, if not found
+    """
+    tfPath = None
+    if dir is not None:
+        dirs = [dir]
+    else:
+        #platform_dir = "vc4" if Picamera2.platform == Platform.Platform.VC4 else "pisp"
+        dirs = [os.path.expanduser("~/libcamera/src/ipa/rpi/" + "pisp" + "/data"),
+                "/usr/local/share/libcamera/ipa/rpi/" + "pisp",
+                "/usr/share/libcamera/ipa/rpi/" + "pisp",
+                os.path.expanduser("~/libcamera/src/ipa/rpi/" + "vc4" + "/data"),
+                "/usr/local/share/libcamera/ipa/rpi/" + "vc4",
+                "/usr/share/libcamera/ipa/rpi/" + "vc4"
+                ]
+    for directory in dirs:
+        file = os.path.join(directory, tuning_file)
+        if os.path.isfile(file):
+            tfPath = file
+    return tfPath
+
+def isTuningFile(file: str, folder:str) -> bool:
+    logger.debug("In isTuningFile")
+    logger.debug("isTuningFile - file=%s", file)
+    logger.debug("isTuningFile - folder=%s", folder)
+    res = False
+    try:
+        tf = Picamera2.load_tuning_file(file, folder)
+        res = True
+    except RuntimeError as e:
+        res = False
+    logger.debug("isTuningFile - res=%s", res)
+    return res
+    
+def getTuningFiles(folder, defFile) -> list:
+    """Create a list of all .json files in the given folder
+
+    Args:
+        - folder (str): Folder to search
+        - defFile (str): Name of default file
+    Returns:
+        - list: list with filenames of .json files
+    """
+    tfl = []
+    defFileFound = False
+    if folder is not None:
+        if os.path.exists(folder):
+            for f in os.listdir(folder):
+                if os.path.isfile(os.path.join(folder, f)):
+                    if f == defFile:
+                        defFileFound = True
+                    nam, ext = os.path.splitext(f)
+                    if ext.lower() == ".json":
+                        tfl.append(f)
+    if defFile:
+        if defFileFound == False:
+            tfl.append(defFile)
+    return tfl
+
+@bp.route("/tuningCfg", methods=("GET", "POST"))
+@login_required
+def tuningCfg():
+    logger.debug("In tuningCfg")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    tc = cfg.tuningConfig
+    sc.lastConfigTab = "cfgtuning"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    if request.method == "POST":
+        err = None
+        msg = ""
+        restart = False
+        if sc.isTriggerRecording:
+            err = "Please go to 'Trigger' and stop the active process before changing the tuning configuration"
+            msg = err
+        if sc.isPhotoSeriesRecording:
+            err = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
+            msg = err
+        if sc.isVideoRecording == True:
+            err = "Please stop video recording before changing the tuning configuration"
+            msg = err
+        if not err:
+            loadTuningFile = not request.form.get("loadtuningfile") is None
+            fd = request.form["tuningfolder"]
+            if fd == "":
+                fd = None
+            fn = request.form["tuningfile"]
+            if loadTuningFile:
+                if isTuningFile(fn, fd) == True:
+                    tc.tuningFolder = fd
+                    tc.tuningFile = fn
+                    tc.loadTuningFile = loadTuningFile
+                    restart = True
+                else:
+                    msg = "Specify an existing tuning file before activating to load it"
+            else:
+                tc.tuningFolder = fd
+                tc.tuningFile = fn
+                if tc.loadTuningFile != loadTuningFile:
+                    restart = True
+                tc.loadTuningFile = loadTuningFile
+        if restart:
+            Camera().restartLiveStream()
+        if len(msg) > 0:
+            flash(msg)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+
+@bp.route("/customTuning", methods=("GET", "POST"))
+@login_required
+def customTuning():
+    logger.debug("In customTuning")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    tc = cfg.tuningConfig
+    sc.lastConfigTab = "cfgtuning"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    if request.method == "POST":
+        err = None
+        msg = ""
+        restart = False
+        if tc.loadTuningFile == True:
+            if sc.isTriggerRecording:
+                err = "Please go to 'Trigger' and stop the active process before changing the tuning configuration"
+                msg = err
+            if sc.isPhotoSeriesRecording:
+                err = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
+                msg = err
+            if sc.isVideoRecording == True:
+                err = "Please stop video recording before changing the tuning configuration"
+                msg = err
+        if not err:
+            fd = tc.tuningFolder
+            fn = tc.tuningFile
+            fdCustom = current_app.static_folder + "/tuning"
+            if fd == fdCustom:
+                msg = "No changes. Custom folder was already set."
+            else:
+                try:
+                    os.makedirs(fdCustom, exist_ok=True)
+                    tc.tuningFolder = fdCustom
+                except Exception as e:
+                    msg = "Error while creating custom folder " + fdCustom + ":" + e
+                if msg == "":
+                    if fn != "":
+                        if isTuningFile(fn, fdCustom) == True:
+                            if tc.loadTuningFile == True:
+                                msg = "Tuning file switched to custom file."
+                                restart = True
+                        else:
+                            if isTuningFile(fn, None) == True:
+                                fpCustom = os.path.join(fdCustom, fn)
+                                fpDefault = findTuningFile(fn, None)
+                                if fpDefault is not None:
+                                    try:
+                                        shutil.copyfile(fpDefault, fpCustom)
+                                        msg = "Tuning file " + fn + " copied to custom directory."
+                                        if tc.loadTuningFile == True:
+                                            restart = True
+                                    except Exception as e:
+                                        logger.debug("error while copying tuning file: %s", str(e))
+                                        msg = "Tuning file directory switched to custom directory, but tuning file " + fn + " could not be copied."
+                                        fn = ""
+                                        if tc.loadTuningFile == True:
+                                            restart = True
+                                        tc.loadTuningFile = False
+                                else:
+                                    tc.tuningFile = ""
+                                    if tc.loadTuningFile == True:
+                                        restart = True
+                                        tc.loadTuningFile = False
+                            else:
+                                tc.tuningFile = ""
+                                if tc.loadTuningFile == True:
+                                    restart = True
+                                    tc.loadTuningFile = False
+        if restart:
+            Camera().restartLiveStream()
+        if len(msg) > 0:
+            flash(msg)
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+
+@bp.route("/defaultTuning", methods=("GET", "POST"))
+@login_required
+def defaultTuning():
+    logger.debug("In defaultTuning")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    tc = cfg.tuningConfig
+    sc.lastConfigTab = "cfgtuning"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    if request.method == "POST":
+        err = None
+        msg = ""
+        restart = False
+        if tc.loadTuningFile == True:
+            if sc.isTriggerRecording:
+                err = "Please go to 'Trigger' and stop the active process before changing the tuning configuration"
+                msg = err
+            if sc.isPhotoSeriesRecording:
+                err = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
+                msg = err
+            if sc.isVideoRecording == True:
+                err = "Please stop video recording before changing the tuning configuration"
+                msg = err
+        if not err:
+            fd = tc.tuningFolder
+            fn = tc.tuningFile
+            fdDefault = tc.tuningFolderDef
+            if fd == fdDefault:
+                msg = "No changes. Default folder was already set."
+            else:
+                tc.tuningFolder = fdDefault
+                if fn != "":
+                    if isTuningFile(fn, fd) == True:
+                        if tc.loadTuningFile == True:
+                            msg = "Tuning file switched to default file."
+                            restart = True
+                    else:
+                        fn = sc.activeCameraModel + ".json"
+                        if isTuningFile(fn, fd) == True:
+                            tc.tuningFile = fn
+                            if tc.loadTuningFile == True:
+                                msg = "Tuning file switched to default file."
+                                restart = True
+                        else:
+                            tc.tuningFile = ""
+                            if tc.loadTuningFile == True:
+                                restart = True
+        if restart:
+            Camera().restartLiveStream()
+        if len(msg) > 0:
+            flash(msg)
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+
+@bp.route("/deleteTuningFile", methods=("GET", "POST"))
+@login_required
+def deleteTuningFile():
+    logger.debug("In deleteTuningFile")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    tc = cfg.tuningConfig
+    sc.lastConfigTab = "cfgtuning"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    if request.method == "POST":
+        restart = False
+        if tc.isDefaultFolder == True:
+            msg = "You cannot delete a tuning file from the default folder"
+        else:
+            fd = tc.tuningFolder
+            fn = tc.tuningFile
+            fp = findTuningFile(fn, fd)
+            if fp is not None:
+                os.remove(fp)
+                msg = f"Tuning File deleted: {fp}"
+            else:
+                msg = "Tuning file not found"
+            tc.tuningFile = ""
+            if tc.loadTuningFile == True:
+                restart = True
+                tc.loadTuningFile = False
+        tfl = getTuningFiles(tc.tuningFolder, None)
+        if len(tfl) > 0:
+            fn = sc.activeCameraModel + ".json"
+            found = False
+            for f in tfl:
+                if f == fn:
+                    tc.tuningFile = fn
+                    found = True
+                    break
+            if found == False:
+                tc.tuningFile = tfl[0]
+        else:
+            logger.debug("deleteTuningFile - No more tuning files in custom folder")
+            fn = sc.activeCameraModel + ".json"
+            tc.tuningFolder = None
+            logger.debug("deleteTuningFile - fn=%s tuningFolder=%s isTuningFile=%s", fn, tc.tuningFolder, isTuningFile(fn, tc.tuningFolder))
+            if isTuningFile(fn, tc.tuningFolder) == True:
+                tc.tuningFile = fn
+                logger.debug("deleteTuningFile - tc.tuningFile set to %s", tc.tuningFile)
+            else:
+                tc.loadTuningFile = False
+        tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+        if restart:
+            Camera().restartLiveStream()
+        if msg != "":
+            flash(msg)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+
+@bp.route("/downloadTuningFile", methods=("GET", "POST"))
+@login_required
+def downloadTuningFile():
+    logger.debug("In downloadTuningFile")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    tc = cfg.tuningConfig
+    sc.lastConfigTab = "cfgtuning"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    if request.method == "POST":
+        fd = tc.tuningFolder
+        fn = tc.tuningFile
+        fp = findTuningFile(fn, fd)
+        if fp is not None:
+            msg = f"Downloading {fn}"
+            flash(msg)
+            return send_file(
+                fp,
+                as_attachment=True,
+                download_name=fn
+            )
+        else:
+            msg = "Tuning file not found"
+            flash(msg)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+
+@bp.route("/uploadTuningFile", methods=("GET", "POST"))
+@login_required
+def uploadTuningFile():
+    logger.debug("In uploadTuningFile")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cp = cfg.cameraProperties
+    sm = cfg.sensorModes
+    rf = cfg.rawFormats
+    sc = cfg.serverConfig
+    tc = cfg.tuningConfig
+    sc.lastConfigTab = "cfgtuning"
+    cfgs = cfg.cameraConfigs
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    if request.method == "POST":
+        msg = ""
+        if tc.tuningFolder is None:
+            msg = "You may only upload to a custom folder!"
+        else:
+            if os.path.exists(tc.tuningFolder) == False:
+                try:
+                    os.makedirs(tc.tuningFolder)
+                except Exception as e:
+                    msg = f"Error creating folder {tc.tuningFolder}: {str(e)}"
+        if msg == "":
+            if "tuningfile" not in request.files:
+                msg = "No file to save"
+            else:
+                files = request.files.getlist("tuningfile")
+                countSel = len(files)
+                #tf = request.files["tuningfile"]
+                logger.debug("uploadTuningFile - %s files selected", countSel)
+                countUp = 0
+                for tf in files:
+                    fn = tf.filename
+                    logger.debug("uploadTuningFile - selected file: %s", fn)
+                    nam, ext = os.path.splitext(fn)
+                    if ext.lower() == ".json":
+                        fp = os.path.join(tc.tuningFolder, fn)
+                        tf.save(fp)
+                        msg = f"Tuning file saved as {fp}."
+                        countUp += 1
+                if countSel > 1:
+                    msg = f"{countUp} of {countSel} files uploaded."
+                    if countUp < countSel:
+                        msg = msg + " Not all files were .json files."
+        if msg != "":
+            flash(msg)
+        tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
 @login_required
@@ -159,6 +637,7 @@ def liveViewCfg():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfglive"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -166,6 +645,11 @@ def liveViewCfg():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -273,7 +757,7 @@ def liveViewCfg():
                 msg = msg + "WARNING: If you do not set Stream to 'lores', the Live Stream cannot be shown parallel to other activities!"
         if len(msg) > 0:
             flash(msg)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/addLiveViewControls", methods=("GET", "POST"))
 @login_required
@@ -287,6 +771,7 @@ def addLiveViewControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfglive"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -294,6 +779,11 @@ def addLiveViewControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -306,7 +796,7 @@ def addLiveViewControls():
             Camera().restartLiveStream()
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/remLiveViewControls", methods=("GET", "POST"))
 @login_required
@@ -319,6 +809,7 @@ def remLiveViewControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfglive"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -326,6 +817,11 @@ def remLiveViewControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -355,7 +851,7 @@ def remLiveViewControls():
                 flash(msg)
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/photoCfg", methods=("GET", "POST"))
 @login_required
@@ -368,6 +864,7 @@ def photoCfg():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgphoto"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -375,6 +872,11 @@ def photoCfg():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -465,7 +967,7 @@ def photoCfg():
             Camera().restartLiveStream()
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/addPhotoControls", methods=("GET", "POST"))
 @login_required
@@ -479,6 +981,7 @@ def addPhotoControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgphoto"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -486,6 +989,11 @@ def addPhotoControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -497,7 +1005,7 @@ def addPhotoControls():
                         cfg.photoConfig.controls[key] = value[1]
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/remPhotoControls", methods=("GET", "POST"))
 @login_required
@@ -510,6 +1018,7 @@ def remPhotoControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgphoto"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -517,6 +1026,11 @@ def remPhotoControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -543,7 +1057,7 @@ def remPhotoControls():
                 flash(msg)
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/rawCfg", methods=("GET", "POST"))
 @login_required
@@ -556,6 +1070,7 @@ def rawCfg():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgraw"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -563,6 +1078,11 @@ def rawCfg():
     cfgraw = cfg.rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -605,7 +1125,7 @@ def rawCfg():
             Camera().restartLiveStream()
         if err:
             flash(err)            
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/addRawControls", methods=("GET", "POST"))
 @login_required
@@ -619,6 +1139,7 @@ def addRawControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgraw"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -626,6 +1147,11 @@ def addRawControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -637,7 +1163,7 @@ def addRawControls():
                         cfg.rawConfig.controls[key] = value[1]
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/remRawControls", methods=("GET", "POST"))
 @login_required
@@ -650,6 +1176,7 @@ def remRawControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgraw"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -657,6 +1184,11 @@ def remRawControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -683,7 +1215,7 @@ def remRawControls():
                 flash(msg)
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/videoCfg", methods=("GET", "POST"))
 @login_required
@@ -696,6 +1228,7 @@ def videoCfg():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgvideo"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -703,6 +1236,11 @@ def videoCfg():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -789,7 +1327,7 @@ def videoCfg():
             Camera().restartLiveStream()
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/addVideoControls", methods=("GET", "POST"))
 @login_required
@@ -803,6 +1341,7 @@ def addVideoControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgvideo"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -810,6 +1349,11 @@ def addVideoControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -821,7 +1365,7 @@ def addVideoControls():
                         cfg.videoConfig.controls[key] = value[1]
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 @bp.route("/remVideoControls", methods=("GET", "POST"))
 @login_required
@@ -834,6 +1378,7 @@ def remVideoControls():
     sm = cfg.sensorModes
     rf = cfg.rawFormats
     sc = cfg.serverConfig
+    tc = cfg.tuningConfig
     sc.lastConfigTab = "cfgvideo"
     cfgs = cfg.cameraConfigs
     cfglive = cfg.liveViewConfig
@@ -841,6 +1386,11 @@ def remVideoControls():
     cfgraw = cfg._rawConfig
     cfgvideo =cfg.videoConfig
     cfgrf = cfg.rawFormats
+    if tc.tuningFile == "":
+        fn = sc.activeCameraModel + ".json"
+        if isTuningFile(fn, tc.tuningFolder) == True:
+            tc.tuningFile = fn
+    tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         err = None
         if sc.isTriggerRecording:
@@ -867,4 +1417,4 @@ def remVideoControls():
                 flash(msg)
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs)
+    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)

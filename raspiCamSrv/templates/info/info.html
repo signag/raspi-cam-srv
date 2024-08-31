@@ -48,6 +48,8 @@
         <h4>Camera {{ cam.num }}</h4>
         {% endif%}
         {% endif%}
+        {% set camnum = cam.num|string %}
+        {% set tc = tcs[camnum] %}
         <table class="w3-table-all">
             <tr>
                 <th style="width:15%">Property</th>
@@ -107,6 +109,21 @@
                 </td>
                 <td>
                     Current status of the camera
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Tuning File
+                </td>
+                <td>
+                    {% if tc.loadTuningFile == True %}
+                        {{ tc.tuningFilePath }}
+                    {% else %}
+                    Default
+                    {% endif %}
+                </td>
+                <td>
+                    Tuning file to be loaded
                 </td>
             </tr>
         </table>

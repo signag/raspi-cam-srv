@@ -48,6 +48,9 @@ The Sensor Mode is usually automatically selected by the camera and normally cor
 
 See [Camera Status and Number of Threads](#camera-status-and-number-of-threads)
 
+Under *Tuning File*, you can see whether the Default or a custom tuning file are currently in use.    
+See [raspiCamSrv Camera Tuning](./Tuning.md).
+
 ## Camera Properties
 
 ![Camera Properties](img/Info-CamProps.jpg)
