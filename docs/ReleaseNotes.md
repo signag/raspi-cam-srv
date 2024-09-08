@@ -28,6 +28,12 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.10.2
+
+### New Features
+
+- Added kernel version and Debian version to [Info](./Information.md) screen.
+
 ## V2.10.1
 
 ### Bugfix

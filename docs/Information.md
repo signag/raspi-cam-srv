@@ -12,6 +12,8 @@ This screen contains several tabs with information on the camera system:
 
 This section shows information on the server hardware with *Model* and *Board Revision*
 
+For the operating system, the kernel version (result of ```uname -r```) and the Debian version (result of *Description* from ```lsb_release -a``` and ```cat /etc/debian_version```) are shown
+
 *Process Info* shows current process information for the raspiCamSrv server process (result of Linux ```ps -eLf``` command)
 - *PID*: Process ID of Flask process (PID)
 - *Start*: Process start time (STIME): either start time (HH:MM) at current day or day (MonDD) when process was started.

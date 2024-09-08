@@ -2192,6 +2192,8 @@ class ServerConfig():
         self._raspiModelFull = ""
         self._raspiModelLower5 = False
         self._boardRevision = ""
+        self._kernelVersion = ""
+        self._debianVersion = ""
         self._activeCamera = 0
         self._activeCameraInfo = ""
         self._activeCameraModel = ""
@@ -2276,6 +2278,12 @@ class ServerConfig():
 
         boardRev = self.getBoardRevision()
         self._boardRevision = boardRev
+
+        debianVers = self.getDebianVersion()
+        self._debianVersion = debianVers
+
+        kernelVers = self.getKernelVersion()
+        self._kernelVersion = kernelVers
 
     @property
     def error(self) -> str:
@@ -2362,6 +2370,22 @@ class ServerConfig():
     @boardRevision.setter
     def boardRevision(self, value: str):
         self._boardRevision = value
+
+    @property
+    def kernelVersion(self) -> str:
+        return self._kernelVersion
+
+    @kernelVersion.setter
+    def kernelVersion(self, value: str):
+        self._kernelVersion = value
+
+    @property
+    def debianVersion(self) -> str:
+        return self._debianVersion
+
+    @debianVersion.setter
+    def debianVersion(self, value: str):
+        self._debianVersion = value
 
     @property
     def activeCamera(self) -> int:
@@ -3335,6 +3359,61 @@ class ServerConfig():
         
         logger.debug("CameraCfg.getBoardRevision - boardRev = %s", boardRev)
         return boardRev
+
+    def getDebianVersion(self):
+        """ Get the Debian Version of the installed OS
+        
+        """
+        logger.debug("CameraCfg.getDebianVersion")
+        debianVers = ""
+        try:
+            with open('/etc/debian_version','r') as f:
+                for line in f:
+                    debianVers += line
+        except Exception as e:
+            logger.error("Error opening /etc/debian_version : %s", e)
+            debianVers = ""
+        
+        debianVers = self.getLsbRelease() + " - Version " + debianVers
+        logger.debug("CameraCfg.getDebianVersion - debianVers = %s", debianVers)
+        return debianVers
+
+    def getKernelVersion(self):
+        """ Get the Kernel Version of the installed OS
+        
+        """
+        logger.debug("CameraCfg.getKernelVersion")
+        kernelVers = ""
+        try:
+            result = subprocess.run(["uname", "-r"], capture_output=True, text=True, check=True).stdout
+            for line in self._lineGen(result):
+                kernelVers += line.strip()
+        except Exception as e:
+            logger.error("Error opening /etc/debian_version : %s", e)
+            kernelVers = ""
+        
+        logger.debug("CameraCfg.getKernelVersion - kernelVers = %s", kernelVers)
+        return kernelVers
+
+    def getLsbRelease(self):
+        """ Get the LSB release of the installed OS
+        
+        """
+        logger.debug("CameraCfg.getLsbRelease")
+        lsbRelease = ""
+        try:
+            result = subprocess.run(["lsb_release", "-a"], capture_output=True, text=True, check=True).stdout
+            for line in self._lineGen(result):
+                logger.debug("CameraCfg.getLsbRelease - line:%s", line)
+                if line[0:12] == "Description:":
+                    lsbRelease = line[13:].strip()
+                    break
+        except Exception as e:
+            logger.error("Error executing lsb_release -a : %s", e)
+            lsbRelease = ""
+        
+        logger.debug("CameraCfg.getLsbRelease - lsbRelease = %s", lsbRelease)
+        return lsbRelease
 
     @staticmethod
     def _lineGen(s):
