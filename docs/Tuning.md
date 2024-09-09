@@ -82,4 +82,4 @@ You may proof this in the following way:
 
 1. Activate a dialog without live view, e.g. [Info](./Information.md).
 2. Wait at least 10 sec. until both streaming threads have terminated (refresh the screen from time to time)
-3 In another browser window, stream just one camera (endpoint video_feed or video_feed2).<br>You should then see the effect of the correct tuning file.<br>However, if you later start streaming the other camera, you may see that the tuning file for the previously started camera has been applied.
+3. In another browser window, stream just one camera (endpoint video_feed or video_feed2).<br>You should then see the effect of the correct tuning file.<br>However, if you later start streaming the other camera, you may see that the tuning file for the previously started camera has been applied.
