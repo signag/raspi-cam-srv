@@ -1764,6 +1764,62 @@ class SensorMode():
     def tabTitle(self) -> str:
         return "Sensor Mode " + str(self.id)
 
+class TuningConfig():
+    def __init__(self):
+        self._loadTuningFile = False
+        self._tuningFolderDef = None
+        self._tuningFolder = None
+        self._tuningFile = ""
+
+    @property
+    def loadTuningFile(self) -> bool:
+        return self._loadTuningFile
+
+    @loadTuningFile.setter
+    def loadTuningFile(self, value: bool):
+        self._loadTuningFile = value
+
+    @property
+    def tuningFolderDef(self) -> str:
+        return self._tuningFolderDef
+
+    @property
+    def tuningFolder(self) -> str:
+        return self._tuningFolder
+
+    @tuningFolder.setter
+    def tuningFolder(self, value: str):
+        self._tuningFolder = value
+
+    @property
+    def tuningFile(self) -> str:
+        return self._tuningFile
+
+    @tuningFile.setter
+    def tuningFile(self, value: str):
+        self._tuningFile = value
+
+    @property
+    def tuningFilePath(self) -> str:
+        if self.tuningFolder is None:
+            return self._tuningFile
+        else:
+            return self.tuningFolder + "/" + self._tuningFile
+
+    @property
+    def isDefaultFolder(self) -> bool:
+        return self.tuningFolder == self.tuningFolderDef
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        cc = TuningConfig()
+        for key, value in dict.items():
+            if value is None:
+                setattr(cc, key, value)
+            else:
+                setattr(cc, key, value)
+        return cc
+
 class CameraConfig():
     def __init__(self):
         self._id = ""
@@ -2136,8 +2192,11 @@ class ServerConfig():
         self._raspiModelFull = ""
         self._raspiModelLower5 = False
         self._boardRevision = ""
+        self._kernelVersion = ""
+        self._debianVersion = ""
         self._activeCamera = 0
         self._activeCameraInfo = ""
+        self._activeCameraModel = ""
         self._hasMicrophone = False
         self._defaultMic = ""
         self._isMicMuted = False
@@ -2219,6 +2278,12 @@ class ServerConfig():
 
         boardRev = self.getBoardRevision()
         self._boardRevision = boardRev
+
+        debianVers = self.getDebianVersion()
+        self._debianVersion = debianVers
+
+        kernelVers = self.getKernelVersion()
+        self._kernelVersion = kernelVers
 
     @property
     def error(self) -> str:
@@ -2307,6 +2372,22 @@ class ServerConfig():
         self._boardRevision = value
 
     @property
+    def kernelVersion(self) -> str:
+        return self._kernelVersion
+
+    @kernelVersion.setter
+    def kernelVersion(self, value: str):
+        self._kernelVersion = value
+
+    @property
+    def debianVersion(self) -> str:
+        return self._debianVersion
+
+    @debianVersion.setter
+    def debianVersion(self, value: str):
+        self._debianVersion = value
+
+    @property
     def activeCamera(self) -> int:
         return self._activeCamera
 
@@ -2321,6 +2402,14 @@ class ServerConfig():
     @activeCameraInfo.setter
     def activeCameraInfo(self, value: str):
         self._activeCameraInfo = value
+
+    @property
+    def activeCameraModel(self) -> str:
+        return self._activeCameraModel
+
+    @activeCameraModel.setter
+    def activeCameraModel(self, value: str):
+        self._activeCameraModel = value
 
     @property
     def hasMicrophone(self) -> bool:
@@ -3271,6 +3360,61 @@ class ServerConfig():
         logger.debug("CameraCfg.getBoardRevision - boardRev = %s", boardRev)
         return boardRev
 
+    def getDebianVersion(self):
+        """ Get the Debian Version of the installed OS
+        
+        """
+        logger.debug("CameraCfg.getDebianVersion")
+        debianVers = ""
+        try:
+            with open('/etc/debian_version','r') as f:
+                for line in f:
+                    debianVers += line
+        except Exception as e:
+            logger.error("Error opening /etc/debian_version : %s", e)
+            debianVers = ""
+        
+        debianVers = self.getLsbRelease() + " - Version " + debianVers
+        logger.debug("CameraCfg.getDebianVersion - debianVers = %s", debianVers)
+        return debianVers
+
+    def getKernelVersion(self):
+        """ Get the Kernel Version of the installed OS
+        
+        """
+        logger.debug("CameraCfg.getKernelVersion")
+        kernelVers = ""
+        try:
+            result = subprocess.run(["uname", "-r"], capture_output=True, text=True, check=True).stdout
+            for line in self._lineGen(result):
+                kernelVers += line.strip()
+        except Exception as e:
+            logger.error("Error opening /etc/debian_version : %s", e)
+            kernelVers = ""
+        
+        logger.debug("CameraCfg.getKernelVersion - kernelVers = %s", kernelVers)
+        return kernelVers
+
+    def getLsbRelease(self):
+        """ Get the LSB release of the installed OS
+        
+        """
+        logger.debug("CameraCfg.getLsbRelease")
+        lsbRelease = ""
+        try:
+            result = subprocess.run(["lsb_release", "-a"], capture_output=True, text=True, check=True).stdout
+            for line in self._lineGen(result):
+                logger.debug("CameraCfg.getLsbRelease - line:%s", line)
+                if line[0:12] == "Description:":
+                    lsbRelease = line[13:].strip()
+                    break
+        except Exception as e:
+            logger.error("Error executing lsb_release -a : %s", e)
+            lsbRelease = ""
+        
+        logger.debug("CameraCfg.getLsbRelease - lsbRelease = %s", lsbRelease)
+        return lsbRelease
+
     @staticmethod
     def _lineGen(s):
         """Generator to yield lines of a text
@@ -3502,6 +3646,7 @@ class CameraCfg():
             cls._cameras = []
             cls._sensorModes = []
             cls._rawFormats = []
+            cls._tuningConfig = TuningConfig()
             cls._controls = CameraControls()
             cls._controlsBackup: CameraControls = None
             cls._cameraProperties = CameraProperties()
@@ -3564,6 +3709,14 @@ class CameraCfg():
     @controls.setter
     def controls(self, value: CameraControls):
         self._controls = value
+    
+    @property
+    def tuningConfig(self) -> TuningConfig:
+        return self._tuningConfig
+
+    @tuningConfig.setter
+    def tuningConfig(self, value: TuningConfig):
+        self._tuningConfig = value
     
     @property
     def controlsBackup(self) -> CameraControls:
@@ -3690,6 +3843,7 @@ class CameraCfg():
             if not os.path.exists(cfgPath):
                 os.makedirs(cfgPath, exist_ok=True)
             self._persistCl(self.cameras, "cameras.json", cfgPath)
+            self._persistCl(self.tuningConfig, "tuningConfig.json", cfgPath)
             self._persistCl(self.sensorModes, "sensorModes.json", cfgPath)
             self._persistCl(self.rawFormats, "rawFormats.json", cfgPath)
             self._persistCl(self.cameraProperties, "cameraProperties.json", cfgPath)
@@ -3744,6 +3898,8 @@ class CameraCfg():
                         scfg["videoconfig"] = CameraConfig.initFromDict(value)
                     elif key == "controls":
                         scfg["controls"] = CameraControls.initFromDict(value)
+                    elif key == "tuningconfig":
+                        scfg["tuningconfig"] = TuningConfig.initFromDict(value)
                     else:
                         scfg[key] = value
                 sc[camKey] = scfg
@@ -3754,6 +3910,7 @@ class CameraCfg():
         """
         if cfgPath:
             if os.path.exists(cfgPath):
+                self.tuningConfig = self._loadConfigCl(TuningConfig, "tuningConfig.json", cfgPath)
                 self.serverConfig = self._loadConfigCl(ServerConfig, "serverConfig.json", cfgPath)
                 self.liveViewConfig = self._loadConfigCl(CameraConfig, "liveViewConfig.json", cfgPath)
                 self.photoConfig = self._loadConfigCl(CameraConfig, "photoConfig.json", cfgPath)

@@ -12,6 +12,8 @@ This screen contains several tabs with information on the camera system:
 
 This section shows information on the server hardware with *Model* and *Board Revision*
 
+For the operating system, the kernel version (result of ```uname -r```) and the Debian version (result of *Description* from ```lsb_release -a``` and ```cat /etc/debian_version```) are shown
+
 *Process Info* shows current process information for the raspiCamSrv server process (result of Linux ```ps -eLf``` command)
 - *PID*: Process ID of Flask process (PID)
 - *Start*: Process start time (STIME): either start time (HH:MM) at current day or day (MonDD) when process was started.
@@ -47,6 +49,9 @@ If the Sensor Mode cannot currently be determined, 'unknown' is shown.
 The Sensor Mode is usually automatically selected by the camera and normally corresponds to the largest [Stream Size](./Configuration.md#stream-size-width-height), requested by one of the [Camera Configurations](./Configuration.md).
 
 See [Camera Status and Number of Threads](#camera-status-and-number-of-threads)
+
+Under *Tuning File*, you can see whether the Default or a custom tuning file are currently in use.    
+See [raspiCamSrv Camera Tuning](./Tuning.md).
 
 ## Camera Properties
 

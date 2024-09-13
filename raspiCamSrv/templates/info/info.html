@@ -27,6 +27,16 @@
                 <td></td>
             </tr>
             <tr>
+                <td>Kernel Version</td>
+                <td>{{sc.kernelVersion}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Debian Version</td>
+                <td>{{sc.debianVersion}}</td>
+                <td></td>
+            </tr>
+            <tr>
                 <td>Process Info</td>
                 <td>{{sc.processInfo}}</td>
                 <td></td>
@@ -48,6 +58,8 @@
         <h4>Camera {{ cam.num }}</h4>
         {% endif%}
         {% endif%}
+        {% set camnum = cam.num|string %}
+        {% set tc = tcs[camnum] %}
         <table class="w3-table-all">
             <tr>
                 <th style="width:15%">Property</th>
@@ -107,6 +119,21 @@
                 </td>
                 <td>
                     Current status of the camera
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Tuning File
+                </td>
+                <td>
+                    {% if tc.loadTuningFile == True %}
+                        {{ tc.tuningFilePath }}
+                    {% else %}
+                    Default
+                    {% endif %}
+                </td>
+                <td>
+                    Tuning file to be loaded
                 </td>
             </tr>
         </table>

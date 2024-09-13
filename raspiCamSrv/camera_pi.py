@@ -3,7 +3,7 @@ import time
 import datetime
 import threading
 from _thread import get_ident
-from raspiCamSrv.camCfg import CameraInfo, CameraCfg, SensorMode, CameraConfig
+from raspiCamSrv.camCfg import CameraInfo, CameraCfg, SensorMode, CameraConfig, TuningConfig
 from raspiCamSrv.photoseriesCfg import Series
 from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
 from libcamera import Transform, Size, ColorSpace, controls
@@ -62,7 +62,7 @@ class CameraController():
     def configuration(self) -> CameraConfiguration:
         return self._requestedCfg
 
-    def requestCameraForConfig(self, cam:Picamera2, camNum, cfg:CameraConfig, cfgPhoto:CameraConfig=None, forLiveStream:bool=False):
+    def requestCameraForConfig(self, cam:Picamera2, camNum, cfg:CameraConfig, cfgPhoto:CameraConfig=None, forLiveStream:bool=False, forActiveCamera=True):
         """ Request camera start for a specific configuration
         
             Parameters:
@@ -72,6 +72,7 @@ class CameraController():
                      If None, request start for the active configuration
             cfgPhoto Photo configuration. To be provided when cfg is a raw photo configuration
             forLiveStream:  The request is for the Live Stream -> don't deactivete Live Stream
+            forActiveCamera: Whether the request is for the active camera
         
             Return:
             True  if start is exclusive for the requested configuration
@@ -91,7 +92,7 @@ class CameraController():
 
         if cfg:
             self.requestConfig(cfg, cfgPhoto=cfgPhoto)
-        cam, started = self.requestStart(cam, camNum)
+        cam, started = self.requestStart(cam, camNum, forActiveCamera)
         if started:
             logger.debug("Thread %s: CameraController.requestCameraForConfig - camera started", get_ident())
         else:
@@ -103,7 +104,7 @@ class CameraController():
             logger.debug("Thread %s: CameraController.requestCameraForConfig: Live stream stopped", get_ident())
             cam, stopped = self.requestStop(cam)
             if stopped:
-                cam, started = Camera.ctrl.requestStart(cam, camNum)
+                cam, started = Camera.ctrl.requestStart(cam, camNum, forActiveCamera)
                 if started:
                     logger.debug("Thread %s: CameraController.requestCameraForConfig - camera started", get_ident())
                 else:
@@ -133,10 +134,12 @@ class CameraController():
             logger.debug("Thread %s: CameraController.restoreLivestream - Restart live stream not required", get_ident())
         return cam
     
-    def requestStart(self, cam, camNum):
+    def requestStart(self, cam, camNum, forActiveCamera=True):
         """ Request to start the camera
         
             If the camera is not yet started, it is configured and started
+            
+            forActiveCamera: Whether the request is for the active camera
             Return:
             - True  if the camera was started
                     or if the camera had been started before with the same configuration
@@ -147,8 +150,30 @@ class CameraController():
         if cam.started == False:
             try:
                 if cam.is_open == False:
-                    cam = Picamera2(camNum)
-                    prgLogger.debug("picam2 = Picamera2(%s)", camNum)
+                    cfg = CameraCfg()
+                    if forActiveCamera == True:
+                        tc = cfg.tuningConfig
+                    else:
+                        strc = cfg.streamingCfg
+                        camNumStr = str(camNum)
+                        if camNumStr in strc:
+                            scfg = strc[camNumStr]
+                            if "tuningconfig" in scfg:
+                                tc = scfg["tuningconfig"]
+                            else:
+                                tc = TuningConfig()
+                        else:
+                            tc = TuningConfig()
+                    if tc.loadTuningFile == False:
+                        cam = Picamera2(camNum)
+                        prgLogger.debug("picam2 = Picamera2(%s)", camNum)
+                    else:
+                        tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
+                        logger.debug("Thread %s: CameraController.requestStart - Tuning file loaded: File=%s Folder=%s", get_ident(), tc.tuningFile, tc.tuningFolder)
+                        cam = Picamera2(camNum, tuning=tuning)
+                        logger.debug("Thread %s: CameraController.requestStart - Initialized camera %s with tuning", get_ident(), camNum)
+                        prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
+                        prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", camNum)
                 self._activeCfg = self.copyConfig(self._requestedCfg)
                 logger.debug("Thread %s: CameraController.requestStart - activeCfg b: %s", get_ident(), self._activeCfg)
                 wrkCfg = self.copyConfig(self._activeCfg)
@@ -166,7 +191,7 @@ class CameraController():
                 time.sleep(1.5)
                 prgLogger.debug("time.sleep(1.5)")
             except RuntimeError as e:
-                logger.error("Thread %s:  CameraController.requestStart - Error starting camera: %s", get_ident(), e)
+                logger.error("Thread %s: CameraController.requestStart - Error starting camera: %s", get_ident(), e)
         else:
             isIdentical, dif = self.compareConfig(self._requestedCfg, self._activeCfg)
             if isIdentical:
@@ -958,8 +983,16 @@ class Camera():
         if cls.cam is None:
             logger.debug("Thread %s: Camera.initCamera: Instantiating camera %s", get_ident(), activeCam)
             try:
-                cls.cam = Picamera2(activeCam)
-                prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                tc = cfg.tuningConfig
+                if tc.loadTuningFile == False:
+                    cls.cam = Picamera2(activeCam)
+                    prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                else:
+                    tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
+                    cls.cam = Picamera2(activeCam, tuning=tuning)
+                    logger.debug("Thread %s: Camera.initCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
+                    prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
+                    prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
                 cls.camNum = activeCam
                 cls.ctrl = CameraController()
             except RuntimeError as e:
@@ -972,8 +1005,16 @@ class Camera():
                 try:
                     logger.debug("Thread %s: Camera.initCamera: About to switch camera from %s to %s", get_ident(), Camera.camNum, activeCam)
                     cls.stopCameraSystem()
-                    cls.cam = Picamera2(activeCam)
-                    prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                    tc = cfg.tuningConfig
+                    if tc.loadTuningFile == False:
+                        cls.cam = Picamera2(activeCam)
+                        prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                    else:
+                        tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
+                        cls.cam = Picamera2(activeCam, tuning=tuning)
+                        logger.debug("Thread %s: Camera.initCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
+                        prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
+                        prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
                     cls.camNum = activeCam
                     cls.ctrl = CameraController()
                     logger.debug("Thread %s: Camera.initCamera: Switch camera to %s successful", get_ident(), activeCam)
@@ -1023,16 +1064,34 @@ class Camera():
         activeCam = Camera.getActiveCamera()
         if Camera.cam is None:
             logger.debug("Thread %s: Camera.switchCamera: Camera instantiated: %s", get_ident(), activeCam)
-            Camera.cam = Picamera2(activeCam)
-            prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+            cfg = CameraCfg()
+            tc = cfg.tuningConfig
+            if tc.loadTuningFile == False:
+                cls.cam = Picamera2(activeCam)
+                prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+            else:
+                tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
+                cls.cam = Picamera2(activeCam, tuning=tuning)
+                logger.debug("Thread %s: Camera.switchCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
+                prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
+                prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
             Camera.camNum = activeCam
             Camera.ctrl = CameraController()
         else:
             if activeCam != Camera.camNum:
                 logger.debug("Thread %s: Camera.switchCamera: About to switch camera from %s to %s", get_ident(), Camera.camNum, activeCam)
                 Camera.stopCameraSystem()
-                Camera.cam = Picamera2(activeCam)
-                prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                cfg = CameraCfg()
+                tc = cfg.tuningConfig
+                if tc.loadTuningFile == False:
+                    cls.cam = Picamera2(activeCam)
+                    prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                else:
+                    tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
+                    cls.cam = Picamera2(activeCam, tuning=tuning)
+                    logger.debug("Thread %s: Camera.switchCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
+                    prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
+                    prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
                 Camera.camNum = activeCam
                 Camera.ctrl = CameraController()
                 logger.debug("Thread %s: Camera.switchCamera: Switch camera to %s successful", get_ident(), activeCam)
@@ -1325,6 +1384,7 @@ class Camera():
                 if cfgCam.isUsb == False:
                     activeCamOK = True
                     sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
+                    sc.activeCameraModel = cfgCam.model
                 break
         logger.debug("Thread %s: Camera.getActiveCamera - Active camera:%s - activeCamOK:%s", get_ident(), activeCam, activeCamOK)
         # If config for active camera is not in the list, or if it is a USB cam, 
@@ -1334,6 +1394,7 @@ class Camera():
                 if cfgCam.isUsb == False:
                     sc.activeCamera = cfgCam.num
                     sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
+                    sc.activeCameraModel = cfgCam.model
                     break
             logger.debug("Thread %s: Camera.getActiveCamera - active camera reset to %s", get_ident(), sc.activeCamera)
         # Make sure that folder for photos exists
@@ -1467,7 +1528,23 @@ class Camera():
         if not camNum2 is None:
             try:
                 cls.camNum2 = camNum2
-                cls.cam2 = Picamera2(cls.camNum2)
+                cfg = CameraCfg()
+                strc = cfg.streamingCfg
+                camNum2Str = str(camNum2)
+                if camNum2Str in strc:
+                    scfg = strc[camNum2Str]
+                    if "tuningconfig" in scfg:
+                        tc = scfg["tuningconfig"]
+                        if tc.loadTuningFile == False:
+                            cls.cam2 = Picamera2(cls.camNum2)
+                        else:
+                            tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
+                            cls.cam2 = Picamera2(cls.camNum2, tuning=tuning)
+                            logger.debug("Thread %s: Camera.setSecondCamera - Initialized camera %s with tuning file %s", get_ident(), cls.camNum2, tc.tuningFilePath)
+                    else:
+                        cls.cam2 = Picamera2(cls.camNum2)
+                else:
+                    cls.cam2 = Picamera2(cls.camNum2)
                 cls.ctrl2 = CameraController()
                 cls.event2 = CameraEvent()
                 logger.debug("Thread %s: Camera.setSecondCamera - second camera initialized %s", get_ident(), cls.camNum2)
@@ -1501,6 +1578,7 @@ class Camera():
             scfg = {}
             scfg["camerainfo"] = copy.copy(sc.activeCameraInfo)
             scfg["hasfocus"] = cfg.cameraProperties.hasFocus
+            scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
             scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
             scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
             scfg["controls"] = copy.deepcopy(cfg.controls)
@@ -1563,6 +1641,7 @@ class Camera():
                         break
                 scfg["camerainfo"] = "Camera " + cn + " (" + model + ")"
                 scfg["hasfocus"] = hasFocus
+                scfg["tuningconfig"] = TuningConfig()
                 scfg["liveconfig"] = liveViewConfig
                 scfg["videoconfig"] = videoConfig
                 scfg["controls"] = copy.deepcopy(cfg.controls)
@@ -2058,7 +2137,7 @@ class Camera():
                 Camera.ctrl.requestConfig(srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.rawConfig, cfgPhoto=srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.liveViewConfig)
-            Camera.cam, started = Camera.ctrl.requestStart(Camera.cam, Camera.camNum)
+            Camera.cam, started = Camera.ctrl.requestStart(Camera.cam, Camera.camNum, forActiveCamera=True)
             if not started:
                 Camera.cam, excl = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg=None, forLiveStream=True)
             else:
@@ -2110,7 +2189,7 @@ class Camera():
         Camera.ctrl2.requestConfig(srvCam.streamingCfg[str(Camera.camNum2)]["videoconfig"])
         Camera.ctrl2.requestConfig(srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"])
 
-        Camera.cam2, started = Camera.ctrl2.requestStart(Camera.cam2, Camera.camNum2)
+        Camera.cam2, started = Camera.ctrl2.requestStart(Camera.cam2, Camera.camNum2, forActiveCamera=False)
         if not started:
             logger.error("Second camera did not start")
             raise RuntimeError("Second camera did not start")

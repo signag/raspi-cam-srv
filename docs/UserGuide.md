@@ -30,7 +30,7 @@ On the left side, the title bar shows the application name (raspiCamSrv) and the
 
 The main menu (black background) allows navigation to different screens:
 - **Live** shows the [Live Screen](./LiveScreen.md) which includes functionality for image control as well as photo- and video taking
-- **Config** gives access to camera [Configuration](./Configuration.md) where basic camera configurations can be specified for different scenarios.
+- **Config** gives access to camera [Tuning](./Tuning.md) and camera [Configuration](./Configuration.md) where basic camera configurations can be specified for different scenarios.
 - **Info** opens the [Camera Information](./Information.md) page with information on installed cameras as well as Properties and Sensor Modes of the active camera.
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.

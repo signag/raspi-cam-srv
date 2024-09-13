@@ -31,6 +31,8 @@ For more details, see [raspiCamSrv Tasks and Background Processes](./Background%
 
 ## Configuration Tab
 
+The *Config* submenu includes a tab *Tuning* which is described in [raspiCamSrv Camera Tuning](./Tuning.md) and not here.
+
 An individual configuration tab is available for each use case. All tabs have essentially the same structure:   
 
 As a general aspect, the green [Submenue](./UserGuide.md#submenue) bar includes an option to synchronize the aspect ratio of [stream sizes](#stream-size-width-height) across all configurations if this has been changed for the current configuration.   

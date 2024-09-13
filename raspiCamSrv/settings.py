@@ -1,6 +1,6 @@
 from flask import Blueprint, Response, flash, g, render_template, request, current_app
 from werkzeug.exceptions import abort
-from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig
+from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig
 from raspiCamSrv.camera_pi import Camera, CameraEvent
 from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
@@ -69,7 +69,18 @@ def serverconfig():
                 for cm in cs:
                     if activeCam == cm.num:
                         sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
+                        sc.activeCameraModel = cm.model
                         break
+                strCfg = cfg.streamingCfg
+                newCamStr = str(activeCam)
+                if newCamStr in strCfg:
+                    ncfg = strCfg[newCamStr]
+                    if "tuningconfig" in ncfg:
+                        cfg.tuningConfig = ncfg["tuningconfig"]
+                    else:
+                        cfg.tuningConfig = TuningConfig
+                else:
+                    cfg.tuningConfig = TuningConfig
                 Camera.switchCamera()
                 msg = "Camera switched to " + sc.activeCameraInfo
                 logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
@@ -120,6 +131,7 @@ def resetServer():
         cfg.cameras = []
         cfg.sensorModes = []
         cfg.rawFormats = []
+        cfg.tuningConfig = TuningConfig()
         cfg.controls = CameraControls()
         cfg.controlsBackup = None
         cfg.cameraProperties = CameraProperties()

@@ -9,7 +9,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.9.2
+## Feature Overview V2.10.2
 For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
 For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
 
@@ -38,6 +38,7 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - On the [Config screen](docs/Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
 - When modifying [Stream Sizes](./docs/Configuration.md#stream-size-width-height) to non-standard aspect ratios, an option can assure that this is syncronously done for all camera configurations, so that Live Stream, Photos, Raw Photos and Videos have all the same aspect ratio and are not distorted.- The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
 - The [Photos screen](docs/PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
+- This screen allows also photo/video download and deletion.
 - With the [Photo Series](docs/PhotoSeries.md) screen, different kinds of photo series ([Timelapse Series](./docs/PhotoSeriesTimelapse.md), [Exposure Series](./docs/PhotoSeriesExp.md), [Focus Stacks](./docs/PhotoSeriesFocus.md)) can be configured, executed and monitored during their progress.
 - For [Timelapse Series](./docs/PhotoSeriesTimelapse.md), it is possible to define active periods depending on sunrise and sunset.
 - The [Photo Series](docs/PhotoSeries.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
@@ -49,9 +50,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 
-**New in V2.9.0 and V2.9.1**
-- This version extends the [Photo Viewer](./docs/PhotoViewer.md) and allows deletion and download of selected files..
-- [Photo Series](./docs/PhotoSeries.md) can be downloaded.
+**New in V2.10.0**
+- Support of [Tuning](./docs/Tuning.md) by selection and management of tuning files.
 
 
 

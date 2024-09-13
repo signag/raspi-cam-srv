@@ -2,11 +2,32 @@
 
 {% block header %}
     {% block title %}Camera Configurations{% endblock %}
+    <style>
+        .inputfile {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        .inputfile:focus + label {
+            outline: 1px dotted #000;
+            outline: -webkit-focus-ring-color auto 5px;
+        }        
+    </style>
 {% endblock %}
 
 {% block content %}
     <div class="w3-bar w3-green">
         <!-- Config menue -->
+        {% if sc.lastConfigTab == "cfgtuning" %}
+        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgtuningbtn"
+            onclick="openCfgTab('cfgtuning', 'cfgtuningbtn')">Tuning</button>
+        {% else %}
+        <button class="w3-bar-item w3-button configmenu" id="cfgtuningbtn" 
+            onclick="openCfgTab('cfgtuning', 'cfgtuningbtn')">Tuning</button>
+        {% endif %}
         {% if sc.lastConfigTab == "cfglive" %}
         <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfglivebtn" 
             onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
@@ -61,6 +82,139 @@
             </form>
         </div>        
     </div>
+    <!-- Tuning configuration -->
+    {% if sc.lastConfigTab == "cfgtuning" %}
+    <div id="cfgtuning" class="cfggroup">
+    {% else %}
+    <div id="cfgtuning" class="cfggroup" style="display:none">
+    {% endif %}
+        <h4>Configuration for Tuning</h4>
+        <div>
+            <form method="post" action="{{ url_for('config.tuningCfg') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                When activated, the specified tuning file will be loaded when the camera is initialized.
+                            </span>
+                            <label for="loadtuningfile">Load Tuning File:</label>
+                        </td>
+                        <td style="width:65%">
+                            {% if tc.loadTuningFile == True %}
+                            <input type="checkbox" id="loadtuningfile" name="loadtuningfile" onchange="blockTuningFileDeletion()" aria-label="loadTuningFile" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="loadtuningfile" name="loadtuningfile" onchange="blockTuningFileDeletion()" aria-label="loadTuningFile" value="0">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Path to folder where tuning files are located.<br>
+                                Leave empty for default.
+                            </span>
+                            <label for="tuningfolder">Full Path to Folder with Tuning Files:</label>
+                        </td>
+                        <td style="width:65%">
+                            {% if tc.tuningFolder == None %}
+                            <input style="width:100%" id="tuningfolder" name="tuningfolder" onchange="blockTuningFileDeletion()" value="">
+                            {% else %}
+                            <input style="width:100%" id="tuningfolder" name="tuningfolder" onchange="blockTuningFileDeletion()" value="{{ tc.tuningFolder }}">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                File name of tuning file to be loaded.
+                            </span>
+                            <label for="tuningfile">Name of Tuning File:</label>
+                        </td>
+                        <td style="width:65%">
+                            <select style="width:100%" name="tuningfile" id="tuningfile" onchange="blockTuningFileDeletion()">
+                                {% for fil in tfl %}
+                                {% if tc.tuningFile == fil %}
+                                <option value="{{ fil }}" selected>{{ fil }}</option>
+                                {% else %}
+                                <option value="{{ fil }}">{{ fil }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%"></td>
+                        <td style="width:30%"></td>
+                        <td style="width:65%">
+                            For tweaking the tuning file, see <a href="https://datasheets.raspberrypi.com/camera/raspberry-pi-camera-guide.pdf" target="_blank">Tuning Guide</a>
+                            chapter 6.8
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" style="width: 30ch" type="submit" value="Submit & Apply">
+                <p style="margin-bottom: 0"></p>
+                <hr>
+                <p style="margin-bottom: 0"></p>
+            </form>
+            {% if tc.isDefaultFolder == True %}
+            <form method="post" action="{{ url_for('config.customTuning') }}">
+                <input class="w3-button w3-black" style="width: 30ch" type="submit" value="Custom Folder">
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('config.defaultTuning') }}">
+                <input class="w3-button w3-black" style="width: 30ch" type="submit" value="Default Folder">
+            </form>
+            {% endif %}
+            <p style="margin-bottom: 0"></p>
+            {% if tc.isDefaultFolder == True or tc.loadTuningFile == True %}
+            <form id="deletetuningfile" method="post" action="{{ url_for('config.deleteTuningFile') }}">
+                <input id="deletetuningfilebtn" class="w3-button w3-black" style="width: 30ch" type="submit"
+                    onclick="confirmDeleteTuningFile('deletetuningfile')" value="Delete Tuning File" disabled>
+            </form>
+            {% else %}
+            <form id="deletetuningfile" method="post" action="{{ url_for('config.deleteTuningFile') }}">
+                <input id="deletetuningfilebtn" class="w3-button w3-black" style="width: 30ch" type="submit"
+                    onclick="confirmDeleteTuningFile('deletetuningfile')" value="Delete Tuning File">
+            </form>
+            {% endif %}
+            <p style="margin-bottom: 0"></p>
+            <form method="post" action="{{ url_for('config.downloadTuningFile') }}">
+                <input class="w3-button w3-black" style="width: 30ch" type="submit" value="Download Tuning File">
+            </form>
+            <p style="margin-bottom: 0"></p>
+            <!-- 
+                Solution for styling file upload from
+                https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/
+            -->
+            {% if tc.isDefaultFolder == True %}
+            <form action="{{ url_for('config.uploadTuningFile') }}" method="post" enctype="multipart/form-data">
+                <input class="w3-button w3-black" style="width: 30ch" type="submit" value="Select Tuning File for Upload" disabled>
+                <br>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" style="width: 30ch" type="submit" value="Upload selected File" disabled>
+            </form>
+            {% else %}
+            <form action="{{ url_for('config.uploadTuningFile') }}" method="post" enctype="multipart/form-data">
+                <input class="inputfile" id="uploadtuningfile" style="width: 40ch" type="file" accept=".json"
+                    data-multiple-caption="{count}" name="tuningfile" multiple />
+                <label id="uploadtuningfilelbl" class="w3-button w3-black" style="width: 30ch" for="uploadtuningfile">
+                    Select Tuning File for Upload
+                </label>
+                <br>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" style="width: 30ch"  type="submit" value="Upload selected File">
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Live View configuration -->
     {% if sc.lastConfigTab == "cfglive" %}
     <div id="cfglive" class="cfggroup">
@@ -1578,6 +1732,41 @@
         
         function syncAspectRatio(form) {
             document.getElementById(form).submit();
-    }
-</script>
+        }
+
+        function confirmDeleteTuningFile(form) {
+            if (confirm("Do you want to delete the active tuning file?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+
+        function blockTuningFileDeletion() {
+            document.getElementById("deletetuningfilebtn").disabled = true;
+        }
+
+        const upld = document.getElementById("uploadtuningfile");
+        upld.addEventListener("change", function (e) {
+            //On change of input file (file(s) have been selected),
+            //Change label to the selected file.
+            //Modified source from 
+            //https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/
+            var upldlbl = document.getElementById("uploadtuningfilelbl");
+            labelVal = upldlbl.innerHTML;
+            console.log("upldlbl.innerHTML:", labelVal);
+            var fileName = '';
+            if (this.files && this.files.length > 1)
+                fileName = (this.getAttribute('data-multiple-caption') || '').replace('{count}', this.files.length) + ' Files selected';
+            else
+                fileName = e.target.value.split('\\').pop();
+
+            console.log("fileName:", fileName);
+            if (fileName)
+                upldlbl.innerHTML = fileName;
+            else
+                upldlbl.innerHTML = labelVal;
+        })
+    </script>
 {% endblock %}

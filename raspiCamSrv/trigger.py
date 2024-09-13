@@ -33,10 +33,10 @@ def trigger():
     #logger.debug("event list: %s", tc.eventList)
     return render_template("trigger/trigger.html", tc=tc, sc=sc)
 
-@bp.route("/control", methods=("GET", "POST"))
+@bp.route("/trgcontrol", methods=("GET", "POST"))
 @login_required
-def control():
-    logger.debug("In control")
+def trgcontrol():
+    logger.debug("In trgcontrol")
     cfg = CameraCfg()
     g.hostname = request.host
     g.version = version

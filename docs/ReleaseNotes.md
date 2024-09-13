@@ -28,6 +28,28 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.10.2
+
+### New Features
+
+- Added kernel version and Debian version to [Info](./Information.md) screen.
+
+## V2.10.1
+
+### Bugfix
+
+- Fixed an issue with platform-specific search of tuning files.
+
+## V2.10.0
+
+### New Features
+
+- Support of [Camera Tuning](./Tuning.md) by selection of alternate tuning files.<br>Resolves raspi-cam-srv issue #26 [NoIR camera settings](https://github.com/signag/raspi-cam-srv/issues/26)<br>**Note:** There is still an issue when streaming two cameras. (See Picamera2 Issue #1103 [Tuning file support not thread-safe?](https://github.com/raspberrypi/picamera2/issues/1103))
+
+### Bugfixes
+
+- Fixed error ```The browser (or proxy) sent a request that this server could not understand.``` which ocurred when pressing *Submit* in the [Control](./Trigger.md#control) tab of the [Trigger](./Trigger.md) menu.<br>Resolves raspi-cam-srv issue #27 [Trigger Control Submit make server error](https://github.com/signag/raspi-cam-srv/issues/27)
+
 ## V2.9.2
 
 ### Bugdixes
