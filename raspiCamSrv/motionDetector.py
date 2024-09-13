@@ -695,8 +695,8 @@ class MotionDetector():
             while cls.mThread:
                 time.sleep(0.01)
                 cnt += 1
-                if cnt > 500:
-                    logger.error("Motion detection thread did not stop within 5 sec")
+                if cnt > 1000:
+                    logger.error("Motion detection thread did not stop within 10 sec")
                     if cls.mThread.is_alive():
                         cnt = 0
                     else:
