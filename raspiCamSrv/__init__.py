@@ -56,13 +56,13 @@ def create_app(test_config=None):
         logger.setLevel(logging.ERROR)
 
     #>>>>> Uncomment the following line in order to log to the log file
-    #app.logger.addHandler(filehandler)
+    app.logger.addHandler(filehandler)
 
     #>>>>> Explicitely set specific log levels. Leave "werkzeug" at INFO
     logging.getLogger("werkzeug").setLevel(logging.INFO)
     #logging.getLogger("raspiCamSrv.auth").setLevel(logging.ERROR)
     #logging.getLogger("raspiCamSrv.camCfg").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
+    logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.images").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.webcam").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.trigger").setLevel(logging.DEBUG)
@@ -74,7 +74,7 @@ def create_app(test_config=None):
     #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
     Picamera2.set_logging(Picamera2.ERROR)
     #>>>>> Uncomment the following line to let Picamera2 log to the log file
-    #logging.getLogger("picamera2").addHandler(filehandler)
+    logging.getLogger("picamera2").addHandler(filehandler)
         
     #>>>>> Set log level for libcamera (0:DEBUG, 1:INFO, 2:WARNING, 3:ERROR, 4:FATAL)
     os.environ["LIBCAMERA_LOG_LEVELS"] = "*:3"
