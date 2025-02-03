@@ -28,6 +28,14 @@ or
 or    
 ```journalctl --user -e```
 
+## V2.10.3
+
+### Bugfix
+
+- Fixed function [Load Stored Configuration](./Settings.md#server-configuration) on the [Settings](./Settings.md) screen.<br>This function failed in cases when only a single camera is connected to a Raspberry Pi.<br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
+
+- Fixed [Switch Cameras](./Webcam.md#-switch-cameras-) on the [Web Cam](./Webcam.md) screen.<br>If working with two cameras, this function caused an error when [Triggered Capture of Videos and Photos](./Trigger.md), a [Photo Series](./PhotoSeries.md) or [Video Recording](./Phototaking.md#video) is currently active.<br>The user is now asked to stop either of these processes before switching cameras.
+
 ## V2.10.2
 
 ### New Features

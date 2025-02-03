@@ -347,7 +347,8 @@ def load_config():
         msg = "Configuration loaded from " + cfgPath
         flash(msg)
         Camera().restartLiveStream()
-        Camera().restartLiveStream2()
+        if Camera().cam2:
+            Camera().restartLiveStream2()
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
 
 def getLoadConfigOnStart(cfgPath: str) -> bool:

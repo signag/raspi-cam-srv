@@ -76,6 +76,7 @@ def switch_cameras():
         str2 = cfg.streamingCfg[str(Camera().camNum2)]
     sc.curMenu = "webcam"
     if request.method == "POST":
+        msg = None
         cs = cfg.cameras
         activeCam = sc.activeCamera
         newCam = activeCam
@@ -87,27 +88,36 @@ def switch_cameras():
                     newCamModel = cm.model
                     break
         if newCam != sc.activeCamera:
-            sc.activeCameraInfo = newCamInfo
-            sc.activeCameraModel = newCamModel
-            cfg.liveViewConfig.stream_size = None
-            cfg.photoConfig.stream_size = None
-            cfg.rawConfig.stream_size = None
-            cfg.videoConfig.stream_size = None
-            sc.activeCamera = newCam
-            strCfg = cfg.streamingCfg
-            newCamStr = str(newCam)
-            if newCamStr in strCfg:
-                ncfg = strCfg[newCamStr]
-                if "tuningconfig" in ncfg:
-                    cfg.tuningConfig = ncfg["tuningconfig"]
+            if sc.isTriggerRecording:
+                msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
+            if sc.isVideoRecording == True:
+                msg = "Please stop video recording before changing the tuning configuration"
+            if sc.isPhotoSeriesRecording:
+                msg = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
+            if not msg:
+                sc.activeCameraInfo = newCamInfo
+                sc.activeCameraModel = newCamModel
+                cfg.liveViewConfig.stream_size = None
+                cfg.photoConfig.stream_size = None
+                cfg.rawConfig.stream_size = None
+                cfg.videoConfig.stream_size = None
+                sc.activeCamera = newCam
+                strCfg = cfg.streamingCfg
+                newCamStr = str(newCam)
+                if newCamStr in strCfg:
+                    ncfg = strCfg[newCamStr]
+                    if "tuningconfig" in ncfg:
+                        cfg.tuningConfig = ncfg["tuningconfig"]
+                    else:
+                        cfg.tuningConfig = TuningConfig
                 else:
                     cfg.tuningConfig = TuningConfig
-            else:
-                cfg.tuningConfig = TuningConfig
-            Camera.switchCamera()
-            if sc.isLiveStream2:
-                str2 = cfg.streamingCfg[str(Camera().camNum2)]
-            logger.debug("switch_cameras - active camera set to %s", sc.activeCamera)
+                Camera.switchCamera()
+                if sc.isLiveStream2:
+                    str2 = cfg.streamingCfg[str(Camera().camNum2)]
+                logger.debug("switch_cameras - active camera set to %s", sc.activeCamera)
+        if msg:
+            flash(msg)
     return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2)
 
 @bp.route("/photo_feed")
