@@ -28,9 +28,15 @@ or
 or    
 ```journalctl --user -e```
 
-## V2.10.3
+## V2.10.4
 
 ### Bugfix
+
+- Fixed function [Load Stored Configuration](./Settings.md#server-configuration) on the [Settings](./Settings.md) screen.<br>After execution of this function, values shown on the [Settings](./Settings.md) screen were only updated to the values loaded from the stored configuration after the page has been refreshed. <br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
+
+## V2.10.3
+
+### Bugfixes
 
 - Fixed function [Load Stored Configuration](./Settings.md#server-configuration) on the [Settings](./Settings.md) screen.<br>This function failed in cases when only a single camera is connected to a Raspberry Pi.<br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
 

@@ -349,6 +349,15 @@ def load_config():
         Camera().restartLiveStream()
         if Camera().cam2:
             Camera().restartLiveStream2()
+        cam = Camera()
+        cfg = CameraCfg()
+        cs = cfg.cameras
+        sc = cfg.serverConfig
+        sc.checkMicrophone()
+        cp = cfg.cameraProperties
+        sc.curMenu = "settings"
+        cfgPath = current_app.static_folder + "/config"
+        los = getLoadConfigOnStart(cfgPath)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
 
 def getLoadConfigOnStart(cfgPath: str) -> bool:
