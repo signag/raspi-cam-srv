@@ -27,6 +27,15 @@ or
 ```sudo journalctl -e```    
 or    
 ```journalctl --user -e```
+6. If you used [start with stored configuration](./Settings.md#server-configuration) before updating, you may now try to activate this again.<br>In cases where configuration parameters were not modified with the update, this will usually work.<br>If not, you will need to prepare and store your preferred configuration again.
+
+In case that the server did not start correctly or if you see an unexpected behavior in the UI, you may have forgotten to deactivate [start with stored configuration](./Settings.md#server-configuration)<br>In this case, you can do the following:
+
+- ```cd ~/prg/raspi-cam-srv/raspiCamSrv/static/config```
+- Check whether a file ```_loadConfigOnStart.txt``` exists in this folder.
+- If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
+- Then repeat step 4, above
+
 ## V2.10.5
 
 ### Bugfixes
