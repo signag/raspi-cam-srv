@@ -27,6 +27,14 @@ or
 ```sudo journalctl -e```    
 or    
 ```journalctl --user -e```
+## V2.10.4
+
+### Bugfixes
+
+- Allowed port range in [Trigger - Notification](./TriggerNotification.md) extended to [1 ... 65535]<br>Partly resolves raspi-cam-srv issue #42 [SMTP port issue](https://github.com/signag/raspi-cam-srv/issues/42)
+
+- Fixed [Trigger Notification](./TriggerNotification.md) for SMTP servers which do not require authentication.<br>It can now be specified whether or not the server requires authentication.<br>Within the connection test it is checked whether the SMTP server requires SSL and authentication.<br>If the requirements are not consistent with the settings on the [Notification](./TriggerNotification.md) screen, an error message is shown.<br>Resolves raspi-cam-srv issue #42 [SMTP port issue](https://github.com/signag/raspi-cam-srv/issues/42)
+
 
 ## V2.10.4
 

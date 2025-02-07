@@ -427,7 +427,12 @@ class MotionDetector():
             else:
                 server = smtplib.SMTP(host=tc.notifyHost, port=tc.notifyPort)
             server.connect(tc.notifyHost)
-            server.login(scr.notifyUser, scr.notifyPwd)
+            
+            if tc.notifyAuthenticate == True:
+                logger.debug("Thread %s: MotionDetector._sendNotificationThread - Authentication with user/pwd", get_ident())
+                server.login(scr.notifyUser, scr.notifyPwd)
+            else:
+                logger.debug("Thread %s: MotionDetector._sendNotificationThread - Authentication skipped", get_ident())
             server.ehlo()
             server.send_message(msg)
             server.quit()

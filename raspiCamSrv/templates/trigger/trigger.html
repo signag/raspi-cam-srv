@@ -626,7 +626,7 @@
                             <label for="notifyport">Port:</label>
                         </td>
                         <td style="width:50%">
-                            <input type="number" id="notifyport" name="notifyport" min="1" max="999" step="1"
+                            <input type="number" id="notifyport" name="notifyport" min="1" max="65535" step="1"
                                 value="{{ tc.notifyPort }}">
                         </td>
                     </tr>
@@ -646,6 +646,27 @@
                         </td>
                     </tr>
                     <tr>
+                        <td style="width: 50%;">&nbsp;</td>
+                        <td style="width: 50%;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Check if server requires authentication.
+                            </span>
+                            <label for="notifyauthenticate">Server requires Authentication:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.notifyAuthenticate == True %}
+                            <input type="checkbox" id="notifyauthenticate" name="notifyauthenticate" 
+                                onclick="mailServerAuthenicationChanged()" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="notifyauthenticate" name="notifyauthenticate" 
+                                onclick="mailServerAuthenicationChanged()" value="1">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 User<br>
@@ -654,7 +675,11 @@
                             <label for="notifyuser">User:</label>
                         </td>
                         <td style="width:50%">
+                            {% if tc.notifyAuthenticate == True %}
                             <input type="text" id="notifyuser" name="notifyuser" value="">
+                            {% else %}
+                            <input type="text" id="notifyuser" name="notifyuser" value="" disabled>
+                            {% endif %}
                         </td>
                     </tr>
                     <tr>
@@ -666,7 +691,11 @@
                             <label for="notifypassword">Password:</label>
                         </td>
                         <td style="width:50%">
+                            {% if tc.notifyAuthenticate == True %}
                             <input type="password" id="notifypassword" name="notifypassword" value="">
+                            {% else %}
+                            <input type="password" id="notifypassword" name="notifypassword" value="" disabled>
+                            {% endif %}
                         </td>
                     </tr>
                     <tr>
@@ -677,10 +706,14 @@
                             <label for="notifysavepwd">Store Credentials in File:</label>
                         </td>
                         <td style="width:50%">
+                            {% if tc.notifyAuthenticate == True %}
                             {% if tc.notifySavePwd == True %}
                             <input type="checkbox" id="notifysavepwd" name="notifysavepwd" value="1" checked>
                             {% else %}
                             <input type="checkbox" id="notifysavepwd" name="notifysavepwd" value="1">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="notifysavepwd" name="notifysavepwd" value="1" disabled>
                             {% endif %}
                         </td>
                     </tr>
@@ -693,8 +726,11 @@
                             <label for="notifypwdpath">Credentials File Path:</label>
                         </td>
                         <td style="width:50%">
-                            <input style="width: 100%" type="text" id="notifypwdpath" name="notifypwdpath"
-                                value="{{ tc.notifyPwdPath }}">
+                            {% if tc.notifyAuthenticate == True %}
+                            <input style="width: 100%" type="text" id="notifypwdpath" name="notifypwdpath" value="{{ tc.notifyPwdPath }}">
+                            {% else %}
+                            <input style="width: 100%" type="text" id="notifypwdpath" name="notifypwdpath" value="{{ tc.notifyPwdPath }}" disabled>
+                            {% endif %}
                         </td>
                     </tr>
                     <tr>
@@ -743,7 +779,7 @@
                             <label for="notifypause">Notification Pause:</label>
                         </td>
                         <td style="width:50%">
-                            <input type="number" id="notifypause" name="notifypause" min="1" max="999999" step="1" value="{{ tc.notifyPause }}">
+                            <input type="number" id="notifypause" name="notifypause" min="0" max="999999" step="1" value="{{ tc.notifyPause }}">
                         </td>
                     </tr>
                     <tr>
@@ -1183,6 +1219,23 @@
                 document.getElementById("backsubmodel").disabled = false;
                 document.getElementById("videobboxes").disabled = false;
             }            
+        }
+
+        function mailServerAuthenicationChanged() {
+            /*  The function enables/disables user/password on Notification ab
+            */
+            var cb = document.getElementById("notifyauthenticate");
+            if (cb.checked == true) {
+                document.getElementById("notifyuser").disabled = false;
+                document.getElementById("notifypassword").disabled = false;
+                document.getElementById("notifysavepwd").disabled = false;
+                document.getElementById("notifypwdpath").disabled = false;
+            } else {
+                document.getElementById("notifyuser").disabled = true;
+                document.getElementById("notifypassword").disabled = true;
+                document.getElementById("notifysavepwd").disabled = true;
+                document.getElementById("notifypwdpath").disabled = true;
+            }
         }
     </script>
 {% endblock %}

@@ -314,34 +314,59 @@ def notify():
     scr = cfg.secrets
     if request.method == "POST":
         err = ""
-        notifyFrom = request.form["notifyfrom"]
-        notifyTo = request.form["notifyto"]
-        notifySubject = request.form["notifysubject"]
-        if notifySubject == "":
+        tc.notifyHost = request.form["notifyhost"]
+        tc.notifyPort = int(request.form["notifyport"])
+        tc.notifyFrom = request.form["notifyfrom"]
+        tc.notifyTo = request.form["notifyto"]
+        tc.notifySubject = request.form["notifysubject"]
+        if tc.notifySubject == "":
             err = "Please enter 'Subject'"
-        if notifyTo == "":
+        if tc.notifyTo == "":
             err = "Please enter 'To e-Mail'"
-        if notifyFrom == "":
+        if tc.notifyFrom == "":
             err = "Please enter 'From e-Mail'"
+        if tc.notifyHost == "":
+            err = "Please enter 'SMTP Server'"
+        if request.form.get("notifyauthenticate") is None:
+            tc.notifyAuthenticate = False
+        else:
+            tc.notifyAuthenticate = True
+        if tc.notifyAuthenticate == True:
+            user = request.form["notifyuser"]
+            pwd = request.form["notifypassword"]
+            if user == "" or pwd == "":
+                if tc.notifyConOK:
+                    if user == "":
+                        user = scr.notifyUser
+                    if pwd == "":
+                        pwd = scr.notifyPwd
+            if user == "" or pwd == "":
+                err = "Please provide 'User' and 'Password'"
+            else:
+                if request.form.get("notifysavepwd") is None:
+                    tc.notifySavePwd = False
+                else:
+                    tc.notifySavePwd = True
+                tc.notifyPwdPath = request.form["notifypwdpath"]
+                if tc.notifySavePwd == True:
+                    if tc.notifyPwdPath == "":
+                        err = "Please provide 'Credentials File Path'"
+                else:
+                    tc.notifyPwdPath = ""
+            
         if err != "":
+            tc.notifyConOK = False
             flash(err)
         else:
-            tc.notifyFrom = notifyFrom
-            tc.notifyTo = notifyTo
-            tc.notifySubject = notifySubject
-            tc.notifyHost = request.form["notifyhost"]
-            tc.notifyPort = int(request.form["notifyport"])
             if request.form.get("notifyusessl") is None:
                 tc.notifyUseSSL = False
             else:
                 tc.notifyUseSSL = True
-            user = request.form["notifyuser"]
-            pwd = request.form["notifypassword"]
-            if request.form.get("notifysavepwd") is None:
+            if tc.notifyAuthenticate == False:
+                user = ""
+                pwd = ""
                 tc.notifySavePwd = False
-            else:
-                tc.notifySavePwd = True
-            tc.notifyPwdPath = request.form["notifypwdpath"]
+                tc.notifyPwdPath = ""
             tc.notifyPause = int(request.form["notifypause"])
             if request.form.get("notifyincludevideo") is None:
                 tc.notifyIncludeVideo = False

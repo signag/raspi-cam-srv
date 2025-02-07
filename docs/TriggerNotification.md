@@ -13,6 +13,7 @@ On this tab, you specify the details required for notification on an event by e-
 - *SMTP Server* is the server address, for example "smtp.gmail.com"
 - *Port* is the server port to be used
 - *Use SSL* specifies whether or not SSL (Secure Sockets Layer) is to be used
+- *Server requires Authentication* must be checked if the mail server requires authentication with user and password.
 - *User* is the user name to be used for login to the server. This is typically identical with the e-Mail address.
 - *Password* is the password required for authentication
 

@@ -57,6 +57,7 @@ class TriggerConfig():
         self._notifyHost = ""
         self._notifyPort = 0
         self._notifyUseSSL = False
+        self._notifyAuthenticate = True
         self._notifyConOK = False
         self._notifyPause = 0
         self._notifyIncludeVideo = False
@@ -388,6 +389,14 @@ class TriggerConfig():
     @notifyUseSSL.setter
     def notifyUseSSL(self, value: bool):
         self._notifyUseSSL = value
+
+    @property
+    def notifyAuthenticate(self) -> bool:
+        return self._notifyAuthenticate
+
+    @notifyAuthenticate.setter
+    def notifyAuthenticate(self, value: bool):
+        self._notifyAuthenticate = value
 
     @property
     def notifyConOK(self) -> bool:
@@ -790,10 +799,12 @@ class TriggerConfig():
             Return (user, password, error message)
         """
         logger.debug("TriggerConfig.checkNotificationRecipient")
+        logger.debug("user: %s, password: %s", user, pwd)
         err = ""
         secHost = ""
         secPort = -1
         secUseSSL = None
+        secAuthenticate = None
         secUser = ""
         secPwd = ""
         secretsOK = False
@@ -806,6 +817,8 @@ class TriggerConfig():
                     secHost = notifySecrets["host"]
                     secPort = notifySecrets["port"]
                     secUseSSL = notifySecrets["useSSL"]
+                    if "authentication" in notifySecrets:
+                        secAuthenticate = notifySecrets["authentication"]
                     secUser = notifySecrets["user"]
                     secPwd = notifySecrets["password"]
                     secretsOK = True
@@ -830,6 +843,12 @@ class TriggerConfig():
             if secUseSSL != self.notifyUseSSL:
                 secUseSSL = self.notifyUseSSL
                 secretsOK = False
+        if secAuthenticate is None:
+            secAuthenticate = self.notifyAuthenticate
+        else:
+            if secAuthenticate != self.notifyAuthenticate:
+                secAuthenticate = self.notifyAuthenticate
+                secretsOK = False
         if secUser == "":
             if not user is None:
                 secUser = user
@@ -846,22 +865,38 @@ class TriggerConfig():
                 if pwd != "":
                     secPwd = pwd
                     secretsOK = False
+                    
+        # Test SSL
+        try:
+            with smtplib.SMTP_SSL(host=secHost, port=secPort) as smtp_ssl:
+                smtp_ssl.ehlo()
+                if secUseSSL == False:
+                    err = "Server requires SSL"
+        except (smtplib.SMTPConnectError, ConnectionRefusedError):
+            if secUseSSL == True:
+                err = "Server does not require SSL"
         
         # Test connection
-        try:
-            if secUseSSL == True:
-                server = smtplib.SMTP_SSL(host=secHost, port=secPort)
-            else:
-                server = smtplib.SMTP(host=secHost, port=secPort)
-            server.connect(secHost)
-            server.login(secUser, secPwd)
-            server.ehlo()
-            server.quit()
-            logger.debug("TriggerConfig.checkNotificationRecipient - connection test successful")
-        except Exception as e:
-            logger.debug("TriggerConfig.checkNotificationRecipient - connection test failed")
-            self.notifyConOK = False
-            err = "Connection error: " + str(e)
+        if err == "":
+            try:
+                if secUseSSL == True:
+                    server = smtplib.SMTP_SSL(host=secHost, port=secPort)
+                else:
+                    server = smtplib.SMTP(host=secHost, port=secPort)
+                server.connect(secHost)
+                server.ehlo()
+                if secAuthenticate == True:
+                    logger.debug("Authentication with user/pwd")
+                    server.login(secUser, secPwd)
+                else:
+                    if "auth" in server.esmtp_features:
+                        err = "The server requires authentication. Please provide 'User' and 'Password'"
+                    logger.debug("Authentication skipped")
+                server.quit()
+                logger.debug("TriggerConfig.checkNotificationRecipient - connection test successful")
+            except Exception as e:
+                logger.debug("TriggerConfig.checkNotificationRecipient - connection test failed")
+                err = "Connection error: " + str(e)
             
         if err == "":
             self.notifyConOK = True
@@ -899,6 +934,7 @@ class TriggerConfig():
                             notifySecrets["host"] = self.notifyHost
                             notifySecrets["port"] = self.notifyPort
                             notifySecrets["useSSL"] = self.notifyUseSSL
+                            notifySecrets["authentication"] = self.notifyAuthenticate
                             notifySecrets["user"] = secUser
                             notifySecrets["password"] = secPwd
                             with open(self.notifyPwdPath, "w") as f:
@@ -908,6 +944,8 @@ class TriggerConfig():
                                 except Exception as e:
                                     logger.err("TriggerConfig.checkNotificationRecipient - error while saving credentials to file %s: %s", self.notifyPwdPath, e)
                                     err = "Error writing to " + self.notifyPwdPath + ": " + str(e)
+        else:
+            self.notifyConOK = False
         return (secUser, secPwd, err)
 
     @classmethod                
