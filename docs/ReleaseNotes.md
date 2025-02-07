@@ -27,7 +27,7 @@ or
 ```sudo journalctl -e```    
 or    
 ```journalctl --user -e```
-## V2.10.4
+## V2.10.5
 
 ### Bugfixes
 
