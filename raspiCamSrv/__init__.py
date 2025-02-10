@@ -200,10 +200,10 @@ def create_app(test_config=None):
     from . import webcam
     app.register_blueprint(webcam.bp)
 
-    from . import api
-    app.register_blueprint(api.bp)
-
     if sc.useAPI == True:
+        from . import api
+        app.register_blueprint(api.bp)
+
         from flask_jwt_extended import JWTManager    
         
         if sc.jwtAuthenticationActive == False:

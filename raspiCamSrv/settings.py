@@ -7,9 +7,15 @@ from raspiCamSrv.db import get_db
 import os
 from pathlib import Path
 import json
-from flask_jwt_extended import create_access_token, get_jwt_identity
 from raspiCamSrv.auth import login_required
 import logging
+
+# Try to import flask_jwt_extended to avoid errors when upgrading to V2.11 from earlier versions
+try:
+    from flask_jwt_extended import create_access_token
+except ImportError:
+    pass
+
 
 bp = Blueprint("settings", __name__)
 
@@ -417,6 +423,7 @@ def loadConfigOnStart():
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
     
 @bp.route('/shutdown', methods=("GET", "POST"))
+@login_required
 def shutdown():
     logger.debug("In shutdown")
     g.hostname = request.host

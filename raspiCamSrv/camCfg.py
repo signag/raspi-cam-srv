@@ -2925,7 +2925,7 @@ class ServerConfig():
     def whyNotSupportsAPI(self) -> str:
         why = ""
         if not self.supportsAPI:
-            why = "The raspiCamSrv API not supported because"
+            why = "The raspiCamSrv API is not supported because"
             if not self.flaskJwtLibAvailable:
                 why = why + "<br>module flask_jwt_extended is not available"
         return why

@@ -13,6 +13,8 @@ The system will request an initial [registration and a login](./Authentication.m
 
 For error handling, see [raspiCamSrv Troubleshooting](./Troubelshooting.md)
 
+For interoperability, **raspiCamSrv** provides an [API](./API.md) which allows access to selected functions through web services.
+
 ## Application Screen
 ![Main Screen](img/Live_start.jpg)
 

@@ -36,17 +36,23 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V2.11.1
+
+### Bugfix
+
+- Fixed an import error which occurred after having upgraded to V2.11 when package ```flask-jwt-extended``` has not yet been installed.
+
 ## V2.11.0
 
 ### New Features
 
-- V2.11.0 introduces the new [raspiCamSrv API](./API.md) for interoprability of with other software packages.<br>This resolves the feature request raspi-cam-srv issue #34 [API?](https://github.com/signag/raspi-cam-srv/discussions/34)
+- V2.11.0 introduces the new [raspiCamSrv API](./API.md) for interoperability of raspiCamSrv with other software packages.<br>This resolves the feature request raspi-cam-srv issue #34 [API?](https://github.com/signag/raspi-cam-srv/discussions/34)
 
 - Required installation actions:<br>In order to allow API support, it is necessary to install an additional package.<br>This can be done before or after the [Update Procedure](#update-procedure):<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>```pip install flask-jwt-extended```
 
 ### Changes
 
-- The [Settings](./Settings.md) has been restructured to incorporate the additional settings required for the API
+- The [Settings](./Settings.md) screen has been restructured to incorporate the additional settings required for the API
 
 
 ## V2.10.5

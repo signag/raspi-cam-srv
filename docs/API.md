@@ -8,7 +8,7 @@ Configuration of the API is done on the [Settings/API](./SettingsAPI.md) screen.
 
 ## Postman Test Collection
 
-For testing the API, a [Postman](https://www.postman.com/) collection is available at [docs/api/postman](https://github.com/signag/raspi-cam-srv/tree/main/docs/api/postman) which can be downloaded and imported into a postman instance.
+For testing the API, a [Postman](https://www.postman.com/) collection is available at [docs/api/postman](https://github.com/signag/raspi-cam-srv/tree/main/docs/api/postman) which can be downloaded and imported into a Postman instance.
 
 ![PostmanColl](./img/API_Postman_collection.jpg)
 
@@ -40,7 +40,7 @@ These requests use the Access Token for authentication.
 
 ### 3. Refresh the Access Token
 
-If a request returns a expiration error, refresh the Access Token using the ```api refresh``` request.
+If a request returns a token expiration error, refresh the Access Token using the ```api refresh``` request.
 
 This will use the Refresh Token for authentication and return a fresh Access Token.
 

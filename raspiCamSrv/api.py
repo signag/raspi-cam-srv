@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash
 from werkzeug.exceptions import abort
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from raspiCamSrv.db import get_db
 
 from raspiCamSrv.camera_pi import Camera
@@ -14,6 +13,13 @@ from raspiCamSrv.version import version
 
 from raspiCamSrv.auth import login_required
 import logging
+
+# Try to import flask_jwt_extended to avoid errors when upgrading to V2.11 from earlier versions
+try:
+    from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+except ImportError:
+    pass
+
 
 bp = Blueprint("api", __name__)
 
