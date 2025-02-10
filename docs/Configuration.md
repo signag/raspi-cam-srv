@@ -47,6 +47,9 @@ If this option is activated after it was previously deactivated, all aspect rati
 
 With *Transform*, you can specify whether the image needs to be flipped horizontally, vertically or both. The latter case is identical to rotation of 180°.
 
+**NOTE:** When this is modified for one configuration, the settings are automatically transferred to all other configurations.<br>
+This is necessary because **raspiCamSrv** simultaneously configures all streams (lores, main and raw) in order to allow using these in parallel for different purposes, such as live stream and video recording. The transform settings cannot be different for different streams at the same time.
+
 ### Colour Space
 
 This allows selecting one of the supported colour spaces

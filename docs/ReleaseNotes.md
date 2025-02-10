@@ -36,6 +36,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V2.11.2
+
+### Bugfix
+
+- Fixed an issue where photos and videos could not be taken if the [Transform](./Configuration.md#transform) settings for the different configuration were different.<br>Now, when modifying the *Transform (flip <> or flip v)* are changed in one configuration this change is also applied to all other configurations.<br>This covers raspiCamSrv Issue #33 [Errors after changing Transform settings](https://github.com/signag/raspi-cam-srv/issues/33)
+
 ## V2.11.1
 
 ### Bugfix

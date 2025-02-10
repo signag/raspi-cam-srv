@@ -52,8 +52,45 @@ def main():
     tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
+def doSyncTransform(hflip: bool, vflip: bool, tgt: list) -> bool:
+    """ Synchronize the transform settings of target configurations with reference
+    
+        Parameters:
+        hflip:    horizontal flip
+        vflip:    vertical flip
+        tgt  :    list of configurations for which to adjust the aspect ratio
+        
+        Return:
+        True if transform settings for Live View was changed
+    """
+    logger.debug("In doSyncTransform")
+    ret = False
+    cfg = CameraCfg()
+    cfglive = cfg.liveViewConfig
+    cfgphoto = cfg.photoConfig
+    cfgraw = cfg._rawConfig
+    cfgvideo =cfg.videoConfig
+    for conf in tgt:
+        if conf == "Live View":
+            if cfglive.transform_hflip != hflip \
+            or cfglive.transform_vflip != vflip:
+                ret = True
+            cfglive.transform_hflip = hflip
+            cfglive.transform_vflip = vflip
+        elif conf == "Photo":
+            cfgphoto.transform_hflip = hflip
+            cfgphoto.transform_vflip = vflip
+        elif conf == "Raw Photo":
+            cfgraw.transform_hflip = hflip
+            cfgraw.transform_vflip = vflip
+        elif conf == "Video":
+            cfgvideo.transform_hflip = hflip
+            cfgvideo.transform_vflip = vflip
+    logger.debug("doSyncTransform %s", ret)
+    return ret
+
 def doSyncAspectRatio(ref: tuple, tgt: list) -> bool:
-    """ Synchronize the aspect ration of target configurations with reference
+    """ Synchronize the aspect ratio of target configurations with reference
     
         Parameters:
         ref:    reference size (width, height)
@@ -741,6 +778,7 @@ def liveViewCfg():
             if sc.syncAspectRatio == True:
                 doSyncAspectRatio(cfglive.stream_size, ["Photo", "Raw Photo", "Video"])
             Camera.resetScalerCropRequested = True
+            doSyncTransform(transform_hflip, transform_vflip, ["Photo", "Raw Photo", "Video"])
             Camera().restartLiveStream()
 
             msg = ""
@@ -972,6 +1010,7 @@ def photoCfg():
             if sc.syncAspectRatio == True:
                 doSyncAspectRatio(cfgphoto.stream_size, ["Live View", "Raw Photo", "Video"])
             Camera.resetScalerCropRequested = True
+            doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Raw Photo", "Video"])
             Camera().restartLiveStream()
         if err:
             flash(err)
@@ -1130,6 +1169,7 @@ def rawCfg():
             if sc.syncAspectRatio == True:
                 doSyncAspectRatio(cfgraw.stream_size, ["Live View", "Photo", "Video"])
             Camera.resetScalerCropRequested = True
+            doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Photo", "Video"])
             Camera().restartLiveStream()
         if err:
             flash(err)            
@@ -1332,6 +1372,7 @@ def videoCfg():
             if sc.syncAspectRatio == True:
                 doSyncAspectRatio(cfgvideo.stream_size, ["Live View", "Photo", "Raw Photo"])
             Camera.resetScalerCropRequested = True
+            doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Photo", "Raw Photo"])
             Camera().restartLiveStream()
         if err:
             flash(err)
