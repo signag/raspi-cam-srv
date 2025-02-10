@@ -9,7 +9,7 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.11.0
+## Feature Overview V2.11.2
 For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
 For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
 
@@ -51,7 +51,7 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 
-**New in V2.11.2**
+**New in V2.11**
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
 
