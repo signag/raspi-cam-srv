@@ -20,7 +20,7 @@ On this tab, you specify the details required for notification on an event by e-
 ### Handling of Mail Server Credentials
 
 Credentials for authentication to the mail server are not part of the normal raspiCamSrv configuration.    
-They ere never exported to JSON files when configuration is stored ([Settings/Configuration](./Settings.md#server-configuration))   
+They ere never exported to JSON files when configuration is stored ([Settings/Configuration](./SettingsConfiguration.md))   
 Therefore, they can also not be imported when the server restarts.
 
 **raspiCamSrv** offers two alternatives for secure handling:

@@ -52,6 +52,7 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.motionAlgoIB"),
         logging.getLogger("raspiCamSrv.webcam"),
         logging.getLogger("raspiCamSrv.sun"),
+        logging.getLogger("raspiCamSrv.api"),
     ):
         logger.setLevel(logging.ERROR)
 
@@ -71,6 +72,8 @@ def create_app(test_config=None):
     #logging.getLogger("raspiCamSrv.sun").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.motionAlgoIB").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.settings").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.api").setLevel(logging.DEBUG)
     
     #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
     Picamera2.set_logging(Picamera2.ERROR)
@@ -125,6 +128,7 @@ def create_app(test_config=None):
         cfg.loadConfig(cfgPath)
     cfg = camCfg.CameraCfg()
     sc = cfg.serverConfig
+    sc.checkEnvironment()
     sc.database = os.path.join(app.instance_path, "raspiCamSrv.sqlite")
         
     # Configure Triggered Capture        
@@ -195,5 +199,22 @@ def create_app(test_config=None):
 
     from . import webcam
     app.register_blueprint(webcam.bp)
+
+    from . import api
+    app.register_blueprint(api.bp)
+
+    if sc.useAPI == True:
+        from flask_jwt_extended import JWTManager    
+        
+        if sc.jwtAuthenticationActive == False:
+            sc.API_active = False
+        else:
+            sc.API_active = True
+            app.config["JWT_SECRET_KEY"] = cfg.secrets.jwtSecretKey
+            if sc.jwtAccessTokenExpirationMin > 0:
+                app.config["JWT_ACCESS_TOKEN_EXPIRES"] = datetime.timedelta(minutes=sc.jwtAccessTokenExpirationMin)
+            if sc.jwtRefreshTokenExpirationDays > 0:
+                app.config["JWT_REFRESH_TOKEN_EXPIRES"] = datetime.timedelta(days=sc.jwtRefreshTokenExpirationDays)
+            jwt = JWTManager(app)
 
     return app

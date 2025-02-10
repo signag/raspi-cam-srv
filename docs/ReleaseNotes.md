@@ -8,7 +8,7 @@ Before updating, make sure that
 - [video recording](./Phototaking.md#video) is stopped
 - there are no active [photoseries](./PhotoSeries.md)
 - [triggered capture](./Trigger.md) (motion tracking) is stopped
-- server will not [start with stored configuration](./Settings.md#server-configuration)
+- server will not [start with stored configuration](./SettingsConfiguration.md)
 
 For update, proceed as follows:
 
@@ -27,14 +27,27 @@ or
 ```sudo journalctl -e```    
 or    
 ```journalctl --user -e```
-6. If you used [start with stored configuration](./Settings.md#server-configuration) before updating, you may now try to activate this again.<br>In cases where configuration parameters were not modified with the update, this will usually work.<br>If not, you will need to prepare and store your preferred configuration again.
+6. If you used [start with stored configuration](./SettingsConfiguration.md) before updating, you may now try to activate this again.<br>In cases where configuration parameters were not modified with the update, this will usually work.<br>If not, you will need to prepare and store your preferred configuration again.
 
-In case that the server did not start correctly or if you see an unexpected behavior in the UI, you may have forgotten to deactivate [start with stored configuration](./Settings.md#server-configuration)<br>In this case, you can do the following:
+In case that the server did not start correctly or if you see an unexpected behavior in the UI, you may have forgotten to deactivate [start with stored configuration](./SettingsConfiguration.md)<br>In this case, you can do the following:
 
 - ```cd ~/prg/raspi-cam-srv/raspiCamSrv/static/config```
 - Check whether a file ```_loadConfigOnStart.txt``` exists in this folder.
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
+
+## V2.11.0
+
+### New Features
+
+- V2.11.0 introduces the new [raspiCamSrv API](./API.md) for interoprability of with other software packages.<br>This resolves the feature request raspi-cam-srv issue #34 [API?](https://github.com/signag/raspi-cam-srv/discussions/34)
+
+- Required installation actions:<br>In order to allow API support, it is necessary to install an additional package.<br>This can be done before or after the [Update Procedure](#update-procedure):<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>```pip install flask-jwt-extended```
+
+### Changes
+
+- The [Settings](./Settings.md) has been restructured to incorporate the additional settings required for the API
+
 
 ## V2.10.5
 
@@ -49,13 +62,13 @@ In case that the server did not start correctly or if you see an unexpected beha
 
 ### Bugfix
 
-- Fixed function [Load Stored Configuration](./Settings.md#server-configuration) on the [Settings](./Settings.md) screen.<br>After execution of this function, values shown on the [Settings](./Settings.md) screen were only updated to the values loaded from the stored configuration after the page has been refreshed. <br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
+- Fixed function [Load Stored Configuration](./SettingsConfiguration.md) on the [Settings](./Settings.md) screen.<br>After execution of this function, values shown on the [Settings](./Settings.md) screen were only updated to the values loaded from the stored configuration after the page has been refreshed. <br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
 
 ## V2.10.3
 
 ### Bugfixes
 
-- Fixed function [Load Stored Configuration](./Settings.md#server-configuration) on the [Settings](./Settings.md) screen.<br>This function failed in cases when only a single camera is connected to a Raspberry Pi.<br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
+- Fixed function [Load Stored Configuration](./SettingsConfiguration.md) on the [Settings](./Settings.md) screen.<br>This function failed in cases when only a single camera is connected to a Raspberry Pi.<br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
 
 - Fixed [Switch Cameras](./Webcam.md#-switch-cameras-) on the [Web Cam](./Webcam.md) screen.<br>If working with two cameras, this function caused an error when [Triggered Capture of Videos and Photos](./Trigger.md), a [Photo Series](./PhotoSeries.md) or [Video Recording](./Phototaking.md#video) is currently active.<br>The user is now asked to stop either of these processes before switching cameras.
 
@@ -291,7 +304,7 @@ For more details, see [Camera Status and Number of Threads](./Information.md#cam
 ### Bugfixes
 
 - [Code Generation](./Troubelshooting.md#generation-of-python-code-for-camera) did not generate import statements.
-- Error status for [Triggered Capture of Videos and Photos](./Trigger.md) which had been stored with [Store Configuration](./Settings.md#server-configuration) are now cleared if server is started with stored configuration
+- Error status for [Triggered Capture of Videos and Photos](./Trigger.md) which had been stored with [Store Configuration](./SettingsConfiguration.md) are now cleared if server is started with stored configuration
 
 ## V2.4.0
 
@@ -330,7 +343,7 @@ Now, when these endpoints are requested, the system automatically starts a live 
 
 ### Bugfixes
 
-- Starting server with stored Configuration ([Settings](./Settings.md#server-configuration)) did not correctly set a previously configured [Zoom](./ZoomPan.md) (*ScalerCrop*). Instead, *ScalerCrop* was set to the active camera's pixel array size (see [raspiCamSrv Issue #7](https://github.com/signag/raspi-cam-srv/issues/7)). This was done only during initial system start and not after manually applying **Load Stored Configuration** in [Settings](./Settings.md#server-configuration).   
+- Starting server with stored Configuration ([Settings](./SettingsConfiguration.md)) did not correctly set a previously configured [Zoom](./ZoomPan.md) (*ScalerCrop*). Instead, *ScalerCrop* was set to the active camera's pixel array size (see [raspiCamSrv Issue #7](https://github.com/signag/raspi-cam-srv/issues/7)). This was done only during initial system start and not after manually applying **Load Stored Configuration** in [Settings](./SettingsConfiguration.md).   
 Now, the stored *ScalerCrop* is no longer overwritten, if a zoom (<>100%) has been explicitely applied ("include_scalerCrop": true in controls.json).
 
 
@@ -345,7 +358,7 @@ Error reasons are mostly invalid combinations of [Configuration](./Configuration
 ### Bugfixes
 
 - After applying **Swith Cameras** in page *Web Cam*, Title and metadata for the second camera were identical to those of the first camera.
-- [Reset Server](./Settings.md#server-configuration) may have caused errors in streaming or other functions
+- [Reset Server](./SettingsConfiguration.md) may have caused errors in streaming or other functions
 - In [Config](./Configuration.md), *raw* stream can no longer be configured for *Live View*, *Photo*, and *Video*
 
 ## V2.3.1
@@ -370,7 +383,7 @@ Previously, the error was only shown in the [events logfile](./TriggerActive.md#
 
 - Streaming of second camera added (see [Webcam](./Webcam.md) page). A single **raspiCamSrv** server can now simultaneously stream both cameras connected to a Raspberry Pi 5.
 - The camera configuration and controls for the active camera can be preserved also for a situation when this camera acts as "other" camera.
-- Streaming configurations for both cameras are stored together with the entire configuration (see [Settings](./Settings.md#server-configuration-storage)) and can be loaded on server restart.
+- Streaming configurations for both cameras are stored together with the entire configuration (see [Settings](./SettingsConfiguration.md-storage)) and can be loaded on server restart.
 
 ## V2.2.3
 

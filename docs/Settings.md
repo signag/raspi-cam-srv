@@ -2,11 +2,29 @@
 
 [![Up](img/goup.gif)](./UserGuide.md)
 
-This screen allows for some basic configurations, such as selecting the standard file types for photos, raw photos and videos.
+The Parameters section of the Settings screen is used for specification of general parameters.
 
-Also the geo-coordinates and timezone, required for sun-calculations in [Sun-controlled Timelapse Photo Series](./PhotoSeriesTimelapse.md) need to be specified here.
+Other sections focus on
+- [Server Configuration](./SettingsConfiguration.md)
+- [User Management](./SettingsUsers.md)
+- [API Management](./API.md)
+
+The last two sections may be invisible, depending on context.
 
 ![Settings](img/Settings.jpg)
+
+The General Paramenters include
+
+- *Active Camera* allows explicitely [setting the active camera](#switching-the-active-camera) for systems with multiple cameras.
+- [Audio settings](#recording-audio-along-with-video) for systems with microphones if sound is to be recorded along with videos
+- *Path for Photos/Videos* shows the path where media will be stored.
+- File types for *Photo*, *Raw* Photo and *Video*
+- *Show Histograms* allows [activatig/deactivating Histograms](#activating--deactivating-histograms) display of histograms
+- *Ext. Motion Detection supported* shows whether the actually installed libraries allow support of [Extended Motion Tracking Algoritms](#extended-motion-detection-support)
+- *Req. Auth for Streaming* controls whether [streaming requires authentication](#configuring-authentication-for-streaming)
+- *Allow access through API* shows whether the installed libraries allow secure [API access](#api-access).<br>Also if it is supported, it can be deactivated.
+- The geo-coordinates *Latitude*, *Longitute*, *Elevation* as well as the *Time Zone* are required for sun-calculations in [Sun-controlled Timelapse Photo Series](./PhotoSeriesTimelapse.md).
+
 
 ## Switching the active Camera
 
@@ -72,7 +90,7 @@ In order to access the microphone, **raspiCamSrv** needs to run in the user envi
 This is automatically the case when the Flask service is directly started from the command line in the **raspiCamSrv** virtual environment with   
 ```flask --app raspiCamSrv run --debug --host=0.0.0.0```
 
-Alternatively, **raspiCamSrv** can be configured as **user** service as described in [README](../README.md#service-configuration-for-audio-support)
+Alternatively, **raspiCamSrv** can be configured as **user** service as described in [README / Service Configuration for Audio Support](../README.md#service-configuration-for-audio-support)
 
 ### Configuration
 
@@ -101,31 +119,24 @@ The discrepancy is typically in subsecond range.
 
 Test videos should be made with something like a clapperboard. In case of delays, the *Audio Timeshift* value should be adjusted (it can be positive or negative) until video and audio are in sync.
 
-### Server Configuration
+## API Access
 
-The *Settings* screen includes a *Configuration* section with functions to control the **raspiCamSrv** configuration:
+API access to **raspiCamSrv** is protected through JSON Web Tokens (JWT).<br>This requires the module ```flask_jwt_extended```, which is first used in **raspiCamSrv V2.11**.
 
-![Configuration](./img/Settings_Config.jpg)
+If the upgrade to this version has been done without installing this module (see [Release Notes V2.11](./ReleaseNotes.md#v2110)), the system will show a hint
+![SettingsAPI](./img/Settings_API_na.jpg)
+and also hide the *API* section
 
-- Button *Store Configuration* generates a set of JSON files which include the entire configuration of the **raspiCamSrv** server (see [below](#configuration-storage)).
-- Button *Load Stored Configuration* replaces the current configuration with a previaously stored configuration.
-- Button *Reset Server* stops any background activity (live stream, video, photo series) and replaces the current configuration with the default configuration.
-- *Start server with stored Configuration* controls whether a server start shall use the default configuration or the stored configuration.
+In this case, the module can be installed (see [Release Notes V2.11](./ReleaseNotes.md#v2110)) and after the server has been restarted, it shows as 
+![SettingsAPI](./img/Settings_API_a.jpg)
+which now allows activating or deactivating API support.
 
-#### Server Configuration Storage
+If the setting is changed, it is necessary to
 
-When the configuration is stored with the *Store Configuration* button, a set of files is created/replaced in the ```raspi-cam-srv/raspiCamSrv/static/config``` folder:
+1. [Store the configuration](./SettingsConfiguration.md)
+2. Make sure that the server is configured to [Start with stored Configuration](./SettingsConfiguration.md)
+3. Restart the server (see [Update Procedure, step 4](./ReleaseNotes.md#update-procedure))
 
-![Config](./img/Settings_ConfigStore.jpg)
+This will be indicated through the hint
 
-- _loadConfigOnStart.txt<br>This is just an empty marker file. If the file exists, the server will initiate its configuration with configuration data stored in the other files.<br>Otherwise, default configuration settings will be applied.
-- cameraConfigs.json<br>This is currently not used
-- cameraProperties.json<br>This file contains the camera properties of the actice camera, which are shown in [Camera Properties](./Information.md#camera-properties).<br>Camera properties are always read directly from the camera.
-- cameras.json<br>This file contains the installed cameras with information shown in [Installed Cameras](./Information.md#cameras)<br>Installed cameras are always directly queried from the camera system.
-- controls.json<br>This file includes all the camera configuration settings as shown in the upper right part of the Live screen [Camera Controls](./LiveScreen.md#top-right-quarter)
-- LiveViewConfig.json, photoConfig.json, rawConfig.json, videoConfig.json<br>contain the camera configuration settings for the different use cases as shown in the [Config screen](./Configuration.md)
-- rawFormats.json<br>contain a list of formats which can be used for raw photos.<br>This information is extracted from the different [Sensor Modes](./Information.md#sensor-modes) and is always directly obtained from the camera system.
-- serverConfig.json<br>This file includes configuration settings for the **raspiCamSrv** dialog system, such as information included in the [Settings](./Settings.md) dialog, or the configuration of the [Display Buffer](./LiveScreen.md#bottom-left-quarter) and some navigation details.
-- streamingCfg.json contains, for each camera, the [Tuning](./Tuning.md) configuration, the [Live View Configuration](./Configuration.md) settings and the [Camera Controls](./CameraControls.md) which will be used for streaming. The included Video Configuration is stored because Picamera2 always requires the *main* stream to be configured. This will not be used for streaming.
-- triggerConfig.json contains the configuration settings for triggered capture of videos and photos (motion capture)
-- tuningConfig.json contains the settings maintained in the [Tuning](./Tuning.md) dialog
+![SettingsAPI](./img/Settings_API_change.jpg)

@@ -6,7 +6,8 @@ from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
 import os
 from pathlib import Path
-
+import json
+from flask_jwt_extended import create_access_token, get_jwt_identity
 from raspiCamSrv.auth import login_required
 import logging
 
@@ -47,6 +48,7 @@ def serverconfig():
     sc.curMenu = "settings"
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
+    sc.lastSettingsTab = "settingsparams"
     if request.method == "POST":
         msg = None
         if sc.isTriggerRecording:
@@ -93,6 +95,8 @@ def serverconfig():
                 sc.displayContent = "meta"
             sc.useHistograms = useHist
             sc.requireAuthForStreaming = not request.form.get("requireAuthForStreaming") is None
+            useAPI = not request.form.get("useapi") is None
+            sc.useAPI = useAPI
             sc.locLatitude = float(request.form["loclatitude"])
             sc.locLongitude = float(request.form["loclongitude"])
             sc.locElevation = float(request.form["locelevation"])
@@ -117,6 +121,7 @@ def resetServer():
     sc.curMenu = "settings"
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
+    sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         logger.debug("Stopping camera system")
         Camera().stopCameraSystem()
@@ -208,6 +213,7 @@ def resetServer():
         Camera.stopRequested = False
         Camera.stopRequested2 = False
         Camera.stopVideoRequested = False
+        Camera.videoDuration = 0
         Camera.stopPhotoSeriesRequested = False
         Camera.event = CameraEvent()
         Camera.event2 = None
@@ -231,6 +237,7 @@ def remove_users():
     sc.checkMicrophone()
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsusers"
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     if request.method == "POST":
@@ -294,6 +301,7 @@ def register_user():
     sc.checkMicrophone()
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsusers"
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     if request.method == "POST":
@@ -316,6 +324,7 @@ def store_config():
     sc.curMenu = "settings"
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
+    sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         cfgPath = current_app.static_folder + "/config"
         # Initialize the Photo viewer list
@@ -342,6 +351,7 @@ def load_config():
     sc.curMenu = "settings"
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
+    sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         cfg.loadConfig(cfgPath)
         msg = "Configuration loaded from " + cfgPath
@@ -399,6 +409,7 @@ def loadConfigOnStart():
     sc.checkMicrophone()
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         cb = not request.form.get("loadconfigonstartcb") is None
         setLoadConfigOnStart(cfgPath, cb)
@@ -420,6 +431,7 @@ def shutdown():
     sc.checkMicrophone()
     cp = cfg.cameraProperties
     sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         shutdown = request.environ.get('werkzeug.server.shutdown')
         if shutdown is None:
@@ -429,3 +441,76 @@ def shutdown():
             msg = "Server shutting down ..."
         flash(msg)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
+
+@bp.route("/api_config", methods=("GET", "POST"))
+@login_required
+def api_config():
+    logger.debug("In api_config")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    sc.lastSettingsTab = "settingsapi"
+    if request.method == "POST":
+        msg = ""
+        sc = cfg.serverConfig
+        jwtAccessTokenExpirationMin = sc.jwtAccessTokenExpirationMin
+        jwtRefreshTokenExpirationDays = sc.jwtRefreshTokenExpirationDays
+        jwtKeyStore = request.form["jwtkeystore"]
+        logger.debug("api_config - jwtKeyStore=%s", jwtKeyStore)
+        if jwtKeyStore != "":
+            if os.path.exists(jwtKeyStore):
+                if os.path.isfile(jwtKeyStore):
+                    with open(jwtKeyStore) as f:
+                        try:
+                            secrets = json.load(f)
+                            sc.jwtKeyStore = jwtKeyStore
+                            logger.debug("api_config - jwtKeyStore successfully accessed")
+                        except Exception as e:
+                            msg = f"Error when accessing JWT Secret Key File: {e}"
+        else:
+            sc.jwtKeyStore = ""
+        sc.jwtAccessTokenExpirationMin = int(request.form["jwtaccesstokenexpirationmin"])
+        sc.jwtRefreshTokenExpirationDays = int(request.form["jwtrefreshtokenexpirationdays"])
+        if msg == "":
+            (secretKey, err, msg) = sc.checkJwtSettings()
+            logger.debug("api_config - secrKey = %s, err = %s, msg = %s", secretKey, err, msg)
+            if not err is None:
+                msg = "ERROR: " + err
+        if msg != "":
+            flash(msg)
+        if sc.API_active == True:
+            if sc.jwtAuthenticationActive == True:
+                if jwtAccessTokenExpirationMin != sc.jwtAccessTokenExpirationMin \
+                or jwtRefreshTokenExpirationDays != sc.jwtRefreshTokenExpirationDays:
+                    sc.jwtAuthenticationActive = False
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
+
+@bp.route("/generate_token", methods=("GET", "POST"))
+@login_required
+def generate_token():
+    logger.debug("In generate_token")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    sc.lastSettingsTab = "settingsapi"
+    if request.method == "POST":
+        access_token = create_access_token(identity=g.user['username'])
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los, access_token=access_token)

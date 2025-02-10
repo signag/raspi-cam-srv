@@ -31,7 +31,7 @@ With *Notification* you specify whether or not you want to be informed by e-Mail
 - *Operation End* specifies the daytime when triggering is paused.
 - *Automatic Start with Server*   
 When activated, the trigger capturing process can be automatically started with the server.   
-When you change this parameter, you need to go to [Settings](./Settings.md) and store the current [Server Configuration](./Settings.md#server-configuration)   
+When you change this parameter, you need to go to [Settings](./Settings.md) and store the current [Server Configuration](./SettingsConfiguration.md)   
 If you want automatic start, you also need to select *Start Server with stored Configuration*.    
 **Note** In case you start the Flask server manually, do not use the ```--debug``` option. This will cause an exception (see [Flask Issue #5437](https://github.com/pallets/flask/discussions/5437)).
 - *Detection Delay* allows specifying a dalay in seconds. When an event is triggered, the configured action (video and/or photo, Notification) will be delayed by the specified number of seconds. Normally, this will be 0.

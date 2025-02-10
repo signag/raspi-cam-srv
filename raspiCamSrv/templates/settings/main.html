@@ -5,454 +5,652 @@
 {% endblock %}
 
 {% block content %}
-    <h3>Settings</h3>
-    <div>
-        <form method="post" action="{{ url_for('settings.serverconfig') }}">
-            <table class="w3-table-all">
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The camera used by the server.<br>
-                            In case that multiple cameras are connected to the server device,
-                            the active camera can be selected here
-                        </span>
-                        <label for="activecamera">Active Camera:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <select name="activecamera" id="activecamera">
-                        {% for cam in cs %}
-                            {% if cam.isUsb == false %}
-                            {% if sc.activeCamera == cam.num %}
-                            <option value="{{ cam.num }}" selected>{{ cam.num }}: {{ cam.model }}</option>
-                            {% else %}
-                            <option value="{{ cam.num }}">{{ cam.num }}: {{ cam.model }}</option>
-                            {% endif %}
-                            {% endif %}
-                        {% endfor %}
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            If one or multiple microphones are accessible through PulseAudio, 
-                            the description for the default microphone is shown.<br>
-                            This will be the microphone used for audio recording.
-                        </span>
-                        <label for="defaultmic">Default Microphone:</label>
-                    </td>
-                    <td style="width:35%">
-                        <input type="text" id="defaultmic" name="defaultmic" value="{{ sc.defaultMic }}" disabled>
-                    </td>
-                    <td style="width:35%">
-                        {% if sc.isMicMuted == True %}
-                        <input type="text" id="micmuted" name="micmuted" value="M U T E D" disabled>
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Select whether audio shall be recorded along with videos.<br>
-                            This is only available for selection if a microphone is connected 
-                            and accessible through PulseAudio.
-                        </span>
-                        <label for="recordaudio">Record Audio along with Video:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        {% if sc.hasMicrophone == True %}
-                        {% if sc.recordAudio == True %}
-                        <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="1"
-                            checked>
-                        {% else %}
-                        <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="0">
-                        {% endif %}
-                        {% else %}
-                        <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="0" disabled>
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The time shift in seconds to apply between the audio and video streams.<br>
-                            This may need tweaking to improve the audio/video synchronisation.
-                        </span>
-                        <label for="audiosync">Audio Timeshift [sec]:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <input type="number" id="audiosync" name="audiosync" min="-2.00" max="2.00" step="0.01" value="{{ sc.audioSync }}">
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The system path where photos and videos will be stored.
-                        </span>
-                        <label for="photopath">Path for Photos/Videos:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <input style="width:70%" type="text" id="photopath" name="photopath" value="{{ sc.photoRoot }}/{{ sc.cameraPhotoSubPath }}" disabled>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The file format to be used for photos
-                        </span>
-                        <label for="phototype">Photo Type:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <select name="phototype" id="phototype">
-                            {% if sc.photoType == "jpeg" %}
-                            <option value="jpeg" selected>jpeg</option>
-                            {% else %}
-                            <option value="jpeg">jpeg</option>
-                            {% endif %}
-                            {% if sc.photoType == "jpg" %}
-                            <option value="jpg" selected>jpg</option>
-                            {% else %}
-                            <option value="jpg">jpg</option>
-                            {% endif %}
-                            {% if sc.photoType == "bmp" %}
-                            <option value="bmp" selected>bmp</option>
-                            {% else %}
-                            <option value="bmp">bmp</option>
-                            {% endif %}
-                            {% if sc.photoType == "png" %}
-                            <option value="png" selected>png</option>
-                            {% else %}
-                            <option value="png">png</option>
-                            {% endif %}
-                            {% if sc.photoType == "gif" %}
-                            <option value="gif" selected>gif</option>
-                            {% else %}
-                            <option value="gif">gif</option>
-                            {% endif %}
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The file format to be used for raw photos
-                        </span>
-                        <label for="rawphototype">Raw Type:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <select name="rawphototype" id="rawphototype">
-                            {% if sc.rawPhotoType == "dng" %}
-                            <option value="dng" selected>dng</option>
-                            {% else %}
-                            <option value="dng">dng</option>
-                            {% endif %}
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The file format to be used for videos
-                        </span>
-                        <label for="videotype">Video Type:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <select name="videotype" id="videotype">
-                            {% if sc.videoType == "h264" %}
-                            <option value="h264" selected>h264</option>
-                            {% else %}
-                            <option value="h264">h264</option>
-                            {% endif %}
-                            {% if sc.videoType == "mp4" %}
-                            <option value="mp4" selected>mp4</option>
-                            {% else %}
-                            <option value="mp4">mp4</option>
-                            {% endif %}
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Select whether you want to see histograms along with specific photo series.
-                        </span>
-                        <label for="showhistograms">Show Histograms:</label>
-                    </td>
-                    <td style="width:35%">
-                        {% if sc.supportsHistograms == True %}
-                        {% if sc.useHistograms == True %}
-                        <input type="checkbox" id="showhistograms" name="showhistograms" value="1" checked>
-                        {% else %}
-                        <input type="checkbox" id="showhistograms" name="showhistograms" value="0">
-                        {% endif %}
-                        {% else %}
-                        <input type="checkbox" id="showhistograms" name="showhistograms" value="0" disabled>
-                        {% endif %}
-                    </td>
-                    <td style="width:35%">
-                    {% if sc.supportsHistograms == False %}
-                        <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotSupportsHistograms|safe }}</p>
-                    {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            This indicates whether advanced algorithms can be used for motion detection:<br>
-                            Frame Differencing, Optical Flow, Background Subtraction
-                        </span>
-                        <label for="supportsextmotiondetection">Ext. Motion Detection supported:</label>
-                    </td>
-                    <td style="width:35%">
-                        {% if sc.supportsExtMotionDetection == True %}
-                        <input type="checkbox" id="supportsextmotiondetection" name="supportsextmotiondetection" value="1" checked disabled>
-                        {% else %}
-                        <input type="checkbox" id="supportsextmotiondetection" name="supportsextmotiondetection" value="0" disabled>
-                        {% endif %}
-                    </td>
-                    <td style="width:35%">
-                    {% if sc.supportsExtMotionDetection == False %}
-                        <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotsupportsExtMotionDetection|safe }}</p>
-                    {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Select whether streaming requires authentication.
-                        </span>
-                        <label for="requireAuthForStreaming">Req. Auth for Streaming:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        {% if sc.requireAuthForStreaming == True %}
-                        <input type="checkbox" id="requireAuthForStreaming" name="requireAuthForStreaming" value="1" checked>
-                        {% else %}
-                        <input type="checkbox" id="requireAuthForStreaming" name="requireAuthForStreaming" value="0">
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Geographic Latitude of camera position.<br>
-                            (Required for sunrise/sunset calculation)
-                        </span>
-                        <label for="loclatitude">Latitude:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <input type="number" id="loclatitude" name="loclatitude" min="-90.000000" max="90.000000" step="0.000001"
-                            value="{{ sc.locLatitude }}">
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Geographic Longitude of camera position.<br>
-                            (Required for sunrise/sunset calculation)
-                        </span>
-                        <label for="loclongitude">Longitude:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <input type="number" id="loclongitude" name="loclongitude" min="-180.000000" max="180.000000" step="0.000001"
-                            value="{{ sc.locLongitude }}">
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Geographic Elevation of camera position (in m).<br>
-                            (Required for sunrise/sunset calculation)
-                        </span>
-                        <label for="locelevation">Elevation:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <input type="number" id="locelevation" name="locelevation" min="-1000.0" max="9000.0" step="0.1"
-                            value="{{ sc.locElevation }}">
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:5%">
-                    </td>
-                    <td style="width:25%" class="w3-tooltip">
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Time zone of camera position.<br>
-                            (Required for sunrise/sunset calculation)
-                        </span>
-                        <label for="loctzkey">Time Zone:</label>
-                    </td>
-                    <td style="width:70%" colspan="2">
-                        <select name="loctzkey" id="loctzkey">
-                            {% for tz in sc.timeZoneKeys() %}
-                            {% if sc.locTzKey == tz %}
-                            <option value="{{ tz }}" selected>{{ tz }}</option>
-                            {% else %}
-                            <option value="{{ tz }}">{{ tz }}</option>
-                            {% endif %}
-                            {% endfor %}
-                        </select>
-                    </td>
-                </tr>
-            </table>
-            <p style="margin-bottom: 0"></p>
-            <input class="w3-button w3-black" type="submit" value="Submit">
-        </form>
-    </div>
-    <hr>
-    <h3>Configuration</h3>
-    <table>
-        <tr>
-            <td>
-                <form id="storeconfig" method="post" action="{{ url_for('settings.store_config') }}">
-                    <input class="w3-button w3-black" style="width: 22ch" type="submit" onclick="confirmStore('storeconfig')" value="Store Configuration">
-                </form>
-            </td>
-            <td>
-                <form id="loadconfig" method="post" action="{{ url_for('settings.load_config') }}">
-                    <input class="w3-button w3-black" style="width: 26ch" type="submit"  onclick="confirmLoad('loadconfig')" value="Load Stored Configuration">
-                </form>
-            </td>
-            <td>
-                <form id="resetserver" method="post" action="{{ url_for('settings.resetServer') }}">
-                    <input class="w3-button w3-black" style="width: 16ch" type="submit"  onclick="confirmReset('resetserver')" value="Reset Server">
-                </form>
-            </td>
-            <!--
-            <td>
-                <form id="shutdownserver" method="post" action="{{ url_for('settings.shutdown') }}">
-                    <input class="w3-button w3-black" style="width: 20ch" type="submit" onclick="confirmShutdown('shutdownserver')"
-                        value="Shutdown Server">
-                </form>
-            </td>
-            -->
-            <td style="width:25%" class="w3-tooltip">
-                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                    If selected, the system will load the stored configuration on server start.<br>
-                    Otherwise, the default configuration will be applied.
-                </span>
-                <label for="loadconfigonstartcb">Start server with stored Configuration:</label>
-            </td>
-            <td>
-                <form id="loadconfigonstart" method="post" action="{{ url_for('settings.loadConfigOnStart') }}">
-                    {% if los == True %}
-                    <input type="checkbox" id="loadconfigonstartcb" name="loadconfigonstartcb" onchange="loadCfgOnStart('loadconfigonstart')" value="1" checked>
-                    {% else %}
-                    <input type="checkbox" id="loadconfigonstartcb" name="loadconfigonstartcb" onchange="loadCfgOnStart('loadconfigonstart')" value="0">
-                    {% endif %}
-                </form>
-            </td>
-        </tr>
-    </table>
-    {% set activeuser = g.user %}
-    {% if activeuser["issuperuser"] == 1 %}
-    <hr>
-    <h3>Users</h3>
-    <div>
-        <form id="removeusersform" method="post" action="{{ url_for('settings.remove_users') }}">
-            <table class="w3-table-all">
-                <tr>
-                    <th>
-                        Sel
-                    </th>
-                    <th>
-                        ID
-                    </th>
-                    <th>
-                        Name
-                    </th>
-                    <th>
-                        Initial
-                    </th>
-                    <th>
-                        SuperUser
-                    </th>
-                </tr>
-                {% for user in g.users %}
-                <tr>
-                    <td style="width:5%">
-                        <input type="checkbox" id="sel_{{ user['id'] }}" name="sel_{{ user['id'] }}"
-                            aria-label="sel_{{ user['id'] }}" value="0">
-                    </td>
-                    <td>
-                        {{ user["id"] }}
-                    </td>
-                    <td>
-                        {{ user["username"] }}
-                    </td>
-                    <td>
-                        {% if 'isinitial' is in user %}
-                        {% if user["isinitial"] == 0 %}
-                        No
-                        {% else %}
-                        Yes
-                        {% endif %}
-                        {% else %}
-                        Unknown
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if 'issuperuser' is in user %}
-                        {% if user["issuperuser"] == 0 %}
-                        No
-                        {% else %}
-                        Yes
-                        {% endif %}
-                        {% else %}
-                        Unknown
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-            <p style="margin-bottom: 0"></p>
-            <input class="w3-button w3-black" style="width: 22ch" type="submit" onclick="confirmRemove('removeusersform')" value="Remove Selected Users">
-            <p style="margin-bottom: 0"></p>
-        </form>
-        <form method="post" action="{{ url_for('settings.register_user') }}">
-            <p style="margin-bottom: 0"></p>
-            <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Register New User">
-        </form>
-        {% set user = g.users[0] %}
-        {% if not 'issuperuser' is in user %}
-        <p>
-            You are using an outdated database schema for users.<br>
-            To update to the new schema, run the following command in raspi-cam-srv, 
-            with activated virtual environment:<br>
-            flask --app raspiCamSrv init-db
-        </p>
+    <div class="w3-bar w3-green">
+        <!-- Settings menue -->
+        {% if sc.lastSettingsTab == "settingsparams" %}
+        <button class="w3-bar-item w3-button settingsmenu w3-light-green" id="settingsgparamsbtn"
+            onclick="openSettingsTab('settingsparams', 'settingsgparamsbtn')">Parameters</button>
+        {% else %}
+        <button class="w3-bar-item w3-button settingsmenu" id="settingsgparamsbtn"
+            onclick="openSettingsTab('settingsparams', 'settingsgparamsbtn')">Parameters</button>
+        {% endif %}
+        {% if sc.lastSettingsTab == "settingsconfig" %}
+        <button class="w3-bar-item w3-button settingsmenu w3-light-green" id="settingsconfigbtn"
+            onclick="openSettingsTab('settingsconfig', 'settingsconfigbtn')">Configuration</button>
+        {% else %}
+        <button class="w3-bar-item w3-button settingsmenu" id="settingsconfigbtn"
+            onclick="openSettingsTab('settingsconfig', 'settingsconfigbtn')">Configuration</button>
+        {% endif %}
+        {% if sc.lastSettingsTab == "settingsusers" %}
+        <button class="w3-bar-item w3-button settingsmenu w3-light-green" id="settingsusersbtn"
+            onclick="openSettingsTab('settingsusers', 'settingsusersbtn')">Users</button>
+        {% else %}
+        {% set activeuser = g.user %}
+        {% if activeuser["issuperuser"] == 1 %}
+        <button class="w3-bar-item w3-button settingsmenu" id="settingsusersbtn"
+            onclick="openSettingsTab('settingsusers', 'settingsusersbtn')">Users</button>
+        {% endif %}
+        {% endif %}
+        {% if sc.lastSettingsTab == "settingsapi" %}
+        <button class="w3-bar-item w3-button settingsmenu w3-light-green" id="settingsapibtn"
+            onclick="openSettingsTab('settingsapi', 'settingsapibtn')">API</button>
+        {% else %}
+        {% if sc.useAPI == True %}
+        <button class="w3-bar-item w3-button settingsmenu" id="settingsapibtn"
+            onclick="openSettingsTab('settingsapi', 'settingsapibtn')">API</button>
+        {% endif %}
         {% endif %}
     </div>
-    <br>
+    {% if sc.lastSettingsTab == "settingsparams" %}
+    <div id="settingsparams" class="settingsgroup">
+    {% else %}
+    <div id="settingsparams" class="settingsgroup" style="display:none">
     {% endif %}
-
+        <h3>General Parameters</h3>
+        <div>
+            <form method="post" action="{{ url_for('settings.serverconfig') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The camera used by the server.<br>
+                                In case that multiple cameras are connected to the server device,
+                                the active camera can be selected here
+                            </span>
+                            <label for="activecamera">Active Camera:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <select name="activecamera" id="activecamera">
+                            {% for cam in cs %}
+                                {% if cam.isUsb == false %}
+                                {% if sc.activeCamera == cam.num %}
+                                <option value="{{ cam.num }}" selected>{{ cam.num }}: {{ cam.model }}</option>
+                                {% else %}
+                                <option value="{{ cam.num }}">{{ cam.num }}: {{ cam.model }}</option>
+                                {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                If one or multiple microphones are accessible through PulseAudio, 
+                                the description for the default microphone is shown.<br>
+                                This will be the microphone used for audio recording.
+                            </span>
+                            <label for="defaultmic">Default Microphone:</label>
+                        </td>
+                        <td style="width:35%">
+                            <input type="text" id="defaultmic" name="defaultmic" value="{{ sc.defaultMic }}" disabled>
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.isMicMuted == True %}
+                            <input type="text" id="micmuted" name="micmuted" value="M U T E D" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select whether audio shall be recorded along with videos.<br>
+                                This is only available for selection if a microphone is connected 
+                                and accessible through PulseAudio.
+                            </span>
+                            <label for="recordaudio">Record Audio along with Video:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            {% if sc.hasMicrophone == True %}
+                            {% if sc.recordAudio == True %}
+                            <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="1"
+                                checked>
+                            {% else %}
+                            <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="0">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="recordaudio" name="recordaudio" aria-label="recordaudio" value="0" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The time shift in seconds to apply between the audio and video streams.<br>
+                                This may need tweaking to improve the audio/video synchronisation.
+                            </span>
+                            <label for="audiosync">Audio Timeshift [sec]:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <input type="number" id="audiosync" name="audiosync" min="-2.00" max="2.00" step="0.01" value="{{ sc.audioSync }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The system path where photos and videos will be stored.
+                            </span>
+                            <label for="photopath">Path for Photos/Videos:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <input style="width:70%" type="text" id="photopath" name="photopath" value="{{ sc.photoRoot }}/{{ sc.cameraPhotoSubPath }}" disabled>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The file format to be used for photos
+                            </span>
+                            <label for="phototype">Photo Type:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <select name="phototype" id="phototype">
+                                {% if sc.photoType == "jpeg" %}
+                                <option value="jpeg" selected>jpeg</option>
+                                {% else %}
+                                <option value="jpeg">jpeg</option>
+                                {% endif %}
+                                {% if sc.photoType == "jpg" %}
+                                <option value="jpg" selected>jpg</option>
+                                {% else %}
+                                <option value="jpg">jpg</option>
+                                {% endif %}
+                                {% if sc.photoType == "bmp" %}
+                                <option value="bmp" selected>bmp</option>
+                                {% else %}
+                                <option value="bmp">bmp</option>
+                                {% endif %}
+                                {% if sc.photoType == "png" %}
+                                <option value="png" selected>png</option>
+                                {% else %}
+                                <option value="png">png</option>
+                                {% endif %}
+                                {% if sc.photoType == "gif" %}
+                                <option value="gif" selected>gif</option>
+                                {% else %}
+                                <option value="gif">gif</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The file format to be used for raw photos
+                            </span>
+                            <label for="rawphototype">Raw Type:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <select name="rawphototype" id="rawphototype">
+                                {% if sc.rawPhotoType == "dng" %}
+                                <option value="dng" selected>dng</option>
+                                {% else %}
+                                <option value="dng">dng</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The file format to be used for videos
+                            </span>
+                            <label for="videotype">Video Type:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <select name="videotype" id="videotype">
+                                {% if sc.videoType == "h264" %}
+                                <option value="h264" selected>h264</option>
+                                {% else %}
+                                <option value="h264">h264</option>
+                                {% endif %}
+                                {% if sc.videoType == "mp4" %}
+                                <option value="mp4" selected>mp4</option>
+                                {% else %}
+                                <option value="mp4">mp4</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select whether you want to see histograms along with specific photo series.
+                            </span>
+                            <label for="showhistograms">Show Histograms:</label>
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.supportsHistograms == True %}
+                            {% if sc.useHistograms == True %}
+                            <input type="checkbox" id="showhistograms" name="showhistograms" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="showhistograms" name="showhistograms" value="0">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="showhistograms" name="showhistograms" value="0" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:35%">
+                        {% if sc.supportsHistograms == False %}
+                            <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotSupportsHistograms|safe }}</p>
+                        {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                This indicates whether advanced algorithms can be used for motion detection:<br>
+                                Frame Differencing, Optical Flow, Background Subtraction
+                            </span>
+                            <label for="supportsextmotiondetection">Ext. Motion Detection supported:</label>
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.supportsExtMotionDetection == True %}
+                            <input type="checkbox" id="supportsextmotiondetection" name="supportsextmotiondetection" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="supportsextmotiondetection" name="supportsextmotiondetection" value="0" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:35%">
+                        {% if sc.supportsExtMotionDetection == False %}
+                            <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotsupportsExtMotionDetection|safe }}</p>
+                        {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select whether streaming requires authentication.
+                            </span>
+                            <label for="requireAuthForStreaming">Req. Auth for Streaming:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            {% if sc.requireAuthForStreaming == True %}
+                            <input type="checkbox" id="requireAuthForStreaming" name="requireAuthForStreaming" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="requireAuthForStreaming" name="requireAuthForStreaming" value="0">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select whether you want to allow API access to the raspiCamSrv server.
+                            </span>
+                            <label for="useapi">Allow access through API:</label>
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.supportsAPI == True %}
+                            {% if sc.useAPI == True %}
+                            <input type="checkbox" id="useapi" name="useapi" onchange="confirmApiChange()" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="useapi" name="useapi" onchange="confirmApiChange()" value="0">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="useapi" name="useapi" value="0" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.supportsAPI == False %}
+                            <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotSupportsAPI|safe }}</p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Geographic Latitude of camera position.<br>
+                                (Required for sunrise/sunset calculation)
+                            </span>
+                            <label for="loclatitude">Latitude:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <input type="number" id="loclatitude" name="loclatitude" min="-90.000000" max="90.000000" step="0.000001"
+                                value="{{ sc.locLatitude }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Geographic Longitude of camera position.<br>
+                                (Required for sunrise/sunset calculation)
+                            </span>
+                            <label for="loclongitude">Longitude:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <input type="number" id="loclongitude" name="loclongitude" min="-180.000000" max="180.000000" step="0.000001"
+                                value="{{ sc.locLongitude }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Geographic Elevation of camera position (in m).<br>
+                                (Required for sunrise/sunset calculation)
+                            </span>
+                            <label for="locelevation">Elevation:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <input type="number" id="locelevation" name="locelevation" min="-1000.0" max="9000.0" step="0.1"
+                                value="{{ sc.locElevation }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Time zone of camera position.<br>
+                                (Required for sunrise/sunset calculation)
+                            </span>
+                            <label for="loctzkey">Time Zone:</label>
+                        </td>
+                        <td style="width:70%" colspan="2">
+                            <select name="loctzkey" id="loctzkey">
+                                {% for tz in sc.timeZoneKeys() %}
+                                {% if sc.locTzKey == tz %}
+                                <option value="{{ tz }}" selected>{{ tz }}</option>
+                                {% else %}
+                                <option value="{{ tz }}">{{ tz }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit">
+            </form>
+        </div>
+    </div>
+    {% if sc.lastSettingsTab == "settingsconfig" %}
+    <div id="settingsconfig" class="settingsgroup">
+    {% else %}
+    <div id="settingsconfig" class="settingsgroup" style="display:none">
+    {% endif %}
+        <h3>Configuration Management</h3>
+        <table>
+            <tr>
+                <td>
+                    <form id="storeconfig" method="post" action="{{ url_for('settings.store_config') }}">
+                        <input class="w3-button w3-black" style="width: 22ch" type="submit" onclick="confirmStore('storeconfig')" value="Store Configuration">
+                    </form>
+                </td>
+                <td>
+                    <form id="loadconfig" method="post" action="{{ url_for('settings.load_config') }}">
+                        <input class="w3-button w3-black" style="width: 26ch" type="submit"  onclick="confirmLoad('loadconfig')" value="Load Stored Configuration">
+                    </form>
+                </td>
+                <td>
+                    <form id="resetserver" method="post" action="{{ url_for('settings.resetServer') }}">
+                        <input class="w3-button w3-black" style="width: 16ch" type="submit"  onclick="confirmReset('resetserver')" value="Reset Server">
+                    </form>
+                </td>
+                <!--
+                <td>
+                    <form id="shutdownserver" method="post" action="{{ url_for('settings.shutdown') }}">
+                        <input class="w3-button w3-black" style="width: 20ch" type="submit" onclick="confirmShutdown('shutdownserver')"
+                            value="Shutdown Server">
+                    </form>
+                </td>
+                -->
+                <td style="width:25%" class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        If selected, the system will load the stored configuration on server start.<br>
+                        Otherwise, the default configuration will be applied.
+                    </span>
+                    <label for="loadconfigonstartcb">Start server with stored Configuration:</label>
+                </td>
+                <td>
+                    <form id="loadconfigonstart" method="post" action="{{ url_for('settings.loadConfigOnStart') }}">
+                        {% if los == True %}
+                        <input type="checkbox" id="loadconfigonstartcb" name="loadconfigonstartcb" onchange="loadCfgOnStart('loadconfigonstart')" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="loadconfigonstartcb" name="loadconfigonstartcb" onchange="loadCfgOnStart('loadconfigonstart')" value="0">
+                        {% endif %}
+                    </form>
+                </td>
+            </tr>
+        </table>
+    </div>
+    {% if sc.lastSettingsTab == "settingsusers" %}
+    <div id="settingsusers" class="settingsgroup">
+    {% else %}
+    <div id="settingsusers" class="settingsgroup" style="display:none">
+    {% endif %}
+        {% set activeuser = g.user %}
+        {% if activeuser["issuperuser"] == 1 %}
+        <h3>Users</h3>
+        <div>
+            <form id="removeusersform" method="post" action="{{ url_for('settings.remove_users') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <th>
+                            Sel
+                        </th>
+                        <th>
+                            ID
+                        </th>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Initial
+                        </th>
+                        <th>
+                            SuperUser
+                        </th>
+                    </tr>
+                    {% for user in g.users %}
+                    <tr>
+                        <td style="width:5%">
+                            <input type="checkbox" id="sel_{{ user['id'] }}" name="sel_{{ user['id'] }}"
+                                aria-label="sel_{{ user['id'] }}" value="0">
+                        </td>
+                        <td>
+                            {{ user["id"] }}
+                        </td>
+                        <td>
+                            {{ user["username"] }}
+                        </td>
+                        <td>
+                            {% if 'isinitial' is in user %}
+                            {% if user["isinitial"] == 0 %}
+                            No
+                            {% else %}
+                            Yes
+                            {% endif %}
+                            {% else %}
+                            Unknown
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if 'issuperuser' is in user %}
+                            {% if user["issuperuser"] == 0 %}
+                            No
+                            {% else %}
+                            Yes
+                            {% endif %}
+                            {% else %}
+                            Unknown
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" style="width: 22ch" type="submit" onclick="confirmRemove('removeusersform')" value="Remove Selected Users">
+                <p style="margin-bottom: 0"></p>
+            </form>
+            <form method="post" action="{{ url_for('settings.register_user') }}">
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Register New User">
+            </form>
+            {% set user = g.users[0] %}
+            {% if not 'issuperuser' is in user %}
+            <p>
+                You are using an outdated database schema for users.<br>
+                To update to the new schema, run the following command in raspi-cam-srv, 
+                with activated virtual environment:<br>
+                flask --app raspiCamSrv init-db
+            </p>
+            {% endif %}
+        </div>
+        <br>
+        {% endif %}
+    </div>
+    {% if sc.useAPI == True %}
+    {% if sc.lastSettingsTab == "settingsapi" %}
+    <div id="settingsapi" class="settingsgroup">
+    {% else %}
+    <div id="settingsapi" class="settingsgroup" style="display:none">
+    {% endif %}
+        <div>
+            <h3>API Settings</h3>
+            <p>API access to the rapiCamSrv server is secured through JSON Web Tokens (JWT).</p>
+            <p>JWT requires a secret private key for signing tokens<br>
+               In order to enable API access, you need to specify the path of the secrets file 
+               where the secret key will be stored.<br>
+               It is recommended using the following path:<br>
+               /home/%user%/.secrets/raspiCamSrv.secrets
+            </p>
+            <p>Furthermore, you can specify expiration for the access token.</p>
+            <p>In case that the access token will expire, 
+                also the expiration period for the refresh token needs to be specified</p>
+            {% if sc.API_active == True %}
+            {% if sc.jwtAuthenticationActive == True %}
+            <h3 class="w3-green">raspiCamSrv API is active</h3>
+            {% else %}
+            {% if sc.jwtKeyStore|length == 0 %}
+            <h3 class="w3-yellow">To deactivate the API, store configuration and restart server with stored configuration</h3>
+            {% else %}
+            <h3 class="w3-yellow">To update token expiration, store configuration and restart server with stored configuration</h3>
+            {% endif %}
+            {% endif %}
+            {% else %}
+            {% if sc.jwtAuthenticationActive == False %}
+            <h3 class="w3-red">API not active. Please specify JWT authentication settings</h3>
+            {% else %}
+            <h3 class="w3-yellow">To activate the API, store configuration and restart server with stored configuration</h3>
+            {% endif %}
+            {% endif %}
+            <form method="post" action="{{ url_for('settings.api_config') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Full path to secrets file 
+                                for storage of secret key for JWT authentication.<br>
+                                A blank value will deactivate the API.
+                            </span>
+                            <label for="jwtkeystore">JWT Secret Key File Path:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input style="width: 100%" type="text" id="jwtkeystore" name="jwtkeystore"
+                                value="{{ sc.jwtKeyStore }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Expiration time (in minutes) for the short-lived access token.<br>
+                                0 = no expiration
+                            </span>
+                            <label for="jwtaccesstokenexpirationmin">Access Token Expiration in Minutes:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="jwtaccesstokenexpirationmin" name="jwtaccesstokenexpirationmin" min="0" max="999999" step="1"
+                                value="{{ sc.jwtAccessTokenExpirationMin }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Expiration time (in days) for the long-lived refresh token,
+                                which can be used to refresh the access token.<br>
+                                0 = no expiration
+                            </span>
+                            <label for="jwtrefreshtokenexpirationdays">Refresh Token Expiration in Days:</label>
+                        </td>
+                        <td style="width:50%">
+                            <input type="number" id="jwtrefreshtokenexpirationdays" name="jwtrefreshtokenexpirationdays" min="0" max="999999"
+                                step="1" value="{{ sc.jwtRefreshTokenExpirationDays }}">
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit">
+            </form>
+            <p>&nbsp;</p>
+            <table style="width: 100%">
+                <tr>
+                    <td>
+                        <form id="generatetoken" method="post" action="{{ url_for('settings.generate_token') }}">
+                            <input class="w3-button w3-black" style="width: 30ch" type="submit"
+                                onclick="doSubmit('generatetoken')" value="Generate Access Token">
+                        </form>
+                    </td>
+                </tr>
+                {% if access_token|length > 0 %}
+                <tr style="width: 100%">
+                    <td>
+                        <form>
+                            <textarea id="jwttoken" name="jwttoken" rows="5" style="width: 100%" class="w3-input w3-border" disabled>
+                                {{ access_token }}
+                            </textarea>
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+    {% endif %}
     <script>
+        function openSettingsTab(settingsTabName, settingsTabButton) {
+            var i;
+            var x = document.getElementsByClassName("settingsgroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(settingsTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("settingsmenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button settingsmenu";
+            }
+            document.getElementById(settingsTabButton).classList = "w3-bar-item w3-button settingsmenu w3-light-green";
+        }
         function confirmRemove(form) {
             if (confirm("Do you want to remove the selected users?")) {
                 document.getElementById(form).method = "post";
@@ -493,8 +691,14 @@
                 document.getElementById(form).method = "get";
             }
         }
+        function confirmApiChange(form) {
+            confirm("A change of API usage will only be effective for clients if you save the configuration and restart the server with stored configuration.")
+        }
         function loadCfgOnStart(form) {
                 document.getElementById(form).submit();
+        }
+        function doSubmit(form) {
+            document.getElementById(form).submit();
         }
     </script>
 

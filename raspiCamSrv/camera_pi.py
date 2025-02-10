@@ -936,6 +936,7 @@ class Camera():
     stopRequested = False           # Request to stop the background thread
     stopRequested2 = False          # Request to stop the background thread for second camera
     stopVideoRequested = False      # Request to stop the video thread
+    videoDuration = 0               # Planned duration of video recording in sec
     stopPhotoSeriesRequested = False  # Request to stop the photoseries thread
     resetScalerCropRequested = False
     event = CameraEvent()
@@ -1980,7 +1981,8 @@ class Camera():
                 logger.debug("Thread %s: Camera.stopCameraSystem: Video thread successfully stopped", get_ident())
         else:
             logger.debug("Thread %s: Camera.stopCameraSystem: Video thread was not active", get_ident())
-        Camera.stopVideoRequested = False        
+        Camera.stopVideoRequested = False
+        Camera.videoDuration = 0
         
         logger.debug("Thread %s: Camera.stopCameraSystem: Stopping Photoseries thread", get_ident())
         Camera.stopPhotoSeriesRequested = True        
@@ -2532,17 +2534,31 @@ class Camera():
             prgLogger.debug("encoder.output = FileOutput(output)")
             logger.debug("Thread %s: Camera._videoThread - h264 Video output to %s", get_ident(), output)
         try:
+            videoStart = time.time()
+            duration = float(Camera.videoDuration)
+            logger.debug("Thread %s: Camera._videoThread - video started at %s, duration is %s", get_ident(), videoStart, duration)
             Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
             prgLogger.debug("picam2.start_encoder(encoder, name=\"%s\")", cfg.videoConfig.stream)
             prgLogger.debug("time.sleep(videoDuration)")
             Camera.ctrl.registerEncoder(Camera.ENCODER_VIDEO, encoder)
             logger.debug("Thread %s: Camera._videoThread - Encoder started", get_ident())
-            while Camera.stopVideoRequested == False:
-                time.sleep(0.1)
+            if duration > 0.0:
+                elapsed = time.time() - videoStart
+                while elapsed <= duration:
+                    if Camera.stopVideoRequested == True:
+                        break
+                    time.sleep(0.1)
+                    elapsed = time.time() - videoStart
+                sc.isVideoRecording = False
+                sc.isAudioRecording = False
+            else:
+                while Camera.stopVideoRequested == False:
+                    time.sleep(0.1)
             logger.debug("Thread %s: Camera._videoThread - stop video requested", get_ident())
             Camera.ctrl.stopEncoder(Camera.cam, Camera.ENCODER_VIDEO)
             logger.debug("Thread %s: Camera._videoThread - encoder stopped", get_ident())
             Camera.stopVideoRequested = False
+            Camera.videoDuration = 0
         except ProcessLookupError as e:
             logger.error("Thread %s: Camera._videoThread - Error: %s", get_ident(), e)
             Camera.liveViewDeactivated = False
@@ -2573,9 +2589,9 @@ class Camera():
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
 
     @staticmethod
-    def recordVideo(filenameVid: str, filename: str):
+    def recordVideo(filenameVid: str, filename: str, duration: int = 0):
         """Record a video in an own thread"""
-        logger.debug("Thread %s: Camera.recordVideo. filename=%s", get_ident(), filename)
+        logger.debug("Thread %s: Camera.recordVideo. filename=%s, duration=%s", get_ident(), filename, duration)
         cfg = CameraCfg()
         sc = cfg.serverConfig
         # First take a normal photo as placeholder
@@ -2589,6 +2605,7 @@ class Camera():
         if Camera.videoThread is None:
             Camera.videoOutput = output
             Camera.prgVideoOutput = prgoutput
+            Camera.videoDuration = duration
             logger.debug("Thread %s: Camera.recordVideo - Starting new videoThread", get_ident())
             Camera.videoThread = threading.Thread(target=Camera._videoThread, daemon=True)
             Camera.videoThread.start()
@@ -2600,6 +2617,7 @@ class Camera():
         """stops the video recording"""
         logger.debug("Thread %s: Camera.stopVideoRecording", get_ident())
         Camera.stopVideoRequested = True
+        Camera.videoDuration = 0
         cnt = 0
         while Camera.videoThread:
             time.sleep(0.01)

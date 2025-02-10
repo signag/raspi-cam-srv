@@ -1,0 +1,409 @@
+{
+	"info": {
+		"_postman_id": "5f679e3f-97eb-491c-8265-7ebfe598603c",
+		"name": "raspiCamSrv",
+		"description": "API for Raspberry Pi Camera Server (raspiCamSrv) [https://github.com/signag/raspi-cam-srv](https://github.com/signag/raspi-cam-srv)\n\nSecurity: JSON Web Tokens (JWT)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "36794475"
+	},
+	"item": [
+		{
+			"name": "api login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"pm.collectionVariables.set(\"access_token\", response.access_token);\r",
+							"pm.collectionVariables.set(\"refresh_token\", response.refresh_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"{{user}}\",\r\n    \"password\": \"{{pwd}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"login"
+					]
+				},
+				"description": "Client login.\n\nReturns: Access Token and Refresh Token"
+			},
+			"response": []
+		},
+		{
+			"name": "api refresh",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"pm.collectionVariables.set(\"access_token\", response.access_token);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{refresh_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/refresh",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"refresh"
+					]
+				},
+				"description": "Refresh of Access Token\n\nAuthentication: Refresh Token\n\nResponse: Access Token"
+			},
+			"response": []
+		},
+		{
+			"name": "api protected",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/protected",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"protected"
+					]
+				},
+				"description": "Dummy API for testing purposes"
+			},
+			"response": []
+		},
+		{
+			"name": "api take_photo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/take_photo",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"take_photo"
+					]
+				},
+				"description": "Take photo with active camera"
+			},
+			"response": []
+		},
+		{
+			"name": "api take_raw_photo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/take_raw_photo",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"take_raw_photo"
+					]
+				},
+				"description": "Take raw photo with active camera"
+			},
+			"response": []
+		},
+		{
+			"name": "api record video",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"duration\": {{video_duration}}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/record_video",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"record_video"
+					]
+				},
+				"description": "Record video with active camera\n\nData: video duration (0 = infinite)"
+			},
+			"response": []
+		},
+		{
+			"name": "api switch cameras",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/switch_cameras",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"switch_cameras"
+					]
+				},
+				"description": "Switch cameras for systems with 2 cameras."
+			},
+			"response": []
+		},
+		{
+			"name": "api info",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/info",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"info"
+					]
+				},
+				"description": "Get status information from server:\n\n```\n{\n    \"message\": {\n        \"active_camera\": \"Camera 0 (imx708)\",\n        \"cameras\": [\n            {\n                \"active\": true,\n                \"is_usb\": false,\n                \"model\": \"imx708\",\n                \"num\": 0,\n                \"status\": \"closed\"\n            },\n            {\n                \"active\": false,\n                \"is_usb\": false,\n                \"model\": \"imx296\",\n                \"num\": 1,\n                \"status\": \"closed\"\n            }\n        ],\n        \"operation_status\": {\n            \"audio_recording\": false,\n            \"livestream2_active\": false,\n            \"livestream_active\": false,\n            \"motion_capturing\": false,\n            \"photoseries_recording\": false,\n            \"video_recording\": false\n        },\n        \"server\": \"raspi06:5000\",\n        \"version\": \"raspiCamSrv V2.11.0\"\n    }\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "api start motion detection",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/start_triggered_capture",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"start_triggered_capture"
+					]
+				},
+				"description": "Start motion detection"
+			},
+			"response": []
+		},
+		{
+			"name": "api stop motion detection",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/stop_triggered_capture",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"stop_triggered_capture"
+					]
+				},
+				"description": "Stop motion detection"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "<base_url>",
+			"type": "default"
+		},
+		{
+			"key": "user",
+			"value": "<user>",
+			"type": "default"
+		},
+		{
+			"key": "pwd",
+			"value": "<password>",
+			"type": "default"
+		},
+		{
+			"key": "access_token",
+			"value": "<access_token>",
+			"type": "default"
+		},
+		{
+			"key": "refresh_token",
+			"value": "<refresh_token>",
+			"type": "default"
+		},
+		{
+			"key": "video_duration",
+			"value": "30",
+			"type": "default"
+		}
+	]
+}

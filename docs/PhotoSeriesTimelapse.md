@@ -11,7 +11,7 @@ Currently, raspiCamSrv supports limiting photo shooting to configurable periods 
 Usage of this feature requires calculation of sunrise and sunset, depending on date.    
 The algorithm (see [Sunrise Equation](#sunrise-equation)) requires information about the geografic coordinates of the camera position.   
 These need to be specified on the [Settings](./Settings.md) screen before a Series can be classified as "Sun-controlled".   
-It is recommended to [store the configuration](./Settings.md#server-configuration-storage) in order to have these settings available after a server restart.
+It is recommended to [store the configuration](./SettingsConfiguration.md#server-configuration-storage) in order to have these settings available after a server restart.
 
 When this screen is activated after a [new Series](./PhotoSeries.md#creation-of-a-new-series) has been created, it will show up as
 

@@ -12,9 +12,9 @@ from datetime import time
 from datetime import timedelta
 import raspiCamSrv.dbx as dbx
 import smtplib
-from flask import g
 from pathlib import Path
 import zoneinfo
+from secrets import token_urlsafe
 
 logger = logging.getLogger(__name__)
 
@@ -867,14 +867,15 @@ class TriggerConfig():
                     secretsOK = False
                     
         # Test SSL
-        try:
-            with smtplib.SMTP_SSL(host=secHost, port=secPort) as smtp_ssl:
-                smtp_ssl.ehlo()
-                if secUseSSL == False:
-                    err = "Server requires SSL"
-        except (smtplib.SMTPConnectError, ConnectionRefusedError):
-            if secUseSSL == True:
-                err = "Server does not require SSL"
+     # TODO: Investigate why this test no longer works
+       #try:
+        #    with smtplib.SMTP_SSL(host=secHost, port=secPort) as smtp_ssl:
+        #        smtp_ssl.ehlo()
+        #        if secUseSSL == False:
+        #            err = "Server requires SSL"
+        #except (smtplib.SMTPConnectError, ConnectionRefusedError):
+        #    if secUseSSL == True:
+        #        err = "Server does not require SSL"
         
         # Test connection
         if err == "":
@@ -2260,6 +2261,7 @@ class ServerConfig():
         self._lastInfoTab = "camprops"
         self._lastPhotoSeriesTab = "series"
         self._lastTriggerTab = "trgcontrol"
+        self._lastSettingsTab = "settingsparams"
         self._isLiveStream = False
         self._isLiveStream2 = None
         self._isVideoRecording = False
@@ -2280,6 +2282,7 @@ class ServerConfig():
         self._cv2Available = False
         self._numpyAvailable = False
         self._matplotlibAvailable = False
+        self._flaskJwtLibAvailable = False
         self._useHistograms = False
         self._requireAuthForStreaming = False
         self._locLongitude = 0.0
@@ -2290,6 +2293,12 @@ class ServerConfig():
         self._pvFrom = None
         self._pvTo = None
         self._pvList = []
+        self._useAPI = False
+        self._API_active = False
+        self._jwtAuthenticationActive = False
+        self._jwtKeyStore = ""
+        self._jwtAccessTokenExpirationMin = 60
+        self._jwtRefreshTokenExpirationDays = 0
         
         # Check access of microphone
         self.checkMicrophone()
@@ -2684,6 +2693,14 @@ class ServerConfig():
         self._lastTriggerTab = value
 
     @property
+    def lastSettingsTab(self):
+        return self._lastSettingsTab
+
+    @lastSettingsTab.setter
+    def lastSettingsTab(self, value: str):
+        self._lastSettingsTab = value
+
+    @property
     def isDisplayHidden(self) -> bool:
         return self._isDisplayHidden
 
@@ -2844,6 +2861,14 @@ class ServerConfig():
         self._matplotlibAvailable = value
 
     @property
+    def flaskJwtLibAvailable(self) -> bool:
+        return self._flaskJwtLibAvailable
+
+    @flaskJwtLibAvailable.setter
+    def flaskJwtLibAvailable(self, value: bool):
+        self._flaskJwtLibAvailable = value
+
+    @property
     def useHistograms(self) -> bool:
         return self._useHistograms
 
@@ -2857,11 +2882,17 @@ class ServerConfig():
           and self.matplotlibAvailable \
           and self.numpyAvailable
         return sup
+
     @property
     def supportsHistograms(self) -> bool:
         sup = self.cv2Available \
           and self.matplotlibAvailable \
           and self.numpyAvailable
+        return sup
+
+    @property
+    def supportsAPI(self) -> bool:
+        sup = self.flaskJwtLibAvailable == True
         return sup
 
     @property
@@ -2888,6 +2919,15 @@ class ServerConfig():
                 why = why + "<br>module matplotlib is not available"
             if not self.numpyAvailable:
                 why = why + "<br>module numpy is not available"
+        return why
+
+    @property
+    def whyNotSupportsAPI(self) -> str:
+        why = ""
+        if not self.supportsAPI:
+            why = "The raspiCamSrv API not supported because"
+            if not self.flaskJwtLibAvailable:
+                why = why + "<br>module flask_jwt_extended is not available"
         return why
 
     @property
@@ -2995,7 +3035,55 @@ class ServerConfig():
     @pvList.setter
     def pvList(self, value: list):
         self._pvList = value
-    
+ 
+    @property
+    def jwtAuthenticationActive(self) -> bool:
+        return self._jwtAuthenticationActive
+
+    @jwtAuthenticationActive.setter
+    def jwtAuthenticationActive(self, value: bool):
+        self._jwtAuthenticationActive = value
+
+    @property
+    def jwtKeyStore(self) -> str:
+        return self._jwtKeyStore
+
+    @jwtKeyStore.setter
+    def jwtKeyStore(self, value: str):
+        self._jwtKeyStore = value
+        
+    @property
+    def jwtAccessTokenExpirationMin(self) -> int:
+        return self._jwtAccessTokenExpirationMin
+
+    @jwtAccessTokenExpirationMin.setter
+    def jwtAccessTokenExpirationMin(self, value: int):
+        self._jwtAccessTokenExpirationMin = value
+ 
+    @property
+    def jwtRefreshTokenExpirationDays(self) -> int:
+        return self._jwtRefreshTokenExpirationDays
+
+    @jwtRefreshTokenExpirationDays.setter
+    def jwtRefreshTokenExpirationDays(self, value: int):
+        self._jwtRefreshTokenExpirationDays = value
+
+    @property
+    def API_active(self) -> bool:
+        return self._API_active
+
+    @API_active.setter
+    def API_active(self, value: bool):
+        self._API_active = value
+ 
+    @property
+    def useAPI(self) -> bool:
+        return self._useAPI
+
+    @useAPI.setter
+    def useAPI(self, value: bool):
+        self._useAPI = value
+
     @property
     def processInfo(self) -> str:
         pi = self._countThreads("raspiCamSrv")
@@ -3036,11 +3124,16 @@ class ServerConfig():
         self.cv2Available = self._checkModule("cv2") is not None
         self.numpyAvailable = self._checkModule("numpy") is not None
         self.matplotlibAvailable = self._checkModule("matplotlib") is not None
+        self.flaskJwtLibAvailable = self._checkModule("flask_jwt_extended") is not None
         if self.supportsHistograms:
             self.useHistograms = True
         else:
             self.useHistograms = False
-        logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable)
+        if self.supportsAPI:
+            self.useAPI = True
+        else:
+            self.useAPI = False
+        logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s flaskJwtLibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable, self.flaskJwtLibAvailable)
     
     @property
     def displayBufferCount(self) -> int:
@@ -3452,6 +3545,76 @@ class ServerConfig():
         
         logger.debug("CameraCfg.getLsbRelease - lsbRelease = %s", lsbRelease)
         return lsbRelease
+            
+    def checkJwtSettings(self) -> tuple:
+        """ Get secret key for JSON Wob Tokens JWT
+
+            The secret key is expected in the JWT secrets file
+            If a secret key is found, JWT authentication for the API is enabled
+        """
+        logger.debug("ServerConfig.checkJwtSettings")
+        self.jwtAuthenticationActive = False
+        # Try to get secret key from the file
+        err = None
+        msg = ""
+        jwtSecretKey = None
+        if self.jwtKeyStore != "":
+            logger.debug("ServerConfig.checkJwtSettings - jwtKeyStore = %s", self.jwtKeyStore)
+            if not os.path.exists(self.jwtKeyStore):
+                fp = Path(self.jwtKeyStore)
+                dir = fp.parent.absolute()
+                fn = fp.name
+                if not os.path.exists(dir):
+                    os.makedirs(dir, exist_ok=True)
+                    logger.debug("ServerConfig.checkJwtSettings - dir created: %s", dir)
+                self.jwtKeyStore = str(dir) + "/" + fn
+                Path(self.jwtKeyStore).touch(exist_ok=True)
+                logger.debug("ServerConfig.checkJwtSettings - file created: %s", self.jwtKeyStore)
+            else:
+                logger.debug("ServerConfig.checkJwtSettings - path exists: %s", self.jwtKeyStore)
+                if os.path.isdir(self.jwtKeyStore):
+                    err = "The 'Password File Path' must be a file and not a directory!"
+            secrets = {}
+            if err is None:
+                if os.stat(self.jwtKeyStore).st_size > 0:
+                    with open(self.jwtKeyStore, "r") as f:
+                        try:
+                            secrets = json.load(f)
+                        except Exception as e:
+                            err = "The file specified as 'JWT Secret Key File Path' has content which is not in JSON format"
+            if err is None:
+                jwtSecretKey = ""
+                if "jwtSecrets" in secrets:
+                    jwtSecrets = secrets["jwtSecrets"]
+                    if "jwtSecretKey" in jwtSecrets:
+                        jwtSecretKey = jwtSecrets["jwtSecretKey"]
+                        logger.debug("ServerConfig.checkJwtSettings - JWT secret key read from file")
+                        msg = "JWT secret key read from Secret Key Store"
+                else:
+                    jwtSecrets = {}
+                if jwtSecretKey == "":
+                    jwtSecretKey = token_urlsafe()
+                    logger.debug("ServerConfig.checkJwtSettings - jwtSecretKey generated: %s", jwtSecretKey)
+                    msg = "New JWT secret key generated"
+                    secrets["jwtSecrets"] = jwtSecrets
+                    jwtSecrets["jwtSecretKey"] = jwtSecretKey
+                    with open(self.jwtKeyStore, "w") as f:
+                        try:
+                            json.dump(secrets,fp=f, indent=4)
+                            logger.debug("ServerConfig.checkJwtSettings -  - saved secrets to file %s", self.jwtKeyStore)
+                        except Exception as e:
+                            logger.err("ServerConfig.checkJwtSettings -  - error while saving secrets to file %s: %s", self.jwtKeyStore, e)
+                            err = "Error writing to " + self.jwtKeyStore + ": " + str(e)
+        else:
+            logger.debug("ServerConfig.checkJwtSettings - jwtKeyStore not set")
+            msg = "API inactive - No JWT Secret Key Store specified"
+
+        if jwtSecretKey is None:
+            self.jwtAuthenticationActive = False
+        else:
+            self.jwtAuthenticationActive = True
+        logger.debug("ServerConfig.checkJwtSettings - jwtAuthenticationActive = %s", self.jwtAuthenticationActive)
+        return (jwtSecretKey, err, msg)
 
     @staticmethod
     def _lineGen(s):
@@ -3658,6 +3821,7 @@ class Secrets():
     def __init__(self) -> None:
         self._notifyUser = ""
         self._notifyPwd = ""
+        self._jwtSecretKey = ""
 
     @property
     def notifyUser(self) -> str:
@@ -3674,7 +3838,14 @@ class Secrets():
     @notifyPwd.setter
     def notifyPwd(self, value: str):
         self._notifyPwd = value
-    
+
+    @property
+    def jwtSecretKey(self) -> str:
+        return self._jwtSecretKey
+
+    @jwtSecretKey.setter
+    def jwtSecretKey(self, value: str):
+        self._jwtSecretKey = value
     
 class CameraCfg():
     _instance = None
@@ -3957,11 +4128,14 @@ class CameraCfg():
                 self.controls = self._loadConfigCl(CameraControls, "controls.json", cfgPath)
                 self.triggerConfig = self._loadConfigCl(TriggerConfig, "triggerConfig.json", cfgPath)
                 self.streamingCfg = self._initStreamingConfigFromDisc("streamingCfg.json", cfgPath)
+                sc = self.secrets
                 tc = self.triggerConfig
                 (usr, pwd, err) = tc.checkNotificationRecipient()
                 if tc.notifyConOK == True:
-                    sc = self.secrets
                     sc.notifyUser = usr
                     sc.notifyPwd = pwd
-                
-                
+                srv = self.serverConfig
+                if srv.useAPI == True:
+                    (secretKey, err, msg) = srv.checkJwtSettings()
+                    if err is None:
+                        sc.jwtSecretKey = secretKey
