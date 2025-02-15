@@ -1422,7 +1422,8 @@ class Camera():
         if cfgProps.model is None:
             camPprops = Camera.cam.camera_properties
             cfgProps.model = camPprops["Model"]
-            cfgProps.unitCellSize = camPprops["UnitCellSize"]
+            if "UnitCellSize" in camPprops:
+                cfgProps.unitCellSize = camPprops["UnitCellSize"]
             cfgProps.location = camPprops["Location"]
             cfgProps.rotation = camPprops["Rotation"]
             cfgProps.pixelArraySize = camPprops["PixelArraySize"]

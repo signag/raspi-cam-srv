@@ -9,9 +9,18 @@ Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullse
 
 Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-## Feature Overview V2.11.2
-For more details and [update procedure](./docs/ReleaseNotes.md#update-procedure), see the [User Guide](docs/UserGuide.md) and [Release Notes](./docs/ReleaseNotes.md).    
-For [installation procedure](#raspicamsrv-installation), see [below](#raspicamsrv-installation).
+## Getting Started
+
+- For [System Setup](#setup--getting-started) or [installation procedure](#raspicamsrv-installation), see below.
+
+- If you need to be independent from an existing Wi-Fi or cabled connection, see [Setup of Raspberry Pi Zero as Standalone System](./docs/bp_PiZero_Standalone.md)
+
+
+- For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
+
+## Feature Overview V2.11.3
+
+For more details, see the [User Guide](docs/UserGuide.md).    
 
 ![Live Overview](docs/img/Live.jpg)
 

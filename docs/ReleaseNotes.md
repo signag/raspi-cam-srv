@@ -36,6 +36,20 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V2.11.3
+
+### Bugfix
+
+- Fixed "TypeError: can only concatenate str", which might occur in special cases for a [Sun-controlled timelapse series](./PhotoSeriesTimelapse.md#).
+
+- Fixed wrong display of *Sunset* in [Timelapse series](./PhotoSeriesTimelapse.md#).
+
+- Fixed "KeyError: 'UnitCellSize'" for cases where camera_properties do not include information on the physical size of the sensor’s pixels
+
+### Doc
+
+- Added [description for setup of stanalone systems](./bp_PiZero_Standalone.md)
+
 ## V2.11.2
 
 ### Bugfix

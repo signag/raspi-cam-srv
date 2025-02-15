@@ -552,7 +552,7 @@ class Series():
     @sunCtrlEnd1.setter
     def sunCtrlEnd1(self, value: datetime):
         if value is None:
-            self._sunset = None
+            self._sunCtrlEnd1 = None
         else:
             dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
             self._sunCtrlEnd1 = dt
@@ -584,7 +584,7 @@ class Series():
     @sunCtrlStart2.setter
     def sunCtrlStart2(self, value: datetime):
         if value is None:
-            self._sunset = None
+            self._sunCtrlStart2 = None
         else:
             dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
             self._sunCtrlStart2 = dt
@@ -616,7 +616,7 @@ class Series():
     @sunCtrlEnd2.setter
     def sunCtrlEnd2(self, value: datetime):
         if value is None:
-            self._sunset = None
+            self._sunCtrlEnd2 = None
         else:
             dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
             self._sunCtrlEnd2 = dt
@@ -791,11 +791,13 @@ class Series():
                         nrint = int(timedifSec / self._interval)
                         next = self.sunCtrlStart2 + timedelta(seconds = (nrint + 1)*self.interval)
                     if next > self.sunCtrlEnd2:
-                        dat += timedelta(days=1)
+                        now1 = now + timedelta(days=1)
+                        dat = now1.strftime("%Y-%m-%d")
                         self.calcSunCtrlData(dat)
                         next = self.sunCtrlStart1
                 else:
-                    dat += timedelta(days=1)
+                    now1 = now + timedelta(days=1)
+                    dat = now1.strftime("%Y-%m-%d")
                     self.calcSunCtrlData(dat)
                     next = self.sunCtrlStart1
         if not next:
