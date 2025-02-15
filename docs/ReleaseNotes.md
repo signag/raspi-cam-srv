@@ -36,6 +36,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V2.11.4
+
+### Bugfix
+
+- Fixed [initialization of the raspiCamSrv API](./SettingsAPI.md) which did not work when a secrets file did not yet exist.
+
 ## V2.11.3
 
 ### Bugfix

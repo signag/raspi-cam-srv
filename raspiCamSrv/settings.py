@@ -483,6 +483,10 @@ def api_config():
                             logger.debug("api_config - jwtKeyStore successfully accessed")
                         except Exception as e:
                             msg = f"Error when accessing JWT Secret Key File: {e}"
+                else:
+                    sc.jwtKeyStore = jwtKeyStore
+            else:
+                sc.jwtKeyStore = jwtKeyStore
         else:
             sc.jwtKeyStore = ""
         sc.jwtAccessTokenExpirationMin = int(request.form["jwtaccesstokenexpirationmin"])
