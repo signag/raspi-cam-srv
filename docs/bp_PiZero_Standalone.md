@@ -67,8 +67,8 @@ sudo apt full-upgrade
 
 The process of configuration is slightly different, depending on the cosen OS:
 
-- [Hotspot Confiuration for 'Bullseye' OS](./bp_Hotspot_Bullseye.md)
-- [Hotspot Confiuration for 'Bookworm' OS](./bp_Hotspot_Bookworm.md)
+- [Hotspot Configuration for 'Bullseye' OS](./bp_Hotspot_Bullseye.md)
+- [Hotspot Configuration for 'Bookworm' OS](./bp_Hotspot_Bookworm.md)
 
 ## 5. Install raspiCamSrv
 

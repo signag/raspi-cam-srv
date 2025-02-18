@@ -1,4 +1,4 @@
-# Hotspot Confiuration for 'Bullseye' OS
+# Hotspot Configuration for 'Bullseye' OS
 
 [![Up](img/goup.gif)](./bp_PiZero_Standalone.md)
 

@@ -1,4 +1,4 @@
-# Hotspot Confiuration for 'Bookworm' OS
+# Hotspot Configuration for 'Bookworm' OS
 
 [![Up](img/goup.gif)](./bp_PiZero_Standalone.md)
 
