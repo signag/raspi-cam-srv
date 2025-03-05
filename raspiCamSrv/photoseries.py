@@ -348,7 +348,10 @@ def continue_series():
                 if sr.isSunControlledSeries == False:
                     #Adjust end time of series
                     logger.debug("Start immediately")
-                    timedifSec = int(sr.interval * (sr.nrShots - sr.curShots + 1))
+                    if sr.nrShots is None or sr.curShots is None:
+                        timedifSec = int(sr.interval)
+                    else:    
+                        timedifSec = int(sr.interval * (sr.nrShots - sr.curShots + 1))
                     delta = timedelta(seconds=timedifSec)
                     serEndRaw = datetime.now() + delta
                     serEnd = datetime(year=serEndRaw.year, month=serEndRaw.month, day=serEndRaw.day, hour=serEndRaw.hour, minute=serEndRaw.minute)

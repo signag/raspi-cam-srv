@@ -336,6 +336,7 @@ def store_config():
         # Initialize the Photo viewer list
         sc = cfg.serverConfig
         sc.pvList = []
+        sc.updateStreamingClients()
         cfg.persist(cfgPath)
         msg = "Configuration stored under " + cfgPath
         flash(msg)

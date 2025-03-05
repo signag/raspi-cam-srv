@@ -4,7 +4,7 @@
 
 This screen contains several tabs with information on the camera system:
 
-## Cameras
+## Installed Cameras
 
 ![Cameras](img/Info-Cameras.jpg)
 
@@ -52,6 +52,16 @@ See [Camera Status and Number of Threads](#camera-status-and-number-of-threads)
 
 Under *Tuning File*, you can see whether the Default or a custom tuning file are currently in use.    
 See [raspiCamSrv Camera Tuning](./Tuning.md).
+
+### Streaming Clients
+
+![Streaming Clients](./img/Info-StreamingClients.jpg)
+
+The tab lists the clients which are currently using one of the camera streams.   
+Along with the IP address of the client, a list of streams is shown which the client is using:
+- *live_view*<br> [The Live View](./LiveScreen.md) stream<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLiveActive.jpg)
+- *video_feed*<br>The [video Stream](./Webcam.md#video-stream) for the active camera<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLiveActive.jpg)
+- *video_feed2*<br>The [video Stream](./Webcam.md#video-stream) for the second camera, if available<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLive2Active.jpg)
 
 ## Camera Properties
 

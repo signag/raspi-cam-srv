@@ -3,6 +3,7 @@ from werkzeug.exceptions import abort
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, TuningConfig
 from raspiCamSrv.version import version
+import threading
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -36,5 +37,7 @@ def main():
             else:
                 tcs[camnum] = TuningConfig()
         c.status = Camera.cameraStatus(c.num)
+    # Update streaming clients
+    sc.updateStreamingClients()
     sc.curMenu = "info"
     return render_template("info/info.html", props=props, sm=sm, sc=sc, tcs=tcs, cp=cp, cs=cs, cfg=cfg)

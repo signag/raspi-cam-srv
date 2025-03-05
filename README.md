@@ -18,7 +18,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V2.11.4
+## Feature Overview V2.12.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -59,10 +59,10 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - Access to the server requires [registration and authentification](docs/Authentication.md).
 - Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
-
-**New in V2.11**
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
+**New in V2.12**
+- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
 
 ## Known Issues
 

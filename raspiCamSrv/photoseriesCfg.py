@@ -1000,6 +1000,7 @@ class Series():
             log = log + "SensorTemperature" + ";"
             log = log + "ColourTemperature" + ";"
             log = log + "AeLocked" + ";"
+            log = log + "ScalerCrops" + ";"
             f = open(self.logFile, "a")
             f.write(log + "\n")
             f.close()
@@ -1049,6 +1050,10 @@ class Series():
             log = log + ";"
         if "AeLocked" in metadata:
             log = log + str(metadata["AeLocked"]) + ";"
+        else:
+            log = log + ";"
+        if "ScalerCrops" in metadata:
+            log = log + str(metadata["ScalerCrops"]) + ";"
         else:
             log = log + ";"
         f = open(self.logFile, "a")

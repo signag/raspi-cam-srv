@@ -260,6 +260,7 @@ class CameraController():
             except Exception as e:
                 logger.debug("Thread %s: CameraController.requestStop - Ignoring error while closing camera: %s", get_ident(), e)
             gc.collect()
+            prgLogger.debug("gc.collect()")
             logger.debug("Thread %s: CameraController.requestStop - Garbage collection completed", get_ident())
 
         logger.debug("Thread %s: CameraController.requestStop: %s", get_ident(), res)
@@ -971,6 +972,7 @@ class Camera():
         prgLogger.debug("from picamera2.encoders import H264Encoder")
         prgLogger.debug("import time")
         prgLogger.debug("import os")
+        prgLogger.debug("import gc")
         prgLogger.debug("Picamera2.set_logging(Picamera2.ERROR)")
         prgLogger.debug('os.environ["LIBCAMERA_LOG_LEVELS"] = "*:3"')
         prgLogger.debug("videoDuration = 10")
@@ -1747,17 +1749,18 @@ class Camera():
         """
         logger.debug("Thread %s: Camera.applyControls - toCam2: %s", get_ident(), toCam2)
 
+        logger.debug("Thread %s: Camera.applyControls - camCfg.controls=%s", get_ident(), camCfg.controls)
         cfg = CameraCfg()
         if toCam2 is None:
             cfgCtrls = cfg.controls
         else:
             cfgCtrls = cfg.streamingCfg[str(Camera.camNum2)]["controls"]
-        logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        logger.debug("Thread %s: Camera.applyControls - cfgCtrls=%s", get_ident(), cfgCtrls.__dict__)
 
         # Initialize controls dict with controls included in configuration
         #ctrls = copy.deepcopy(camCfg.controls)
         ctrls = {}
-        logger.debug("Thread %s: Camera.applyControls - camCfg.controls=%s", get_ident(), ctrls)
+        logger.debug("Thread %s: Camera.applyControls - ctrls=%s", get_ident(), ctrls)
         cnt = 0
         
         # Apply selected controls with precedence of controls from configuration
@@ -1876,6 +1879,7 @@ class Camera():
                     ctrls[exceptCtrl] = exceptValue
             
         logger.debug("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
+        logger.debug("Thread %s: Camera.applyControls - ctrls=%s", get_ident(), ctrls)
         if toCam2 is None:
             camCtrls = Controls(Camera.cam)
             prgLogger.debug("camCtrls = Controls(picam2)")
@@ -1883,9 +1887,10 @@ class Camera():
             camCtrls.set_controls(ctrls)
             prgLogger.debug("camCtrls.set_controls(ctrls)")
             Camera.cam.controls = camCtrls
+            #Camera.cam.controls.set_controls(ctrls)
             prgLogger.debug("picam2.controls = camCtrls")
+            logger.debug("Thread %s: Camera.applyControls - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s", get_ident(), id(Camera), id(Camera.cam), id(Camera.cam.controls))
             logger.debug("Thread %s: Camera.applyControls - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
-            logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
         else:
             camCtrls = Controls(Camera.cam2)
             camCtrls.set_controls(ctrls)
@@ -2247,6 +2252,7 @@ class Camera():
             Camera.applyControls(Camera.ctrl.configuration)
             logger.debug("Thread %s: Camera.takeImage - controls applied", get_ident())
             
+            logger.debug("Thread %s: Camera.takeImage - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
             request = Camera.cam.capture_request()
             prgLogger.debug("request = picam2.capture_request()")
             logger.debug("Thread %s: Camera.takeImage: Request started", get_ident())
@@ -2750,7 +2756,7 @@ class Camera():
                         timedif = nextTime - curTime
                         timedifSec = timedif.total_seconds()
                         if camClosed:
-                            timedifSec -= 1.5
+                            timedifSec -= 2.0
                             
                         if Camera.stopPhotoSeriesRequested:
                             stop = True
@@ -2762,6 +2768,11 @@ class Camera():
                     stop = True
                 if not stop:
                     try:
+                        if Camera.cam is None:
+                            camClosed = True
+                        else:
+                            if Camera.cam.started == False:
+                                camClosed = True
                         if camClosed:
                             logger.debug("Thread %s: Camera._photoSeriesThread - Preparing closed camera", get_ident())
                             if ser.type == "jpg":
@@ -2771,10 +2782,21 @@ class Camera():
                             logger.debug("Thread %s: Camera._photoSeriesThread Got camera for photo series exclusive: %s", get_ident(), exclusive)
                             photoseriesCtrls = Camera.applyControls(Camera.ctrl.configuration, exceptCtrl, exceptValue)
                             logger.debug("Thread %s: Camera._photoSeriesThread - selected controls applied", get_ident())
+                            time.sleep(1)
+                            curTime = datetime.datetime.now()
+                            timedif = nextTime - curTime
+                            timedifSec = timedif.total_seconds()
+                            if timedifSec > 0:
+                                time.sleep(timedifSec)
                             
                         logger.debug("Thread %s: Camera._photoSeriesThread - Preparing request", get_ident())
+                        logger.debug("Thread %s: Camera._photoSeriesThread - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s", get_ident(), id(Camera), id(Camera.cam), id(Camera.cam.controls))
+                        logger.debug("Thread %s: Camera._photoSeriesThread - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
                         lastTime = datetime.datetime.now()
                         request = Camera.cam.capture_request()
+                        logger.debug("Thread %s: Camera._photoSeriesThread - capture_request completed", get_ident())
+                        logger.debug("Thread %s: Camera._photoSeriesThread - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s", get_ident(), id(Camera), id(Camera.cam), id(Camera.cam.controls))
+                        logger.debug("Thread %s: Camera._photoSeriesThread - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
                         prgLogger.debug("request = picam2.capture_request()")
                         fpjpg = ser.path + "/" + nextPhoto + ".jpg"
                         fpraw = ser.path + "/" + nextPhoto + ".dng"
@@ -2784,7 +2806,7 @@ class Camera():
                             request.save_dng(fpraw)
                             prgLogger.debug("request.save_dng(\"%s\")", sc.prgOutputPath + "/" + nextPhoto + ".dng")
                         metadata = request.get_metadata()
-                        prgLogger.debug("request.get_metadata()")
+                        prgLogger.debug("metadata = request.get_metadata()")
                         request.release()
                         prgLogger.debug("request.release()")
                         logger.debug("Thread %s: Camera._photoSeriesThread - Request released", get_ident())
@@ -2865,7 +2887,9 @@ class Camera():
                 Camera.photoSeriesThread = None
                 CameraCfg().serverConfig.isPhotoSeriesRecording = False
                 #raise TimeoutError("Photoseries thread did not stop within 5 sec")
-        logger.debug("Thread %s: stopPhotoSeries: Thread has stopped", get_ident())
+                logger.debug("Thread %s: stopPhotoSeries: Thread seams to be dead", get_ident())
+            else:
+                logger.debug("Thread %s: stopPhotoSeries: Thread has stopped", get_ident())
         Camera.stopPhotoSeriesRequested = False
 
     @classmethod

@@ -58,10 +58,22 @@ def gen2(camera):
             #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), len(frame))
             yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
+@bp.route("/live_view_feed")
+@login_required
+def live_view_feed():
+    logger.debug("Thread %s: In live_view_feed - client IP: %s", get_ident(), request.remote_addr)
+    sc = CameraCfg().serverConfig
+    sc.registerStreamingClient(request.remote_addr, "live_view", get_ident())
+    Camera().startLiveStream()
+    return Response(gen(Camera()),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
 @bp.route("/video_feed")
 @login_for_streaming
 def video_feed():
-    logger.debug("Thread %s: In video_feed", get_ident())
+    logger.debug("Thread %s: In video_feed - client IP: %s", get_ident(), request.remote_addr)
+    sc = CameraCfg().serverConfig
+    sc.registerStreamingClient(request.remote_addr, "video_feed", get_ident())
     Camera().startLiveStream()
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -69,7 +81,9 @@ def video_feed():
 @bp.route("/video_feed2")
 @login_for_streaming
 def video_feed2():
-    logger.debug("Thread %s: In video_feed2", get_ident())
+    logger.debug("Thread %s: In video_feed2 - client IP: %s", get_ident(), request.remote_addr)
+    sc = CameraCfg().serverConfig
+    sc.registerStreamingClient(request.remote_addr, "video_feed2", get_ident())
     Camera().startLiveStream2()
     return Response(gen2(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')

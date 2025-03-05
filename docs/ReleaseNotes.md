@@ -36,6 +36,22 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V2.12.0
+
+### New Features
+
+- The [Info Screen](./Information.md) has been extended by a section [Streaming Clients](./Information.md#streaming-clients) which shows a list of clients which are currently using any of the camera streams. 
+
+### Bugfixes
+
+- Fixed TypeError which could occur if a paused [Photo Series](./PhotoSeries.md), for which no photos had been taken, was continued. 
+
+- Fixed an error where for a [Photo Series](./PhotoSeries.md) with *Interval* > 60 sec. an additional photo could have been taken about 1.5 sec. before the expected time when the regular photo is taken. If the waiting time between successive photos is > 60 sec. and if no other process requires the camera, the camera is closed to minimize resource consumption. The waiting time is then shortened by 1.5 sec., to account for the time required for camera wakeup. If, however, the live stream is activated within 60 sec. before the time for the next photo, the camera is already active and this additional time is not required. 
+
+- Fixed an error for [Photo Series](./PhotoSeries.md) with *Interval* >> 60 sec. for the case when the series was started while the live stream was still active. In this case, the photo series did not stop the camera during the waiting period because it was required by the live stream. If the photo series continued taking the next photo, it did not recognize that the camera was closed in the meantime. An attempt to take a photo caused the thread to stop without error notification.<br>As a result, the series seemed to be active while it was actually dead.
+
+- Fixed an error for [Photo Series](./PhotoSeries.md) with *Interval* > 60 sec. where controls (e.g. zoom/ScalerCrop) were not applied to the photos of the series, except probably for the first one.<br>The reason was that the camera is closed if the waiting time for the next photo is > 60 sec. and after restart the camara wasn't given time to pick up the controls settings. Now, an additional waiting time of 1 sec. has been added which resolves the issue.
+
 ## V2.11.4
 
 ### Bugfix

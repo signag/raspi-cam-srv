@@ -47,7 +47,6 @@
                 <td></td>
             </tr>
         </table>
-        <p>&nbsp;</p>
         {% for cam in cs %}
         {% if cam.num == sc.activeCamera %}
         <h4>Camera {{ cam.num }} (currently active)</h4>
@@ -138,6 +137,29 @@
             </tr>
         </table>
         {% endfor%}
+        <h4>Streaming Clients</h4>
+        <table class="w3-table-all">
+            <tr>
+                <th style="width:15%">IP Address</th>
+                <th style="width:55%">Streams</th>
+                <th style="width:30%"></th>
+            </tr>
+            {% for cli in sc.streamingClients %}
+            {% set ip = cli["ipaddr"] %}
+            <tr>
+                <td>{{ ip }}</td>
+                <td>{{ sc.streamingClientStreams(ip) }}</td>
+                <td></td>
+            </tr>
+            {% endfor%}
+            {% if sc.streamingClients|length == 0 %}
+            <tr>
+                <td>None</td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endif %}
+        </table>
     </div>
     <div id="camprops" class="infogroup" style="display:none">
         <h4>Camera Properties</h4>

@@ -13,7 +13,7 @@ RaspiCamSrv's Live page
         <div class="w3-half" style="min-height: 440px;">
             <!-- Live stream -->
             {% if sc.isLiveStream %}
-            <img src="{{ url_for('home.video_feed') }}" class="w3-image" id="liveviewimage" alt="Camera Live View">
+            <img src="{{ url_for('home.live_view_feed') }}" class="w3-image" id="liveviewimage" alt="Camera Live View">
             {% else %}
             {% if sc.isVideoRecording %}
             {% if sc.recordAudio == False %}

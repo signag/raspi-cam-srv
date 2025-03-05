@@ -29,7 +29,7 @@ The General Paramenters include
 ## Switching the active Camera
 
 On systems which allow connection of multiple cameras (e.g. Pi 5), it is possible to switch the active camera.   
-Only non-USB cameras are offered for selection (see also [Information](./Information.md#cameras))
+Only non-USB cameras are offered for selection (see also [Information](./Information.md#installed-cameras))
 
 ![Camera Switch](img/Settings_CamSel.jpg)
 

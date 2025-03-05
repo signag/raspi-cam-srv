@@ -15,6 +15,7 @@ import smtplib
 from pathlib import Path
 import zoneinfo
 from secrets import token_urlsafe
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -2299,6 +2300,7 @@ class ServerConfig():
         self._jwtKeyStore = ""
         self._jwtAccessTokenExpirationMin = 60
         self._jwtRefreshTokenExpirationDays = 0
+        self._streamingClients = []
         
         # Check access of microphone
         self.checkMicrophone()
@@ -3067,6 +3069,87 @@ class ServerConfig():
     @jwtRefreshTokenExpirationDays.setter
     def jwtRefreshTokenExpirationDays(self, value: int):
         self._jwtRefreshTokenExpirationDays = value
+ 
+    @property
+    def streamingClients(self) -> list:
+        return self._streamingClients
+
+    @streamingClients.setter
+    def streamingClients(self, value: list):
+        self._streamingClients = value
+
+    def registerStreamingClient(self, ipaddr: str, stream: str, thread: int):
+        cl = None
+        for scl in self.streamingClients:
+            if scl["ipaddr"] == ipaddr:
+                cl = scl
+                break
+        if cl is None:
+            cl = {}
+            cl["ipaddr"] = ipaddr
+            streams = []
+            s = {}
+            s["stream"] = stream
+            s["thread"] = thread
+            streams.append(s)
+            cl["streams"] = streams
+            self.streamingClients.append(cl)
+        else:
+            streams = cl["streams"]
+            append = True
+            if len(streams) > 0:
+                for s in streams:
+                    if s["thread"] == thread and s["stream"] == stream:
+                        append = False
+                        break
+            if append == True:
+                s = {}
+                s["stream"] = stream
+                s["thread"] = thread
+                streams.append(s)
+
+    def unregisterStreamingClient(self, ipaddr: str, stream: str, thread: int):
+        remcl = -1
+        idxcl = 0
+        for scl in self.streamingClients:
+            if scl["ipaddr"] == ipaddr:
+                streams = scl["streams"]
+                rems = -1
+                idxs = 0
+                for s in streams:
+                    if s["thread"] == thread and s["stream"] == stream:
+                        rems = idxs
+                    idxs += 1
+                if rems >= 0:
+                    streams.pop(rems)
+                if len(streams) == 0:
+                    remcl = idxcl
+            idxcl += 1
+        if remcl >= 0:
+            self.streamingClients.pop(remcl)
+
+    def streamingClientStreams(self, ipaddr: str) -> str:
+        res = ""
+        for scl in self.streamingClients:
+            if scl["ipaddr"] == ipaddr:
+                streams = scl["streams"]
+                for s in streams:
+                    stream = s["stream"]
+                    if len(res) == 0:
+                        res = stream
+                    else:
+                        res = res + ", " + stream
+        return res
+    
+    def updateStreamingClients(self):
+        for cl in self.streamingClients:
+            ip = cl["ipaddr"]
+            streams = cl["streams"]
+            for s in streams:
+                thread = s["thread"]
+                is_alive = any([th for th in threading.enumerate() if th.ident == thread])
+                if is_alive == False:
+                    self.unregisterStreamingClient(ip,s["stream"], thread)
 
     @property
     def API_active(self) -> bool:
@@ -3798,6 +3881,10 @@ class ServerConfig():
             elif key == "_pvList":
                 # Photo viewer list shall not be imported
                 # It will be filled on demand
+                setattr(sc, key, [])
+            elif key == "_streamingClients":
+                # Streaming clients shall not be imported
+                # They will be populated during server runtime when clients start/stop streaming
                 setattr(sc, key, [])
             elif key == "_pvCamera":
                 setattr(sc, key, None)
