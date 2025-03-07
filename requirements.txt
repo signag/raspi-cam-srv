@@ -1,0 +1,4 @@
+Flask==3.0.0
+numpy
+matplotlib
+flask-jwt-extended

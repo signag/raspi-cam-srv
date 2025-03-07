@@ -10,7 +10,8 @@ Before updating, make sure that
 - [triggered capture](./Trigger.md) (motion tracking) is stopped
 - server will not [start with stored configuration](./SettingsConfiguration.md)
 
-For update, proceed as follows:
+For update, proceed as follows:    
+(If running a Docker container see [Update Procedure for Docker Container](./SetupDocker.md#update-procedure))
 
 1. Within a SSH session go to the **raspiCamSrv** root directory    
 ```cd ~/prg/raspi-cam-srv```
@@ -35,6 +36,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - Check whether a file ```_loadConfigOnStart.txt``` exists in this folder.
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
+
+## V2.13.0
+
+### New Feature
+
+- RaspiCamSrv can now also be deployed in Docker.<br>See [Running raspiCamSrv as Docker Container](./SetupDocker.md)
 
 ## V2.12.0
 

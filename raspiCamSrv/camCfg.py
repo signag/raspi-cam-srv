@@ -3547,11 +3547,14 @@ class ServerConfig():
         """
         logger.debug("CameraCfg.getPiModel")
         model = ""
-        with open('/proc/device-tree/model') as f:
-            model = f.read()
-            if model.endswith("\x00"):
-                model = model[:len(model)-1]
-        logger.debug("CameraCfg.getPiModel - model: %s", model)
+        try:
+            with open('/proc/device-tree/model') as f:
+                model = f.read()
+                if model.endswith("\x00"):
+                    model = model[:len(model)-1]
+            logger.debug("CameraCfg.getPiModel - model: %s", model)
+        except Exception as e:
+            pass
         return model
 
     @staticmethod
@@ -3588,7 +3591,7 @@ class ServerConfig():
             logger.error("Error opening /etc/debian_version : %s", e)
             debianVers = ""
         
-        debianVers = self.getLsbRelease() + " - Version " + debianVers
+        debianVers = self.getOsName() + " - Version " + debianVers
         logger.debug("CameraCfg.getDebianVersion - debianVers = %s", debianVers)
         return debianVers
 
@@ -3609,25 +3612,39 @@ class ServerConfig():
         logger.debug("CameraCfg.getKernelVersion - kernelVers = %s", kernelVers)
         return kernelVers
 
-    def getLsbRelease(self):
-        """ Get the LSB release of the installed OS
+    def getOsName(self):
+        """ Get the name of the installed OS
         
         """
-        logger.debug("CameraCfg.getLsbRelease")
-        lsbRelease = ""
+        logger.debug("CameraCfg.getOsName")
+        osName = ""
+
+        logger.debug("CameraCfg.getOsName - trying lsb_release")
         try:
             result = subprocess.run(["lsb_release", "-a"], capture_output=True, text=True, check=True).stdout
             for line in self._lineGen(result):
-                logger.debug("CameraCfg.getLsbRelease - line:%s", line)
+                logger.debug("CameraCfg.getOsName - line:%s", line)
                 if line[0:12] == "Description:":
-                    lsbRelease = line[13:].strip()
+                    osName = line[13:].strip()
                     break
         except Exception as e:
-            logger.error("Error executing lsb_release -a : %s", e)
-            lsbRelease = ""
+            osName = ""
+            
+        if osName == "":
+            logger.debug("CameraCfg.getOsName - trying cat /etc/os-release")
+            try:
+                result = subprocess.run(["cat", "/etc/os-release"], capture_output=True, text=True, check=True).stdout
+                for line in self._lineGen(result):
+                    logger.debug("CameraCfg.getOsName - line:%s", line)
+                    if line[0:12] == "PRETTY_NAME=":
+                        osName = line[13:].strip()
+                        osName = osName.strip('"')
+                        break
+            except Exception as e:
+                osName = ""
         
-        logger.debug("CameraCfg.getLsbRelease - lsbRelease = %s", lsbRelease)
-        return lsbRelease
+        logger.debug("CameraCfg.getOsName - osName = %s", osName)
+        return osName
             
     def checkJwtSettings(self) -> tuple:
         """ Get secret key for JSON Wob Tokens JWT

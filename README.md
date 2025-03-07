@@ -11,14 +11,14 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 ## Getting Started
 
-- For [System Setup](#setup--getting-started) or [installation procedure](#raspicamsrv-installation), see below.
+- For [System Setup](#setup--getting-started) or [installation procedure](#raspicamsrv-installation), see below.<br>Alternatively, consider [running raspiCamSrv as Docker container](./docs/SetupDocker.md).
 
 - If you need to be independent from an existing Wi-Fi or cabled connection, see [Setup of Raspberry Pi Zero as Standalone System](./docs/bp_PiZero_Standalone.md)
 
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V2.12.0
+## Feature Overview V2.13.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -31,6 +31,7 @@ It can be configured whether or not authentication is required.
 The setting for necessity of authentication applies also to photo snapshots.
 - For systems with 2 Raspberry Pi cameras (currently Pi 5) both cameras can stream simultaneously.    
 The non-active camera stream and photo can be accessed through endpoints ```http://<server>:<port>/video_feed2``` and ```http://<server>:<port>/photo_feed2```, respectively.
+- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
 - Support of [Tuning](./docs/Tuning.md) by selection and management of tuning files.
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
 - [Event viewer](./docs/TriggerEventViewer.md) with calendar overview
@@ -61,8 +62,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V2.12**
-- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
+**New in V2.13**
+- Alternatively to the [manual installation](#raspicamsrv-installation), it is now also possible to [run raspiCamSrv as Docker container](./docs/SetupDocker.md)
 
 ## Known Issues
 
