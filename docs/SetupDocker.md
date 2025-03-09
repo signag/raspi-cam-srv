@@ -4,7 +4,7 @@
 
 A container image is available for **raspiCamSrv** at [https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general](https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general)
 
-**ATTENTION**: Running raspiCamSrv in Docker is still somehow 'experimental'. Not all functions and platforms have so far been tested. Please post issues and necessary improvements if you find any.
+**ATTENTION**: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~475 MB).
 
 **1. Preconditions**
 - [Installation of Docker on a Raspberry Pi](#installation-of-docker-on-a-raspberry-pi)
@@ -91,7 +91,7 @@ See [Docker Reference](https://docs.docker.com/reference/cli/docker/compose/)
 - Stop Container<br>```docker compose stop raspi-cam-srv```
 - Start Container<br>```docker compose start raspi-cam-srv```
 - Show server logs<br>```docker compose logs raspi-cam-srv```
-- List Containers<br>```docker containers ls```
+- List Containers<br>```docker container ls```
 - List images<br>```docker compose images```
 - Pull latest image<br>```docker compose pull raspi-cam-srv```
 
@@ -139,6 +139,7 @@ If the value on your system is smaller, it needs to be increased:
 |----|--------------------------------------------------
 |1.  | Edit the Raspberry Pi configuration file:<br>```sudo nano /boot/firmware/config.txt```
 |2   | Find the line<br>```dtoverlay=vc4-kms-v3d```<br>and replace it with<br>```dtoverlay=vc4-kms-v3d,cma-512``` for > 2GB systems<br>```dtoverlay=vc4-kms-v3d,cma-384``` for > 1GB systems<br>```dtoverlay=vc4-kms-v3d,cma-320``` for smaller systems
+|3.  | Reboot<br>```sudo reboot```
 
 ## Deactivate raspiCamSrv Service from manual Installation
 
