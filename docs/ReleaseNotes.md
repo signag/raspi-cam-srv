@@ -37,6 +37,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.0.0
+
+## Package version upgrade
+
+- Released for Flask 3.1.0<br>raspiCamSrv can use the current Flask version 3.x<br>Upgrading Flask in an existing installation is not mandatory.<br>In order to upgrade from Flask 3.0.0 to the latest version 3.x, proceed as follows:<br>```cd prg/raspi-cam-srv/```<br>```source .venv/bin/activate```<br>```pip install --upgrade "Flask>=3,<4"```
+
 ## V2.13.0
 
 ### New Feature

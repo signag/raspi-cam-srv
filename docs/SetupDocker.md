@@ -13,7 +13,7 @@ A container image is available for **raspiCamSrv** at [https://hub.docker.com/re
 
 **2. Compose Service Definition**
 
-In an arbitrary working directory, create
+In an arbitrary working directory (e.g. ```~/docker```), create
 
 ```compose.yaml```:
 
@@ -91,6 +91,7 @@ See [Docker Reference](https://docs.docker.com/reference/cli/docker/compose/)
 - Stop Container<br>```docker compose stop raspi-cam-srv```
 - Start Container<br>```docker compose start raspi-cam-srv```
 - Show server logs<br>```docker compose logs raspi-cam-srv```
+- Open shell for interactive prompt<br>```docker compose exec raspi-cam-srv sh```
 - List Containers<br>```docker container ls```
 - List images<br>```docker compose images```
 - Pull latest image<br>```docker compose pull raspi-cam-srv```
@@ -101,11 +102,12 @@ Changes in the [raspi-cam-srv Git repository](https://github.com/signag/raspi-ca
 
 To update to the latest version, proceed as follows:
 
-1. ```docker compose pull raspi-cam-srv```
-2. ```docker compose stop raspi-cam-srv```
-3. ```docker compose rm raspi-cam-srv```
-4. ```docker compose create raspi-cam-srv```
-5. ```docker compose start raspi-cam-srv```
+1. cd to your working directory, e.g. ```cd ~/docker```
+2. ```docker compose pull raspi-cam-srv```
+3. ```docker compose stop raspi-cam-srv```
+4. ```docker compose rm raspi-cam-srv```
+5. ```docker compose create raspi-cam-srv```
+6. ```docker compose start raspi-cam-srv```
 
 ## Installation of Docker on a Raspberry Pi
 
