@@ -38,6 +38,7 @@ The main menu (black background) allows navigation to different screens:
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
 - **Trigger** Allows configuring and controlling [triggered video and/or photo taking](./Trigger.md), currently based on [Motion Capturing](./TriggerMotion.md)
 - **Web Cam** opens the [Web Cam](./Webcam.md) page showing web cam features of **raspiCamSrv**
+- **Console** is dedicated to interaction with the Raspberry Pi. On the [Versatile Buttons](./Console.md) screen you can place freely configurable functional buttons for execution of OS-level commands.
 - **Settings** opens the [Settings](./Settings.md) page where some basic server parameters can be configured and where the active camera can be switched in case the Raspberry Pi device supprts multiple cameras (such as Pi 5).
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
 

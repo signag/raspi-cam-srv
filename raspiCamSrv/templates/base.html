@@ -69,6 +69,11 @@
                 {% else %}
                 <a href="{{ url_for('webcam.webcam') }}" class="w3-bar-item w3-button" id='webcambtn' onclick="openMenu('webcambtn')">Web Cam</a>
                 {% endif %}
+                {% if sc.curMenu == "console" %}
+                <a href="{{ url_for('console.console') }}" class="w3-bar-item w3-button w3-dark-grey" id='consolebtn' onclick="openMenu('consolebtn')">Console</a>
+                {% else %}
+                <a href="{{ url_for('console.console') }}" class="w3-bar-item w3-button" id='consolebtn' onclick="openMenu('consolebtn')">Console</a>
+                {% endif %}
                 {% if sc.curMenu == "settings" %}
                 <a href="{{ url_for('settings.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='settingsbtn' onclick="openMenu('settingsbtn')">Settings</a>
                 {% else %}

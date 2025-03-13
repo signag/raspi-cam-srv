@@ -1,6 +1,6 @@
 from flask import Blueprint, Response, flash, g, render_template, request, current_app
 from werkzeug.exceptions import abort
-from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig
+from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig, vButton
 from raspiCamSrv.camera_pi import Camera, CameraEvent
 from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
@@ -526,3 +526,95 @@ def generate_token():
     if request.method == "POST":
         access_token = create_access_token(identity=g.user['username'])
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los, access_token=access_token)
+    
+@bp.route('/vbutton_dimensions', methods=("GET", "POST"))
+@login_required
+def vbutton_dimensions():
+    logger.debug("In vbutton_dimensions")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsvbuttons"
+    if request.method == "POST":
+        msg = ""
+        if request.form["vbuttonsrows"]:
+            vButtonsRows = int(request.form["vbuttonsrows"])
+        else:
+            msg = "Please enter a valid number of rows"
+        if request.form["vbuttonscols"]:
+            vButtonsCols = int(request.form["vbuttonscols"])
+        else:
+            msg = "Please enter a valid number of columns"
+        if msg == "":
+            if vButtonsRows == 0 \
+            or vButtonsCols == 0:
+                sc.vButtonsCols = vButtonsCols
+                sc.vButtonsRows = vButtonsRows
+                sc.vButtons = []
+            else:
+                vButtons = []
+                for r in range(0, vButtonsRows):
+                    row = []
+                    for c in range(0, vButtonsCols):
+                        if r < sc.vButtonsRows and c < sc.vButtonsCols:
+                            btn = sc.vButtons[r][c]
+                        else:
+                            btn = vButton()
+                        btn.row = r
+                        btn.col = c
+                        row.append(btn)
+                    vButtons.append(row)
+                sc.vButtonsCols = vButtonsCols
+                sc.vButtonsRows = vButtonsRows
+                sc.vButtons = vButtons
+        if msg != "":
+            flash(msg)
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
+    
+@bp.route('/vbutton_settings', methods=("GET", "POST"))
+@login_required
+def vbutton_settings():
+    logger.debug("In vbutton_settings")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsvbuttons"
+    if request.method == "POST":
+        msg = ""
+        for r in range(0, sc.vButtonsRows):
+            for c in range(0, sc.vButtonsCols):
+                btn = sc.vButtons[r][c]
+                visibleId = f"vbtn_{btn.row}{ btn.col }_visible"
+                btn.isVisible = not request.form.get(visibleId) is None
+                buttonTextKey = f"vbtn_{btn.row}{btn.col}_buttontext"
+                btn.buttonText = request.form[buttonTextKey]
+                buttonExecKey = f"vbtn_{btn.row}{btn.col}_buttonexec"
+                btn.buttonExec = request.form[buttonExecKey]
+                buttonShapeKey = f"vbtn_{btn.row}{btn.col}_shape"
+                btn.buttonShape = request.form[buttonShapeKey]
+                buttonColorKey = f"vbtn_{btn.row}{btn.col}_color"
+                btn.buttonColor = request.form[buttonColorKey]
+                confirmId = f"vbtn_{btn.row}{ btn.col }_confirm"
+                btn.needsConfirm = not request.form.get(confirmId) is None
+                sc.vButtons[r][c] = btn
+        if msg != "":
+            flash(msg)
+    return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)

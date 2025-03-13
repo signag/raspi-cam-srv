@@ -8,8 +8,9 @@ Other sections focus on
 - [Server Configuration](./SettingsConfiguration.md)
 - [User Management](./SettingsUsers.md)
 - [API Management](./API.md)
+- [Versatile Buttons](./SettingsVButtons.md)
 
-The last two sections may be invisible, depending on context.
+*Users* and/or *API* may be invisible, depending on context.
 
 ![Settings](img/Settings.jpg)
 

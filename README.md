@@ -18,7 +18,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V3.0.0
+## Feature Overview V3.1.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -62,8 +62,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V2.13**
-- Alternatively to the [manual installation](#raspicamsrv-installation), it is now also possible to [run raspiCamSrv as Docker container](./docs/SetupDocker.md)
+**New in V3.1**
+- On the [Console](./docs/Console.md), configurable buttons allow execution of arbitrary OS commands and scripts including restart of the Flask service or reboot of the Raspberry Pi.
 
 ## Known Issues
 

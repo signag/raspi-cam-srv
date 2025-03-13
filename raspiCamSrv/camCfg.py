@@ -2220,6 +2220,94 @@ class CameraProperties():
     def systemDevices(self):
         del self._systemDevices
 
+class vButton():
+    """ Versatile button
+
+    """
+    def __init__(self) -> None:
+        self._row = 0
+        self._col = 0
+        self._isVisible = False
+        self._needsConfirm = False
+        self._buttonColor = None
+        self._buttonShape = None
+        self._buttonText = ""
+        self._buttonExec = ""
+
+    @property
+    def row(self) -> int:
+        return self._row
+
+    @row.setter
+    def row(self, value: int):
+        self._row = value
+
+    @property
+    def col(self) -> int:
+        return self._col
+
+    @col.setter
+    def col(self, value: int):
+        self._col = value
+
+    @property
+    def isVisible(self) -> bool:
+        return self._isVisible
+
+    @isVisible.setter
+    def isVisible(self, value: bool):
+        self._isVisible = value
+
+    @property
+    def needsConfirm(self) -> bool:
+        return self._needsConfirm
+
+    @needsConfirm.setter
+    def needsConfirm(self, value: bool):
+        self._needsConfirm = value
+        
+    @property
+    def buttonColor(self) -> str:
+        return self._buttonColor
+
+    @buttonColor.setter
+    def buttonColor(self, value: str):
+        self._buttonColor = value
+        
+    @property
+    def buttonShape(self) -> str:
+        return self._buttonShape
+
+    @buttonShape.setter
+    def buttonShape(self, value: str):
+        self._buttonShape = value
+
+    @property
+    def buttonText(self) -> str:
+        return self._buttonText
+
+    @buttonText.setter
+    def buttonText(self, value: str):
+        self._buttonText = value
+
+    @property
+    def buttonExec(self) -> str:
+        return self._buttonExec
+
+    @buttonExec.setter
+    def buttonExec(self, value: str):
+        self._buttonExec = value
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        vb = vButton()
+        for key, value in dict.items():
+            if value is None:
+                setattr(vb, key, value)
+            else:
+                setattr(vb, key, value)
+        return vb
+
 class ServerConfig():
     def __init__(self):
         self._error = None
@@ -2301,6 +2389,14 @@ class ServerConfig():
         self._jwtAccessTokenExpirationMin = 60
         self._jwtRefreshTokenExpirationDays = 0
         self._streamingClients = []
+        self._vButtonsRows = 0
+        self._vButtonsCols = 0
+        self._vButtons = []
+        self._vButtonCommand = None
+        self._vButtonArgs = None
+        self._vButtonReturncode = None
+        self._vButtonStdout = None
+        self._vButtonStderr = None
         
         # Check access of microphone
         self.checkMicrophone()
@@ -3152,6 +3248,70 @@ class ServerConfig():
                     self.unregisterStreamingClient(ip,s["stream"], thread)
 
     @property
+    def vButtonsRows(self) -> int:
+        return self._vButtonsRows
+
+    @vButtonsRows.setter
+    def vButtonsRows(self, value: int):
+        self._vButtonsRows = value
+        
+    @property
+    def vButtonsCols(self) -> int:
+        return self._vButtonsCols
+
+    @vButtonsCols.setter
+    def vButtonsCols(self, value: int):
+        self._vButtonsCols = value
+        
+    @property
+    def vButtons(self) -> list[list[vButton]]:
+        return self._vButtons
+
+    @vButtons.setter
+    def vButtons(self, value: list):
+        self._vButtons = value
+        
+    @property
+    def vButtonCommand(self) -> str:
+        return self._vButtonCommand
+
+    @vButtonCommand.setter
+    def vButtonCommand(self, value: str):
+        self._vButtonCommand = value
+        
+    @property
+    def vButtonArgs(self) -> list:
+        return self._vButtonArgs
+
+    @vButtonArgs.setter
+    def vButtonArgs(self, value: list):
+        self._vButtonArgs = value
+        
+    @property
+    def vButtonReturncode(self) -> int:
+        return self._vButtonReturncode
+
+    @vButtonReturncode.setter
+    def vButtonReturncode(self, value: int):
+        self._vButtonReturncode = value
+        
+    @property
+    def vButtonStdout(self) -> str:
+        return self._vButtonStdout
+
+    @vButtonStdout.setter
+    def vButtonStdout(self, value: str):
+        self._vButtonStdout = value
+        
+    @property
+    def vButtonStderr(self) -> str:
+        return self._vButtonStderr
+
+    @vButtonStderr.setter
+    def vButtonStderr(self, value: str):
+        self._vButtonStderr = value
+
+    @property
     def API_active(self) -> bool:
         return self._API_active
 
@@ -3908,6 +4068,29 @@ class ServerConfig():
             elif key == "_pvFrom":
                 setattr(sc, key, None)
             elif key == "_pvTo":
+                setattr(sc, key, None)
+            elif key == "_vButtons":
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    vButtons = []
+                    for row in value:
+                        vButtonRow = []
+                        for btn in row:
+                            button = vButton.initFromDict(btn)
+                            vButtonRow.append(button)
+                        vButtons.append(vButtonRow)
+                    setattr(sc, key, vButtons)
+            #Initialize last vButton execution result
+            elif key == "_vButtonCommand":
+                setattr(sc, key, None)
+            elif key == "_vButtonArgs":
+                setattr(sc, key, None)
+            elif key == "_vButtonReturncode":
+                setattr(sc, key, None)
+            elif key == "_vButtonStdout":
+                setattr(sc, key, None)
+            elif key == "_vButtonStderr":
                 setattr(sc, key, None)
             else:
                 setattr(sc, key, value)

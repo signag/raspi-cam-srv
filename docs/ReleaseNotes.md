@@ -37,6 +37,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.1.0
+
+### New Features
+
+- Functionality has bee added for configuration of [Versatile Buttons](./Console.md) for execution of commands on the level of the Raspberry Pi's Linux OS.<br>This covers part of the request in [Discussion #47](https://github.com/signag/raspi-cam-srv/discussions/47).
+
 ## V3.0.0
 
 ## Package version upgrade
