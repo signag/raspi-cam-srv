@@ -2397,6 +2397,7 @@ class ServerConfig():
         self._vButtonReturncode = None
         self._vButtonStdout = None
         self._vButtonStderr = None
+        self._vButtonHasCommandLine = False
         
         # Check access of microphone
         self.checkMicrophone()
@@ -3310,6 +3311,14 @@ class ServerConfig():
     @vButtonStderr.setter
     def vButtonStderr(self, value: str):
         self._vButtonStderr = value
+
+    @property
+    def vButtonHasCommandLine(self) -> bool:
+        return self._vButtonHasCommandLine
+
+    @vButtonHasCommandLine.setter
+    def vButtonHasCommandLine(self, value: bool):
+        self._vButtonHasCommandLine = value
 
     @property
     def API_active(self) -> bool:

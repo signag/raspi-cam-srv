@@ -37,6 +37,14 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.2.0
+
+### New Features
+
+- The [Settings for Versatile Buttons](./SettingsVButtons.md) now allows setting the commandline in [Versatile Buttons](./Console.md) to be interactive, which allows entering commands directly.
+
+- Access to Online Help added to the different application screens.<br>The *Online Help* button opens the document page on GitHub related to the active dialog.
+
 ## V3.1.0
 
 ### New Features

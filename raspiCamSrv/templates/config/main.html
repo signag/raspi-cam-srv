@@ -58,7 +58,7 @@
         {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
             <form method="post" id="syncaspectratiofrm" action="{{ url_for('config.syncAspectRatio') }}">
-                <table>
+                <table style="position:absolute;right:100px">
                     <tr>
                         <td>
                             <input id="activecfgtab" name="activecfgtab" value="-" style="display: none">
@@ -80,7 +80,14 @@
                     </tr>
                 </table>
             </form>
-        </div>        
+            <div class="w3-tooltip">
+                <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
+                    GitHub
+                </span>
+                <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp" alt="Online help"
+                    style="height:34px; width:34px" onclick="onlineHelp()">
+            </div>
+        </div>
     </div>
     <!-- Tuning configuration -->
     {% if sc.lastConfigTab == "cfgtuning" %}
@@ -1755,18 +1762,21 @@
             //https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/
             var upldlbl = document.getElementById("uploadtuningfilelbl");
             labelVal = upldlbl.innerHTML;
-            console.log("upldlbl.innerHTML:", labelVal);
+            //console.log("upldlbl.innerHTML:", labelVal);
             var fileName = '';
             if (this.files && this.files.length > 1)
                 fileName = (this.getAttribute('data-multiple-caption') || '').replace('{count}', this.files.length) + ' Files selected';
             else
                 fileName = e.target.value.split('\\').pop();
 
-            console.log("fileName:", fileName);
+            //console.log("fileName:", fileName);
             if (fileName)
                 upldlbl.innerHTML = fileName;
             else
                 upldlbl.innerHTML = labelVal;
         })
+        function onlineHelp() {
+            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Configuration.md");
+        }
     </script>
 {% endblock %}

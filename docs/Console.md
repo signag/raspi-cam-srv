@@ -27,3 +27,9 @@ In the bottom part of the dialog the result of the command execution is shown:
 The last *Execution Result* remains visible within the live time of the Flask server.
 
 Of course, no result will be visible if the Flask server has been restarted or of the Raspberry Pi has been rebooted.
+
+## Interactive Commandline
+
+If the [Settings / Versatile Buttons](./SettingsVButtons.md) have declared the commandline to be interactive, commands can be directly entered on the commandline:
+
+![Commandline](./img/Console_VButtons_commandline.jpg)

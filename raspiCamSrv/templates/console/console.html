@@ -9,6 +9,16 @@
     <!-- Controller menue -->
     <button class="w3-bar-item w3-button consolemenu w3-light-green" id="buttonsbtn"
         onclick="openConsoleTab('versbuttons', 'buttonsbtn')">Versatile Buttons</button>
+    <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+        <div class="w3-tooltip">
+            <span style="position:absolute;right:45px;top:5px;width:200px"
+                class="w3-text w3-tag">Online help from GitHub
+            </span>
+            <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp"
+                alt="Online help" style="height:34px; width:34px"
+                onclick="onlineHelp()">
+        </div>
+    </div>
 </div>
 <div id="versbuttons" class="consolegroup">
     <h4>Versatile Buttons</h4>
@@ -92,8 +102,16 @@
                 <b>Command:</b>
             </td>
             <td style="width:80%">
+                {% if sc.vButtonHasCommandLine == False %}
                 {% if sc.vButtonCommand is not none %}
                 {{ sc.vButtonCommand }}
+                {% endif %}
+                {% else %}
+                <form id="commandlineform" method="post" action="{{ url_for('console.execCommandline') }}">
+                    <input style="width: 100%" type="text" id="commandline" name="commandline" 
+                        onchange="doSubmit('commandlineform')"
+                        value="{{ sc.vButtonCommand }}">
+                </form>
                 {% endif %}
             </td>
         </tr>
@@ -172,7 +190,7 @@
         document.getElementById(form).submit();
     }
     function confirmExecution(form, command, needsConfirm) {
-        console.log("confirmExecution - needsConfirm=", needsConfirm);
+        //console.log("confirmExecution - needsConfirm=", needsConfirm);
         if (needsConfirm == "True") {
             if (confirm("Do you want to execute the following command?\n" + command)) {
                 document.getElementById(form).method = "post";
@@ -182,6 +200,8 @@
             }
         }
     }
-
+    function onlineHelp(){
+        window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Console.md");
+    }
 </script>
 {% endblock %}

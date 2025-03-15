@@ -5,7 +5,18 @@
 {% endblock %}
 
 {% block content %}
-<h2>Web Cam</h2>
+    <div class="w3-bar w3-green">
+        <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+            <div class="w3-tooltip">
+                <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
+                    GitHub
+                </span>
+                <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp"
+                    alt="Online help" style="height:34px; width:34px" onclick="onlineHelp()">
+            </div>
+        </div>
+    </div>
+    <h2>Web Cam</h2>
     <table>
         <tr>
             <td style="width: 50%;">
@@ -150,5 +161,9 @@
             </td>
         </tr>
     </table>
-
+    <script>
+        function onlineHelp() {
+            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Webcam.md");
+        }
+    </script>
 {% endblock %}

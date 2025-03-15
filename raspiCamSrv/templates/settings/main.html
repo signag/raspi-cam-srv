@@ -47,6 +47,14 @@
         <button class="w3-bar-item w3-button settingsmenu" id="settingsvbuttonsbtn"
             onclick="openSettingsTab('settingsvbuttons', 'settingsvbuttonsbtn')">Versatile Buttons</button>
         {% endif %}
+        <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+            <div class="w3-tooltip">
+                <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from GitHub
+                </span>
+                <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp" alt="Online help"
+                    style="height:34px; width:34px" onclick="onlineHelp()">
+            </div>
+        </div>
     </div>
     {% if sc.lastSettingsTab == "settingsparams" %}
     <div id="settingsparams" class="settingsgroup">
@@ -672,12 +680,24 @@
                             <input type="number" id="vbuttonscols" name="vbuttonscols" min="0" max="9" step="1"
                             value="{{ sc.vButtonsCols }}">
                         </td>
+                        <td style="width: 17%">
+                            Interactive Commandline:
+                        </td>
+                        <td style="width:5%">
+                            {% if sc.vButtonHasCommandLine == True %}
+                            <input type="checkbox" id="vbuttonhascommandline"
+                                name="vbuttonhascommandline" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="vbuttonhascommandline"
+                                name="vbuttonhascommandline" value="1">
+                            {% endif %}
+                        </td>
                         <td style="width: 5%">
                         </td>
                         <td style="width: 20%">
                             <input class="w3-button w3-black" type="submit" value="Submit">
                         </td>
-                        <td style="width: 35%">
+                        <td style="width: 13%">
                         </td>
                     </tr>
                 </form>
@@ -880,6 +900,9 @@
         }
         function doSubmit(form) {
             document.getElementById(form).submit();
+        }
+        function onlineHelp() {
+            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Settings.md");
         }
     </script>
 

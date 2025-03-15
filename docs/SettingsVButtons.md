@@ -15,6 +15,8 @@ Once non-zero values have been specified and submitted, the *Buttons Settings* a
 
 If an existing grid layout is modified by changing either the number of rows and/or the number of columns, the configured rows and columns of buttons will be preserved if the new values are larger than the old ones. Superfluous rows or columns will be removed in case that new dimensions are smaller than the old ones.
 
+The checkbox *Interactive Commandline* controls whether [Console](./Console.md) will show an interactive commandline where commands can be directly entered. 
+
 **IMPORTANT**: You need to [Store Configuration](./SettingsConfiguration.md) if you want the button settings to survive a server restart!
 
 ## Button Settings

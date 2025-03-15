@@ -57,6 +57,15 @@ RaspiCamSrv's Live page
                 {% else %}
                 <button class="w3-bar-item w3-button ctrlmenu" id="imagebtn" onclick="openCtrlTab('image','imagebtn')">Image</button>
                 {% endif %}
+                <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+                    <div class="w3-tooltip">
+                        <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
+                            GitHub
+                        </span>
+                        <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp" alt="Online help"
+                            style="height:34px; width:34px" onclick="onlineHelp()">
+                    </div>
+                </div>
             </div>
             {% if sc.lastLiveTab == "focus" %}
             <div id="focus" class="w3-container controlgroup">
@@ -2358,6 +2367,9 @@ RaspiCamSrv's Live page
                 liveCanvasCtx = null;
             }
             
+        }
+        function onlineHelp() {
+            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/LiveScreen.md");
         }
     </script>
     <style>

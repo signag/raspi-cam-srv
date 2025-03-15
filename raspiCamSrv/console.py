@@ -23,6 +23,9 @@ def console():
     g.version = version
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    if sc.vButtonHasCommandLine == True:
+        if sc.vButtonCommand is None:
+            sc.vButtonCommand = ""
     sc.curMenu = "console"
     return render_template("console/console.html", props=props, sc=sc)
 
@@ -48,6 +51,43 @@ def execute(row:None, col=None):
         c = int(col)
         btn = sc.vButtons[r][c]
         cmd = btn.buttonExec
+        sc.vButtonCommand = cmd
+        args = cmd.rsplit(" ")
+        sc.vButtonArgs = args
+        
+        msg = "Command successfully executed."
+        result = None
+        if cmd != "":
+            try:
+                result = subprocess.run(args, capture_output=True, text=True, check=False)            
+            except CalledProcessError as e:
+                msg = f"Command executed with error: {e}."
+            except Exception as e:
+                msg = f"Command executed with error: {e}."
+            if result:
+                sc.vButtonReturncode = result.returncode
+                sc.vButtonStdout = result.stdout
+                sc.vButtonStderr = result.stderr
+        else:
+            msg = "No command executed"
+        
+        if msg != "":
+            flash(msg)
+    return render_template("console/console.html", props=props, sc=sc)
+
+@bp.route("/execCommandline", methods=("GET", "POST"))
+@login_required
+def execCommandline():
+    logger.debug("In execCommandline")
+    cam = Camera().cam
+    props = cam.camera_properties
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    if request.method == "POST":
+        msg = ""
+        cmd = request.form["commandline"]
         sc.vButtonCommand = cmd
         args = cmd.rsplit(" ")
         sc.vButtonArgs = args

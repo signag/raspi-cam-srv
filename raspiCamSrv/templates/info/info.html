@@ -12,6 +12,15 @@
         {% for mode in sm %}
         <button class="w3-bar-item w3-button infomenu" id="{{ mode.tabButtonId }}" onclick="openInfoTab('{{ mode.tabId }}', '{{ mode.tabButtonId }}')">{{ mode.tabTitle}}</button>
         {% endfor%}
+        <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+            <div class="w3-tooltip">
+                <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
+                    GitHub
+                </span>
+                <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp" alt="Online help"
+                    style="height:34px; width:34px" onclick="onlineHelp()">
+            </div>
+        </div>
     </div>
     <div id="cameras" class="infogroup">
         <h4>Raspberry Pi</h4>
@@ -355,6 +364,9 @@
                 b[i].classList = "w3-bar-item w3-button infomenu";
             }
             document.getElementById(infoTabButton).classList = "w3-bar-item w3-button infomenu w3-light-green";
+        }
+        function onlineHelp() {
+            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Information.md");
         }
     </script>
 {% endblock %}

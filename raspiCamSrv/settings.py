@@ -576,6 +576,7 @@ def vbutton_dimensions():
                 sc.vButtonsCols = vButtonsCols
                 sc.vButtonsRows = vButtonsRows
                 sc.vButtons = vButtons
+                sc.vButtonHasCommandLine = not request.form.get("vbuttonhascommandline") is None
         if msg != "":
             flash(msg)
     return render_template("settings/main.html", sc=sc, cp=cp, cs=cs, los=los)
