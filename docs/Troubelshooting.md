@@ -4,6 +4,12 @@
 
 This page intends to collect information on how to deal with errors which may occur while running **raspiCamSrv**.
 
+- **ERROR in motionDetector: Exception in _motionThread: OpenCV(4.6.0)**   
+This error may occur when trying to use [extended motion capturing](./TriggerMotion.md) while the 'YUV420' stream format is set for the [Live View Configuration](./Configuration.md). <br>It seems that OpenCV is not capable to handle images with this format.    
+This error is typically observed on Pi3 and Pi4 where the YUV stream format is mandatory for the lores stream according to the [Picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), ch. 4.2.<br>
+As a workaround, you may try setting the "main" stream for the Live View configuration with "RGB888" Stream Format.   
+To avoid performance issues, also a low Stream Size (e.g. 640x400) should be chosen.
+
 - **No Connection to server although server has been started as service**.    
 This may happen (see [raspi-cam-srv Issue #8](https://github.com/signag/raspi-cam-srv/issues/8)) if the service has been started before the network interfaces are ready.   
 The systemd journal will indicate that the Flask server is only listening to *localhost* (127.0.0.1)   
