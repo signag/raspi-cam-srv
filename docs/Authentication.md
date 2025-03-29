@@ -8,7 +8,7 @@ A user session will live as long as the browser remains open, even if the tab wi
 The basic principle is that the first user in the system will be automatically registered as SuperUser.
 Only the SuperUser will be able to register new users or remove users from the system.
 
-After the database has been initialized with ```flask --app raspiCamSrv init-db``` (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation) Step 10), there is no user in tha database.
+After the database has been initialized with ```flask --app raspiCamSrv init-db``` (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation) Step 11), there is no user in the database.
 
 In this situation, any connect to the server will open the *Register* screen:   
 ![Register Initial](./img/Auth_RegisterInitial.jpg)

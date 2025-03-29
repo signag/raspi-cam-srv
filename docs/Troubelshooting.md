@@ -2,7 +2,10 @@
 
 [![Up](img/goup.gif)](./UserGuide.md)
 
-This page intends to collect information on how to deal with errors which may occur while running **raspiCamSrv**.
+This page intends to collect information on how to deal with errors or problems which may occur while running **raspiCamSrv**.
+
+- **Password forgotten**    
+If you have your password forgotten, there are two alternatives:<br>1. Somone else is Superuser:<br>Ask him to remove your user entry and create a new one (See [Settings / Users](./SettingsUsers.md)).<br>2. You are the Superuser.<br>You need to reset the database where user entries are stored.<br>You do this with with ```flask --app raspiCamSrv init-db``` (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation) Step 11).<br>At the next Login, you need to Register as new Superuser (see [Authorization](./Authentication.md))
 
 - **ERROR in motionDetector: Exception in _motionThread: OpenCV(4.6.0)**   
 This error may occur when trying to use [extended motion capturing](./TriggerMotion.md) while the 'YUV420' stream format is set for the [Live View Configuration](./Configuration.md). <br>It seems that OpenCV is not capable to handle images with this format.    
