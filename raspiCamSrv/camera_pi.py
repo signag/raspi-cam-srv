@@ -943,6 +943,15 @@ class Camera():
     event = CameraEvent()
     event2 = None
     
+    #Callbacks
+    when_photo_taken = None
+    when_recording_starts = None
+    when_recording_stops = None
+    when_streaming_1_starts = None
+    when_streaming_1_stops = None
+    when_streaming_2_starts = None
+    when_streaming_2_stops = None
+    
 
     def __new__(cls):
         logger.debug("Thread %s: Camera.__new__", get_ident())
@@ -2032,6 +2041,10 @@ class Camera():
         """Camera background thread."""
         logger.debug("Thread %s: Camera._thread", get_ident())
         frames_iterator = None
+
+        if Camera().when_streaming_1_starts:
+            Camera().when_streaming_1_starts()
+
         try:
             frames_iterator = cls.frames()
             logger.debug("Thread %s: Camera._thread - frames_iterator instantiated", get_ident())
@@ -2092,11 +2105,18 @@ class Camera():
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
         sc.isLiveStream = False
 
+        if Camera().when_streaming_1_stops:
+            Camera().when_streaming_1_stops()
+
     @classmethod
     def _thread2(cls):
         """Camera background thread 2."""
         logger.debug("Thread %s: Camera._thread2", get_ident())
         frames_iterator = None
+
+        if Camera().when_streaming_2_starts:
+            Camera().when_streaming_2_starts()
+
         try:
             frames_iterator = cls.frames2()
             logger.debug("Thread %s: Camera._thread2 - frames_iterator instantiated", get_ident())
@@ -2132,6 +2152,9 @@ class Camera():
         Camera.thread2 = None
         Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
         CameraCfg().serverConfig.isLiveStream2 = False
+
+        if Camera().when_streaming_2_stops:
+            Camera().when_streaming_2_stops()
 
     @staticmethod
     def frames():
@@ -2231,7 +2254,7 @@ class Camera():
             raise
 
     @staticmethod
-    def takeImage(filename: str, keepExclusive:bool=False):
+    def takeImage(filename: str, keepExclusive:bool=False, noEvents:bool=False):
         """ Takes a photo with the specified file name and returns the path
 
             filename:       file name for the photo
@@ -2243,7 +2266,11 @@ class Camera():
         fp = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
-        
+
+        if noEvents == False:
+            logger.debug("Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            if Camera().when_photo_taken:
+                Camera().when_photo_taken()
         try:
             logger.debug("Thread %s: Camera.takeImage Requesting camera for photoConfig", get_ident())
             Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.photoConfig)
@@ -2451,7 +2478,7 @@ class Camera():
         return (done, err)
 
     @staticmethod
-    def takeRawImage(filenameRaw: str, filename: str):
+    def takeRawImage(filenameRaw: str, filename: str, noEvents:bool=False):
         """ Takes a photo as well as a raw image with the specified file names 
             and returns the path for the raw photo
             filenameRaw: file name for the raw image
@@ -2461,6 +2488,11 @@ class Camera():
         fpr = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
+
+        if noEvents == False:
+            logger.debug("Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            if Camera().when_photo_taken:
+                Camera().when_photo_taken()
         
         try:
             logger.debug("Thread %s: Camera.takeRawImage Requesting camera for rawConfig", get_ident())
@@ -2596,13 +2628,13 @@ class Camera():
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
 
     @staticmethod
-    def recordVideo(filenameVid: str, filename: str, duration: int = 0):
+    def recordVideo(filenameVid: str, filename: str, duration: int = 0, noEvents:bool=False):
         """Record a video in an own thread"""
         logger.debug("Thread %s: Camera.recordVideo. filename=%s, duration=%s", get_ident(), filename, duration)
         cfg = CameraCfg()
         sc = cfg.serverConfig
         # First take a normal photo as placeholder
-        Camera.takeImage(filename, keepExclusive=True)
+        Camera.takeImage(filename, keepExclusive=True,noEvents=True)
         sc.displayFile = filenameVid
         
         # Configure output for video file
@@ -2617,10 +2649,14 @@ class Camera():
             Camera.videoThread = threading.Thread(target=Camera._videoThread, daemon=True)
             Camera.videoThread.start()
             logger.debug("Thread %s: Camera.recordVideo - videoThread started", get_ident())
+
+            if noEvents == False:
+                if Camera().when_recording_starts:
+                    Camera().when_recording_starts()
         return output
 
     @staticmethod
-    def stopVideoRecording():
+    def stopVideoRecording(noEvents:bool=False):
         """stops the video recording"""
         logger.debug("Thread %s: Camera.stopVideoRecording", get_ident())
         Camera.stopVideoRequested = True
@@ -2632,6 +2668,10 @@ class Camera():
             if cnt > 500:
                 raise TimeoutError("Video thread did not stop within 5 sec")
         logger.debug("Thread %s: Camera.stopVideoRecording: Thread has stopped", get_ident())
+
+        if noEvents == False:
+            if Camera().when_recording_stops:
+                Camera().when_recording_stops()
         
     @staticmethod
     def isVideoRecording() -> bool:

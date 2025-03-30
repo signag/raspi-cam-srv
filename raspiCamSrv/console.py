@@ -5,6 +5,7 @@ from raspiCamSrv.camCfg import CameraCfg
 from raspiCamSrv.version import version
 import subprocess
 from subprocess import CalledProcessError
+from raspiCamSrv.triggerHandler import TriggerHandler
 
 
 from raspiCamSrv.auth import login_required
@@ -45,6 +46,7 @@ def execute(row:None, col=None):
     sc.vButtonReturncode = None
     sc.vButtonStderr = None
     sc.vButtonStdout = None
+    sc.lastConsoleTab = "versbuttons"
     if request.method == "POST":
         msg = ""
         r = int(row)
@@ -107,6 +109,41 @@ def execCommandline():
                 sc.vButtonStderr = result.stderr
         else:
             msg = "No command executed"
+        
+        if msg != "":
+            flash(msg)
+    return render_template("console/console.html", props=props, sc=sc)
+
+@bp.route("/do_action/<row>/<col>", methods=("GET", "POST"))
+@login_required
+def do_action(row:None, col=None):
+    logger.debug("In do_action - row=%s, col=%s", row, col)
+    cam = Camera().cam
+    props = cam.camera_properties
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    sc.curMenu = "console"
+    sc.vButtonCommand = None
+    sc.vButtonArgs = None
+    sc.vButtonReturncode = None
+    sc.vButtonStderr = None
+    sc.vButtonStdout = None
+    sc.lastConsoleTab = "actionbuttons"
+    if request.method == "POST":
+        msg = ""
+        r = int(row)
+        c = int(col)
+        btn = sc.aButtons[r][c]
+        action = btn.buttonAction
+        
+        msg = "Action successfully executed."
+        result = None
+        if action != "":
+            msg = TriggerHandler.doAction(action)
+        else:
+            msg = "No Action executed"
         
         if msg != "":
             flash(msg)

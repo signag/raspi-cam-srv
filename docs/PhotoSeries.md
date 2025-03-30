@@ -40,6 +40,7 @@ This needs to be set to the time when the series shall start.
 If this is done, the number of shots will be calculated based on the specified *Interval*
 - As *Interval* , the time difference (in seconds) between successive shots can be specified.   
 From experience, the system will observe the given value within a tolerance of about 30 ms.
+- *On Dial Marks* specifies whether the shots shall be taken on whole hours, quarters, minutes, ..., depending on the intarval.<br>For example, if the interval is 900 sec, photos will be taken exactly (within tolerances) at :00, :15, :30, :45, or if the interval is 3600 sec, photos will be taken every full hour.
 - The *Number of Shosts* specifies the numper of photos intended for the series.   
 If the *End* time has not been explicitly specified, it will be calculated from *Interval* and *Number of Shots* considering the specified *Start* time.
 - The checkbox *Cont. on Server Start* allows to automatically continue an active series in case of a server restart.    

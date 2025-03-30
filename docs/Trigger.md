@@ -2,30 +2,36 @@
 
 [![Up](img/goup.gif)](./UserGuide.md)
 
-**raspiCamSrv** supports triggered capture of videos and photos.
+**raspiCamSrv** supports triggered capture of videos and photos as well as actions GPIO-connected devices.
 
-Currently, only motion is supported as trigger.
-
-Motion detection is basic and based on frame-differencing with simple mean square difference analysis and a configurable threshold.
-
-Further reading:
-- [Motion Capturing](./TriggerMotion.md)
+Currently supported triggers are
+- [Triggers](./TriggerTriggers.md) from GPIO-connected sensors
+- [Triggers](./TriggerTriggers.md) from camera events such as start and stop of video recording or streaming.
+- [Motion Capturing](./TriggerMotion.md) through image analysis
 - [Active Motion Capture](./TriggerActive.md)
-- [Event Viewer](./TriggerEventViewer.md)
+
+Supported actions are:
+- [Actions](./TriggerActions.md) with GPIO-connected devices, such as LEDs, motors, servos or sound devices
+- [Trigger-Actions](./TriggerTriggerActions.md) define which trigger will execute which action(s)
+- [Camera Actions](./TriggerCameraActions.md)
 - [Notification](./TriggerNotification.md)
+
+Registered events can be inspected in the
+- [Event Viewer](./TriggerEventViewer.md)
 
 ## Control
 
 ![Triggercontrol](./img/Trigger_Control.jpg)
 
-In the *Control* section, you may specify basic aspects of triggered capture:
+In the *Control* section, you may specify basic aspects of triggered action:
 
 - Under *Triggers*, you select the triggers to be used.   
-Currently, only motion detection is available.
+You can activate Motion detection and/or the other *Configured Triggers*
 - Under *Actions* you specify the actions to be taken in case of a trigger event.   
 You may select among video recording and photo taking.   
 In case *Record Video* is selected, also at least one photo must be taken. This photo will serve as placeholder for the video in the [Event Viewer](./TriggerEventViewer.md).    
-With *Notification* you specify whether or not you want to be informed by e-Mail about an event. The details need to be specified on the [Notification](./TriggerNotification.md) tab.
+With *Notification* you specify whether or not you want to be informed by e-Mail about an event. The details need to be specified on the [Notification](./TriggerNotification.md) tab.    
+**ATTENTION**: If you have chosen to only activate *Configured Triggers* without *Motion Detection*, the listed Actions will be deactivated because they are currently only supported with *Motion Detection*. From the *Configured Triggers*, the configured [Trigger-Actions](./TriggerTriggerActions.md) will be executed, which currently do not yet include any camera actions.
 - With *Operation Weekdays*, you specify the weekdays when triggering shall be active.
 - *Operation Start* specifies the daytime when triggering is activated on each active weekday.
 - *Operation End* specifies the daytime when triggering is paused.
@@ -34,29 +40,30 @@ When activated, the trigger capturing process can be automatically started with 
 When you change this parameter, you need to go to [Settings](./Settings.md) and store the current [Server Configuration](./SettingsConfiguration.md)   
 If you want automatic start, you also need to select *Start Server with stored Configuration*.    
 **Note** In case you start the Flask server manually, do not use the ```--debug``` option. This will cause an exception (see [Flask Issue #5437](https://github.com/pallets/flask/discussions/5437)).
-- *Detection Delay* allows specifying a dalay in seconds. When an event is triggered, the configured action (video and/or photo, Notification) will be delayed by the specified number of seconds. Normally, this will be 0.
-- *Detection Pause* specifies a 'dead time' after an event has been registerd. Within this time no new event will be registered although the system will not stop detecting motion.   
-This setting prevents from being flooded with registered events, for example if motion persists for a longer time.
+- *Detection Delay* allows specifying a dalay in seconds. When an event is triggered, the configured action (video and/or photo, Notification) will be delayed by the specified number of seconds. Normally, this will be 0.    
+- *Detection Pause* specifies a 'dead time' after an event has been registerd. Within this time no new event will be registered although the system will not stop detecting motion.    
+This setting prevents from being flooded with registered events, for example if motion persists for a longer time.    
+Detection pause (and alse *Detection Delay*), configured here, does not apply to the configured [Triggers](./TriggerTriggers.md). For these, it is possible to specify *bouncing-time* individually for every trigger.
 - *Retention Period* specifies the number of days  for which event data will be retained when a [cleanup](./TriggerEventViewer.md#cleanup) is done.
 
 Data changes will not be persisted unless the **Submit** button has been pressed.
 
-For activation of motion capturing, see [Active Motion Capturing](./TriggerActive.md) 
+## Starting Trigger capturing
 
-## Actions
+Trigger- and event handling is activated using the *Start* button.
 
-![Action](./img/Trigger_Action.jpg)
+Depending on the selected *Triggers* *Motion Detection* and/or *Configured Triggers* are started.
 
-This section allows specification of aspects for photos and/or videos recorded in reaction an an  event:
+Which process is currently active is indicated by the [status indicators](./UserGuide.md#process-status-indicators):
 
-- *Video Recording Type*   
-With *Normal*, video recording starts with the event or, if configured, after a specified dalay.   
-With "Circular*, the system continuesly captures video in a circular buffer with a capacity of a few seconds. In case of an event, also the seconds before the event will be available in the video.   
-Currently, only *Normal* is supported.
-- *Circular Buffer Size* is the number of seconds, the system shall look 'backwards' from the time of an event.
-- *Video Duration* specifies the length of videos captured in case of an event.    
-If a new event is registered while video recording from the previous event is still active, this will be stopped before recording for the new event starts.
-- *Photo Burst - Number of Photos* allows specifying a number of photos which will be successively captured in case of an event.   
-If video is recorded, at least one photo must be specified.
-- *Photo Burst Interval* is the interval after the previous photo when the system will capture a new photo if there is still motion detected. If no motion is detected after this interval, no photo will be taken.
-- *Action data path* is the path where pictures and logs for events will be stored.
+- Motion detection only:    
+![Proc13](./img/ProcessIndicator14.jpg)
+- Configured Triggers only:    
+![Proc13](./img/ProcessIndicator15.jpg)
+- Both    
+![Proc13](./img/ProcessIndicator13.jpg)
+
+Note that, whenever Motion Detection is active, also the live stream will be kept active because this is used to detect motion.
+
+For active of motion capturing, see [Active Motion Capturing](./TriggerActive.md) 
+

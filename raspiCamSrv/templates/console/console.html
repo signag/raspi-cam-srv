@@ -5,203 +5,317 @@
 {% endblock %}
 
 {% block content %}
-<div class="w3-bar w3-green">
-    <!-- Controller menue -->
-    <button class="w3-bar-item w3-button consolemenu w3-light-green" id="buttonsbtn"
-        onclick="openConsoleTab('versbuttons', 'buttonsbtn')">Versatile Buttons</button>
-    <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
-        <div class="w3-tooltip">
-            <span style="position:absolute;right:45px;top:5px;width:200px"
-                class="w3-text w3-tag">Online help from GitHub
-            </span>
-            <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp"
-                alt="Online help" style="height:34px; width:34px"
-                onclick="onlineHelp()">
+    <div class="w3-bar w3-green">
+        <!-- Console menue -->
+        {% if sc.lastConsoleTab == "versbuttons" %}
+        <button class="w3-bar-item w3-button consolemenu w3-light-green" id="versbuttonsbtn"
+            onclick="openConsoleTab('versbuttons', 'versbuttonsbtn')">Versatile Buttons</button>
+        {% else %}
+        <button class="w3-bar-item w3-button consolemenu" id="consoleversbuttonsbtn"
+            onclick="openConsoleTab('versbuttons', 'versbuttonsbtn')">Versatile Buttons</button>
+        {% endif %}
+        {% if sc.lastConsoleTab == "actionbuttons" %}
+        <button class="w3-bar-item w3-button consolemenu w3-light-green" id="actionbuttonsbtn"
+            onclick="openConsoleTab('actionbuttons', 'actionbuttonsbtn')">Action Buttons</button>
+        {% else %}
+        <button class="w3-bar-item w3-button consolemenu" id="actionbuttonsbtn"
+            onclick="openConsoleTab('actionbuttons', 'actionbuttonsbtn')">Action Buttons</button>
+        {% endif %}
+        <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+            <div class="w3-tooltip">
+                <span style="position:absolute;right:45px;top:5px;width:200px"
+                    class="w3-text w3-tag">Online help from GitHub
+                </span>
+                <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp"
+                    alt="Online help" style="height:34px; width:34px"
+                    onclick="onlineHelp()">
+            </div>
         </div>
     </div>
-</div>
-<div id="versbuttons" class="consolegroup">
-    <h4>Versatile Buttons</h4>
-    {% if sc.vButtonsRows == 0 %}
-    <p>There are no buttons configured.</p>
-    <p>You can configure buttons for execution of OS commands in Settings/Versatile Buttons</p>
+    {% if sc.lastConsoleTab == "versbuttons" %}
+    <div id="versbuttons" class="consolegroup">
     {% else %}
-    <div>
-        {% set nrcols=sc.vButtonsCols %}
-        {% set cw = 100/nrcols %}
-        {% set cws = cw|string() %}
-<!--       
-        {% set cst = 'style=width:' + cws + '%'%}
--->
-        {% set cst = 'width:' + cws + '%; min-height:38.5px; height:38.5px' %}
-        <table style="width:100%">
-            {% for r in sc.vButtons %}
-            <tr>
-                {% for btn in r %}
-                {% set shape = btn["buttonShape"] %}
-                {% set color = btn["buttonColor"] %}
-                {% if shape == "Circular" %}
-                <td style="{{ cst }}"; align="center">
-                {% elif shape == "Square" %}
-                <td {{ cst }} align="center">
-                {% else %}
-                <td {{ cst }}>
-                {% endif %}
-                    {% if btn["isVisible"] == True %}
-
-                    {% set cls1 = 'w3-button' %}
-                    {% set cls = cls1 + ' w3-black' %}
-
-                    {% if shape == "Rectangle" %}
-                        {% set btnshp = "w3-button" %}
-                        {% set style = 'width: 100%' %}
-                    {% elif shape == "Rounded" %}
-                        {% set btnshp = 'w3-button w3-round-xxlarge' %}
-                        {% set style = 'width: 100%' %}
-                    {% elif shape == "Circular" %}
-                        {% set btnshp = 'w3-button w3-circle' %}
-                        {% set style = 'text-align:center' %}
+    <div id="versbuttons" class="consolegroup" style="display:none">
+    {% endif %}
+        <h4>Versatile Buttons</h4>
+        {% if sc.vButtonsRows == 0 %}
+        <p>There are no buttons configured.</p>
+        <p>You can configure buttons for execution of OS commands in Settings/Versatile Buttons</p>
+        {% else %}
+        <div>
+            {% set nrcols=sc.vButtonsCols %}
+            {% set cw = 100/nrcols %}
+            {% set cws = cw|string() %}
+    <!--       
+            {% set cst = 'style=width:' + cws + '%'%}
+    -->
+            {% set cst = 'width:' + cws + '%; min-height:38.5px; height:38.5px' %}
+            <table style="width:100%">
+                {% for r in sc.vButtons %}
+                <tr>
+                    {% for btn in r %}
+                    {% set shape = btn["buttonShape"] %}
+                    {% set color = btn["buttonColor"] %}
+                    {% if shape == "Circular" %}
+                    <!-- Attantion: Syntax check will not be OK for the following line -->
+                    <td style="{{ cst }}"; align="center">
                     {% elif shape == "Square" %}
-                        {% set btnshp = 'w3-button w3-large' %}
-                        {% set style = 'text-align:center' %}
+                    <!-- Attantion: Syntax check will not be OK for the following line -->
+                    <td {{ cst }} align="center">
+                    {% else %}
+                    <td {{ cst }}>
                     {% endif %}
-                    {% if color == "Black" %}
-                        {% set btnall = btnshp + ' w3-black' %}
-                    {% elif color == "Red" %}
-                        {% set btnall = btnshp + ' w3-red' %}
-                    {% elif color == "Green" %}
-                        {% set btnall = btnshp + ' w3-green' %}
-                    {% elif color == "Yellow" %}
-                        {% set btnall = btnshp + ' w3-yellow' %}
-                    {% elif color == "Blue" %}
-                        {% set btnall = btnshp + ' w3-blue' %}
+                        {% if btn["isVisible"] == True %}
+
+                        {% set cls1 = 'w3-button' %}
+                        {% set cls = cls1 + ' w3-black' %}
+
+                        {% if shape == "Rectangle" %}
+                            {% set btnshp = "w3-button" %}
+                            {% set style = 'width: 100%' %}
+                        {% elif shape == "Rounded" %}
+                            {% set btnshp = 'w3-button w3-round-xxlarge' %}
+                            {% set style = 'width: 100%' %}
+                        {% elif shape == "Circular" %}
+                            {% set btnshp = 'w3-button w3-circle' %}
+                            {% set style = 'text-align:center' %}
+                        {% elif shape == "Square" %}
+                            {% set btnshp = 'w3-button w3-large' %}
+                            {% set style = 'text-align:center' %}
+                        {% endif %}
+                        {% if color == "Black" %}
+                            {% set btnall = btnshp + ' w3-black' %}
+                        {% elif color == "Red" %}
+                            {% set btnall = btnshp + ' w3-red' %}
+                        {% elif color == "Green" %}
+                            {% set btnall = btnshp + ' w3-green' %}
+                        {% elif color == "Yellow" %}
+                            {% set btnall = btnshp + ' w3-yellow' %}
+                        {% elif color == "Blue" %}
+                            {% set btnall = btnshp + ' w3-blue' %}
+                        {% elif color == "White" %}
+                            {% set btnall = btnshp + ' w3-white' %}
+                        {% endif %}
+                        {% set buttonid = "vbtn_" ~ btn['row'] ~ btn['col'] ~ "_form" %}
+                        {% set buttonex = btn['buttonExec'] %}
+                        {% set buttonconf = btn['needsConfirm'] %}
+                        <form id="{{ buttonid }}" 
+                            method="post" action="{{ url_for('console.execute', row=btn['row'], col=btn['col']) }}">
+                            <!-- Attantion: Syntax check will not be OK for the following line-->
+                            <input class="{{ btnall }}" style="{{ style }}" type="submit" 
+                                onclick="confirmExecution('{{ buttonid }}', '{{ buttonex }}', '{{ buttonconf }}')"
+                                value="{{ btn['buttonText'] }}">
+                        </form>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <p>&nbsp;</p>
+        <hr>
+        <p>&nbsp;</p>
+        <h4>Execution Result</h4>
+        <table  class="w3-table-all">
+            <tr>
+                <td style="width:15%">
+                    <b>Command:</b>
+                </td>
+                <td style="width:80%">
+                    {% if sc.vButtonHasCommandLine == False %}
+                    {% if sc.vButtonCommand is not none %}
+                    {{ sc.vButtonCommand }}
                     {% endif %}
-                    {% set buttonid = "vbtn_" ~ btn['row'] ~ btn['col'] ~ "_form" %}
-                    {% set buttonex = btn['buttonExec'] %}
-                    {% set buttonconf = btn['needsConfirm'] %}
-                    <form id="{{ buttonid }}" 
-                          method="post" action="{{ url_for('console.execute', row=btn['row'], col=btn['col']) }}">
-                        <input class="{{ btnall }}" style="{{ style }}" type="submit" 
-                            onclick="confirmExecution('{{ buttonid }}', '{{ buttonex }}', '{{ buttonconf }}')"
-                            value="{{ btn['buttonText'] }}">
+                    {% else %}
+                    <form id="commandlineform" method="post" action="{{ url_for('console.execCommandline') }}">
+                        <input style="width: 100%" type="text" id="commandline" name="commandline" 
+                            onchange="doSubmit('commandlineform')"
+                            value="{{ sc.vButtonCommand }}">
                     </form>
                     {% endif %}
                 </td>
-                {% endfor %}
             </tr>
-            {% endfor %}
+            <tr>
+                <td style="width:15%">
+                    <b>Run Arguments:</b>
+                </td>
+                <td style="width:80%">
+                    {% if sc.vButtonArgs is not none %}
+                    {{ sc.vButtonArgs|string() }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="width:15%">
+                    <b>Return Code:</b>
+                </td>
+                <td style="width:80%">
+                    {% if sc.vButtonReturncode is not none %}
+                    {{ sc.vButtonReturncode }}
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="width:15%">
+                    <b>Stdout:</b>
+                </td>
+                <td style="width:80%">
+                    {% if sc.vButtonStdout is not none %}
+                    {% if sc.vButtonStdout|length() > 0 %}
+                    <textarea cols="100" rows="6" readonly>{{ sc.vButtonStdout }}</textarea>
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="width:15%">
+                    <b>Sterr:</b>
+                </td>
+                <td style="width:80%">
+                    {% if sc.vButtonStderr is not none %}
+                    {% if sc.vButtonStderr|length() > 0 %}
+                    <textarea cols="100" rows="6" readonly>{{ sc.vButtonStderr }}</textarea>
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                </td>
+            </tr>
         </table>
+        {% endif %}
     </div>
-    <p>&nbsp;</p>
-    <hr>
-    <p>&nbsp;</p>
-    <h4>Execution Result</h4>
-    <table  class="w3-table-all">
-        <tr>
-            <td style="width:15%">
-                <b>Command:</b>
-            </td>
-            <td style="width:80%">
-                {% if sc.vButtonHasCommandLine == False %}
-                {% if sc.vButtonCommand is not none %}
-                {{ sc.vButtonCommand }}
-                {% endif %}
-                {% else %}
-                <form id="commandlineform" method="post" action="{{ url_for('console.execCommandline') }}">
-                    <input style="width: 100%" type="text" id="commandline" name="commandline" 
-                        onchange="doSubmit('commandlineform')"
-                        value="{{ sc.vButtonCommand }}">
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td style="width:15%">
-                <b>Run Arguments:</b>
-            </td>
-            <td style="width:80%">
-                {% if sc.vButtonArgs is not none %}
-                {{ sc.vButtonArgs|string() }}
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td style="width:15%">
-                <b>Return Code:</b>
-            </td>
-            <td style="width:80%">
-                {% if sc.vButtonReturncode is not none %}
-                {{ sc.vButtonReturncode }}
-                {% else %}
-                &nbsp;
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td style="width:15%">
-                <b>Stdout:</b>
-            </td>
-            <td style="width:80%">
-                {% if sc.vButtonStdout is not none %}
-                {% if sc.vButtonStdout|length() > 0 %}
-                <textarea cols="100" rows="6" readonly>{{ sc.vButtonStdout }}</textarea>
-                {% else %}
-                &nbsp;
-                {% endif %}
-                {% else %}
-                &nbsp;
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td style="width:15%">
-                <b>Sterr:</b>
-            </td>
-            <td style="width:80%">
-                {% if sc.vButtonStderr is not none %}
-                {% if sc.vButtonStderr|length() > 0 %}
-                <textarea cols="100" rows="6" readonly>{{ sc.vButtonStderr }}</textarea>
-                {% else %}
-                &nbsp;
-                {% endif %}
-                {% else %}
-                &nbsp;
-                {% endif %}
-            </td>
-        </tr>
-    </table>
+    {% if sc.lastConsoleTab == "actionbuttons" %}
+    <div id="actionbuttons" class="consolegroup">
+    {% else %}
+    <div id="actionbuttons" class="consolegroup" style="display:none">
     {% endif %}
-<script>
-    function openConsoleTab(infoTabName, infoTabButton) {
-        var i;
-        var x = document.getElementsByClassName("consolegroup");
-        for (i = 0; i < x.length; i++) {
-            x[i].style.display = "none";
-        }
-        document.getElementById(infoTabName).style.display = "block";
+        <h4>Action Buttons</h4>
+        {% if sc.aButtonsRows == 0 %}
+        <p>There are no action buttons configured.</p>
+        <p>You can configure buttons for execution of actions in Settings/Action Buttons</p>
+        {% else %}
+        <div>
+            {% set nrcols=sc.aButtonsCols %}
+            {% set cw = 100/nrcols %}
+            {% set cws = cw|string() %}
+    <!--       
+            {% set cst = 'style=width:' + cws + '%'%}
+    -->
+            {% set cst = 'width:' + cws + '%; min-height:38.5px; height:38.5px' %}
+            <table style="width:100%">
+                {% for r in sc.aButtons %}
+                <tr>
+                    {% for btn in r %}
+                    {% set shape = btn["buttonShape"] %}
+                    {% set color = btn["buttonColor"] %}
+                    {% if shape == "Circular" %}
+                    <!-- Attantion: Syntax check will not be OK for the following line -->
+                    <td style="{{ cst }}"; align="center">
+                    {% elif shape == "Square" %}
+                    <!-- Attantion: Syntax check will not be OK for the following line -->
+                    <td {{ cst }} align="center">
+                    {% else %}
+                    <td {{ cst }}>
+                    {% endif %}
+                        {% if btn["isVisible"] == True %}
 
-        var b = document.getElementsByClassName("consolemenu");
-        for (i = 0; i < b.length; i++) {
-            b[i].classList = "w3-bar-item w3-button consolemenu";
+                        {% set cls1 = 'w3-button' %}
+                        {% set cls = cls1 + ' w3-black' %}
+
+                        {% if shape == "Rectangle" %}
+                            {% set btnshp = "w3-button" %}
+                            {% set style = 'width: 100%' %}
+                        {% elif shape == "Rounded" %}
+                            {% set btnshp = 'w3-button w3-round-xxlarge' %}
+                            {% set style = 'width: 100%' %}
+                        {% elif shape == "Circular" %}
+                            {% set btnshp = 'w3-button w3-circle' %}
+                            {% set style = 'text-align:center' %}
+                        {% elif shape == "Square" %}
+                            {% set btnshp = 'w3-button w3-large' %}
+                            {% set style = 'text-align:center' %}
+                        {% endif %}
+                        {% if color == "Black" %}
+                            {% set btnall = btnshp + ' w3-black' %}
+                        {% elif color == "Red" %}
+                            {% set btnall = btnshp + ' w3-red' %}
+                        {% elif color == "Green" %}
+                            {% set btnall = btnshp + ' w3-green' %}
+                        {% elif color == "Yellow" %}
+                            {% set btnall = btnshp + ' w3-yellow' %}
+                        {% elif color == "Blue" %}
+                            {% set btnall = btnshp + ' w3-blue' %}
+                        {% endif %}
+                        {% set buttonid = "abtn_" ~ btn['row'] ~ btn['col'] ~ "_form" %}
+                        {% set buttonaction = btn['buttonAction'] %}
+                        {% set buttonconf = btn['needsConfirm'] %}
+                        <form id="{{ buttonid }}" 
+                            method="post" action="{{ url_for('console.do_action', row=btn['row'], col=btn['col']) }}">
+                            <!-- Attantion: Syntax check will not be OK for the following line-->
+                            <input class="{{ btnall }}" style="{{ style }}" type="submit" 
+                                onclick="confirmAction('{{ buttonid }}', '{{ buttonaction }}', '{{ buttonconf }}')"
+                                value="{{ btn['buttonText'] }}">
+                        </form>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+    </div>
+    <script>
+        function openConsoleTab(infoTabName, infoTabButton) {
+            var i;
+            var x = document.getElementsByClassName("consolegroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(infoTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("consolemenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button consolemenu";
+            }
+            document.getElementById(infoTabButton).classList = "w3-bar-item w3-button consolemenu w3-light-green";
         }
-        document.getElementById(infoTabButton).classList = "w3-bar-item w3-button consolemenu w3-light-green";
-    }
-    function doSubmit(form) {
-        document.getElementById(form).submit();
-    }
-    function confirmExecution(form, command, needsConfirm) {
-        //console.log("confirmExecution - needsConfirm=", needsConfirm);
-        if (needsConfirm == "True") {
-            if (confirm("Do you want to execute the following command?\n" + command)) {
-                document.getElementById(form).method = "post";
-                document.getElementById(form).submit();
-            } else {
-                document.getElementById(form).method = "get";
+        function doSubmit(form) {
+            document.getElementById(form).submit();
+        }
+        function confirmExecution(form, command, needsConfirm) {
+            //console.log("confirmExecution - needsConfirm=", needsConfirm);
+            if (needsConfirm == "True") {
+                if (confirm("Do you want to execute the following command?\n" + command)) {
+                    document.getElementById(form).method = "post";
+                    document.getElementById(form).submit();
+                } else {
+                    document.getElementById(form).method = "get";
+                }
             }
         }
-    }
-    function onlineHelp(){
-        window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Console.md");
-    }
-</script>
+        function confirmAction(form, action, needsConfirm) {
+            //console.log("confirmExecution - needsConfirm=", needsConfirm);
+            if (needsConfirm == "True") {
+                if (confirm("Do you want to execute the following action?\n" + action)) {
+                    document.getElementById(form).method = "post";
+                    document.getElementById(form).submit();
+                } else {
+                    document.getElementById(form).method = "get";
+                }
+            }
+        }
+        function onlineHelp(){
+            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Console.md");
+        }
+    </script>
 {% endblock %}

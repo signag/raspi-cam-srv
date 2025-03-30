@@ -6,13 +6,34 @@
 
 {% block content %}
     <div class="w3-bar w3-green">
-        <!-- Info menue -->
+        <!-- Trigger menue -->
         {% if sc.lastTriggerTab == "trgcontrol" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgCtrlBtn"
             onclick="openTriggerTab('trgcontrol', 'trgCtrlBtn')">Control</button>
         {% else %}
         <button class="w3-bar-item w3-button triggermenu" id="trgCtrlBtn"
             onclick="openTriggerTab('trgcontrol', 'trgCtrlBtn')">Control</button>
+        {% endif %}
+        {% if sc.lastTriggerTab == "trgtriggers" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgTriggersBtn"
+            onclick="openTriggerTab('trgtriggers', 'trgTriggersBtn')">Triggers</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgTriggersBtn"
+            onclick="openTriggerTab('trgtriggers', 'trgTriggersBtn')">Triggers</button>
+        {% endif %}
+        {% if sc.lastTriggerTab == "trgactions" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgActionsBtn"
+            onclick="openTriggerTab('trgactions', 'trgActionsBtn')">Actions</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgActionsBtn"
+            onclick="openTriggerTab('trgactions', 'trgActionsBtn')">Actions</button>
+        {% endif %}
+        {% if sc.lastTriggerTab == "trgtriggeractions" %}
+        <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgTriggerActionsBtn"
+            onclick="openTriggerTab('trgtriggeractions', 'trgTriggerActionsBtn')">Trigger-Actions</button>
+        {% else %}
+        <button class="w3-bar-item w3-button triggermenu" id="trgTriggerActionsBtn"
+            onclick="openTriggerTab('trgtriggeractions', 'trgTriggerActionsBtn')">Trigger-Actions</button>
         {% endif %}
         {% if sc.lastTriggerTab == "trgmotion" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgmotionbtn"
@@ -23,10 +44,10 @@
         {% endif %}
         {% if sc.lastTriggerTab == "trgaction" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgactionbtn"
-            onclick="openTriggerTab('trgaction', 'trgactionbtn')">Action</button>
+            onclick="openTriggerTab('trgaction', 'trgactionbtn')">Camera</button>
         {% else %}
         <button class="w3-bar-item w3-button triggermenu" id="trgactionbtn"
-            onclick="openTriggerTab('trgaction', 'trgactionbtn')">Action</button>
+            onclick="openTriggerTab('trgaction', 'trgactionbtn')">Camera</button>
         {% endif %}
         {% if sc.lastTriggerTab == "trgnotify" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgnotifybtn"
@@ -109,9 +130,19 @@
                     </td>
                 </tr>
                 <tr>
-                    <td style="width:15%">
+                    <td class="w3-tooltip" style="width:15%">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Activate checkbox if actions shall be triggered by events<br>
+                           which are configured on the Triggers, Actions and Trigger-Actions tabs
+                        </span>
+                        <label for="triggerbyevents">Configured Triggers:</label>
                     </td>
                     <td style="width:10%">
+                        {% if tc.triggeredByEvents == True %}
+                        <input type="checkbox" id="triggerbyevents" name="triggerbyevents" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="triggerbyevents" name="triggerbyevents" value="1">
+                        {% endif %}
                     </td>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -271,7 +302,7 @@
             <input class="w3-button w3-black" type="submit" value="Submit">
         </form>
         <p style="margin-bottom: 0"></p>
-        {% if sc.isTriggerRecording == False %}
+        {% if sc.isTriggerRecording == False and sc.isEventhandling == False %}
         <form method="post" action="{{ url_for('trigger.start_triggered_capture') }}">
             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Start">
         </form>
@@ -292,13 +323,684 @@
         </div>
         {% endif %}
     </div>
+    {% if sc.lastTriggerTab == "trgtriggers" %}
+    <div id="trgtriggers" class="triggergroup">
+    {% else %}
+    <div id="trgtriggers" class="triggergroup" style="display:none">
+    {% endif %}
+        <div class="wr-row">
+            <h3>Triggers</h3>
+            <h4>New Trigger</h4>
+            {% set triggerSource = "" %}
+            {% set triggerDevice = "" %}
+            {% set triggerEvent = "" %}
+            {% set triggerEventSettings = "" %}
+            {% set triggerId = "" %}
+            {% if tmp|length() > 0 %}
+            {% if "triggerSource" in tmp %}
+            {% set triggerSource = tmp.triggerSource %}
+            {% endif %}
+            {% if "triggerDevice" in tmp %}
+            {% set triggerDevice = tmp.triggerDevice %}
+            {% endif %}
+            {% if "triggerEvent" in tmp %}
+            {% set triggerEvent = tmp.triggerEvent %}
+            {% endif %}
+            {% if "triggerEventSettings" in tmp %}
+            {% set triggerEventSettings = tmp.triggerEventSettings %}
+            {% endif %}
+            {% if "triggerControl" in tmp %}
+            {% set triggerControl = tmp.triggerControl %}
+            {% endif %}
+            {% if "triggerId" in tmp %}
+            {% set triggerId = tmp.triggerId %}
+            {% endif %}
+            {% endif %}
+            <form id="newtriggerform" method="post" action="{{ url_for('trigger.new_trigger') }}">
+                <table>
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Choose the source system for the trigger: Camera or GPIO
+                            </span>
+                            <label for="triggersource">Trigger Source:</label>
+                        </td>
+                        <td style="width:20%">
+                            <select style="width:100%; height:28px" name="triggersource" id="triggersource"
+                                onchange="dosubmitTriggerSource()">
+                                {% if triggerSource == "" %}
+                                <option value="" selected></option>
+                                {% endif %}
+                                {% for source in tc.triggerSources() %}
+                                {% if source == triggerSource %}
+                                <option value="{{ source }}" selected>{{ source }}</option>
+                                {% else %}
+                                <option value="{{ source }}">{{ source }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Choose the device for which to register a trigger
+                            </span>
+                            <label for="triggerdevice">Trigger Device:</label>
+                        </td>
+                        <td style="width:20%">
+                            {% if triggerSource == "" %}
+                            <select style="width:100%; height:28px" name="triggerdevice" id="triggerdevice" disabled></select>
+                            {% else %}
+                            <select style="width:100%; height:28px" name="triggerdevice" id="triggerdevice"
+                                onchange="dosubmitTriggerDevice()">
+                                {% if triggerDevice == "" %}
+                                <option value="" selected></option>
+                                {% endif %}
+                                {% for device in tc.triggerDevices(triggerSource) %}
+                                {% if device == triggerDevice %}
+                                <option value="{{ device }}" selected>{{ device }}</option>
+                                {% else %}
+                                <option value="{{ device }}">{{ device }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            </select>
+                        </td>
+                        {% if triggerSource == "GPIO" and triggerDevice != "" %}
+                        {% set device = sc.getDevice(triggerDevice) %}
+                        <td style="width:30%">
+                            <input style="width: 100%" type="text" id="triggerdevicetype" name="triggerdevicetype" value="{{ device.type }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                            {% set device = sc.getDeviceType(device.type) %}
+                            <a id="triggerdevicedocurl" href="{{ device.docUrl }}" target="_blank">Link to gpiozero</a>
+                        </td>
+                        {% else %}
+                        <td style="width:30%">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% set events, eventSettings, control = tc.triggerEvents(triggerSource, triggerDevice) %}
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Choose the triggering event for the selected device
+                            </span>
+                            <label for="triggerevent">Trigger Event:</label>
+                        </td>
+                        <td style="width:20%">
+                            {% if triggerDevice == "" %}
+                            <select style="width:100%; height:28px" name="triggerevent" id="triggerevent" disabled></select>
+                            {% else %}
+                            <select style="width:100%; height:28px" name="triggerevent" id="triggerevent"
+                                onchange="dosubmitTriggerEvent()">
+                                {% if triggerEvent == "" %}
+                                <option value="" selected></option>
+                                {% endif %}
+                                {% for event in events %}
+                                {% if event == triggerEvent %}
+                                <option value="{{ event }}" selected>{{ event }}</option>
+                                {% else %}
+                                <option value="{{ event }}">{{ event }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            </select>
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    <div id="triggereventsettingsarea">
+                    {% if triggerEvent != "" and triggerEventSettings|length() > 0 %}
+                    {% for param, val in triggerEventSettings.items() %}
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The selected event requires specific parameters to be set.
+                            </span>
+                            <label for="trigger{{ param }}">Event Parameter:</label>
+                        </td>
+                        <td style="width:20%">
+                            <input style="width: 100%" type="text" id="trigger_{{ param }}" name="trigger_{{ param }}" value="{{ param }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                            <input style="width: 100%" type="text" id="trigger_{{ param }}_value" name="trigger_{{ param }}_value"
+                                value="{{ val }}">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    </div>
+                    <div id="triggercontrolarea">
+                    {% if triggerEvent != "" and triggerControl|length() > 0 %}
+                    {% for ctrlparam, ctrlval in triggerControl.items() %}
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The selected event requires specific control parameters to be set.
+                            </span>
+                            <label for="triggerctrl{{ ctrlparam }}">Control Parameter:</label>
+                        </td>
+                        <td style="width:20%">
+                            <input style="width: 100%" type="text" id="triggerctrl{{ ctrlparam }}" name="triggerctrl{{ ctrlparam }}" value="{{ ctrlparam }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                            <input style="width: 100%" type="text" id="triggerctrl{{ ctrlparam }}_value" name="triggerctrl{{ ctrlparam }}_value"
+                                value="{{ ctrlval }}">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    </div>
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Every trigger must be identified by a unique ID.
+                            </span>
+                            <label for="triggerid">Unique Trigger ID:</label>
+                        </td>
+                        <td style="width:20%">
+                            {% if triggerEvent == "" %}
+                            <input style="width: 100%" type="text" id="triggerid" name="triggerid" value="{{ triggerId }}" disabled>
+                            {% else %}
+                            <input style="width: 100%" type="text" id="triggerid" name="triggerid" value="{{ triggerId }}">
+                            {% endif %}
+                        </td>
+                        <td style="width:30%">
+                            {% if triggerEvent == "" %}
+                            <input class="w3-button w3-black" type="submit" value="Submit" disabled>
+                            {% else %}
+                            <input class="w3-button w3-black" type="submit" value="Submit">
+                            {% endif %}
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        <div class="w3-row">
+            <hr>
+        </div>
+        <div class="w3-row">
+            <h4>Trigger Overview</h4>
+            <form method="post" id="formtriggers" action="{{ url_for('trigger.trigger_activation') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <th>
+                            ID
+                        </th>
+                        <th>
+                            Active
+                        </th>
+                        <th>
+                            Source
+                        </th>
+                        <th>
+                            Device
+                        </th>
+                        <th>
+                            Event
+                        </th>
+                        <th>
+                            Parameters
+                        </th>
+                        <th>
+                            Control
+                        </th>
+                        <th>
+                            Delete
+                        </th>
+                    </tr>
+                    {% if tc.triggers|length() > 0 %}
+                    {% for trigger in tc.triggers %}
+                    <tr>
+                        <td>
+                            {{ trigger.id }}
+                        </td>
+                        <td>
+                            {% if sc.isEventhandling %}
+                            {% if trigger.isActive == True %}
+                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="0" disabled>
+                            {% endif %}
+                            {% else %}
+                            {% if trigger.isActive == True %}
+                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="0">
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ trigger.source }}
+                        </td>
+                        <td>
+                            {{ trigger.device }}
+                        </td>
+                        <td>
+                            {{ trigger.event }}
+                        </td>
+                        <td>
+                            {{ trigger.params }}
+                        </td>
+                        <td>
+                            {{ trigger.control }}
+                        </td>
+                        <td>
+                            {% if sc.isEventhandling %}
+                            <input type="checkbox" id="trigger{{ trigger.id }}_delete" name="trigger{{ trigger.id }}_delete" value="0"
+                                onchange="countTriggerDelete('trigger{{ trigger.id }}_delete')" disabled>
+                            {% else %}
+                            <input type="checkbox" id="trigger{{ trigger.id }}_delete" name="trigger{{ trigger.id }}_delete" value="0"
+                                onchange="countTriggerDelete('trigger{{ trigger.id }}_delete')">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </table>
+                <p style="margin-bottom: 0"></p>
+                {% if tc.triggers|length() > 0 %}
+                <input class="w3-button w3-black" type="submit" value="Submit" onclick="confirmDeleteTriggers('formtriggers')">
+                {% else %}
+                <input class="w3-button w3-black" type="submit" value="Submit" disabled>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% if sc.lastTriggerTab == "trgactions" %}
+    <div id="trgactions" class="triggergroup">
+    {% else %}
+    <div id="trgactions" class="triggergroup" style="display:none">
+    {% endif %}
+        <div class="wr-row">
+            <h3>Actions</h3>
+            <h4>New Action</h4>
+            {% set actionSource = "" %}
+            {% set actionDevice = "" %}
+            {% set actionTarget = "" %}
+            {% set actionId = "" %}
+            {% if tmp|length() > 0 %}
+            {% if "actionSource" in tmp %}
+            {% set actionSource = tmp.actionSource %}
+            {% endif %}
+            {% if "actionDevice" in tmp %}
+            {% set actionDevice = tmp.actionDevice %}
+            {% endif %}
+            {% if "actionTarget" in tmp %}
+            {% set actionTarget = tmp.actionTarget %}
+            {% endif %}
+            {% if "actionId" in tmp %}
+            {% set actionId = tmp.actionId %}
+            {% endif %}
+            {% endif %}
+            <form id="newactionform" method="post" action="{{ url_for('trigger.new_action') }}">
+                <table>
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Choose the source system for the action: Camera, GPIO or SMTP
+                            </span>
+                            <label for="actionsource">Action Source:</label>
+                        </td>
+                        <td style="width:20%">
+                            <select style="width:100%; height:28px" name="actionsource" id="actionsource"
+                                onchange="dosubmitActionSource()">
+                                {% if actionSource == "" %}
+                                <option value="" selected></option>
+                                {% endif %}
+                                {% for source in tc.actionSources() %}
+                                {% if source == actionSource %}
+                                <option value="{{ source }}" selected>{{ source }}</option>
+                                {% else %}
+                                <option value="{{ source }}">{{ source }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Choose the device for which to register an action
+                            </span>
+                            <label for="actiondevice">Action Device:</label>
+                        </td>
+                        <td style="width:20%">
+                            {% if actionSource == "" %}
+                            <select style="width:100%; height:28px" name="actiondevice" id="actiondevice" disabled></select>
+                            {% else %}
+                            <select style="width:100%; height:28px" name="actiondevice" id="actiondevice"
+                                onchange="dosubmitActionDevice()">
+                                {% if actionDevice == "" %}
+                                <option value="" selected></option>
+                                {% endif %}
+                                {% for device in tc.actionDevices(actionSource) %}
+                                {% if device == actionDevice %}
+                                <option value="{{ device }}" selected>{{ device }}</option>
+                                {% else %}
+                                <option value="{{ device }}">{{ device }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            </select>
+                        </td>
+                        {% if actionSource == "GPIO" and actionDevice != "" %}
+                        {% set device = sc.getDevice(actionDevice) %}
+                        <td style="width:30%">
+                            <input style="width: 100%" type="text" id="actiondevicetype" name="actiondevicetype" value="{{ device.type }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                            {% set device = sc.getDeviceType(device.type) %}
+                            <a id="devicedocurl" href="{{ device.docUrl }}" target="_blank">Link to gpiozero</a>
+                        </td>
+                        {% else %}
+                        <td style="width:30%">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% set actionTargets = tc.actionTargets(actionSource, actionDevice) %}
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Choose the action method for the selected device
+                            </span>
+                            <label for="actionmethod">Action Method:</label>
+                        </td>
+                        <td style="width:20%">
+                            {% if actionDevice == "" %}
+                            <select style="width:100%; height:28px" name="actionmethod" id="actionmethod" disabled></select>
+                            {% else %}
+                            <select style="width:100%; height:28px" name="actionmethod" id="actionmethod"
+                                onchange="dosubmitActionMethod()">
+                                {% if actionTarget == "" %}
+                                <option value="" selected></option>
+                                {% else %}
+                                {% if actionTarget.method == "" %}
+                                <option value="" selected></option>
+                                {% else %}
+                                {% set method = actionTarget.method %}
+                                {% endif %}
+                                {% endif %}
+                                {% for target in actionTargets %}
+                                {% if target.method == method %}
+                                <option value="{{ target.method }}" selected>{{ target.method }}</option>
+                                {% else %}
+                                <option value="{{ target.method }}">{{ target.method }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            </select>
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    <div id="actiontargetsettingsarea">
+                    {% if actionTarget != "" %}
+                    {% for target in actionTargets %}
+                    {% if target.method == actionTarget.method %}
+                    {% set method = actionTarget.method %}
+                    {% if "params" in actionTarget %}
+                    {% set params = actionTarget.params %}
+                    {% else %}
+                    {% set params = target.params %}
+                    {% endif %}
+                    {% if params|length() > 0 %}
+                    {% for param, value in params.items() %}
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The selected action requires specific parameters to be set.
+                            </span>
+                            <label for="action_{{ method }}_param_{{ param }}_value">Action Parameter:</label>
+                        </td>
+                        <td style="width:20%">
+                            <input style="width: 100%" type="text" id="action_{{ method }}_param_{{ param }}" name="action_{{ method }}_param_{{ param }}" value="{{ param }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                            <input style="width: 100%" type="text" id="action_{{ method }}_param_{{ param }}_value" name="action_{{ method }}_param_{{ param }}_value"
+                                value="{{ value }}">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    {% if "control" in actionTarget %}
+                    {% set control = actionTarget.control %}
+                    {% else %}
+                    {% set control = target.control %}
+                    {% endif %}
+                    {% if control|length() > 0 %}
+                    {% for ctrl, value in control.items() %}
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The selected action requires specific control parameters 
+                                which may, for example specify the duration of the target device status
+                                or the status shall be gradually reached.
+                            </span>
+                            <label for="action_{{ method }}_control_{{ ctrl }}_value">Control Parameter:</label>
+                        </td>
+                        <td style="width:20%">
+                            <input style="width: 100%" type="text" id="action_{{ method }}_control_{{ ctrl }}"
+                                name="action_{{ method }}_control_{{ ctrl }}" value="{{ ctrl }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                            <input style="width: 100%" type="text" id="action_{{ method }}_control_{{ ctrl }}_value"
+                                name="action_{{ method }}_control_{{ ctrl }}_value" value="{{ value }}">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    </div>
+                    <tr>
+                        <td class="w3-tooltip" style="width:20%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Every action must be identified by a unique ID.
+                            </span>
+                            <label for="actionid">Unique Action ID:</label>
+                        </td>
+                        <td style="width:20%">
+                            {% if actionTarget == "" %}
+                            <input style="width: 100%" type="text" id="actionid" name="actionid" value="{{ actionId }}" disabled>
+                            {% else %}
+                            <input style="width: 100%" type="text" id="actionid" name="actionid" value="{{ actionId }}">
+                            {% endif %}
+                        </td>
+                        <td style="width:30%">
+                            {% if actionTarget == "" %}
+                            <input class="w3-button w3-black" type="submit" value="Submit" disabled>
+                            {% else %}
+                            <input class="w3-button w3-black" type="submit" value="Submit">
+                            {% endif %}
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        <div class="w3-row">
+            <hr>
+        </div>
+        <div class="w3-row">
+            <h4>Action Overview</h4>
+            <form id="formactions" method="post" action="{{ url_for('trigger.action_activation') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <th>
+                            ID
+                        </th>
+                        <th>
+                            Active
+                        </th>
+                        <th>
+                            Source
+                        </th>
+                        <th>
+                            Device
+                        </th>
+                        <th>
+                            Action Method
+                        </th>
+                        <th>
+                            Parameters
+                        </th>
+                        <th>
+                            Control
+                        </th>
+                        <th>
+                            Delete
+                        </th>
+                    </tr>
+                    {% if tc.actions|length() > 0 %}
+                    {% for action in tc.actions %}
+                    <tr>
+                        <td>
+                            {{ action.id }}
+                        </td>
+                        <td>
+                            {% if sc.isEventhandling %}
+                            {% if action.isActive == True %}
+                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="0" disabled>
+                            {% endif %}
+                            {% else %}
+                            {% if action.isActive == True %}
+                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="0">
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ action.source }}
+                        </td>
+                        <td>
+                            {{ action.device }}
+                        </td>
+                        <td>
+                            {{ action.method }}
+                        </td>
+                        <td>
+                            {{ action.params }}
+                        </td>
+                        <td>
+                            {{ action.control }}
+                        </td>
+                        <td>
+                            {% if sc.isEventhandling %}
+                            <input type="checkbox" id="action{{ action.id }}_delete" name="action{{ action.id }}_delete" value="0"
+                                onchange="countActionDelete('action{{ action.id }}_delete')" disabled>
+                            {% else %}
+                            <input type="checkbox" id="action{{ action.id }}_delete" name="action{{ action.id }}_delete" value="0"
+                                onchange="countActionDelete('action{{ action.id }}_delete')">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </table>
+                <p style="margin-bottom: 0"></p>
+                {% if tc.actions|length() > 0 %}
+                <input class="w3-button w3-black" type="submit" value="Submit" onclick="confirmDeleteActions('formactions')">
+                {% else %}
+                <input class="w3-button w3-black" type="submit" value="Submit" disabled>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% if sc.lastTriggerTab == "trgtriggeractions" %}
+    <div id="trgtriggeractions" class="triggergroup">
+    {% else %}
+    <div id="trgtriggeractions" class="triggergroup" style="display:none">
+    {% endif %}
+        <h3>Trigger Actions</h3>
+        <div overflow: auto>
+            <form method="post" action="{{ url_for('trigger.trigger_action') }}">
+                <table class="w3-table-all">
+                    <tr>
+                        <th class="width:10%">
+                            Trigger
+                        </th>
+                        {% for action in tc.actions %}
+                        <th class="width:5%; w3-center">
+                            {{ action.id }}
+                        </th>
+                        {% endfor %}
+                        <th class="width:90%"></th>
+                    </tr>
+                    {% for trigger in tc.triggers %}
+                    {% set triggerId = trigger.id %}
+                    {% set triggerActions = trigger.actions %}
+                    <tr>
+                        <th class="width:10%">
+                            {{ trigger.id }}
+                        </th>
+                        {% for action in tc.actions %}
+                        {% set actionId = action.id %}
+                        <td class="width:5%; w3-center">
+                            {% if sc.isEventhandling %}
+                            {% if triggerActions[actionId] == True %}
+                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="0" disabled>
+                            {% endif %}
+                            {% else %}
+                            {% if triggerActions[actionId] == True %}
+                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="0">
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="width:90%"></td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit">
+            </form>
+        </div>
+    </div>
     {% if sc.lastTriggerTab == "trgmotion" %}
     <div id="trgmotion" class="triggergroup">
     {% else %}
     <div id="trgmotion" class="triggergroup" style="display:none">
     {% endif %}
+        <h3>Motion Capturing Settings</h3>
         <div class="w3-half">
-            <p>&nbsp;</p>
             <form method="post" action="{{ url_for('trigger.motion') }}">
                 <table class="w3-table-all">
                     <tr>
@@ -436,7 +1138,7 @@
             </form>
             {% endif %}
         </div>
-        <div class="w3-half" style="height:90vh; overflow: auto">
+        <div class="w3-half" style="height:85vh; overflow: auto">
             {% if sc.isTriggerTesting == True %}
             <p> Reference: 
             <a href="{{ tc.motionRefURL }}" target="_blank">{{ tc.motionRefTit }}</a>
@@ -509,8 +1211,8 @@
     {% else %}
     <div id="trgaction" class="triggergroup" style="display:none">
     {% endif %}
+        <h3>Camera Actions</h3>
         <div class="w3-half">
-            <p>&nbsp;</p>
             <form method="post" action="{{ url_for('trigger.action') }}">
                 <table class="w3-table-all">
                     <tr>
@@ -606,8 +1308,8 @@
     {% else %}
     <div id="trgnotify" class="triggergroup" style="display:none">
     {% endif %}
+        <h3>Notification Settings</h3>
         <div class="w3-half">
-            <p>&nbsp;</p>
             {% if tc.notifyConOK == False %}
             <h3 class="w3-red">Please enter credentials to check notification recipient</h3>
             {% else %}
@@ -1124,6 +1826,9 @@
         </div>
     </div>
     <script>
+        var triggerDelete = 0;
+        var actionDelete = 0;
+
         function openTriggerTab(trgTabName, trgTabButton) {
             var i;
             var x = document.getElementsByClassName("triggergroup");
@@ -1247,6 +1952,112 @@
         }
         function onlineHelp() {
             window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Trigger.md");
+        }
+        function dosubmitTriggerSource(){
+            td = document.getElementById("triggerdevice");
+            td.value = "";
+            td.disabled = true;
+            tt = document.getElementById("triggerdevicetype");
+            if (tt) {
+                tt.value = "";
+                tt.display = "none";
+            }
+            tu = document.getElementById("triggerdevicedocurl");
+            if (tu) {
+                tu.value = "";
+                tu.display = "none";
+            }
+            te = document.getElementById("triggerevent");
+            te.value = "";
+            te.disabled = true;
+            tt = document.getElementById("triggereventsettingsarea");
+            tt.display = "none";
+            document.getElementById("newtriggerform").submit();
+        }
+        function dosubmitTriggerDevice(){
+            te = document.getElementById("triggerevent");
+            te.value = "";
+            te.disabled = true;
+            tt = document.getElementById("triggereventsettingsarea");
+            tt.display = "none";
+            document.getElementById("newtriggerform").submit();
+        }
+        function dosubmitTriggerEvent(){
+            tt = document.getElementById("triggereventsettingsarea");
+            tt.display = "none";
+            document.getElementById("newtriggerform").submit();
+        }
+        function dosubmitActionSource(){
+            td = document.getElementById("actiondevice");
+            td.value = "";
+            td.disabled = true;
+            tt = document.getElementById("actiondevicetype");
+            if (tt) {
+                tt.value = "";
+                tt.display = "none";
+            }
+            tu = document.getElementById("devicedocurl");
+            if (tu) {
+                tu.innerHTML = "";
+                tu.display = "none";
+            }
+            te = document.getElementById("actionmethod");
+            te.value = "";
+            te.disabled = true;
+            tt = document.getElementById("actiontargetsettingsarea");
+            tt.display = "none";
+            document.getElementById("newactionform").submit();
+        }
+        function dosubmitActionDevice(){
+            te = document.getElementById("actionmethod");
+            te.value = "";
+            te.disabled = true;
+            tt = document.getElementById("actiontargetsettingsarea");
+            tt.display = "none";
+            document.getElementById("newactionform").submit();
+        }
+        function dosubmitActionMethod(){
+            tt = document.getElementById("actiontargetsettingsarea");
+            tt.display = "none";
+            document.getElementById("newactionform").submit();
+        }
+        function countTriggerDelete(id){
+            cb = document.getElementById(id);
+            if (cb.checked == true){
+                triggerDelete += 1;
+            } else {
+                triggerDelete -= 1;
+            }
+            //console.log("triggerDelete=", triggerDelete, " checked=", cb.checked);
+        }
+        function confirmDeleteTriggers(form) {
+            if (triggerDelete > 0){
+                if (confirm("Do you want to delete the selected triggers?")) {
+                    document.getElementById(form).method = "post";
+                    document.getElementById(form).submit();
+                } else {
+                    document.getElementById(form).method = "get";
+                }
+            }
+        }
+        function countActionDelete(id){
+            cb = document.getElementById(id);
+            if (cb.checked == true){
+                actionDelete += 1;
+            } else {
+                actionDelete -= 1;
+            }
+            //console.log("triggerDelete=", triggerDelete, " checked=", cb.checked);
+        }
+        function confirmDeleteActions(form) {
+            if (actionDelete > 0){
+                if (confirm("Do you want to delete the selected actions?")) {
+                    document.getElementById(form).method = "post";
+                    document.getElementById(form).submit();
+                } else {
+                    document.getElementById(form).method = "get";
+                }
+            }
         }
     </script>
 {% endblock %}

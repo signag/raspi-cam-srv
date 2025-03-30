@@ -92,6 +92,15 @@
                     <img src="{{ url_for('static', filename='recording_live2_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px"> 
                     {% endif %}
                     {% endif %}
+                    {% if sc.isEventhandling %}
+                    {% if sc.isEventsWaiting %}
+                    <img src="{{ url_for('static', filename='recording_events_wait.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_events_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_events_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
                     {% if sc.isTriggerRecording %}
                     {% if sc.isTriggerWaiting %}
                     <img src="{{ url_for('static', filename='recording_trigger_wait.png') }}" class="w3-image" id="recording_active" alt="Recording paused" style="height:34px; width:34px">

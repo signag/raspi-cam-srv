@@ -36,10 +36,10 @@ The main menu (black background) allows navigation to different screens:
 - **Info** opens the [Camera Information](./Information.md) page with information on installed cameras as well as Properties and Sensor Modes of the active camera.
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
-- **Trigger** Allows configuring and controlling [triggered video and/or photo taking](./Trigger.md), currently based on [Motion Capturing](./TriggerMotion.md)
+- **Trigger** Allows configuring and controlling [triggered actions](./Trigger.md), based on [Motion Capturing](./TriggerMotion.md) as well as on configured [events from GPIO-connected sensors](./TriggerTriggers.md)
 - **Web Cam** opens the [Web Cam](./Webcam.md) page showing web cam features of **raspiCamSrv**
-- **Console** is dedicated to interaction with the Raspberry Pi. On the [Versatile Buttons](./Console.md) screen you can place freely configurable functional buttons for execution of OS-level commands.
-- **Settings** opens the [Settings](./Settings.md) page where some basic server parameters can be configured and where the active camera can be switched in case the Raspberry Pi device supprts multiple cameras (such as Pi 5).
+- **Console** is dedicated to manually controlled interactions with the [Raspberry Pi OS](./ConsoleVButtons.md) or with [GPIO-connected Actors](./ConsoleActionButtons.md), such as motors, servos or LEDs.
+- **Settings** opens the [Settings](./Settings.md) page for all kinds of static configurations for **raspiCamSrv**.
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
 
 **NOTE:** Selecting an option on the main menue will issue a request to the server with a specific URL and, thus, refresh the screen.
@@ -69,13 +69,14 @@ From right to left, these indicate the status of
 - Recording [audio](./Settings.md#recording-audio-along-with-video) along with video
 - [Photo Series](./PhotoSeries.md) thread
 - [Motion Capture](./Trigger.md) thread
+- [Trigger](./TriggerTriggers.md) thread
 - Live stream thread for the other camera, if available (see [Webcam](./Webcam.md))
 
 Red color indicates that a process is active whereas gray indicates that it is inactive.   
 
 In the case of [motion capture](./TriggerMotion.md),    
 - yellow color indicates that the process is active but currently not scheduled to register events
-- tuquoise color indicates that the motion capture process runs in [test mode](./TriggerMotion.md#testing-motion-capturing)
+- turquoise color indicates that the motion capture process runs in [test mode](./TriggerMotion.md#testing-motion-capturing)
 
 ![MotionPaused](./img/ProcessIndicator8.jpg)     
 ![MotionPaused](./img/ProcessIndicator12.jpg)

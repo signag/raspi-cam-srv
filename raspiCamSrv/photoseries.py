@@ -107,6 +107,7 @@ def new_series():
             ser.start = dt
             ser.end = ser.start
             ser.interval = 5.0
+            ser.onDialMarks = False
             ser.nrShots = 1
             ser.nextStatus("create")
             ser.persist()
@@ -480,6 +481,10 @@ def series_properties():
                 sr.start = datetime.fromisoformat(serStartFormIso)
             serEndFormIso = request.form["serend"]
             serIntForm = float(request.form["serinterval"])
+            if request.form.get("serondialmarks") is None:
+                serOnDialMarks = False
+            else:
+                serOnDialMarks = True
             serShtForm = int(request.form["sernrshots"])
             if request.form.get("isautocontinue") is None:
                 continueOnServerStart = False
@@ -527,6 +532,7 @@ def series_properties():
                 if sr.isSunControlledSeries == False:
                     sr.end = serEnd
                 sr.interval = serInt
+                sr.onDialMarks = serOnDialMarks
                 sr.nrShots = serNrShots
                 if sr.isExposureSeries == False \
                 and sr.isFocusStackingSeries == False:

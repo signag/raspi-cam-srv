@@ -47,6 +47,20 @@
         <button class="w3-bar-item w3-button settingsmenu" id="settingsvbuttonsbtn"
             onclick="openSettingsTab('settingsvbuttons', 'settingsvbuttonsbtn')">Versatile Buttons</button>
         {% endif %}
+        {% if sc.lastSettingsTab == "settingsabuttons" %}
+        <button class="w3-bar-item w3-button settingsmenu w3-light-green" id="settingsabuttonsbtn"
+            onclick="openSettingsTab('settingsabuttons', 'settingsabuttonsbtn')">Action Buttons</button>
+        {% else %}
+        <button class="w3-bar-item w3-button settingsmenu" id="settingsabuttonsbtn"
+            onclick="openSettingsTab('settingsabuttons', 'settingsabuttonsbtn')">Action Buttons</button>
+        {% endif %}
+        {% if sc.lastSettingsTab == "settingsdevices" %}
+        <button class="w3-bar-item w3-button settingsmenu w3-light-green" id="settingsdevicesbtn"
+            onclick="openSettingsTab('settingsdevices', 'settingsdevicesbtn')">Devices</button>
+        {% else %}
+        <button class="w3-bar-item w3-button settingsmenu" id="settingsdevicesbtn"
+            onclick="openSettingsTab('settingsdevices', 'settingsdevicesbtn')">Devices</button>
+        {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
             <div class="w3-tooltip">
                 <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from GitHub
@@ -660,7 +674,6 @@
         <p>
             On this page you can configure the versatile buttons shown under Console/Versatile Buttons.<br>
             Buttons are arranged in a matrix-like structure with rows and columns.<br>
-            Button sizes are determined from the current pane width.
         </p>
         <div>
             <table style="width:100%" id="vbuttondimtab">
@@ -835,9 +848,546 @@
                 </form>
             </div>
         </div>
-
     </div>
+    {% if sc.lastSettingsTab == "settingsabuttons" %}
+    <div id="settingsabuttons" class="settingsgroup">
+    {% else %}
+    <div id="settingsabuttons" class="settingsgroup" style="display:none">
+    {% endif %}
+        <h3>Action Buttons</h3>
+        <p>
+            On this page you can configure the action buttons shown under Console/Action Buttons.<br>
+            With these buttons you can execute actions which are configured on page Trigger/Actions<br>
+            Buttons are arranged in a matrix-like structure with rows and columns.<br>
+        </p>
+        <div>
+            <table style="width:100%" id="abuttondimtab">
+                <form id="abuttondimensions" method="post" action="{{ url_for('settings.abutton_dimensions') }}">
+                    <tr>
+                        <td style="width: 15%">
+                            Number of Rows:
+                        </td>
+                        <td style="width: 5%">
+                            <input type="number" id="abuttonsrows" name="abuttonsrows" min="0" max="9" step="1" 
+                                value="{{ sc.abuttonsRows }}">
+                        </td>
+                        <td style="width: 15%">
+                            Number of Columns:
+                        </td>
+                        <td style="width: 5%">
+                            <input type="number" id="abuttonscols" name="abuttonscols" min="0" max="9" step="1"
+                            value="{{ sc.abuttonsCols }}">
+                        </td>
+                        <td style="width: 17%">
+                            <input class="w3-button w3-black" type="submit" value="Submit">
+                        </td>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width: 5%">
+                        </td>
+                        <td style="width: 20%">
+                        </td>
+                        <td style="width: 13%">
+                        </td>
+                    </tr>
+                </form>
+            </table>
+        </div>
+        {% if sc.abuttonsRows == 0 or sc.abuttonsCols == 0 %}
+        <div style="display:none">
+        {% else %}
+        <div>
+        {% endif %}
+            <h3>Action Button Settings</h1>
+            <form method="post" action="{{ url_for('settings.abutton_settings') }}">
+                <div style="height:810px; overflow: auto">
+                    <table class="w3-table-all">
+                        <tr>
+                            <th style="width:5%">
+                                Row
+                            </th>
+                            <th style="width:5%">
+                                Col
+                            </th>
+                            <th style="width:5%">
+                                Visible
+                            </th>
+                            <th style="width:5%">
+                                Shape
+                            </th>
+                            <th style="width:5%">
+                                Color
+                            </th>
+                            <th style="width:20%">
+                                Button Text
+                            </th>
+                            <th style="width:50%">
+                                Action
+                            </th>
+                            <th style="width:5%">
+                                Conf
+                            </th>
+                        </tr>
+                        {% for r in sc.aButtons %}
+                        {% for btn in r %}
+                        <tr>
+                            <td style="width:5%">
+                                {{ btn["row"] + 1 }}
+                            </td>
+                            <td style="width:5%">
+                                {{ btn["col"] + 1 }}
+                            </td>
+                            <td style="width:5%">
+                                {% if btn["isVisible"] == True %}
+                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" 
+                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1" checked>
+                                {% else %}
+                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible"
+                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1">
+                                {% endif %}
+                            </td>
+                            <td style="width:5%">
+                                <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_shape" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_shape">
+                                    {% if btn["buttonShape"] == "Rectangle" %}
+                                    <option value="Rectangle" selected>Rectangle</option>
+                                    {% else %}
+                                    <option value="Rectangle">Rectangle</option>
+                                    {% endif %}
+                                    {% if btn["buttonShape"] == "Rounded" %}
+                                    <option value="Rounded" selected>Rounded</option>
+                                    {% else %}
+                                    <option value="Rounded">Rounded</option>
+                                    {% endif %}
+                                    {% if btn["buttonShape"] == "Circular" %}
+                                    <option value="Circular" selected>Circular</option>
+                                    {% else %}
+                                    <option value="Circular">Circular</option>
+                                    {% endif %}
+                                    {% if btn["buttonShape"] == "Square" %}
+                                    <option value="Square" selected>Square</option>
+                                    {% else %}
+                                    <option value="Square">Square</option>
+                                    {% endif %}
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_color" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_color">
+                                    {% if btn["buttonColor"] == "Black" %}
+                                    <option value="Black" selected>Black</option>
+                                    {% else %}
+                                    <option value="Black">Black</option>
+                                    {% endif %}
+                                    {% if btn["buttonColor"] == "White" %}
+                                    <option value="White" selected>White</option>
+                                    {% else %}
+                                    <option value="White">White</option>
+                                    {% endif %}
+                                    {% if btn["buttonColor"] == "Red" %}
+                                    <option value="Red" selected>Red</option>
+                                    {% else %}
+                                    <option value="Red">Red</option>
+                                    {% endif %}
+                                    {% if btn["buttonColor"] == "Green" %}
+                                    <option value="Green" selected>Green</option>
+                                    {% else %}
+                                    <option value="Green">Green</option>
+                                    {% endif %}
+                                    {% if btn["buttonColor"] == "Yellow" %}
+                                    <option value="Yellow" selected>Yellow</option>
+                                    {% else %}
+                                    <option value="Yellow">Yellow</option>
+                                    {% endif %}
+                                    {% if btn["buttonColor"] == "Blue" %}
+                                    <option value="Blue" selected>Blue</option>
+                                    {% else %}
+                                    <option value="Blue">Blue</option>
+                                    {% endif %}
+                                </select>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width: 100%" type="text" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext"
+                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext" value="{{ btn['buttonText'] }}">
+                            </td>
+                            <td style="width:50%">
+                                <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_action" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_action">
+                                    {% if btn["buttonAction"] == "" %}
+                                    <option value="" selected></option>
+                                    {% else %}
+                                    <option value=""></option>
+                                    {% endif %}
+                                    {% for action in tc.actions %}
+                                    {% if btn["buttonAction"] == action.id %}
+                                    <option value="{{ action.id }}" selected>{{ action.id }}</option>
+                                    {% else %}
+                                    <option value="{{ action.id }}">{{ action.id }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                {% if btn["needsConfirm"] == True %}
+                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
+                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1" checked>
+                                {% else %}
+                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
+                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1">
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </table>
+                </div>
+                <p style="margin-bottom: 0"></p>
+                <input class="w3-button w3-black" type="submit" value="Submit">
+            </form>
+        </div>
+    </div>
+    {% if sc.lastSettingsTab == "settingsdevices" %}
+    <div id="settingsdevices" class="settingsgroup">
+    {% else %}
+    <div id="settingsdevices" class="settingsgroup" style="display:none">
+    {% endif %}
+        <div class="w3-row">
+            <div class="w3-half">
+                <h3>GPIO-Connected Devices</h3>
+                <h4>New Device</h4>
+                <table>
+                    <form method="post" id="newdevice" action="{{ url_for('settings.new_device') }}">
+                        <tr>
+                            <td class="w3-tooltip" style="width:35%">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Select one of the available device types.<br>
+                                    raspiCamSrv supports various gpizero device types.
+                                </span>
+                                <label for="newdevicetype">Device Type:</label>
+                            </td>
+                            <td style="width:35%">
+                                {% set urlStatic = url_for('static', filename='' ) %}
+                                <select style="width:100%; height:28px" name="newdevicetype" id="newdevicetype"
+                                        onchange="changeDeviceTypeImage('newdevicetype', 'deviceimage', '{{ urlStatic }}')">
+                                    {% if sc.curDeviceType %}
+                                    {% set curDeviceType = sc.curDeviceType.type %}
+                                    {% for devicetype in sc.deviceTypes %}
+                                    {% if devicetype.type == curDeviceType %}
+                                    <option value="{{ devicetype.type}}" selected>{{ devicetype.type }}</option>
+                                    {% else %}
+                                    <option value="{{ devicetype.type}}">{{ devicetype.type }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                    {% else %}
+                                    {% for devicetype in sc.deviceTypes %}
+                                    <option value="{{ devicetype.type}}">{{ devicetype.type }}</option>
+                                    {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </td>
+                            <td style="width:30%">
+                                <!-- This cell is used to store an invisible list of device type images -->
+                                {% for deviceType in sc.deviceTypes %}
+                                {% if "image" in deviceType %}
+                                <p id="devicetypeimage_{{ deviceType.type }}" style="display:none">{{ deviceType.image }}</p>
+                                {% endif%}
+                                {% endfor%}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="w3-tooltip" style="width:35%">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Enter a unique ID under which the new device will be identified
+                                    within the system.
+                                </span>
+                                <label for="newdeviceid">ID:</label>
+                            </td>
+                            <td style="width:35%">
+                                <input type="text" id="newdeviceid" name="newdeviceid" value="" aria-label="ID for device">
+                            </td>
+                            <td style="width:30%">
+                                <input class="w3-button w3-black" style="width:95px" type="submit" value="Create">
+                            </td>
+                        </tr>
+                    </form>
+                </table>
+            </div>
+            <div class="w3-half">
+                {% if sc.curDeviceType %}
+                {% set devImage = sc.curDeviceType.image %}
+                {% else %}
+                {% set devType = sc.deviceTypes[0] %}
+                {% set devImage = devType.image %}
+                {% endif %}
+                {% if devImage %}
+                {% if devImage|length() > 0 %}
+                {% set urlImage=url_for('static', filename=devImage) %}
+                <img src="{{ urlImage }}" class="w3-image" id="deviceimage" alt="Device image"
+                    style="height:200px; object-fit:scale-down">
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="w3-row">
+            <hr>
+        </div>
+        {% if sc.gpioDevices|length() > 0 %}
+        <div class="w3-half">
+            <h3>Device Configuration</h3>
+            <table>
+                <tr>
+                    {% if sc.curDeviceId != "" %}
+                    <form method="post" id="device" action="{{ url_for('settings.select_device') }}">
+                        <td style="width:35%">
+                        </td>
+                        <td style="width:35%">
+                            <select style="width:100%; height:28px" name="selectdevice" id="selectdevice" onchange="doSubmit('device')">
+                                {% for device in sc.gpioDevices %}
+                                {% if device.id == sc.curDeviceId %}
+                                <option value="{{ device.id }}" selected>{{ device.id }}</option>
+                                {% else %}
+                                <option value="{{ device.id }}">{{ device.id }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </form>
+                    <td style="width:30%">
+                        <form method="post" id="deletedevice" action="{{ url_for('settings.delete_device') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Delete"
+                                onclick="confirmDeleteDevice('deletedevice')">
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% if sc.curDeviceId != "" %}
+                {% set device = sc.curDevice %}
+                <form method="post" id="deviceprops" action="{{ url_for('settings.device_properties') }}">
+                    <tr>
+                        <td style="width:35%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The status shows whether or not a device has been completely configured 
+                                and tested so that it can be used.
+                            </span>
+                            <label for="devicestatus">Config Status:</label>
+                        </td>
+                        <td style="width:35%">
+                            {% if device.isOk == True %}
+                            <input style="width:100%" type="text" id="devicestatus" name="devicestatus" value="OK" disabled>
+                            {% else %}
+                            <input style="width:100%" type="text" id="devicestatus" name="devicestatus" value="Not OK" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:35%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                The device type is one of the supported gpiozero device types.
+                            </span>
+                            <label for="devicetype">Device Type:</label>
+                        </td>
+                        <td style="width:35%">
+                            <input style="width:100%" type="text" id="devicetype" name="devicetype" value="{{ device.type }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:35%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Usage shows whether the device is an input or output device.
+                            </span>
+                            <label for="deviceusage">Usage:</label>
+                        </td>
+                        <td style="width:35%">
+                            <input style="width:100%" type="text" id="deviceusage" name="deviceusage" value="{{ device.usage }}" disabled>
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:35%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                gpiozero documentation for this device type.
+                            </span>
+                            <label for="devicedocurl">gpiozero Doc:</label>
+                        </td>
+                        <td style="width:35%">
+                            <a id="devicedocurl" href="{{ device.docUrl }}" target="_blank">Link to gpiozero</a>
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                    {% set deviceType = sc.curDeviceType %}
+                    {% for key, value in device.params.items() %}
+                    {% for dtKey, dtValue in deviceType.params.items() %}
+                    {% if key == dtKey %}
+                    <tr>
+                        <td style="width:35%">
+                            {{ key }}
+                        </td>
+                        {% if dtValue.type == "str" %}
+                        <td style="width:35%">
+                            <input type="text" id="param_{{ key }}" name="param_{{ key }}" value="{{ value }}">
+                        </td>
+                        {% elif dtValue.type == "int"%}
+                        <td style="width:35%">
+                            <input type="number" id="param_{{ key }}" name="param_{{ key }}" min="{{ dtValue.min }}" max="{{ dtValue.max }}"
+                                step="1" value="{{ value }}">
+                        </td>
+                        {% elif dtValue.type == "float"%}
+                        <td style="width:35%">
+                            <input type="number" id="param_{{ key }}" name="param_{{ key }}" min="{{ dtValue.min }}" max="{{ dtValue.max }}"
+                                step="0.001" value="{{ value }}">
+                        </td>
+                        {% elif dtValue.type == "floatOrNone"%}
+                        <td style="width:35%">
+                            <input type="text" id="param_{{ key }}" name="param_{{ key }}" value="{{ value }}">
+                        </td>
+                        {% elif dtValue.type == "bool"%}
+                        <td style="width:35%">
+                            {% if value == True %}
+                            <input type="checkbox" id="param_{{ key }}" name="param_{{ key }}" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="param_{{ key }}" name="param_{{ key }}" value="1">
+                            {% endif %}
+                        </td>
+                        {% elif dtValue.type == "boolOrNone"%}
+                        <td style="width:35%">
+                            <select style="width:100%; height:28px" name="param_{{ key }}" id="param_{{ key }}">
+                                {% if value is none %}
+                                <option value="None" selected>None</option>
+                                {% else %}
+                                <option value="None">None</option>
+                                {% endif %}
+                                {% if value == True %}
+                                <option value="True" selected>True</option>
+                                {% else %}
+                                <option value="True">True</option>
+                                {% endif %}
+                                {% if value == False %}
+                                <option value="False" selected>False</option>
+                                {% else %}
+                                <option value="False">False</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                        {% else %}
+                        <td style="width:35%">
+                            <input type="text" id="param_{{ key }}" name="param_{{ key }}" value="{{ value }}">
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% endfor %}
+                    <tr>
+                        <td style="width:35%">
+                            <input class="w3-button w3-black" type="submit" value="Submit">
+                        </td>
+                        <td style="width:35%">
+                        </td>
+                        <td style="width:30%">
+                        </td>
+                    </tr>
+                </form>
+                {% endif %}
+            </table>
+            {% set device = sc.curDevice %}
+            {% if device.isOk == True %}
+            <hr>
+            <h3>Device Test</h3>
+            <table>
+                <tr>
+                    <td style="width:35%">
+                        <form method="post" id="testdevice" action="{{ url_for('settings.test_device') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Test" onclick="hideTestResults()">
+                        </form>
+                    </td>
+                    <td colspan="2" style="width:65%">
+                    </td>
+                </tr>
+            </table>
+            {% if result|length() > 0 %}
+            <div style="height:200px; overflow: auto">
+                <table id="testresults" class="w3-table-all">
+                    {% for key, value in result.items() %}
+                    <tr>
+                        <td style="width:35%">
+                            {{ key }}
+                        </td>
+                        <td colspan="2" style="width:65%">
+                            {{ value }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if sc.gpioDevices|length() > 0 %}
+        <div class="w3-half">
+            <h3>Devices</h3>
+            <p>
+                Unused GPIO Pins:
+                {% for pin in sc.freeGpioPins %}{{ pin }}{% if not loop.last %},{% endif %}{% endfor %}
+            </p>
+            <div style="height:800px; overflow: auto">
+                <table class="w3-table-all">
+                    <tr>
+                        <th>
+                            ID
+                        </th>
+                        <th>
+                            Type
+                        </th>
+                        <th>
+                            Usage
+                        </th>
+                        <th>
+                            GPIO Pins
+                        </th>
+                        <th>
+                            OK
+                        </th>
+                    </tr>
+                    {% for device in sc.gpioDevices %}
+                    <tr>
+                        <td>
+                            {{ device.id }}
+                        </td>
+                        <td>
+                            {{ device.type }}
+                        </td>
+                        <td>
+                            {{ device.usage }}
+                        </td>
+                        <td>
+                            {{ device.usedPins }}
+                        </td>
+                        <td>
+                            {{ device.isOk }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
     <script>
+        var deviceTypeImages;
+
+        function initDeviceTypeImages(){
+            deviceTypeImages = new Map();
+        }
+
+        function appendDeviceTypeImages(type, image){
+            deviceTypeImages.set(type, image);
+        }
+
         function openSettingsTab(settingsTabName, settingsTabButton) {
             var i;
             var x = document.getElementsByClassName("settingsgroup");
@@ -903,6 +1453,26 @@
         }
         function onlineHelp() {
             window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Settings.md");
+        }
+        function confirmDeleteDevice(form) {
+            if (confirm("Do you want to delete this device?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function changeDeviceTypeImage(src, tgt, urlRoot){
+            deviceType = document.getElementById(src).value;
+            imgId = "devicetypeimage_" + deviceType;
+            image = document.getElementById(imgId).innerText;
+            file = urlRoot + image;
+            tgtEl = document.getElementById(tgt);
+            tgtEl.src = file
+        }
+        function hideTestResults(){
+            tr = document.getElementById("testresults")
+            tr.display = "none"
         }
     </script>
 

@@ -10,6 +10,7 @@ import copy
 import shutil
 from pathlib import Path
 import json
+import math
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ class Series():
         self._ended = None
         self._downloaded= None
         self._interval = None
+        self._onDialMarks = None
         self._nrShots = None
         self._curShots = None
         self._type = "jpg"
@@ -236,6 +238,14 @@ class Series():
     @interval.setter
     def interval(self, value: float):
         self._interval = value
+    
+    @property
+    def onDialMarks(self) -> bool:
+        return self._onDialMarks
+
+    @onDialMarks.setter
+    def onDialMarks(self, value: bool):
+        self._onDialMarks = value
     
     @property
     def nrShots(self) -> int:
@@ -772,39 +782,102 @@ class Series():
             now += timedelta(days=1)
             dat = now.strftime("%Y-%m-%d")
             self.calcSunCtrlData(dat)
-            next = self.sunCtrlStart1
+            if self.onDialMarks == True:
+                next = self.nextDialMark(self.sunCtrlStart1)
+            else:
+                next = self.sunCtrlStart1
         else:
             if now < self.sunCtrlStart1:
-                next = self.sunCtrlStart1
+                if self.onDialMarks == True:
+                    next = self.nextDialMark(self.sunCtrlStart1)
+                else:
+                    next = self.sunCtrlStart1
             else:
-                timedif = now - self.sunCtrlStart1
-                timedifSec = timedif.total_seconds()
-                nrint = int(timedifSec / self._interval)
-                next = self.sunCtrlStart1 + timedelta(seconds = (nrint + 1)*self.interval)
+                if self.onDialMarks == True:
+                    next = self.nextDialMark(now)
+                else:
+                    timedif = now - self.sunCtrlStart1
+                    timedifSec = timedif.total_seconds()
+                    nrint = int(timedifSec / self._interval)
+                    next = self.sunCtrlStart1 + timedelta(seconds = (nrint + 1)*self.interval)
             if next > self.sunCtrlEnd1:
                 if self.sunCtrlStart2Trg > 0 and self.sunCtrlEnd2Trg > 0:
                     if now < self.sunCtrlStart2:
-                        next = self.sunCtrlStart2
+                        if self.onDialMarks == True:
+                            next = self.nextDialMark(self.sunCtrlStart2)
+                        else:
+                            next = self.sunCtrlStart2
                     else:
-                        timedif = now - self.sunCtrlStart2
-                        timedifSec = timedif.total_seconds()
-                        nrint = int(timedifSec / self._interval)
-                        next = self.sunCtrlStart2 + timedelta(seconds = (nrint + 1)*self.interval)
+                        if self.onDialMarks == True:
+                            next = self.nextDialMark(now)
+                        else:
+                            timedif = now - self.sunCtrlStart2
+                            timedifSec = timedif.total_seconds()
+                            nrint = int(timedifSec / self._interval)
+                            next = self.sunCtrlStart2 + timedelta(seconds = (nrint + 1)*self.interval)
                     if next > self.sunCtrlEnd2:
                         now1 = now + timedelta(days=1)
                         dat = now1.strftime("%Y-%m-%d")
                         self.calcSunCtrlData(dat)
-                        next = self.sunCtrlStart1
+                        if self.onDialMarks == True:
+                            next = self.nextDialMark(self.sunCtrlStart1)
+                        else:
+                            next = self.sunCtrlStart1
                 else:
                     now1 = now + timedelta(days=1)
                     dat = now1.strftime("%Y-%m-%d")
                     self.calcSunCtrlData(dat)
-                    next = self.sunCtrlStart1
+                    if self.onDialMarks == True:
+                        next = self.nextDialMark(self.sunCtrlStart1)
+                    else:
+                        next = self.sunCtrlStart1
         if not next:
             next = datetime.now()
         logger.debug("Thread %s: Series.nextTimeSunCtrl - returning: %s", get_ident(), next.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
         return next
-    
+
+    def nextDialMark(self, t:datetime) -> datetime:
+        """ Calculate and return the next dial mark for the given time
+        
+            t: time for which next dial mark is to be calculated
+            Return: updated time
+        """
+        logger.debug("Thread %s: Series.nextDialMark - t: %s", get_ident(), t)
+        dm = t
+        if (
+            (self.interval % 60 == 0)
+            or (self.interval % 120 == 0)
+            or (self.interval % 240 == 0)
+            or (self.interval % 300 == 0)
+            or (self.interval % 360 == 0)
+            or (self.interval % 600 == 0)
+            or (self.interval % 720 == 0)
+            or (self.interval % 900 == 0)
+            or (self.interval % 1200 == 0)
+            or (self.interval % 1800 == 0)
+            or (self.interval % 3600 == 0)
+        ):
+            minutes = t.hour * 60 + t.minute
+            period = math.floor(60.0 * minutes / self.interval)
+            nextmin = (period + 1) * self.interval / 60
+            dm = datetime(t.year,t.month, t.day) + timedelta(minutes=nextmin)
+        elif (
+            (self.interval % 2 == 0)
+            or (self.interval % 4 == 0)
+            or (self.interval % 5 == 0)
+            or (self.interval % 6 == 0)
+            or (self.interval % 10 == 0)
+            or (self.interval % 12 == 0)
+            or (self.interval % 15 == 0)
+            or (self.interval % 20 == 0)
+            or (self.interval % 30 == 0)
+        ):
+            seconds = t.minute * 60 + t.second
+            period = math.floor(seconds / self.interval)
+            nextsec = (period + 1) * self.interval
+            dm = datetime(t.year,t.month, t.day, t.hour) + timedelta(seconds=nextsec)
+        return dm
+
     def nextTime(self, lastTime=None, test=False) -> datetime:
         """ Calculate and return the time when the next photo must be taken
         
@@ -818,12 +891,18 @@ class Series():
                 next = self.nextTimeSunCtrl()
             else:
                 if curTime < self.start:
-                    next = self.start
+                    if self.onDialMarks == True:
+                        next = self.nextDialMark(self.start)
+                    else:
+                        next = self.start
                 else:
-                    timedif = curTime - self.start
-                    timedifSec = timedif.total_seconds()
-                    nrint = int(timedifSec / self._interval)
-                    next = self.start + timedelta(seconds = (nrint + 1)*self.interval)
+                    if self.onDialMarks == True:
+                        next = self.nextDialMark(curTime)
+                    else:
+                        timedif = curTime - self.start
+                        timedifSec = timedif.total_seconds()
+                        nrint = int(timedifSec / self._interval)
+                        next = self.start + timedelta(seconds = (nrint + 1)*self.interval)
         else:
             if self.ended is None and test == False:
                 logger.debug("Thread %s: Series.nextTime - Finishing series", get_ident())

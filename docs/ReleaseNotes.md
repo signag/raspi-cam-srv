@@ -37,6 +37,18 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.3.0
+
+### New Features
+
+- Configuration of access to [GPIO-connected devices](./SettingsDevices.md) through the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library.
+- Extension of ```gpiozero.OutputDevice``` for support of [Stepper Motors](./gpioDevices/StepperMotor.md)
+- Configuration of [Triggers](./TriggerTriggers.md) for events from GPIO-connected input devices, such as sensors and buttons.
+- Implementation of callback hooks for photo-related events ('when_photo_taken', 'when_recording_starts', 'when_recording_stops', 'when_streaming_*_starts', 'when_streaming_*_stops') for integration with the new event handling infrastructure.
+- Configuring of [Actions](./TriggerActions.md) for GPIO-connected output devices.
+- [Configuration of Action Buttons](./SettingsAButtons.md) and [Console / Action Buttons](./ConsoleActionButtons.md) for the direct manual execution of [Actions](./TriggerActions.md) with GPIO-connected output devices such as LEDs, motors and servos. This includes also the control of Stepper Motors.
+- An option *On Dial Marks* has been added to [Photo Series](./PhotoSeries.md) which assures that photos will be taken exactly (within tolerances) at every full hour, half hour, quarter, minute, ..., depending on the chosen interval.
+
 ## V3.2.0
 
 ### New Features

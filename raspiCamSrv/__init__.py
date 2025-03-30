@@ -6,6 +6,7 @@ from flask.logging import default_handler
 from picamera2 import Picamera2
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.motionDetector import MotionDetector
+from raspiCamSrv.triggerHandler import TriggerHandler
 import json
 import datetime
 import time
@@ -50,6 +51,7 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.trigger"),
         logging.getLogger("raspiCamSrv.motionDetector"),
         logging.getLogger("raspiCamSrv.motionAlgoIB"),
+        logging.getLogger("raspiCamSrv.triggerHandler"),
         logging.getLogger("raspiCamSrv.webcam"),
         logging.getLogger("raspiCamSrv.console"),
         logging.getLogger("raspiCamSrv.sun"),
@@ -73,6 +75,7 @@ def create_app(test_config=None):
     #logging.getLogger("raspiCamSrv.sun").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.motionAlgoIB").setLevel(logging.DEBUG)
+    #logging.getLogger("raspiCamSrv.triggerHandler").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.settings").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.console").setLevel(logging.DEBUG)
     #logging.getLogger("raspiCamSrv.api").setLevel(logging.DEBUG)
@@ -170,8 +173,12 @@ def create_app(test_config=None):
 
     # Autostart triggered capture, if configured
     if tc.operationAutoStart:
-        MotionDetector().startMotionDetection()
-        sc.isTriggerRecording = True
+        if tc.triggeredByMotion:
+            MotionDetector().startMotionDetection()
+            sc.isTriggerRecording = True
+        if tc.triggeredByEvents:
+            TriggerHandler().start()
+            sc.isEventhandling = True
     
     # Register required blueprints
     from . import auth

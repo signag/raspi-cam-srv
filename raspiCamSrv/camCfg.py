@@ -11,6 +11,7 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 import raspiCamSrv.dbx as dbx
+from raspiCamSrv.gpioDeviceTypes import gpioDeviceTypes
 import smtplib
 from pathlib import Path
 import zoneinfo
@@ -19,6 +20,291 @@ import threading
 
 logger = logging.getLogger(__name__)
 
+class GPIODevice():
+    def __init__(self):
+        self._id = ""
+        self._usage = ""
+        self._type = ""
+        self._params = {}
+        self._usedPins = ""
+        self._isOk = False
+        self._docUrl = ""
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @id.setter
+    def id(self, value: str):
+        self._id = value
+
+    @property
+    def usage(self) -> str:
+        return self._usage
+
+    @usage.setter
+    def usage(self, value: str):
+        self._usage = value
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @type.setter
+    def type(self, value: str):
+        self._type = value
+
+    @property
+    def params(self) -> dict:
+        return self._params
+
+    @params.setter
+    def params(self, value: dict):
+        self._params = value
+
+    @property
+    def usedPins(self) -> str:
+        return self._usedPins
+
+    @usedPins.setter
+    def usedPins(self, value: str):
+        self._usedPins = value
+
+    @property
+    def isOk(self) -> bool:
+        return self._isOk
+
+    @isOk.setter
+    def isOk(self, value: bool):
+        self._isOk = value
+
+    @property
+    def docUrl(self) -> str:
+        return self._docUrl
+
+    @docUrl.setter
+    def docUrl(self, value: str):
+        self._docUrl = value
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        dev = GPIODevice()
+        for key, value in dict.items():
+            if value is None:
+                setattr(dev, key, value)
+            else:
+                if key == "_params":
+                    newval = {}
+                    for pkey, pvalue in value.items():
+                        if type(pvalue) is list:
+                            newval[pkey] = tuple(pvalue)
+                        else:
+                            newval[pkey] = pvalue
+                    value = newval
+                setattr(dev, key, value)
+        return dev
+
+class Trigger():
+    def __init__(self):
+        self._id = ""
+        self._source = ""
+        self._device = ""
+        self._event = ""
+        self._params = {}
+        self._control = {}
+        self._isActive = False
+        self._actions = {}
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @id.setter
+    def id(self, value: str):
+        self._id = value
+
+    @property
+    def source(self) -> str:
+        return self._source
+
+    @source.setter
+    def source(self, value: str):
+        self._source = value
+
+    @property
+    def device(self) -> str:
+        return self._device
+
+    @device.setter
+    def device(self, value: str):
+        self._device = value
+
+    @property
+    def event(self) -> str:
+        return self._event
+
+    @event.setter
+    def event(self, value: str):
+        self._event = value
+
+    @property
+    def params(self) -> dict:
+        return self._params
+
+    @params.setter
+    def params(self, value: dict):
+        self._params = value
+
+    @property
+    def control(self) -> dict:
+        return self._control
+
+    @control.setter
+    def control(self, value: dict):
+        self._control = value
+
+    @property
+    def isActive(self) -> bool:
+        return self._isActive
+
+    @isActive.setter
+    def isActive(self, value: bool):
+        self._isActive = value
+
+    @property
+    def actions(self) -> dict:
+        return self._actions
+
+    @actions.setter
+    def actions(self, value: dict):
+        self._actions = value
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        trg = Trigger()
+        for key, value in dict.items():
+            if value is None:
+                setattr(trg, key, value)
+            else:
+                if key == "_params":
+                    newval = {}
+                    for pkey, pvalue in value.items():
+                        if type(pvalue) is list:
+                            newval[pkey] = tuple(pvalue)
+                        else:
+                            newval[pkey] = pvalue
+                    value = newval
+                if key == "_control":
+                    newval = {}
+                    for pkey, pvalue in value.items():
+                        if type(pvalue) is list:
+                            newval[pkey] = tuple(pvalue)
+                        else:
+                            newval[pkey] = pvalue
+                    value = newval
+                elif key == "_actions":
+                    newval = {}
+                    for pkey, pvalue in value.items():
+                        if type(pvalue) is list:
+                            newval[pkey] = tuple(pvalue)
+                        else:
+                            newval[pkey] = pvalue
+                    value = newval
+                setattr(trg, key, value)
+        return trg
+
+class Action():
+    def __init__(self):
+        self._id = ""
+        self._isActive = False
+        self._source = ""
+        self._device = ""
+        self._method = ""
+        self._params = {}
+        self._control = {}
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @id.setter
+    def id(self, value: str):
+        self._id = value
+
+    @property
+    def isActive(self) -> bool:
+        return self._isActive
+
+    @isActive.setter
+    def isActive(self, value: bool):
+        self._isActive = value
+
+    @property
+    def source(self) -> str:
+        return self._source
+
+    @source.setter
+    def source(self, value: str):
+        self._source = value
+
+    @property
+    def device(self) -> str:
+        return self._device
+
+    @device.setter
+    def device(self, value: str):
+        self._device = value
+
+    @property
+    def method(self) -> str:
+        return self._method
+
+    @method.setter
+    def method(self, value: str):
+        self._method = value
+
+    @property
+    def params(self) -> dict:
+        return self._params
+
+    @params.setter
+    def params(self, value: dict):
+        self._params = value
+
+    @property
+    def control(self) -> dict:
+        return self._control
+
+    @control.setter
+    def control(self, value: dict):
+        self._control = value
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        act = Action()
+        for key, value in dict.items():
+            if value is None:
+                setattr(act, key, value)
+            else:
+                if key == "_params":
+                    newval = {}
+                    for pkey, pvalue in value.items():
+                        if type(pvalue) is list:
+                            newval[pkey] = tuple(pvalue)
+                        else:
+                            newval[pkey] = pvalue
+                    value = newval
+                elif key == "_control":
+                    newval = {}
+                    for pkey, pvalue in value.items():
+                        if type(pvalue) is list:
+                            newval[pkey] = tuple(pvalue)
+                        else:
+                            newval[pkey] = pvalue
+                    value = newval
+                setattr(act, key, value)
+        return act
+
 class TriggerConfig():
     motionDetectAlgos = ["Mean Square Diff", "Frame Differencing", "Optical Flow", "Background Subtraction"]
     videoRecorders = ["Normal", "Circular"]
@@ -26,6 +312,7 @@ class TriggerConfig():
     def __init__(self):
         self._triggeredByMotion = True
         self._triggeredBySound = False
+        self._triggeredByEvents = False
         self._actionVideo = True
         self._actionPhoto = True
         self._actionNotify = False
@@ -77,6 +364,8 @@ class TriggerConfig():
         self._error = None
         self._error2 = None
         self._errorSource = None
+        self._triggers = []
+        self._actions = []
         
     @property
     def logFileName(self) -> str:
@@ -181,6 +470,14 @@ class TriggerConfig():
     @triggeredBySound.setter
     def triggeredBySound(self, value: bool):
         self._triggeredBySound = value
+
+    @property
+    def triggeredByEvents(self) -> bool:
+        return self._triggeredByEvents
+
+    @triggeredByEvents.setter
+    def triggeredByEvents(self, value: bool):
+        self._triggeredByEvents = value
 
     @property
     def motionDetectAlgo(self) -> int:
@@ -603,6 +900,22 @@ class TriggerConfig():
     @errorSource.setter
     def errorSource(self, value: str):
         self._errorSource = value
+
+    @property
+    def triggers(self) -> list[Trigger]:
+        return self._triggers
+
+    @triggers.setter
+    def triggers(self, value: list[Trigger]):
+        self._triggers = value
+
+    @property
+    def actions(self) -> list:
+        return self._actions
+
+    @actions.setter
+    def actions(self, value: list):
+        self._actions = value
         
     @property
     def eventList(self) -> list:
@@ -949,6 +1262,194 @@ class TriggerConfig():
         else:
             self.notifyConOK = False
         return (secUser, secPwd, err)
+    
+    def triggerSources(self) -> list[str]:
+        """ Return a list of trigger sources
+
+            Trigger sources are:
+            - 'Camera'  : only used for motion detection
+            - 'GPIO'    : for GPIO input devices
+        Returns:
+            list[str] : List of trigger sources
+        """
+        triggerSources = ["Camera", "GPIO"]
+        
+        return triggerSources
+        
+    def actionSources(self) -> list[str]:
+        """ Return a list of action sources
+
+            Action sources are:
+            - 'Camera'  : for photo taking and video recording
+            - 'GPIO'    : for GPIO output devices
+
+        Returns:
+            list[str]: List of action sources
+        """
+        actionSources = ["Camera", "GPIO", "SMTP"]
+        
+        return actionSources
+    
+    def triggerDevices(self, source:str) -> list[str]:
+        """ Return a list of trigger devices for the given source
+
+            for source 'Camera':
+                - "Active Camera"
+            for source 'GPIO':
+                - list of IDs of Input devices
+        Args:
+            source (str): trigger source ('Camera' or 'GPIO')
+
+        Returns:
+            list[str]: list of devices
+        """
+        logger.debug("TriggerConfig.triggerDevices")
+        deviceList = []
+        if source == "Camera":
+            deviceList = ["Active Camera",]
+            if len(CameraCfg().cameras) > 1:
+                deviceList.append("Second Camera")
+        elif source == "GPIO":
+            devices = CameraCfg().serverConfig.gpioDevices
+            for device in devices:
+                if device.usage == "Input" \
+                and device.isOk == True:
+                    id = device.id
+                    deviceList.append(id)
+        return deviceList
+    
+    def actionDevices(self, source:str) -> list[str]:
+        """ Return a list of action devices for the given source
+
+            for source 'Camera':
+                - "Active Camera"
+            for source 'GPIO':
+                - list of IDs of Output devices
+        Args:
+            source (str): trigger source ('Camera' or 'GPIO')
+
+        Returns:
+            list[str]: list of devices
+        """
+        deviceList = []
+        if source == "Camera":
+            deviceList = ["Active Camera",]
+        if source == "SMTP":
+            deviceList = [self._notifyHost,]
+        elif source == "GPIO":
+            devices = CameraCfg().serverConfig.gpioDevices
+            for device in devices:
+                if device.usage == "Output":
+                    id = device.id
+                    deviceList.append(id)
+        return deviceList
+    
+    def triggerEvents(self, source:str, device:str) -> tuple[list[str], dict, dict]:
+        """ Return lists of events and event settings for the given device
+        
+            The returned events are methods which allow assignment of callback routines
+        Args:
+            source (str): Source ('Camera' or 'GPIO')
+            device (str): Device
+
+        Returns:
+            tuple[list[str], dict]: 
+                - list of events
+                - dict of event settings
+                - dict of control data
+        """
+        events = []
+        eventSettings = {}
+        control = {}
+        if source == "Camera":
+            if device == "Active Camera":
+                events = [
+                    "when_photo_taken", 
+                    "when_recording_starts",
+                    "when_recording_stops",
+                    "when_streaming_1_starts",
+                    "when_streaming_1_stops",
+                ]
+            elif device == "Second Camera":
+                events = [
+                    "when_streaming_2_starts",
+                    "when_streaming_2_stops",
+                ]
+        elif source == "GPIO":
+            gpioDev = CameraCfg().serverConfig.getDevice(device)
+            if gpioDev is not None:
+                devType = gpioDev.type
+                for typ in gpioDeviceTypes:
+                    if typ["type"] == devType:
+                        if "events" in typ:
+                            events = typ["events"]
+                        if "eventSettings" in typ:
+                            eventSettings = typ["eventSettings"]
+                        if "control" in typ:
+                            control = typ["control"]
+                        break
+        return events, eventSettings, control
+    
+    def actionTargets(self, source:str, device:str) -> list[str]:
+        """ Return lists of action targets for the given device
+        
+            The returned actions are methods or properties for the device type
+        Args:
+            source (str): Source ('Camera' or 'GPIO')
+            device (str): Device
+
+        Returns:
+            list[str]: list of action targets
+        """
+        actionTargets = []
+        if source == "Camera":
+            actionTargets = []
+            #actionTargets = [{"method": "take_photo","params": {"filename":".jpg"},"control": {}},{"method": "record_video","params": {"t_filename":".mp4"},"control": {"duration":""}}]
+        elif source == "SMTP":
+            actionTargets = []
+            #actionTargets = [{"method": "send_mail","params": {"eMail_address":""},"control": {}}]
+        elif source == "GPIO":
+            gpioDev = CameraCfg().serverConfig.getDevice(device)
+            if gpioDev is not None:
+                devType = gpioDev.type
+                for typ in gpioDeviceTypes:
+                    if typ["type"] == devType:
+                        if "actionTargets" in typ:
+                            actionTargets = typ["actionTargets"]
+                        break
+        return actionTargets
+    
+    def getTrigger(self, id:str) -> Trigger:
+        """ Return a trigger with a specific ID
+
+        Args:
+            id (str): ID of trigger to be returned
+
+        Returns:
+            Trigger: Trigger with the given ID or None
+        """
+        trigger = None
+        for trg in self.triggers:
+            if trg.id == id:
+                trigger = trg
+                break
+        return trigger
+    
+    def getAction(self, id:str) -> Action:
+        """ Return an action with a specific ID
+
+        Args:
+            id (str): ID of action to be returned
+
+        Returns:
+            Action: Action with the given ID or None
+        """
+        action = None
+        for act in self.actions:
+            if act.id == id:
+                action = act
+                break
+        return action
 
     @classmethod                
     def initFromDict(cls, dict:dict):
@@ -956,6 +1457,24 @@ class TriggerConfig():
         for key, value in dict.items():
             if value is None:
                 setattr(cc, key, value)
+            elif key == "_triggers":
+                if value is None:
+                    setattr(cc, key, value)
+                else:
+                    triggers = []
+                    for trg in value:
+                        trigger = Trigger.initFromDict(trg)
+                        triggers.append(trigger)
+                    setattr(cc, key, triggers)
+            elif key == "_actions":
+                if value is None:
+                    setattr(cc, key, value)
+                else:
+                    actions = []
+                    for act in value:
+                        action = Action.initFromDict(act)
+                        actions.append(action)
+                    setattr(cc, key, actions)
             else:
                 setattr(cc, key, value)
         #Reset some default values for which imported values shall be ignored
@@ -2308,6 +2827,94 @@ class vButton():
                 setattr(vb, key, value)
         return vb
 
+class ActionButton():
+    """ Action button
+
+    """
+    def __init__(self) -> None:
+        self._row = 0
+        self._col = 0
+        self._isVisible = False
+        self._needsConfirm = False
+        self._buttonColor = None
+        self._buttonShape = None
+        self._buttonText = ""
+        self._buttonAction = ""
+
+    @property
+    def row(self) -> int:
+        return self._row
+
+    @row.setter
+    def row(self, value: int):
+        self._row = value
+
+    @property
+    def col(self) -> int:
+        return self._col
+
+    @col.setter
+    def col(self, value: int):
+        self._col = value
+
+    @property
+    def isVisible(self) -> bool:
+        return self._isVisible
+
+    @isVisible.setter
+    def isVisible(self, value: bool):
+        self._isVisible = value
+
+    @property
+    def needsConfirm(self) -> bool:
+        return self._needsConfirm
+
+    @needsConfirm.setter
+    def needsConfirm(self, value: bool):
+        self._needsConfirm = value
+        
+    @property
+    def buttonColor(self) -> str:
+        return self._buttonColor
+
+    @buttonColor.setter
+    def buttonColor(self, value: str):
+        self._buttonColor = value
+        
+    @property
+    def buttonShape(self) -> str:
+        return self._buttonShape
+
+    @buttonShape.setter
+    def buttonShape(self, value: str):
+        self._buttonShape = value
+
+    @property
+    def buttonText(self) -> str:
+        return self._buttonText
+
+    @buttonText.setter
+    def buttonText(self, value: str):
+        self._buttonText = value
+
+    @property
+    def buttonAction(self) -> str:
+        return self._buttonAction
+
+    @buttonAction.setter
+    def buttonAction(self, value: str):
+        self._buttonAction = value
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        ab = ActionButton()
+        for key, value in dict.items():
+            if value is None:
+                setattr(ab, key, value)
+            else:
+                setattr(ab, key, value)
+        return ab
+
 class ServerConfig():
     def __init__(self):
         self._error = None
@@ -2350,6 +2957,7 @@ class ServerConfig():
         self._lastInfoTab = "camprops"
         self._lastPhotoSeriesTab = "series"
         self._lastTriggerTab = "trgcontrol"
+        self._lastConsoleTab = "versbuttons"
         self._lastSettingsTab = "settingsparams"
         self._isLiveStream = False
         self._isLiveStream2 = None
@@ -2359,6 +2967,8 @@ class ServerConfig():
         self._isTriggerRecording = False
         self._isTriggerWaiting = False
         self._isTriggerTesting = False
+        self._isEventhandling = False
+        self._isEventsWaiting = False
         self._isDisplayHidden = True
         self._displayPhoto = None
         self._displayFile = None
@@ -2398,6 +3008,14 @@ class ServerConfig():
         self._vButtonStdout = None
         self._vButtonStderr = None
         self._vButtonHasCommandLine = False
+        self._aButtonsRows = 0
+        self._aButtonsCols = 0
+        self._aButtons = []
+        self._aButtonAction = None
+        self._curDeviceId = ""
+        self._curDevice = None
+        self._curDeviceType = None
+        self._gpioDevices = []
         
         # Check access of microphone
         self.checkMicrophone()
@@ -2792,6 +3410,14 @@ class ServerConfig():
         self._lastTriggerTab = value
 
     @property
+    def lastConsoleTab(self):
+        return self._lastConsoleTab
+
+    @lastConsoleTab.setter
+    def lastConsoleTab(self, value: str):
+        self._lastConsoleTab = value
+
+    @property
     def lastSettingsTab(self):
         return self._lastSettingsTab
 
@@ -2870,6 +3496,22 @@ class ServerConfig():
     @isTriggerTesting.setter
     def isTriggerTesting(self, value: bool):
         self._isTriggerTesting = value
+
+    @property
+    def isEventhandling(self) -> bool:
+        return self._isEventhandling
+
+    @isEventhandling.setter
+    def isEventhandling(self, value: bool):
+        self._isEventhandling = value
+
+    @property
+    def isEventsWaiting(self) -> bool:
+        return self._isEventsWaiting
+
+    @isEventsWaiting.setter
+    def isEventsWaiting(self, value: bool):
+        self._isEventsWaiting = value
 
     @property
     def buttonClear(self) -> str:
@@ -3321,6 +3963,70 @@ class ServerConfig():
         self._vButtonHasCommandLine = value
 
     @property
+    def aButtonsRows(self) -> int:
+        return self._aButtonsRows
+
+    @aButtonsRows.setter
+    def aButtonsRows(self, value: int):
+        self._aButtonsRows = value
+        
+    @property
+    def aButtonsCols(self) -> int:
+        return self._aButtonsCols
+
+    @aButtonsCols.setter
+    def aButtonsCols(self, value: int):
+        self._aButtonsCols = value
+        
+    @property
+    def aButtons(self) -> list[list[ActionButton]]:
+        return self._aButtons
+
+    @aButtons.setter
+    def aButtons(self, value: list):
+        self._aButtons = value
+        
+    @property
+    def aButtonAction(self) -> str:
+        return self._aButtonAction
+
+    @aButtonAction.setter
+    def aButtonAction(self, value: str):
+        self.aButtonAction = value
+
+    @property
+    def curDeviceId(self) -> str:
+        return self._curDeviceId
+
+    @curDeviceId.setter
+    def curDeviceId(self, value: str):
+        self._curDeviceId = value
+
+    @property
+    def curDevice(self) -> GPIODevice:
+        return self._curDevice
+
+    @curDevice.setter
+    def curDevice(self, value: GPIODevice):
+        self._curDevice = value
+
+    @property
+    def curDeviceType(self) -> dict:
+        return self._curDeviceType
+
+    @curDeviceType.setter
+    def curDeviceType(self, value: dict):
+        self._curDeviceType = value
+    
+    @property
+    def gpioDevices(self) ->list[GPIODevice]:
+        return self._gpioDevices
+
+    @gpioDevices.setter
+    def gpioDevices(self, value: list[GPIODevice]):
+        self._gpioDevices = value
+
+    @property
     def API_active(self) -> bool:
         return self._API_active
 
@@ -3351,6 +4057,50 @@ class ServerConfig():
             return f"No ffmpeg process active"
         else:
             return f"PID:{pi[0]} Start:{pi[1]} #Threads:{pi[2]} CPU Process:{pi[3]} Threads:{pi[4]}"
+    
+    @property
+    def deviceTypes(self) -> list:
+        return gpioDeviceTypes
+    
+    def getDevice(self, id: str) -> GPIODevice:
+        device = None
+        for dev in self.gpioDevices:
+            if dev.id == id:
+                device = dev
+                break
+        return device
+    
+    def getDeviceType(self, id: str) -> dict:
+        deviceType = None
+        for typ in self.deviceTypes:
+            if typ["type"] == id:
+                deviceType = typ
+                break
+        return deviceType
+    
+    @property
+    def freeGpioPins(self) -> list[int]:
+        """ Return a list with the numbers of free GPIO pins
+
+        Returns:
+            list[int]: the free GPIO pins
+        """
+        pins = []
+        for pin in range(0, 28):
+            pins.append(pin)
+        logger.debug("freeGpioPins")
+        for device in self.gpioDevices:
+            typ = device.type
+            deviceParams = device.params
+            devType = self.getDeviceType(typ)
+            for param, value in devType["params"].items():
+                if "isPin" in value:
+                    if value["isPin"] == True:
+                        pin = deviceParams[param]
+                        if type(pin) is int:
+                            if pin in pins:
+                                pins.remove(pin)
+        return pins
     
     def _checkModule(self, moduleName: str):
         module = None
@@ -3993,6 +4743,7 @@ class ServerConfig():
     def initFromDict(cls, dict:dict):
         sc = ServerConfig()
         for key, value in dict.items():
+            #logger.debug("serverConfig.initFromDict - processing key %s", key)
             if key == "_scalerCropLiveView":
                 setattr(sc, key, tuple(value))
             elif key == "_scalerCropMin":
@@ -4101,6 +4852,41 @@ class ServerConfig():
                 setattr(sc, key, None)
             elif key == "_vButtonStderr":
                 setattr(sc, key, None)
+            elif key == "_aButtons":
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    aButtons = []
+                    for row in value:
+                        aButtonRow = []
+                        for btn in row:
+                            button = ActionButton.initFromDict(btn)
+                            aButtonRow.append(button)
+                        aButtons.append(aButtonRow)
+                    setattr(sc, key, aButtons)
+            elif key == "_gpioDevices":
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    gpioDevices = []
+                    for device in value:
+                        gpioDevice = GPIODevice.initFromDict(device)
+                        gpioDevices.append(gpioDevice)
+                    setattr(sc, key, gpioDevices)
+            elif key == "_curDevice":
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    curDevice = GPIODevice.initFromDict(value)
+                    setattr(sc, key, curDevice)
+            elif key == "_curDeviceType":
+                # Take the current device type from a fresh declaration rather than from stored data
+                # This will allow later modifications of gpioDeviceTypes being immediately effective
+                type = value["type"]
+                for typ in gpioDeviceTypes:
+                    if typ["type"] == type:
+                        setattr(sc, key, typ)
+                        break
             else:
                 setattr(sc, key, value)
         # Reset process status variables
@@ -4109,6 +4895,15 @@ class ServerConfig():
         sc.isPhotoSeriesRecording = False
         sc.isTriggerRecording = False
         sc.isVideoRecording = False
+
+        #Set the sc.curDevice attribute to the corresponding object from sc.gpioDevices
+        # After import fom the JSON file sc.curDevice is an own object and not the one
+        # from the sc.gpioDevices list.
+        for device in sc.gpioDevices:
+            if device.id == sc.curDeviceId:
+                sc.curDevice = device
+                break
+        
         return sc
     
 class Secrets():
@@ -4391,7 +5186,7 @@ class CameraCfg():
                 try:
                     scdict = json.load(f)
                 except Exception as e:
-                    logger.error("Error loading from %s: %s", fp, e)
+                    logger.error("Error loading StreamingConfig from %s: %s", fp, e)
                     scdict = {}
         if len(scdict) > 0:
             for camKey, camValue in scdict.items():
@@ -4410,6 +5205,25 @@ class CameraCfg():
                 sc[camKey] = scfg
         return sc
     
+    def _initGpioDevicesFromDisc(self, fn: str, cfgPath: str) -> list:
+        """ Load GPIO devices
+        """
+        devs = []
+        fdevs = {}
+        fp = cfgPath + "/" + fn
+        if os.path.exists(fp):
+            with open(fp) as f:
+                try:
+                    fdevs = json.load(f)
+                except Exception as e:
+                    logger.error("Error loading GPIO devices from %s: %s", fp, e)
+                    fdevs = []
+        if len(fdevs) > 0:
+            for dev in fdevs.items():
+                devo = GPIODevice.initFromDict(dev)
+                devs.append(devo)
+        return devs
+    
     def loadConfig(self, cfgPath):
         """ Load configuration from files, except camera-specific configs
         """
@@ -4424,6 +5238,7 @@ class CameraCfg():
                 self.controls = self._loadConfigCl(CameraControls, "controls.json", cfgPath)
                 self.triggerConfig = self._loadConfigCl(TriggerConfig, "triggerConfig.json", cfgPath)
                 self.streamingCfg = self._initStreamingConfigFromDisc("streamingCfg.json", cfgPath)
+                self.gpioDevices = self._initGpioDevicesFromDisc("gpioDevices.json", cfgPath)
                 sc = self.secrets
                 tc = self.triggerConfig
                 (usr, pwd, err) = tc.checkNotificationRecipient()
