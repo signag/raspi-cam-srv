@@ -27,6 +27,7 @@ services:
       - "5000:5000"
     devices:
       - /dev/video0:/dev/video0
+      - /dev/gpiochip0:/dev/gpiochip0
     volumes:
       # Uncomment resource mappings, if required
       # Configure and prepare container-external folders
