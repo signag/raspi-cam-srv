@@ -1,3 +1,5 @@
+RPi.GPIO
+gpiozero
 Flask>=3,<4
 numpy
 matplotlib

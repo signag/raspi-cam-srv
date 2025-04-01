@@ -6,10 +6,14 @@ LABEL maintainer="signag"
 RUN apt update && apt -y upgrade
 
 RUN apt update && apt install -y \
+    gcc-aarch64-linux-gnu \
     python3 \
+    python3-dev \
     python3-pip \
     python3-venv \
     python3-opencv \
+    python3-gpiozero \
+    python3-lgpio \
     ffmpeg \
     python3-picamera2 --no-install-recommends
 
