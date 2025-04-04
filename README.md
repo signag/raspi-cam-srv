@@ -125,6 +125,7 @@ In case of problems during installation and usage, see [Troubleshooting](./docs/
 |----|--------------------------------------------------
 |1.  | Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with \<user> and \<host> as specified during setup with Imager.
 |2.  | Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
+|2.a | If you intend to take videos and have installed a *lite* version of the OS, you may need to install *ffmpeg*:<br>Check whether ffmpeg is installed with<br>```which ffmpeg```<br>I you get an empty response, install with<br>```sudo apt install ffmpeg```
 |3.  | Create a root directory under which you will install programs (e.g. 'prg')<br>```mkdir prg```<br>```cd prg```
 |4.  | Check that git is installed (which is usually the case in current Bullseye and Bookworm distributions)<br>```git --version```<br>If git is not installed, install it with<br>```sudo apt install git```
 |5.  | Clone the raspi-cam-srv repository:<br>```git clone https://github.com/signag/raspi-cam-srv```
