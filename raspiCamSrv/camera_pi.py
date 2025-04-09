@@ -1743,6 +1743,24 @@ class Camera():
             logger.debug("Thread %s: Camera.configure: Stream size adjusted to %s", get_ident(), cfg.stream_size)
 
         return camCfg
+    
+    @staticmethod
+    def requiresTimeForAutoAlgos() -> bool:
+        """ Check if the camera requires time for auto algorithms to settle
+            Returns True, if the camera is a Pi 4 or Pi 5
+        """
+        logger.debug("Thread %s: Camera.requiresTimeForAutoAlgos", get_ident())
+        cfgCtrls = CameraCfg().controls
+        res = False
+        if cfgCtrls.include_aeEnable and cfgCtrls.aeEnable == True:
+            res = True
+        if cfgCtrls.include_awbEnable and cfgCtrls.awbEnable == True:
+            res = True
+        if CameraCfg().cameraProperties.hasFocus == True:
+            if cfgCtrls.include_afMode and cfgCtrls.afMode != 0:
+                res = True
+        return res
+        
 
     @staticmethod
     def applyControls(camCfg: CameraConfig, exceptCtrl=None, exceptValue = None, toCam2 = None):
@@ -2254,13 +2272,18 @@ class Camera():
             raise
 
     @staticmethod
-    def takeImage(filename: str, keepExclusive:bool=False, noEvents:bool=False):
+    def takeImage(filename: str, keepExclusive:bool=False, noEvents:bool=False, alternatePath:str="") -> str:
         """ Takes a photo with the specified file name and returns the path
 
             filename:       file name for the photo
             keepExclusive:  If True, keep the exclusive mode
                             This can be used for example if a jpg photo shall be taken
                             before a video is recorded
+            noEvents:       If True, no events are triggered
+            alternatePath:  If not empty, the file path of the photo, 
+                            otherwise the standard photo path is taken
+                            and the display buffer is not updated
+
         """
         logger.debug("Thread %s: Camera.takeImage - filename: %s keepExclusive: %s", get_ident(), filename, keepExclusive)
         fp = ""
@@ -2283,23 +2306,27 @@ class Camera():
             request = Camera.cam.capture_request()
             prgLogger.debug("request = picam2.capture_request()")
             logger.debug("Thread %s: Camera.takeImage: Request started", get_ident())
-            fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filename
+            path = sc.photoRoot + "/" + sc.cameraPhotoSubPath
+            if alternatePath != "":
+                path = alternatePath
+            fp = path + "/" + filename
             request.save(cfg.photoConfig.stream, fp)
             prgLogger.debug("request.save(\"%s\", \"%s\")", cfg.photoConfig.stream, sc.prgOutputPath + "/" + filename)
-            sc.displayFile = filename
-            sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
-            sc.isDisplayHidden = False
             logger.debug("Thread %s: Camera.takeImage: Image saved as %s", get_ident(), fp)
-            metadata = request.get_metadata()
-            prgLogger.debug("metadata = request.get_metadata()")
-            sc.displayMeta = {"Camera": sc.activeCameraInfo}
-            sc.displayMeta.update(metadata)
-            sc.displayMetaFirst = 0
-            if len(metadata) < 11:
-                sc._displayMetaLast = 999
-            else:
-                sc.displayMetaLast = 10
-            sc.displayHistogram = None
+            if alternatePath == "":
+                sc.displayFile = filename
+                sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
+                sc.isDisplayHidden = False
+                metadata = request.get_metadata()
+                prgLogger.debug("metadata = request.get_metadata()")
+                sc.displayMeta = {"Camera": sc.activeCameraInfo}
+                sc.displayMeta.update(metadata)
+                sc.displayMetaFirst = 0
+                if len(metadata) < 11:
+                    sc._displayMetaLast = 999
+                else:
+                    sc.displayMetaLast = 10
+                sc.displayHistogram = None
             logger.debug("Thread %s: Camera.takeImage: Image metedata captured", get_ident())
             request.release()
             prgLogger.debug("request.release()")
@@ -2478,11 +2505,15 @@ class Camera():
         return (done, err)
 
     @staticmethod
-    def takeRawImage(filenameRaw: str, filename: str, noEvents:bool=False):
+    def takeRawImage(filenameRaw: str, filename: str, noEvents:bool=False, alternatePath:str=""):
         """ Takes a photo as well as a raw image with the specified file names 
             and returns the path for the raw photo
             filenameRaw: file name for the raw image
             filename:    file name for the photo   
+            noEvents:       If True, no events are triggered
+            alternatePath:  If not empty, the file path of the photo, 
+                            otherwise the standard photo path is taken
+                            and the display buffer is not updated
         """
         logger.debug("Thread %s: Camera.takeRawImage", get_ident())
         fpr = ""
@@ -2505,27 +2536,31 @@ class Camera():
             request = Camera.cam.capture_request()
             prgLogger.debug("request = picam2.capture_request()")
             logger.debug("Thread %s: Camera.takeRawImage: Request started", get_ident())
-            fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filename
+            path = sc.photoRoot + "/" + sc.cameraPhotoSubPath
+            if alternatePath != "":
+                path = alternatePath
+            fp = path + "/" + filename
             request.save("main", fp)
             prgLogger.debug("request.save(\"main\", \"%s\")", sc.prgOutputPath + "/" + filename)
-            fpr = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filenameRaw
+            fpr = path + "/" + filenameRaw
             request.save_dng(fpr)
             prgLogger.debug("request.save_dng(\"%s\")", fpr)
-            sc.displayFile = filenameRaw
-            sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
-            sc.isDisplayHidden = False
             logger.debug("Thread %s: Camera.takeRawImage: Raw Image saved as %s", get_ident(), fpr)
-            metadata = request.get_metadata()
-            prgLogger.debug("metadata = request.get_metadata()")
-            sc.displayMeta = {"Camera": sc.activeCameraInfo}
-            sc.displayMeta.update(metadata)
-            sc.displayMetaFirst = 0
-            if len(metadata) < 11:
-                sc._displayMetaLast = 999
-            else:
-                sc.displayMetaLast = 10
-            sc.displayHistogram = None
-            logger.debug("Thread %s: Camera.takeRawImage: Raw Image metedata captured", get_ident())
+            if alternatePath == "":
+                sc.displayFile = filenameRaw
+                sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
+                sc.isDisplayHidden = False
+                metadata = request.get_metadata()
+                prgLogger.debug("metadata = request.get_metadata()")
+                sc.displayMeta = {"Camera": sc.activeCameraInfo}
+                sc.displayMeta.update(metadata)
+                sc.displayMetaFirst = 0
+                if len(metadata) < 11:
+                    sc._displayMetaLast = 999
+                else:
+                    sc.displayMetaLast = 10
+                sc.displayHistogram = None
+                logger.debug("Thread %s: Camera.takeRawImage: Raw Image metedata captured", get_ident())
             request.release()
             prgLogger.debug("request.release()")
             logger.debug("Thread %s: Camera.takeRawImage: Request released", get_ident())
@@ -2628,17 +2663,33 @@ class Camera():
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
 
     @staticmethod
-    def recordVideo(filenameVid: str, filename: str, duration: int = 0, noEvents:bool=False):
-        """Record a video in an own thread"""
+    def recordVideo(filenameVid: str, filename: str, duration: int = 0, noEvents:bool=False, alternatePath:str=""):
+        """ Start recrding video in an own thread
+
+        Args:
+            filenameVid (str): File name for video
+            filename (str): filename for placeholder image
+                            If empty, no placeholder image is created
+            duration (int, optional): Video duration. Defaults to 0.
+            noEvents (bool, optional): Dont fire events. Defaults to False.
+            alternatePath (str, optional): Alternate path. 
+                        If set, display buffer will not be upfated
+                        Defaults to "".
+        """
         logger.debug("Thread %s: Camera.recordVideo. filename=%s, duration=%s", get_ident(), filename, duration)
         cfg = CameraCfg()
         sc = cfg.serverConfig
         # First take a normal photo as placeholder
-        Camera.takeImage(filename, keepExclusive=True,noEvents=True)
-        sc.displayFile = filenameVid
+        if filename != "":
+            Camera.takeImage(filename, keepExclusive=True, noEvents=True, alternatePath=alternatePath)
+            if alternatePath == "":
+                sc.displayFile = filenameVid
         
         # Configure output for video file
-        output = sc.photoRoot + "/" + sc.cameraPhotoSubPath + "/" + filenameVid
+        path = sc.photoRoot + "/" + sc.cameraPhotoSubPath
+        if alternatePath != "":
+            path = alternatePath
+        output = path + "/" + filenameVid
         prgoutput = sc.prgOutputPath + "/" + filenameVid
         
         if Camera.videoThread is None:

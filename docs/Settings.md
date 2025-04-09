@@ -9,6 +9,8 @@ Other sections focus on
 - [User Management](./SettingsUsers.md)
 - [API Management](./API.md)
 - [Versatile Buttons](./SettingsVButtons.md)
+- [Action Buttons](./SettingsAButtons.md)
+- [Devices](./SettingsDevices.md)
 
 *Users* and/or *API* may be invisible, depending on context.
 

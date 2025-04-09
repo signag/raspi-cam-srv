@@ -5,8 +5,8 @@ from raspiCamSrv.camCfg import GPIODevice
 from raspiCamSrv.camera_pi import Camera, CameraEvent
 from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
-from gpiozero import Button, RotaryEncoder, MotionSensor, DistanceSensor, LightSensor, LineSensor
-from gpiozero import LED, PWMLED, RGBLED, Buzzer, TonalBuzzer, Servo, AngularServo, Motor
+from gpiozero import Button, RotaryEncoder, MotionSensor, DistanceSensor, LightSensor, LineSensor, DigitalInputDevice
+from gpiozero import LED, PWMLED, RGBLED, Buzzer, TonalBuzzer, Servo, AngularServo, Motor, DigitalOutputDevice, OutputDevice
 from raspiCamSrv.gpioDevices import StepperMotor
 import os
 import ast
@@ -117,6 +117,7 @@ def serverconfig():
             sc.locLongitude = float(request.form["loclongitude"])
             sc.locElevation = float(request.form["locelevation"])
             sc.locTzKey = request.form["loctzkey"]
+            sc.unsavedChanges = True
         if msg:
             flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
@@ -358,6 +359,7 @@ def store_config():
         sc.updateStreamingClients()
         cfg.persist(cfgPath)
         msg = "Configuration stored under " + cfgPath
+        sc.unsavedChanges = False
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
@@ -396,6 +398,7 @@ def load_config():
         sc.curMenu = "settings"
         cfgPath = current_app.static_folder + "/config"
         los = getLoadConfigOnStart(cfgPath)
+        sc.unsavedChanges = False
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 def getLoadConfigOnStart(cfgPath: str) -> bool:
@@ -531,6 +534,7 @@ def api_config():
                 if jwtAccessTokenExpirationMin != sc.jwtAccessTokenExpirationMin \
                 or jwtRefreshTokenExpirationDays != sc.jwtRefreshTokenExpirationDays:
                     sc.jwtAuthenticationActive = False
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 @bp.route("/generate_token", methods=("GET", "POST"))
@@ -610,6 +614,7 @@ def vbutton_dimensions():
                 sc.vButtonHasCommandLine = not request.form.get("vbuttonhascommandline") is None
         if msg != "":
             flash(msg)
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
     
 @bp.route('/vbutton_settings', methods=("GET", "POST"))
@@ -651,6 +656,7 @@ def vbutton_settings():
                 sc.vButtons[r][c] = btn
         if msg != "":
             flash(msg)
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
     
 @bp.route('/abutton_dimensions', methods=("GET", "POST"))
@@ -706,6 +712,7 @@ def abutton_dimensions():
                 sc.aButtons = aButtons
         if msg != "":
             flash(msg)
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
     
 @bp.route('/abutton_settings', methods=("GET", "POST"))
@@ -747,6 +754,7 @@ def abutton_settings():
                 sc.aButtons[r][c] = btn
         if msg != "":
             flash(msg)
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
     
 @bp.route('/new_device', methods=("GET", "POST"))
@@ -796,6 +804,7 @@ def new_device():
         
         if msg != "":
             flash(msg)
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
     
 @bp.route('/select_device', methods=("GET", "POST"))
@@ -907,6 +916,7 @@ def delete_device():
                         sc.curDeviceType = deviceType
         if msg != "":
             flash(msg)
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 def parseTuple(stuple: str) -> tuple[str, tuple]:
@@ -1102,6 +1112,7 @@ def device_properties():
             sc.curDevice.isOk = ok
         else:
             flash(msg)
+        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 def storeResult(result:dict, test:str, testResult:str) -> dict:

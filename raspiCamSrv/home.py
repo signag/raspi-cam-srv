@@ -173,7 +173,8 @@ def focus_control():
                 ctrls["AfWindows"] = cc.afWindows
                 if len(cc.afWindows) == 0:
                     cc.include_afWindows = False
-
+                    
+            sc.unsavedChanges = True
             Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
@@ -201,6 +202,7 @@ def trigger_autofocus():
                         cc.include_lensPosition = True
                         cc.afMode = 0
                         msg = "Autofocus successful. See Focal Distance. Autofocus Mode set to 'Manual'."
+                        sc.unsavedChanges = True
                     else:
                         msg = "Camera returned LensPosition 0. Ignored"
                 else:
@@ -242,6 +244,7 @@ def set_zoom():
             if zoomFactor <= 0:
                 zoomFactor = sc.zoomFactorStep
             sc.zoomFactor = zoomFactor
+            sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_in", methods=("GET", "POST"))
@@ -294,6 +297,7 @@ def zoom_in():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 def checkScalerCrop(crop: tuple, range: tuple) -> tuple:
@@ -371,6 +375,7 @@ def zoom_out():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_full", methods=("GET", "POST"))
@@ -408,6 +413,7 @@ def zoom_full():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_up", methods=("GET", "POST"))
@@ -439,6 +445,7 @@ def pan_up():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_left", methods=("GET", "POST"))
@@ -476,6 +483,7 @@ def pan_left():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_center", methods=("GET", "POST"))
@@ -512,6 +520,7 @@ def pan_center():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_right", methods=("GET", "POST"))
@@ -543,6 +552,7 @@ def pan_right():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/pan_down", methods=("GET", "POST"))
@@ -574,6 +584,7 @@ def pan_down():
             cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_default", methods=("GET", "POST"))
@@ -598,6 +609,7 @@ def zoom_default():
         cc.include_scalerCrop = False
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
+        sc.unsavedChanges = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
     
 @bp.route("/zoom_draw", methods=("GET", "POST"))
@@ -669,6 +681,7 @@ def ae_control():
                 aeFlickerPeriod = int(request.form["aeflickerperiod"])
                 cc.aeFlickerPeriod = aeFlickerPeriod
 
+        sc.unsavedChanges = True
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
@@ -732,6 +745,7 @@ def exposure_control():
                 hdrMode = int(request.form["hdrmode"])
                 cc.hdrMode = hdrMode
 
+        sc.unsavedChanges = True
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
@@ -796,6 +810,7 @@ def image_control():
             brightness = float(request.form["brightness"])
             cc.brightness = brightness
 
+        sc.unsavedChanges = True
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
         

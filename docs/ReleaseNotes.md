@@ -37,6 +37,29 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.4.0
+
+### New Features
+
+- Under [Actions](./TriggerActions.md), it is now possible to configure camera actions:<br>take_photo<br>start_video<br>stop_video<br>record_video with a configurable duration.
+- [Actions](./TriggerActions.md) now support SMTP action for sending a mail in case of an event.
+- [Trigger](./TriggerTriggers.md) allow configuring *MotionDetector* trigger for *CAM-1*: *when_motion_detected*.<br>This trigger fires when a motion is detected by the cameras [motion detection](./TriggerMotion.md) algorithms.
+- [Device Types](./SettingsDevices.md#device-type-configuration) for GPIO devices include now additional GPIO base classes which allows integrating more general devices:<br>- DigitalInputDevice<br>- DigitalOutputDevice<br>- OutputDevice
+- An [indicator](./UserGuide.md#title-bar) has been added which indicates unsaved configuration changes.
+- The [event log](./TriggerActive.md#log-file) can now be downloaded from the [Calendar view](./TriggerEventViewer.md#calendar)
+
+### Changes
+
+- For [Triggers](./TriggerTriggers.md) with *Source* "Camera" the device names were changed:<br>"Active Camera" -> "CAM-1"<br>"Second Camera" -> "CAM-2"<br>If triggers have been created with the old *Device* names, they will be renamed automatically when data are loaded from the stored configuration.
+- For [Versatile Buttons](./SettingsVButtons.md) and [Action Buttons](./SettingsAButtons.md) the maximum number of rows and columns was changed from 9 to 99.
+- Added favicon for browser tab
+
+### Bugfixes
+
+- Fixed error<br>```ERROR in camCfg: Error loading from /home/pi/server/raspi-cam-srv/raspiCamSrv/static/config/serverConfig.json: 'NoneType' object is not subscriptable```<br>reported in [raspi-cam-srv Issue #55](https://github.com/signag/raspi-cam-srv/issues/55)
+- Bugfixes and improvements for Class [StepperMotor](./gpioDevices/StepperMotor.md):<br>For full-step mode, the waiting time is now doubled while speed range is unchanged. (1ms does not work)<br>New methods *step(steps)* and *rotate(angle)* have been added, which allow positive and negative arguments.<br>Rotations are now with higher precision. They are now in integers of motor steps rather than geared steps.<br>For full-step mode, now two coils are activated in each step, instead of only one, which increases torque.
+- Several tables which can become large, can now be scrolled with fixed headers.
+
 ## V3.3.0
 
 ### New Features

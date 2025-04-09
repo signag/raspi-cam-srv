@@ -96,6 +96,9 @@ class MotionDetector():
     mdAlgo = None
     event = MotionEvent()
 
+    #Callbacks
+    when_motion_detected = None
+
     def __new__(cls):
         logger.debug("Thread %s: MotionDetector.__new__", get_ident())
         if cls._instance is None:
@@ -291,6 +294,10 @@ class MotionDetector():
         logTS = now.strftime("%Y-%m-%dT%H:%M:%S")
         fnPhoto = fnRaw + ".jpg"
         fnVideo = fnRaw + ".mp4"
+        
+        if logEvent:
+            if MotionDetector().when_motion_detected:
+                MotionDetector().when_motion_detected()
         
         if logEvent:
             with open(tc.logFilePath, "a") as f:

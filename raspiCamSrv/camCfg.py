@@ -186,6 +186,13 @@ class Trigger():
             if value is None:
                 setattr(trg, key, value)
             else:
+                if key == "_device":
+                    val = value
+                    if value == "Active Camera":
+                        val = "CAM-1"
+                    if value == "Second Camera":
+                        val = "CAM-2"
+                    value = val
                 if key == "_params":
                     newval = {}
                     for pkey, pvalue in value.items():
@@ -1267,12 +1274,13 @@ class TriggerConfig():
         """ Return a list of trigger sources
 
             Trigger sources are:
-            - 'Camera'  : only used for motion detection
-            - 'GPIO'    : for GPIO input devices
+            - 'Camera'          : Camera-based triggers
+            - 'GPIO'            : for GPIO input devices
+            - 'MotionDetector'  : for motion detection using a camera
         Returns:
             list[str] : List of trigger sources
         """
-        triggerSources = ["Camera", "GPIO"]
+        triggerSources = ["Camera", "GPIO", "MotionDetector"]
         
         return triggerSources
         
@@ -1294,9 +1302,12 @@ class TriggerConfig():
         """ Return a list of trigger devices for the given source
 
             for source 'Camera':
-                - "Active Camera"
+                - "CAM-1"
+                - "CAM-2"
             for source 'GPIO':
                 - list of IDs of Input devices
+            for source 'MotionDetector':
+                - "CAM-1"
         Args:
             source (str): trigger source ('Camera' or 'GPIO')
 
@@ -1306,9 +1317,11 @@ class TriggerConfig():
         logger.debug("TriggerConfig.triggerDevices")
         deviceList = []
         if source == "Camera":
-            deviceList = ["Active Camera",]
+            deviceList = ["CAM-1",]
             if len(CameraCfg().cameras) > 1:
-                deviceList.append("Second Camera")
+                deviceList.append("CAM-2")
+        elif source == "MotionDetector":
+            deviceList = ["CAM-1",]
         elif source == "GPIO":
             devices = CameraCfg().serverConfig.gpioDevices
             for device in devices:
@@ -1322,9 +1335,11 @@ class TriggerConfig():
         """ Return a list of action devices for the given source
 
             for source 'Camera':
-                - "Active Camera"
+                - "CAM-1"
             for source 'GPIO':
                 - list of IDs of Output devices
+            for source 'SMTP':
+                - The configured SMTP srver, if any
         Args:
             source (str): trigger source ('Camera' or 'GPIO')
 
@@ -1333,7 +1348,7 @@ class TriggerConfig():
         """
         deviceList = []
         if source == "Camera":
-            deviceList = ["Active Camera",]
+            deviceList = ["CAM-1",]
         if source == "SMTP":
             deviceList = [self._notifyHost,]
         elif source == "GPIO":
@@ -1362,19 +1377,32 @@ class TriggerConfig():
         eventSettings = {}
         control = {}
         if source == "Camera":
-            if device == "Active Camera":
+            if device == "CAM-1":
                 events = [
                     "when_photo_taken", 
                     "when_recording_starts",
                     "when_recording_stops",
                     "when_streaming_1_starts",
                     "when_streaming_1_stops",
+                    "when_motion_detected",
                 ]
-            elif device == "Second Camera":
+                control = {
+                    "event_log": False
+                }
+            elif device == "CAM-2":
                 events = [
                     "when_streaming_2_starts",
                     "when_streaming_2_stops",
                 ]
+                control = {
+                    "event_log": False
+                }
+        elif source == "MotionDetector":
+            if device == "CAM-1":
+                events = [
+                    "when_motion_detected", 
+                ]
+                control = {}
         elif source == "GPIO":
             gpioDev = CameraCfg().serverConfig.getDevice(device)
             if gpioDev is not None:
@@ -1404,10 +1432,51 @@ class TriggerConfig():
         actionTargets = []
         if source == "Camera":
             actionTargets = []
-            #actionTargets = [{"method": "take_photo","params": {"filename":".jpg"},"control": {}},{"method": "record_video","params": {"t_filename":".mp4"},"control": {"duration":""}}]
+            actionTargets = [
+                {
+                    "method": "take_photo",
+                    "params": {
+                        "type": "jpg"
+                        },
+                    "control": {
+                        "burst_count": 1,
+                        "burst_intvl": 1.0
+                    }
+                },
+                {
+                    "method": "record_video",
+                    "params": {
+                        "type": "mp4"
+                    },
+                    "control": {
+                        "duration": 1
+                    }
+                },
+                {
+                    "method": "start_video",
+                    "params": {
+                        "type": "mp4"
+                    },
+                    "control": {
+                    }
+                },
+                {
+                    "method": "stop_video",
+                    "params": {},
+                    "control": {}
+                }
+            ]
         elif source == "SMTP":
-            actionTargets = []
-            #actionTargets = [{"method": "send_mail","params": {"eMail_address":""},"control": {}}]
+            actionTargets = [
+                {
+                    "method": "send_mail",
+                    "params": {},
+                    "control": {
+                        "attach_photo": False,
+                        "attach_video": False
+                    }
+                }
+            ]
         elif source == "GPIO":
             gpioDev = CameraCfg().serverConfig.getDevice(device)
             if gpioDev is not None:
@@ -2917,6 +2986,7 @@ class ActionButton():
 
 class ServerConfig():
     def __init__(self):
+        self._unsavedChanges = False
         self._error = None
         self._error2 = None
         self._errorSource = None
@@ -3048,6 +3118,14 @@ class ServerConfig():
 
         kernelVers = self.getKernelVersion()
         self._kernelVersion = kernelVers
+
+    @property
+    def unsavedChanges(self) -> bool:
+        return self._unsavedChanges
+
+    @unsavedChanges.setter
+    def unsavedChanges(self, value: bool):
+        self._unsavedChanges = value
 
     @property
     def error(self) -> str:
@@ -4882,11 +4960,16 @@ class ServerConfig():
             elif key == "_curDeviceType":
                 # Take the current device type from a fresh declaration rather than from stored data
                 # This will allow later modifications of gpioDeviceTypes being immediately effective
-                type = value["type"]
-                for typ in gpioDeviceTypes:
-                    if typ["type"] == type:
-                        setattr(sc, key, typ)
-                        break
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    type = value["type"]
+                    for typ in gpioDeviceTypes:
+                        if typ["type"] == type:
+                            setattr(sc, key, typ)
+                            break
+            elif key == "_unsavedChanges":
+                setattr(sc, key, False)
             else:
                 setattr(sc, key, value)
         # Reset process status variables

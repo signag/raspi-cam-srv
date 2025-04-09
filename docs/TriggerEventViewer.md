@@ -12,6 +12,11 @@ Clicking on a red field navigates to the [Events](#events) display for this spec
 
 You can change the active month using the date control and navigation arrows, or return to the current month with the *Now* button.
 
+### Download Log
+
+You can download the [Log file](./TriggerActive.md#log-file) including a timeline of all events and associated actions.<br>
+Note that only those triggers and their associated actions will be included in the log, for which the [control parameter](./TriggerTriggers.md#control) *event_log* has the value "True".
+
 ### Cleanup
 
 The *Cleanup* button can be used for removing old events.   

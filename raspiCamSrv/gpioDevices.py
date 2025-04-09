@@ -25,8 +25,13 @@ class StepperMotor():
             speed (float, optional):
                 0.0 : lowest speed
                 1.0 : highest speed
+                Defaults to 1.0.
             stride_angle (float, optional)
                 angle per step in half-step mode
+                Defaults to 5.625.
+            gear_reduction (int, optional)
+                gear reduction ratio
+                Defaults to 64.
         """
         # Constant waiting times for highest (1) and lowest (0) speed
         self._WAIT_HIGH_SPEED = 0.001
@@ -37,43 +42,51 @@ class StepperMotor():
         self._in2 = OutputDevice(in2)
         self._in3 = OutputDevice(in3)
         self._in4 = OutputDevice(in4)
+        self._mode = mode
+        self._speed = speed
+        self._stride_angle = stride_angle
+        self._gear_reduction = gear_reduction
+        self._wait = self._WAIT_HIGH_SPEED
+
         self._pins = [self._in1, self._in2, self._in3, self._in4]
         
         # Step sequence for half-step operation
         self._seq_half_step = [ \
-            [1,0,0,1], 
             [1,0,0,0], 
             [1,1,0,0],
             [0,1,0,0],
             [0,1,1,0],
             [0,0,1,0],
             [0,0,1,1],
-            [0,0,0,1]
+            [0,0,0,1],
+            [1,0,0,1],
         ]
         # Step sequence for full-step operation
         self._seq_full_step = [ \
-            [1,0,0,0], 
-            [0,1,0,0],
-            [0,0,1,0],
-            [0,0,0,1]
+            [1,1,0,0], 
+            [0,1,1,0],
+            [0,0,1,1],
+            [1,0,0,1]
         ]
-        self._seq = self._seq_half_step
+        if self._mode == 0:
+            self._seq = self._seq_half_step
+        else:
+            self._seq = self._seq_full_step
         self._seq_len = len(self._seq)
-        
-        # Set the sequence depending on the mode
-        self.mode = mode
             
         # Set the waiting time tepending on the speed
-        self.speed = speed
+        if self._speed < 0.0:
+            self._speed = 0.0
+        if self._speed > 1.0:
+            self._speed = 1.0
+
+        self._wait = self._WAIT_LOW_SPEED + self._speed * (self._WAIT_HIGH_SPEED - self._WAIT_LOW_SPEED)
+        # For full-step mode, the wait time is doubled
+        if self._mode == 1:
+            self._wait = self._wait * 2
         
         # Set the current step
         self._current_step = 0
-        
-        # Set stride angle
-        self._stride_angle = stride_angle
-
-        # Set gear reduction
-        self._gear_reduction = gear_reduction
 
     @property
     def in1(self) -> int:
@@ -119,6 +132,8 @@ class StepperMotor():
         else:
             self._seq = self._seq_full_step
         self._seq_len = len(self._seq)
+        # Set the waiting time tepending on the speed
+        self.speed = self.speed
 
     @property
     def speed(self) -> float:
@@ -133,7 +148,10 @@ class StepperMotor():
         if self._speed > 1.0:
             self._speed = 1.0
 
-        self._wait = self._WAIT_HIGH_SPEED - self._speed * (self._WAIT_HIGH_SPEED - self._WAIT_LOW_SPEED)
+        self._wait = self._WAIT_LOW_SPEED + self._speed * (self._WAIT_HIGH_SPEED - self._WAIT_LOW_SPEED)
+        # For full-step mode, the wait time is doubled
+        if self._mode == 1:
+            self._wait = self._wait * 2
 
     @property
     def stride_angle(self) -> float:
@@ -142,6 +160,31 @@ class StepperMotor():
     @property
     def gear_reduction(self) -> float:
         return self._gear_reduction
+
+    def _motor_step(self, direction:int):
+        """ Do one motor step in the current direction
+        
+        Args:
+            direction (int):
+                 1: forward
+                -1: backward
+        """
+        # Move
+        for pin in range(0, 4):
+            if self._seq[self._current_step][pin] != 0:
+                self._pins[pin].on()
+            else:
+                self._pins[pin].off()
+
+        # Proceed
+        self._current_step += direction
+        if self._current_step >= self._seq_len:
+            self._current_step = 0
+        if self._current_step < 0:
+            self._current_step = self._seq_len - 1
+
+        # Wait
+        time.sleep(self._wait)
 
     def _step(self, direction:int):
         """ Do one step in the current direction
@@ -152,22 +195,21 @@ class StepperMotor():
                 -1: backward
         """
         for motor_step in range(0, self._gear_reduction):
-            # Move
-            for pin in range(0, 4):
-                if self._seq[self._current_step][pin] != 0:
-                    self._pins[pin].on()
-                else:
-                    self._pins[pin].off()
+            self._motor_step(direction)
 
-            # Proceed
-            self._current_step += direction
-            if self._current_step >= self._seq_len:
-                self._current_step = 0
-            if self._current_step < 0:
-                self._current_step = self._seq_len - 1
-                
-            # Wait
-            time.sleep(self._wait)        
+    def step(self, steps:int):
+        """ step forward or backward by a given number of steps
+
+        Args:
+            steps (int): number of steps to step forward (positive) or backward (negative)
+        """
+        nrSteps = abs(steps)
+        if steps < 0:
+            direction = -1
+        else:
+            direction = 1
+        for step in range(0, nrSteps):
+            self._step(direction)
 
     def step_forward(self, steps:int):
         """ step forward by a given number of steps
@@ -187,17 +229,31 @@ class StepperMotor():
         for step in range(0, steps):
             self._step(-1)
             
+    def rotate(self, angle:float):
+        """ Rotate right by the given angle
+
+        Args:
+            angle (float): angle to rotate. Positive angle is clockwise, negative angle is counter-clockwise
+        """
+        abs_angle = abs(angle)
+        dir = 1
+        if angle < 0:
+            dir = -1
+        motor_steps = round(self.gear_reduction * abs_angle / self._stride_angle)
+        if self.mode == 1:
+            motor_steps = round(motor_steps / 2)
+            
+        for motor_step in range(0, motor_steps):
+            self._motor_step(dir)
+            
+            
     def rotate_right(self, angle:float):
         """ Rotate right by the given angle
 
         Args:
             angle (float): angle to rotate
         """
-        if self.mode == 0:
-            steps = round(angle / self._stride_angle)
-        else:
-            steps = round(angle / 2 * self._stride_angle)
-        self.step_forward(steps)
+        self.rotate(angle)
             
     def rotate_left(self, angle:float):
         """ Rotate left by the given angle
@@ -205,11 +261,7 @@ class StepperMotor():
         Args:
             angle (float): angle to rotate
         """
-        if self.mode == 0:
-            steps = round(angle / self._stride_angle)
-        else:
-            steps = round(angle / 2 * self._stride_angle)
-        self.step_backward(steps)
+        self.rotate(-angle)
         
     def close(self):
         """ Close gpiozero resources associated with pins
@@ -220,15 +272,24 @@ class StepperMotor():
         
 if __name__ == "__main__":
     print("==== Test StepperMotor ======")
+    sm = StepperMotor(10, 9, 11, 0)
     for mode in range(0, 2):
+        sm.mode = mode
         for ispeed in range(1, -1, -1):
             speed = float(ispeed)
-            print(f"==== mode={mode} == speed={speed } ====")
-            sm = StepperMotor(10, 9, 11, 0, mode=0, speed=1)
+            sm.speed = speed
+            print(f"==== mode={sm.mode} == speed={sm.speed } ====")
             print(f"==== step_forward(64) =======")
             sm.step_forward(64)
+            time.sleep(2)
             print(f"==== step_backward(64)")
             sm.step_backward(64) 
+            time.sleep(2)
+            print(f"==== step(64)")
+            sm.step(64) 
+            time.sleep(2)
+            print(f"==== step(-64)")
+            sm.step(-64) 
             time.sleep(2)
             print(f"==== rotate_right(90) =======")
             sm.rotate_right(90) 
@@ -236,6 +297,12 @@ if __name__ == "__main__":
             print(f"==== rotate_left(90) =======")
             sm.rotate_left(90) 
             time.sleep(2)
+            print(f"==== rotate(360) =======")
+            sm.rotate(360) 
+            time.sleep(2)
+            print(f"==== rotate(-360) =======")
+            sm.rotate(-360) 
+            time.sleep(2)
             print(f"==== close ====")
-            sm.close()
+    sm.close()
     print(f"==== Test completed ====")

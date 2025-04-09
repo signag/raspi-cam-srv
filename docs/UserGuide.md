@@ -25,6 +25,7 @@ On the right side, the title bar shows
 - the current server connection
 - the active camera as advertised by Picamera2
 - the active user
+- A special icon will indicate unsaved configuration changes:<br>![Changes](./img/UnsavedChangesIndicator.jpg)<br>It will vanish after changes have been saved with [Settings/Configuration/Store Configuration](./SettingsConfiguration.md) or after a stored configuration has been loaded.
 
 On the left side, the title bar shows the application name (raspiCamSrv) and the current screen.
 

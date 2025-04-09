@@ -11,10 +11,10 @@ This screen is used to specify actions which can be started by **raspiCamSrv**, 
 ## Creating an Action
 
 1. In field *Action Source*, select the source system for which the action is defined:    
-![Action2](./img/Trigger_Actions2.jpg)<br>**NOTE**: Camera and SMTP are not yet supported.
+![Action2](./img/Trigger_Actions2.jpg)
 2. This will open a list of devices defined for the chosen source system:    
 ![Action3](./img/Trigger_Actions3.jpg)    
-For the GPIO system, these are the **Output** devices configured on [Settings/Devices](./SettingsDevices.md)
+For the GPIO system, these are the **Output** devices configured on [Settings/Devices](./SettingsDevices.md)<br>**NOTE**: For SMTP, a device will only be shown if a mail account has been specified and verified in dialog [Notification](./TriggerNotification.md).<br>If this is the case, the configured *SMTP Server* will be shown as device.
 3. After a device has been selected, the system will show the device type with a link to related gpiozero documentation as well as the action methods which can be executed for this device (this information is taken from the [fixed configuration for the device type](./SettingsDevices.md#device-type-configuration)):    
 ![Action4](./img/Trigger_Actions4.jpg)    
 4. When the method has been chosen, the sytem will display any parameters which may be required for this method:    
@@ -38,6 +38,9 @@ Control parameters are not part of the class interfaces but they can affect how 
 
 - *duration*<br>With duration, you can specify the length of the time interval, during which the device will stay in the state achieved through the method, for example the 'on' state of an LED.<br>After this time, the system will check, whether the device object has a method off() (which is the case for LEDs and Buzzer) or a method stop() (which is the case for Motor and TonalBuzzer).<br>If either of these methods is found, it is applied.<br>In effect, the device will be in an inactive state afterwards.
 - *steps*<br>This is the number of steps in which the device shall reach the intended state within the given duration.<br>The intention here is that one might want a smooth rather than an abrupt movement, for example for a Servo.<br>**NOTE**This feature is currently not yet supported.
+- *burst_count*<br>This is a a parameter for method "take_photo". You can specify the number of photos which shall be taken as part of a photo burst in a series with a given interval.
+- *burst_intvl*<br>This is the interval you can specify for a photo burst.
+- *attach_photo*, *attach_video*<br>for an SMTP action, you can specify whether or not photos and/or videos shall be attached to the mail which have been created as part of the actions of the triggered event.
 
 ### Restrictions
 
@@ -51,8 +54,8 @@ In the latter case, action execution is done in an own thread which allows the a
 
 This means that actions are always completed and not interrupted.
 
-This applies to actions with a configured duration, such as an LED which shall be 'on' for a certain time.    
-However, it applies also to actions with an inherent time consumtion. For example the movement of a StepperMotor can consist of hundrets of steps with a waiting tyme of 1 to 4 ms after each step. This require in total sever seconds to complete.
+This applies to actions with a configured duration, such as an LED which shall be 'on' for a certain time or a video with a given duration.    
+However, it applies also to actions with an inherent time consumtion. For example the movement of a StepperMotor can consist of hundrets of steps with a waiting tyme of 1 to 4 ms after each step. This require in total several seconds to complete.
 
 If for such an action a new action is requested before the previous action is completed, it will wait until the device is no longer busy.
 

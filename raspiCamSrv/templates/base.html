@@ -4,6 +4,7 @@
     <title>{% block title %}{% endblock %} - Raspi Camera</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='w3.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     {% if sc.curMenu == "live" %}
     <body 
         onload="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')"
@@ -17,12 +18,18 @@
                 <div class="w3-bar-item w3-left">raspiCamSrv {{ g.version }}</div>
                 <div class="w3-bar-item w3-center">{% block header %}{% endblock %}</div>
                 {% if g.user %}
-                <div class="w3-bar-item w3-right">
-                    {{ g.user['username'] }}
-                     | 
-                    {{ sc.activeCameraInfo}}
-                     |
-                    {{ g.hostname }}
+                <div class="w3-bar-item w3-right" style="padding-top:0;padding-bottom:0">
+                    {% if sc.unsavedChanges %}
+                    <img src="{{ url_for('static', filename='save_changes.png') }}" class="w3-image" id="save_changes"
+                        alt="Save changes" style="height:34px; width:34px; margin-top:4px">
+                    {% endif %}
+                    <div class="w3-bar-item w3-right" style="padding-top:8px;padding-bottom:8px">
+                        {{ g.user['username'] }}
+                        | 
+                        {{ sc.activeCameraInfo}}
+                        |
+                        {{ g.hostname }}
+                    </div>
                 </div>
                 {% else%}
                 <div class="w3-bar-item w3-right">

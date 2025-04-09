@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_dbx():
+def get_dbx() -> sqlite3.Connection:
     """ Get database outside of application context
     """
     database = camCfg.CameraCfg().serverConfig.database

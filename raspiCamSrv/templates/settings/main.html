@@ -683,14 +683,14 @@
                             Number of Rows:
                         </td>
                         <td style="width: 5%">
-                            <input type="number" id="vbuttonsrows" name="vbuttonsrows" min="0" max="9" step="1" 
+                            <input type="number" id="vbuttonsrows" name="vbuttonsrows" min="0" max="99" step="1" 
                                 value="{{ sc.vButtonsRows }}">
                         </td>
                         <td style="width: 15%">
                             Number of Columns:
                         </td>
                         <td style="width: 5%">
-                            <input type="number" id="vbuttonscols" name="vbuttonscols" min="0" max="9" step="1"
+                            <input type="number" id="vbuttonscols" name="vbuttonscols" min="0" max="99" step="1"
                             value="{{ sc.vButtonsCols }}">
                         </td>
                         <td style="width: 17%">
@@ -724,125 +724,131 @@
             <h3>Button Settings</h1>
             <div>
                 <form method="post" action="{{ url_for('settings.vbutton_settings') }}">
-                    <table class="w3-table-all">
-                        <tr>
-                            <th style="width:5%">
-                                Row
-                            </th>
-                            <th style="width:5%">
-                                Col
-                            </th>
-                            <th style="width:5%">
-                                Visible
-                            </th>
-                            <th style="width:5%">
-                                Shape
-                            </th>
-                            <th style="width:5%">
-                                Color
-                            </th>
-                            <th style="width:20%">
-                                Button Text
-                            </th>
-                            <th style="width:50%">
-                                Command
-                            </th>
-                            <th style="width:5%">
-                                Conf
-                            </th>
-                        </tr>
-                        {% for r in sc.vButtons %}
-                        {% for btn in r %}
-                        <tr>
-                            <td style="width:5%">
-                                {{ btn["row"] + 1 }}
-                            </td>
-                            <td style="width:5%">
-                                {{ btn["col"] + 1 }}
-                            </td>
-                            <td style="width:5%">
-                                {% if btn["isVisible"] == True %}
-                                <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible" 
-                                    name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1" checked>
-                                {% else %}
-                                <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible"
-                                    name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1">
-                                {% endif %}
-                            </td>
-                            <td style="width:5%">
-                                <select name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_shape" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_shape">
-                                    {% if btn["buttonShape"] == "Rectangle" %}
-                                    <option value="Rectangle" selected>Rectangle</option>
-                                    {% else %}
-                                    <option value="Rectangle">Rectangle</option>
-                                    {% endif %}
-                                    {% if btn["buttonShape"] == "Rounded" %}
-                                    <option value="Rounded" selected>Rounded</option>
-                                    {% else %}
-                                    <option value="Rounded">Rounded</option>
-                                    {% endif %}
-                                    {% if btn["buttonShape"] == "Circular" %}
-                                    <option value="Circular" selected>Circular</option>
-                                    {% else %}
-                                    <option value="Circular">Circular</option>
-                                    {% endif %}
-                                    {% if btn["buttonShape"] == "Square" %}
-                                    <option value="Square" selected>Square</option>
-                                    {% else %}
-                                    <option value="Square">Square</option>
-                                    {% endif %}
-                                </select>
-                            </td>
-                            <td style="width:5%">
-                                <select name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_color" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_color">
-                                    {% if btn["buttonColor"] == "Black" %}
-                                    <option value="Black" selected>Black</option>
-                                    {% else %}
-                                    <option value="Black">Black</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Red" %}
-                                    <option value="Red" selected>Red</option>
-                                    {% else %}
-                                    <option value="Red">Red</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Green" %}
-                                    <option value="Green" selected>Green</option>
-                                    {% else %}
-                                    <option value="Green">Green</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Yellow" %}
-                                    <option value="Yellow" selected>Yellow</option>
-                                    {% else %}
-                                    <option value="Yellow">Yellow</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Blue" %}
-                                    <option value="Blue" selected>Blue</option>
-                                    {% else %}
-                                    <option value="Blue">Blue</option>
-                                    {% endif %}
-                                </select>
-                            </td>
-                            <td style="width:20%">
-                                <input style="width: 100%" type="text" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext"
-                                    name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext" value="{{ btn['buttonText'] }}">
-                            </td>
-                            <td style="width:50%">
-                                <input style="width: 100%" type="text" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttonexec"
-                                    name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttonexec" value="{{ btn['buttonExec'] }}">
-                            </td>
-                            <td style="width:5%">
-                                {% if btn["needsConfirm"] == True %}
-                                <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
-                                    name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1" checked>
-                                {% else %}
-                                <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
-                                    name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1">
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        {% endfor %}
-                    </table>
+                    <div style="max-height:63.6vh;overflow-y:auto">
+                        <table class="w3-table-all">
+                            <thead>
+                                <tr>
+                                    <th style="width:5%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Row
+                                    </th>
+                                    <th style="width:5%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Col
+                                    </th>
+                                    <th style="width:5%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Visible
+                                    </th>
+                                    <th style="width:5%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Shape
+                                    </th>
+                                    <th style="width:5%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Color
+                                    </th>
+                                    <th style="width:20%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Button Text
+                                    </th>
+                                    <th style="width:50%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Command
+                                    </th>
+                                    <th style="width:5%; width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                        Conf
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in sc.vButtons %}
+                                {% for btn in r %}
+                                <tr>
+                                    <td style="width:5%">
+                                        {{ btn["row"] + 1 }}
+                                    </td>
+                                    <td style="width:5%">
+                                        {{ btn["col"] + 1 }}
+                                    </td>
+                                    <td style="width:5%">
+                                        {% if btn["isVisible"] == True %}
+                                        <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible" 
+                                            name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1" checked>
+                                        {% else %}
+                                        <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible"
+                                            name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1">
+                                        {% endif %}
+                                    </td>
+                                    <td style="width:5%">
+                                        <select name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_shape" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_shape">
+                                            {% if btn["buttonShape"] == "Rectangle" %}
+                                            <option value="Rectangle" selected>Rectangle</option>
+                                            {% else %}
+                                            <option value="Rectangle">Rectangle</option>
+                                            {% endif %}
+                                            {% if btn["buttonShape"] == "Rounded" %}
+                                            <option value="Rounded" selected>Rounded</option>
+                                            {% else %}
+                                            <option value="Rounded">Rounded</option>
+                                            {% endif %}
+                                            {% if btn["buttonShape"] == "Circular" %}
+                                            <option value="Circular" selected>Circular</option>
+                                            {% else %}
+                                            <option value="Circular">Circular</option>
+                                            {% endif %}
+                                            {% if btn["buttonShape"] == "Square" %}
+                                            <option value="Square" selected>Square</option>
+                                            {% else %}
+                                            <option value="Square">Square</option>
+                                            {% endif %}
+                                        </select>
+                                    </td>
+                                    <td style="width:5%">
+                                        <select name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_color" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_color">
+                                            {% if btn["buttonColor"] == "Black" %}
+                                            <option value="Black" selected>Black</option>
+                                            {% else %}
+                                            <option value="Black">Black</option>
+                                            {% endif %}
+                                            {% if btn["buttonColor"] == "Red" %}
+                                            <option value="Red" selected>Red</option>
+                                            {% else %}
+                                            <option value="Red">Red</option>
+                                            {% endif %}
+                                            {% if btn["buttonColor"] == "Green" %}
+                                            <option value="Green" selected>Green</option>
+                                            {% else %}
+                                            <option value="Green">Green</option>
+                                            {% endif %}
+                                            {% if btn["buttonColor"] == "Yellow" %}
+                                            <option value="Yellow" selected>Yellow</option>
+                                            {% else %}
+                                            <option value="Yellow">Yellow</option>
+                                            {% endif %}
+                                            {% if btn["buttonColor"] == "Blue" %}
+                                            <option value="Blue" selected>Blue</option>
+                                            {% else %}
+                                            <option value="Blue">Blue</option>
+                                            {% endif %}
+                                        </select>
+                                    </td>
+                                    <td style="width:20%">
+                                        <input style="width: 100%" type="text" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext"
+                                            name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext" value="{{ btn['buttonText'] }}">
+                                    </td>
+                                    <td style="width:50%">
+                                        <input style="width: 100%" type="text" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttonexec"
+                                            name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_buttonexec" value="{{ btn['buttonExec'] }}">
+                                    </td>
+                                    <td style="width:5%">
+                                        {% if btn["needsConfirm"] == True %}
+                                        <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
+                                            name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1" checked>
+                                        {% else %}
+                                        <input type="checkbox" id="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
+                                            name="vbtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1">
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     <p style="margin-bottom: 0"></p>
                     <input class="w3-button w3-black" type="submit" value="Submit">
                 </form>
@@ -868,14 +874,14 @@
                             Number of Rows:
                         </td>
                         <td style="width: 5%">
-                            <input type="number" id="abuttonsrows" name="abuttonsrows" min="0" max="9" step="1" 
+                            <input type="number" id="abuttonsrows" name="abuttonsrows" min="0" max="99" step="1" 
                                 value="{{ sc.abuttonsRows }}">
                         </td>
                         <td style="width: 15%">
                             Number of Columns:
                         </td>
                         <td style="width: 5%">
-                            <input type="number" id="abuttonscols" name="abuttonscols" min="0" max="9" step="1"
+                            <input type="number" id="abuttonscols" name="abuttonscols" min="0" max="99" step="1"
                             value="{{ sc.abuttonsCols }}">
                         </td>
                         <td style="width: 17%">
@@ -900,142 +906,146 @@
         {% endif %}
             <h3>Action Button Settings</h1>
             <form method="post" action="{{ url_for('settings.abutton_settings') }}">
-                <div style="height:810px; overflow: auto">
+                <div style="max-height:63.6vh;overflow-y:auto">
                     <table class="w3-table-all">
-                        <tr>
-                            <th style="width:5%">
-                                Row
-                            </th>
-                            <th style="width:5%">
-                                Col
-                            </th>
-                            <th style="width:5%">
-                                Visible
-                            </th>
-                            <th style="width:5%">
-                                Shape
-                            </th>
-                            <th style="width:5%">
-                                Color
-                            </th>
-                            <th style="width:20%">
-                                Button Text
-                            </th>
-                            <th style="width:50%">
-                                Action
-                            </th>
-                            <th style="width:5%">
-                                Conf
-                            </th>
-                        </tr>
-                        {% for r in sc.aButtons %}
-                        {% for btn in r %}
-                        <tr>
-                            <td style="width:5%">
-                                {{ btn["row"] + 1 }}
-                            </td>
-                            <td style="width:5%">
-                                {{ btn["col"] + 1 }}
-                            </td>
-                            <td style="width:5%">
-                                {% if btn["isVisible"] == True %}
-                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" 
-                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1" checked>
-                                {% else %}
-                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible"
-                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1">
-                                {% endif %}
-                            </td>
-                            <td style="width:5%">
-                                <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_shape" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_shape">
-                                    {% if btn["buttonShape"] == "Rectangle" %}
-                                    <option value="Rectangle" selected>Rectangle</option>
+                        <thead>
+                            <tr>
+                                <th style="width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Row
+                                </th>
+                                <th style="width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Col
+                                </th>
+                                <th style="width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Visible
+                                </th>
+                                <th style="width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Shape
+                                </th>
+                                <th style="width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Color
+                                </th>
+                                <th style="width:20%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Button Text
+                                </th>
+                                <th style="width:50%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Action
+                                </th>
+                                <th style="width:5%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                                    Conf
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in sc.aButtons %}
+                            {% for btn in r %}
+                            <tr>
+                                <td style="width:5%">
+                                    {{ btn["row"] + 1 }}
+                                </td>
+                                <td style="width:5%">
+                                    {{ btn["col"] + 1 }}
+                                </td>
+                                <td style="width:5%">
+                                    {% if btn["isVisible"] == True %}
+                                    <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" 
+                                        name="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1" checked>
                                     {% else %}
-                                    <option value="Rectangle">Rectangle</option>
+                                    <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible"
+                                        name="abtn_{{ btn['row'] }}{{ btn['col'] }}_visible" value="1">
                                     {% endif %}
-                                    {% if btn["buttonShape"] == "Rounded" %}
-                                    <option value="Rounded" selected>Rounded</option>
+                                </td>
+                                <td style="width:5%">
+                                    <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_shape" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_shape">
+                                        {% if btn["buttonShape"] == "Rectangle" %}
+                                        <option value="Rectangle" selected>Rectangle</option>
+                                        {% else %}
+                                        <option value="Rectangle">Rectangle</option>
+                                        {% endif %}
+                                        {% if btn["buttonShape"] == "Rounded" %}
+                                        <option value="Rounded" selected>Rounded</option>
+                                        {% else %}
+                                        <option value="Rounded">Rounded</option>
+                                        {% endif %}
+                                        {% if btn["buttonShape"] == "Circular" %}
+                                        <option value="Circular" selected>Circular</option>
+                                        {% else %}
+                                        <option value="Circular">Circular</option>
+                                        {% endif %}
+                                        {% if btn["buttonShape"] == "Square" %}
+                                        <option value="Square" selected>Square</option>
+                                        {% else %}
+                                        <option value="Square">Square</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                                <td style="width:5%">
+                                    <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_color" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_color">
+                                        {% if btn["buttonColor"] == "Black" %}
+                                        <option value="Black" selected>Black</option>
+                                        {% else %}
+                                        <option value="Black">Black</option>
+                                        {% endif %}
+                                        {% if btn["buttonColor"] == "White" %}
+                                        <option value="White" selected>White</option>
+                                        {% else %}
+                                        <option value="White">White</option>
+                                        {% endif %}
+                                        {% if btn["buttonColor"] == "Red" %}
+                                        <option value="Red" selected>Red</option>
+                                        {% else %}
+                                        <option value="Red">Red</option>
+                                        {% endif %}
+                                        {% if btn["buttonColor"] == "Green" %}
+                                        <option value="Green" selected>Green</option>
+                                        {% else %}
+                                        <option value="Green">Green</option>
+                                        {% endif %}
+                                        {% if btn["buttonColor"] == "Yellow" %}
+                                        <option value="Yellow" selected>Yellow</option>
+                                        {% else %}
+                                        <option value="Yellow">Yellow</option>
+                                        {% endif %}
+                                        {% if btn["buttonColor"] == "Blue" %}
+                                        <option value="Blue" selected>Blue</option>
+                                        {% else %}
+                                        <option value="Blue">Blue</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                                <td style="width:20%">
+                                    <input style="width: 100%" type="text" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext"
+                                        name="abtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext" value="{{ btn['buttonText'] }}">
+                                </td>
+                                <td style="width:50%">
+                                    <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_action" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_action">
+                                        {% if btn["buttonAction"] == "" %}
+                                        <option value="" selected></option>
+                                        {% else %}
+                                        <option value=""></option>
+                                        {% endif %}
+                                        {% for action in tc.actions %}
+                                        {% if btn["buttonAction"] == action.id %}
+                                        <option value="{{ action.id }}" selected>{{ action.id }}</option>
+                                        {% else %}
+                                        <option value="{{ action.id }}">{{ action.id }}</option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td style="width:5%">
+                                    {% if btn["needsConfirm"] == True %}
+                                    <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
+                                        name="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1" checked>
                                     {% else %}
-                                    <option value="Rounded">Rounded</option>
+                                    <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
+                                        name="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1">
                                     {% endif %}
-                                    {% if btn["buttonShape"] == "Circular" %}
-                                    <option value="Circular" selected>Circular</option>
-                                    {% else %}
-                                    <option value="Circular">Circular</option>
-                                    {% endif %}
-                                    {% if btn["buttonShape"] == "Square" %}
-                                    <option value="Square" selected>Square</option>
-                                    {% else %}
-                                    <option value="Square">Square</option>
-                                    {% endif %}
-                                </select>
-                            </td>
-                            <td style="width:5%">
-                                <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_color" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_color">
-                                    {% if btn["buttonColor"] == "Black" %}
-                                    <option value="Black" selected>Black</option>
-                                    {% else %}
-                                    <option value="Black">Black</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "White" %}
-                                    <option value="White" selected>White</option>
-                                    {% else %}
-                                    <option value="White">White</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Red" %}
-                                    <option value="Red" selected>Red</option>
-                                    {% else %}
-                                    <option value="Red">Red</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Green" %}
-                                    <option value="Green" selected>Green</option>
-                                    {% else %}
-                                    <option value="Green">Green</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Yellow" %}
-                                    <option value="Yellow" selected>Yellow</option>
-                                    {% else %}
-                                    <option value="Yellow">Yellow</option>
-                                    {% endif %}
-                                    {% if btn["buttonColor"] == "Blue" %}
-                                    <option value="Blue" selected>Blue</option>
-                                    {% else %}
-                                    <option value="Blue">Blue</option>
-                                    {% endif %}
-                                </select>
-                            </td>
-                            <td style="width:20%">
-                                <input style="width: 100%" type="text" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext"
-                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_buttontext" value="{{ btn['buttonText'] }}">
-                            </td>
-                            <td style="width:50%">
-                                <select name="abtn_{{ btn['row'] }}{{ btn['col'] }}_action" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_action">
-                                    {% if btn["buttonAction"] == "" %}
-                                    <option value="" selected></option>
-                                    {% else %}
-                                    <option value=""></option>
-                                    {% endif %}
-                                    {% for action in tc.actions %}
-                                    {% if btn["buttonAction"] == action.id %}
-                                    <option value="{{ action.id }}" selected>{{ action.id }}</option>
-                                    {% else %}
-                                    <option value="{{ action.id }}">{{ action.id }}</option>
-                                    {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </td>
-                            <td style="width:5%">
-                                {% if btn["needsConfirm"] == True %}
-                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
-                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1" checked>
-                                {% else %}
-                                <input type="checkbox" id="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm"
-                                    name="abtn_{{ btn['row'] }}{{ btn['col'] }}_confirm" value="1">
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% endfor %}
+                        </tbody>
                     </table>
                 </div>
                 <p style="margin-bottom: 0"></p>
@@ -1333,44 +1343,48 @@
                 Unused GPIO Pins:
                 {% for pin in sc.freeGpioPins %}{{ pin }}{% if not loop.last %},{% endif %}{% endfor %}
             </p>
-            <div style="height:800px; overflow: auto">
+            <div style="max-height:58.5vh;overflow-y:auto">
                 <table class="w3-table-all">
-                    <tr>
-                        <th>
-                            ID
-                        </th>
-                        <th>
-                            Type
-                        </th>
-                        <th>
-                            Usage
-                        </th>
-                        <th>
-                            GPIO Pins
-                        </th>
-                        <th>
-                            OK
-                        </th>
-                    </tr>
+                    <thead>
+                        <tr>
+                            <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                ID
+                            </th>
+                            <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                Type
+                            </th>
+                            <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                Usage
+                            </th>
+                            <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                GPIO Pins
+                            </th>
+                            <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                OK
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     {% for device in sc.gpioDevices %}
-                    <tr>
-                        <td>
-                            {{ device.id }}
-                        </td>
-                        <td>
-                            {{ device.type }}
-                        </td>
-                        <td>
-                            {{ device.usage }}
-                        </td>
-                        <td>
-                            {{ device.usedPins }}
-                        </td>
-                        <td>
-                            {{ device.isOk }}
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>
+                                {{ device.id }}
+                            </td>
+                            <td>
+                                {{ device.type }}
+                            </td>
+                            <td>
+                                {{ device.usage }}
+                            </td>
+                            <td>
+                                {{ device.usedPins }}
+                            </td>
+                            <td>
+                                {{ device.isOk }}
+                            </td>
+                        </tr>
                     {% endfor %}
+                    </tbody>
                 </table>
             </div>
         </div>

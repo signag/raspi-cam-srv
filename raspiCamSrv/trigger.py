@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
+from flask import send_file, send_from_directory
 from werkzeug.exceptions import abort
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, Trigger, Action, ServerConfig, TriggerConfig
@@ -10,6 +11,7 @@ from datetime import datetime
 from datetime import timedelta
 import ast
 import copy
+import os
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -102,6 +104,7 @@ def trgcontrol():
             err = "Actions have been deactivated because they are currently supported only in combination with Motion Detection"
         if err:
             flash(err)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/motion", methods=("GET", "POST"))
@@ -145,6 +148,7 @@ def motion():
             if sc.isTriggerRecording == True:
                 msg = "Please restart motion detection to use the changed parameters!"
                 flash(msg)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/test_motion_detection", methods=("GET", "POST"))
@@ -319,6 +323,7 @@ def action():
         tc.actionPhotoBurstDelaySec = pbd
         if err:
             flash(err)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/notify", methods=("GET", "POST"))
@@ -409,6 +414,7 @@ def notify():
                 scr.notifyUser = user
                 scr.notifyPwd = pwd
                 flash("Connection test successful")
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/start_triggered_capture", methods=("GET", "POST"))
@@ -788,6 +794,29 @@ def do_cleanup():
         flash(err)
     return redirect(url_for("trigger.trigger"))
 
+@bp.route("/do_download_log", methods=("GET", "POST"))
+@login_required
+def do_download_log():
+    logger.debug("In do_download_log")
+    cfg = CameraCfg()
+    g.hostname = request.host
+    g.version = version
+    sc = cfg.serverConfig
+    tc = cfg._triggerConfig
+    sc.lastTriggerTab = "trgcalendar"
+    if request.method == "POST":
+        err = None
+        fp = tc.logFilePath
+        (path, file) = os.path.split(fp)
+        msg = f"Downloading {file}"
+        flash(msg)
+        return send_file(
+            fp,
+            as_attachment=True,
+            download_name=file
+        )
+    return redirect(url_for("trigger.trigger"))
+
 @bp.route("/new_trigger", methods=("GET", "POST"))
 @login_required
 def new_trigger():
@@ -887,6 +916,7 @@ def new_trigger():
         
         if err.strip() != "":
             flash(err)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def countEvent(source:str, device:str, event:str, tc:TriggerConfig) -> int:
@@ -956,6 +986,7 @@ def trigger_activation():
             err = "Some triggers werde deactivated because they used the same event"
         if err.strip() != "":
             flash(err)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def parseTuple(stuple: str) -> tuple[str, tuple]:
@@ -1010,7 +1041,7 @@ def castType(val:str, tpl:object) ->tuple[str, object]:
                     res = True
                 elif val.casefold() == "false":
                     res = False
-                elif val.casefold == "true":
+                elif val.casefold() == "true":
                     res = True
                 else:
                     err = "String does not represent boolean."            
@@ -1144,6 +1175,7 @@ def new_action():
                 
         if err.strip() != "":
             flash(err)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def checkActionUsage(actionId:str, actionUsage: list, sc:ServerConfig) -> tuple[bool, list]:
@@ -1205,6 +1237,7 @@ def action_activation():
         
         if err.strip() != "":
             flash(err)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/trigger_action", methods=("GET", "POST"))
@@ -1229,6 +1262,34 @@ def trigger_action():
                     trigger.actions[aid] = False
                 else:
                     trigger.actions[aid] = True
+        for trigger in tc.triggers:
+            if "event_log" in trigger.control:
+                if trigger.control["event_log"] == True:
+                    # Check for "start_video" or "record_video" actions which do not have a "take_photo" action
+                    has_photo = False
+                    has_video = False
+                    for action in tc.actions:
+                        if trigger.actions[action.id] == True:
+                            if action.method == "take_photo":
+                                has_photo = True
+                            elif action.method == "start_video" \
+                            or action.method == "record_video":
+                                has_video = True
+                    if has_video == True \
+                    and has_photo == False:
+                        err = f"Trigger {trigger.id} has 'event_log' set. Therefore you should add a 'take_photo' action in addition to the video action!"
+                        break
+            if trigger.source == "MotionDetector":
+                # Check that no Camera actions are assigned
+                for action in tc.actions:
+                    if trigger.actions[action.id] == True:
+                        if action.source == "Camera":
+                            err = f"Trigger {trigger.id}: You cannot assign Camera actions here. These are covered by settings in 'Camera' dialog"
+                            trigger.actions[action.id] = False
+                        if action.source == "SMTP":
+                            err = f"Trigger {trigger.id}: You cannot assign SMTP actions here. These are covered by settings in 'Notification' dialog"
+                            trigger.actions[action.id] = False
         if err.strip() != "":
             flash(err)
+        sc.unsavedChanges = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)

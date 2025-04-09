@@ -47,7 +47,8 @@ gpioDeviceTypes = [
             "when_released"
         ],
         "control":{
-            "bounce_time": 0.0
+            "bounce_time": 0.0,
+            "event_log": False
         }
     },
     {
@@ -102,7 +103,8 @@ gpioDeviceTypes = [
             "when_rotated_counter_clockwise",
         ],
         "control":{
-            "bounce_time": 0.0
+            "bounce_time": 0.0,
+            "event_log": False
         }
     },
     {
@@ -150,7 +152,8 @@ gpioDeviceTypes = [
             "when_light"
         ],
         "control":{
-            "bounce_time": 0.0
+            "bounce_time": 0.0,
+            "event_log": False
         }
     },
     {
@@ -206,7 +209,8 @@ gpioDeviceTypes = [
             "when_no_motion"
         ],
         "control":{
-            "bounce_time": 0.0
+            "bounce_time": 0.0,
+            "event_log": False
         }
     },
     {
@@ -261,7 +265,8 @@ gpioDeviceTypes = [
             "when_no_line"
         ],
         "control":{
-            "bounce_time": 0.0
+            "bounce_time": 0.0,
+            "event_log": False
         }
     },
     {
@@ -319,8 +324,48 @@ gpioDeviceTypes = [
             "threshold_distance": 0.0
         },
         "control":{
-            "bounce_time": 0.0
+            "bounce_time": 0.0,
+            "event_log": False
         }
+    },
+    {
+        "type":"DigitalInputDevice",
+        "usage":"Input",
+        "docUrl": "https://gpiozero.readthedocs.io/en/stable/api_input.html#digitalinputdevice",
+        "image": "device_DigitalInputDevice.jpg",
+        "params": {
+            "pin": {
+                "value": "",
+                "type": "int",
+                "min": 0,
+                "max": 27,
+                "isPin": True
+                },
+            "pull_up": {
+                "value": False,
+                "type": "boolOrNone"
+                },
+            "active_state": {
+                "value": None,
+                "type": "boolOrNone"
+                },
+            "bounce_time": {
+                "value": None,
+                "type": "floatOrNone",
+                "min": 0.0,
+                "max": 10.0
+                }
+        },
+        "testMethods":[
+            "value",
+            "active_time"
+        ],
+        "events":[
+            "when_activated",
+            "when_deactivated"
+        ],
+        "eventSettings":{},
+        "control":{}
     },
     {
         "type":"LED",
@@ -805,6 +850,11 @@ gpioDeviceTypes = [
         "testStepDuration": 1,
         "actionTargets":[
             {
+                "method": "step",
+                "params": {"steps":-1},
+                "control": {}
+            },
+            {
                 "method": "step_forward",
                 "params": {"steps":1},
                 "control": {}
@@ -812,6 +862,11 @@ gpioDeviceTypes = [
             {
                 "method": "step_backward",
                 "params": {"speed":1},
+                "control": {}
+            },
+            {
+                "method": "rotate",
+                "params": {"angle":-1.0},
                 "control": {}
             },
             {
@@ -825,5 +880,100 @@ gpioDeviceTypes = [
                 "control": {}
             }
         ]
-    }    
+    },
+    {
+        "type":"DigitalOutputDevice",
+        "usage":"Output",
+        "docUrl": "https://gpiozero.readthedocs.io/en/stable/api_output.html#digitaloutputdevice",
+        "image": "device_DigitalOutputDevice.jpg",
+        "params": {
+            "pin": {
+                "value": "",
+                "type": "int",
+                "min": 0,
+                "max": 27,
+                "isPin": True
+                },
+            "active_high": {
+                "value": True,
+                "type": "bool"
+                },
+            "initial_value": {
+                "value": False,
+                "type": "boolOrNone"
+                }
+        },
+        "testMethods":[
+            "on",
+            "value"
+        ],
+        "testDuration": 2,
+        "actionTargets":[
+            {
+                "method": "on",
+                "params": {},
+                "control": {"duration":0.0}
+            },
+            {
+                "method": "off",
+                "params": {},
+                "control": {}
+            },
+            {
+                "method": "value",
+                "params": {"value": 0},
+                "control": {}
+            }
+        ]
+    },
+    {
+        "type":"OutputDevice",
+        "usage":"Output",
+        "docUrl": "https://gpiozero.readthedocs.io/en/stable/api_output.html#outputdevice",
+        "image": "device_OutputDevice.jpg",
+        "params": {
+            "pin": {
+                "value": "",
+                "type": "int",
+                "min": 0,
+                "max": 27,
+                "isPin": True
+                },
+            "active_high": {
+                "value": True,
+                "type": "bool"
+                },
+            "initial_value": {
+                "value": False,
+                "type": "boolOrNone"
+                }
+        },
+        "testMethods":[
+            "on",
+            "value"
+        ],
+        "testDuration": 2,
+        "actionTargets":[
+            {
+                "method": "on",
+                "params": {},
+                "control": {"duration":0.0}
+            },
+            {
+                "method": "off",
+                "params": {},
+                "control": {}
+            },
+            {
+                "method": "toggle",
+                "params": {},
+                "control": {}
+            },
+            {
+                "method": "value",
+                "params": {"value": 0},
+                "control": {}
+            }
+        ]
+    }
 ]

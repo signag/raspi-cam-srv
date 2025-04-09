@@ -18,7 +18,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V3.3.0
+## Feature Overview V3.4.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -34,6 +34,9 @@ The non-active camera stream and photo can be accessed through endpoints ```http
 - Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
 - Support of [Tuning](./docs/Tuning.md) by selection and management of tuning files.
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
+- Support for interaction with GPIO-connected devices based on the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library. All basic input and output devices provided by *gpiozero* are supported and can be configured in the [Settings / Devices](./docs/SettingsDevices.md) dialog. In addition, also support for [Stepper Motor](./docs/gpioDevices/StepperMotor.md) is provided.
+- Events occurring on Input [Devices](./docs/SettingsDevices.md), such as sensors or buttons, can be configured as [Triggers](./docs/TriggerTriggers.md) for the execution of [Actions](./docs/TriggerActions.md). Various actors, such as LEDs, buzzers, motors and servos can thus be integrated. All this integrates well with available functionality of the camera system.
+- Besides [Trigger](./docs/TriggerTriggers.md)-based [Action](./docs/TriggerActions.md) execution, actions can also be envoked through flexibly configurable [Action Buttons](./docs/ConsoleActionButtons.md).
 - [Event viewer](./docs/TriggerEventViewer.md) with calendar overview
 - Notification on captured events by e-Mail (see [Notification](./docs/TriggerNotification.md))
 - [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) are available, including [Frame Differencing](./docs/TriggerMotion.md#test-for-frame-differencing-algorithm), [Optical Flow](./docs/TriggerMotion.md#test-for-optical-flow-algorithm) and [Background Subtraction](./docs/TriggerMotion.md#test-for-background-subtraction-algorithm)
@@ -63,10 +66,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V3.3**
-- Support for interaction with GPIO-connected devices based on the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library. All basic input and output devices provided by *gpiozero* are supported and can be configured in the [Settings / Devices](./docs/SettingsDevices.md) dialog. In addition, also support for [Stepper Motor](./docs/gpioDevices/StepperMotor.md) is provided.
-- Events occurring on Input [Devices](./docs/SettingsDevices.md), such as sensors or buttons, can be configured as [Triggers](./docs/TriggerTriggers.md) for the execution of [Actions](./docs/TriggerActions.md). Various actors, such as LEDs, buzzers, motors and servos can thus be integrated. All this integrates well with available functionality of the camera system.
-- Besides [Trigger](./docs/TriggerTriggers.md)-based [Action](./docs/TriggerActions.md) execution, actions can also be envoked through flexibly configurable [Action Buttons](./docs/ConsoleActionButtons.md).
+**New in V3.4**
+- [Event Handling](./docs/Trigger.md#event-handling-infrastructure) fully integrates Camera with GPIO-connected devices 
 
 ## Known Issues
 

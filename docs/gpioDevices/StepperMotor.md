@@ -11,12 +11,12 @@ An example combination, for which this class has been developped and tested, is 
 2. Connect the 4 inputs on the motor driver (IN1 ... IN4) to 4 GPIO pins of the Raspberry Pi.<br>It is important to correctly memorize which pin is connected to which input.
 3. Connect the power input of the motor driver to Raspberry Pi 5V and GND pins with the correct polarity.
 
-The following code will step the motor forwards by a specific number of steps:
+The following code will rotate the motor counter-clockwise (from the perspective of the motor) by 15°:
 ```
 from raspiCamSrv.gpioDevoces import StepperMotor
 stepper = StepperMotor(6, 13, 19, 26)
-motor.rotate(90)
-motor.close()
+stepper.rotate(-15)
+stepper.close()
 ```
 
 ## Parameters
@@ -46,6 +46,15 @@ Returns the stride angle.
 
 Returns the gear_reduction
 
+### **step**(*steps=?*)
+
+Steps forward for positive and backward for negative argument by the given number of steps.    
+Thus, the angle is changed by *steps x stride_angle*
+
+**Parameters**:
+
+- **steps** (*int*) Number of steps to move (positive or negative)
+
 ### **step_forward**(*steps=?*)
 
 Steps forward (clockwise rotation) by the given number of steps.    
@@ -53,7 +62,7 @@ Thus, the angle is increased by *steps x stride_angle*
 
 **Parameters**:
 
-- **steps** (*int*) Numner of steps to move forward
+- **steps** (*int*) Number of steps to move forward (positive value)
 
 ### **step_backward**(*steps=?*)
 
@@ -62,7 +71,15 @@ Thus, the angle is decreased by *steps x stride_angle*
 
 **Parameters**:
 
-- **steps** (*int*) Numner of steps to move backward
+- **steps** (*int*) Number of steps to move backward (positive palue)
+
+### **rotate**(*angle=?*)
+
+Rotate clockwise (for positive angle) or counter-clockwise (for negative angle) by the given angle.
+
+**Parameters**:
+
+- **angle** (*float*) Angle to rotate (positive or negative)
 
 ### **rotate_right**(*angle=?*)
 
@@ -70,7 +87,7 @@ Rotate right (clockwise from the pespective of the motor) by the given angle.
 
 **Parameters**:
 
-- **angle** (*float*) Angle to rotate
+- **angle** (*float*) Angle to rotate (positive)
 
 ### **rotate_left**(*angle=?*)
 
@@ -78,7 +95,7 @@ Rotate left (anti-clockwise from the pespective of the motor) by the given angle
 
 **Parameters**:
 
-- **angle** (*float*) Angle to rotate
+- **angle** (*float*) Angle to rotate (positive)
 
 ### **close()**
 

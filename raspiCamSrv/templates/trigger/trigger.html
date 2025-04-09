@@ -538,82 +538,88 @@
         <div class="w3-row">
             <h4>Trigger Overview</h4>
             <form method="post" id="formtriggers" action="{{ url_for('trigger.trigger_activation') }}">
-                <table class="w3-table-all">
-                    <tr>
-                        <th>
-                            ID
-                        </th>
-                        <th>
-                            Active
-                        </th>
-                        <th>
-                            Source
-                        </th>
-                        <th>
-                            Device
-                        </th>
-                        <th>
-                            Event
-                        </th>
-                        <th>
-                            Parameters
-                        </th>
-                        <th>
-                            Control
-                        </th>
-                        <th>
-                            Delete
-                        </th>
-                    </tr>
-                    {% if tc.triggers|length() > 0 %}
-                    {% for trigger in tc.triggers %}
-                    <tr>
-                        <td>
-                            {{ trigger.id }}
-                        </td>
-                        <td>
-                            {% if sc.isEventhandling %}
-                            {% if trigger.isActive == True %}
-                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="1" checked disabled>
-                            {% else %}
-                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="0" disabled>
-                            {% endif %}
-                            {% else %}
-                            {% if trigger.isActive == True %}
-                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="1" checked>
-                            {% else %}
-                            <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="0">
-                            {% endif %}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ trigger.source }}
-                        </td>
-                        <td>
-                            {{ trigger.device }}
-                        </td>
-                        <td>
-                            {{ trigger.event }}
-                        </td>
-                        <td>
-                            {{ trigger.params }}
-                        </td>
-                        <td>
-                            {{ trigger.control }}
-                        </td>
-                        <td>
-                            {% if sc.isEventhandling %}
-                            <input type="checkbox" id="trigger{{ trigger.id }}_delete" name="trigger{{ trigger.id }}_delete" value="0"
-                                onchange="countTriggerDelete('trigger{{ trigger.id }}_delete')" disabled>
-                            {% else %}
-                            <input type="checkbox" id="trigger{{ trigger.id }}_delete" name="trigger{{ trigger.id }}_delete" value="0"
-                                onchange="countTriggerDelete('trigger{{ trigger.id }}_delete')">
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    {% endif %}
-                </table>
+                <div style="max-height:58.5vh;overflow-y:auto">
+                    <table class="w3-table-all">
+                        <thead>
+                            <tr>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    ID
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Active
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Source
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Device
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Event
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Parameters
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Control
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Delete
+                                </th>
+                            </tr>
+                        </thead>
+                        {% if tc.triggers|length() > 0 %}
+                        <tbody>
+                            {% for trigger in tc.triggers %}
+                            <tr>
+                                <td>
+                                    {{ trigger.id }}
+                                </td>
+                                <td>
+                                    {% if sc.isEventhandling %}
+                                    {% if trigger.isActive == True %}
+                                    <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="1" checked disabled>
+                                    {% else %}
+                                    <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="0" disabled>
+                                    {% endif %}
+                                    {% else %}
+                                    {% if trigger.isActive == True %}
+                                    <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="trigger{{ trigger.id }}_isactive" name="trigger{{ trigger.id }}_isactive" value="0">
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ trigger.source }}
+                                </td>
+                                <td>
+                                    {{ trigger.device }}
+                                </td>
+                                <td>
+                                    {{ trigger.event }}
+                                </td>
+                                <td>
+                                    {{ trigger.params }}
+                                </td>
+                                <td>
+                                    {{ trigger.control }}
+                                </td>
+                                <td>
+                                    {% if sc.isEventhandling %}
+                                    <input type="checkbox" id="trigger{{ trigger.id }}_delete" name="trigger{{ trigger.id }}_delete" value="0"
+                                        onchange="countTriggerDelete('trigger{{ trigger.id }}_delete')" disabled>
+                                    {% else %}
+                                    <input type="checkbox" id="trigger{{ trigger.id }}_delete" name="trigger{{ trigger.id }}_delete" value="0"
+                                        onchange="countTriggerDelete('trigger{{ trigger.id }}_delete')">
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% endif %}
+                    </table>
+                </div>
                 <p style="margin-bottom: 0"></p>
                 {% if tc.triggers|length() > 0 %}
                 <input class="w3-button w3-black" type="submit" value="Submit" onclick="confirmDeleteTriggers('formtriggers')">
@@ -855,82 +861,88 @@
         <div class="w3-row">
             <h4>Action Overview</h4>
             <form id="formactions" method="post" action="{{ url_for('trigger.action_activation') }}">
-                <table class="w3-table-all">
-                    <tr>
-                        <th>
-                            ID
-                        </th>
-                        <th>
-                            Active
-                        </th>
-                        <th>
-                            Source
-                        </th>
-                        <th>
-                            Device
-                        </th>
-                        <th>
-                            Action Method
-                        </th>
-                        <th>
-                            Parameters
-                        </th>
-                        <th>
-                            Control
-                        </th>
-                        <th>
-                            Delete
-                        </th>
-                    </tr>
-                    {% if tc.actions|length() > 0 %}
-                    {% for action in tc.actions %}
-                    <tr>
-                        <td>
-                            {{ action.id }}
-                        </td>
-                        <td>
-                            {% if sc.isEventhandling %}
-                            {% if action.isActive == True %}
-                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="1" checked disabled>
-                            {% else %}
-                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="0" disabled>
-                            {% endif %}
-                            {% else %}
-                            {% if action.isActive == True %}
-                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="1" checked>
-                            {% else %}
-                            <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="0">
-                            {% endif %}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ action.source }}
-                        </td>
-                        <td>
-                            {{ action.device }}
-                        </td>
-                        <td>
-                            {{ action.method }}
-                        </td>
-                        <td>
-                            {{ action.params }}
-                        </td>
-                        <td>
-                            {{ action.control }}
-                        </td>
-                        <td>
-                            {% if sc.isEventhandling %}
-                            <input type="checkbox" id="action{{ action.id }}_delete" name="action{{ action.id }}_delete" value="0"
-                                onchange="countActionDelete('action{{ action.id }}_delete')" disabled>
-                            {% else %}
-                            <input type="checkbox" id="action{{ action.id }}_delete" name="action{{ action.id }}_delete" value="0"
-                                onchange="countActionDelete('action{{ action.id }}_delete')">
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    {% endif %}
-                </table>
+                <div style="max-height:58.5vh;overflow-y:auto">
+                    <table class="w3-table-all">
+                        <thead>
+                            <tr>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    ID
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Active
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Source
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Device
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Action Method
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Parameters
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Control
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Delete
+                                </th>
+                            </tr>
+                        </thead>
+                        {% if tc.actions|length() > 0 %}
+                        <tbody>
+                            {% for action in tc.actions %}
+                            <tr>
+                                <td>
+                                    {{ action.id }}
+                                </td>
+                                <td>
+                                    {% if sc.isEventhandling %}
+                                    {% if action.isActive == True %}
+                                    <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="1" checked disabled>
+                                    {% else %}
+                                    <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="0" disabled>
+                                    {% endif %}
+                                    {% else %}
+                                    {% if action.isActive == True %}
+                                    <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="action{{ action.id }}_isactive" name="action{{ action.id }}_isactive" value="0">
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ action.source }}
+                                </td>
+                                <td>
+                                    {{ action.device }}
+                                </td>
+                                <td>
+                                    {{ action.method }}
+                                </td>
+                                <td>
+                                    {{ action.params }}
+                                </td>
+                                <td>
+                                    {{ action.control }}
+                                </td>
+                                <td>
+                                    {% if sc.isEventhandling %}
+                                    <input type="checkbox" id="action{{ action.id }}_delete" name="action{{ action.id }}_delete" value="0"
+                                        onchange="countActionDelete('action{{ action.id }}_delete')" disabled>
+                                    {% else %}
+                                    <input type="checkbox" id="action{{ action.id }}_delete" name="action{{ action.id }}_delete" value="0"
+                                        onchange="countActionDelete('action{{ action.id }}_delete')">
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% endif %}
+                    </table>
+                </div>
                 <p style="margin-bottom: 0"></p>
                 {% if tc.actions|length() > 0 %}
                 <input class="w3-button w3-black" type="submit" value="Submit" onclick="confirmDeleteActions('formactions')">
@@ -946,49 +958,55 @@
     <div id="trgtriggeractions" class="triggergroup" style="display:none">
     {% endif %}
         <h3>Trigger Actions</h3>
-        <div overflow: auto>
+        <div>
             <form method="post" action="{{ url_for('trigger.trigger_action') }}">
-                <table class="w3-table-all">
-                    <tr>
-                        <th class="width:10%">
-                            Trigger
-                        </th>
-                        {% for action in tc.actions %}
-                        <th class="width:5%; w3-center">
-                            {{ action.id }}
-                        </th>
-                        {% endfor %}
-                        <th class="width:90%"></th>
-                    </tr>
-                    {% for trigger in tc.triggers %}
-                    {% set triggerId = trigger.id %}
-                    {% set triggerActions = trigger.actions %}
-                    <tr>
-                        <th class="width:10%">
-                            {{ trigger.id }}
-                        </th>
-                        {% for action in tc.actions %}
-                        {% set actionId = action.id %}
-                        <td class="width:5%; w3-center">
-                            {% if sc.isEventhandling %}
-                            {% if triggerActions[actionId] == True %}
-                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="1" checked disabled>
-                            {% else %}
-                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="0" disabled>
-                            {% endif %}
-                            {% else %}
-                            {% if triggerActions[actionId] == True %}
-                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="1" checked>
-                            {% else %}
-                            <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="0">
-                            {% endif %}
-                            {% endif %}
-                        </td>
-                        {% endfor %}
-                        <td class="width:90%"></td>
-                    </tr>
-                    {% endfor %}
-                </table>
+                <div style="max-height:78.5vh;max-width:95vw;overflow-x:auto;overflow-y:auto">
+                    <table class="w3-table-all" style=" width: max-content;">
+                        <thead>
+                            <tr>
+                                <th class="width:10%" style="background-color: #f1f1f1;position:sticky;top:0;left:0;z-index:12">
+                                    Trigger
+                                </th>
+                                {% for action in tc.actions %}
+                                <th class="width:5%; w3-center" style="background-color: #f1f1f1;position:sticky;top:0;z-index:10">
+                                    {{ action.id }}
+                                </th>
+                                {% endfor %}
+                                <th class="width:90%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trigger in tc.triggers %}
+                            {% set triggerId = trigger.id %}
+                            {% set triggerActions = trigger.actions %}
+                            <tr>
+                                <th class="width:10%" style="position:sticky; left:0; background-color: #f1f1f1;z-index:11;">
+                                    {{ trigger.id }}
+                                </th>
+                                {% for action in tc.actions %}
+                                {% set actionId = action.id %}
+                                <td class="width:5%; w3-center">
+                                    {% if sc.isEventhandling %}
+                                    {% if triggerActions[actionId] == True %}
+                                    <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="1" checked disabled>
+                                    {% else %}
+                                    <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="0" disabled>
+                                    {% endif %}
+                                    {% else %}
+                                    {% if triggerActions[actionId] == True %}
+                                    <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="triggeraction_{{ triggerId }}_{{ actionId }}" name="triggeraction_{{ triggerId }}_{{ actionId }}" value="0">
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                                <td class="width:90%"></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 <p style="margin-bottom: 0"></p>
                 <input class="w3-button w3-black" type="submit" value="Submit">
             </form>
@@ -1759,14 +1777,15 @@
                         <td style="height: 15px;"></td>
                     </tr>
                     <tr>
-                        <td style="width: 5%;">
-                        </td>
-                        <td style="width: 35%;">
-                        </td>
-                        <td rowspan="2" style="width: 60%;">
+                        <td style="width: 100%;">
                             <div class="w3-right">
+                                <form style="display:inline-block" id="dodownloadlog" method="post" action="{{ url_for('trigger.do_download_log') }}">
+                                    <input class="w3-button w3-green w3-round-xxlarge" style="display:inline-block; width: 150px" type="submit"
+                                        value="Download Log">
+                                </form>
                                 <form style="display:inline-block" id="docleanupevents" method="post" action="{{ url_for('trigger.do_cleanup') }}">
-                                    <input class="w3-button w3-black w3-round-xxlarge" style="display:inline-block; width: 100px" type="submit" onclick="confirmCleanup('docleanupevents', '{{ tc.retentionPeriodStr}}')" value="Cleanup">
+                                    <input class="w3-button w3-black w3-round-xxlarge" style="display:inline-block; width: 100px" type="submit" 
+                                        onclick="confirmCleanup('docleanupevents', '{{ tc.retentionPeriodStr}}')" value="Cleanup">
                                 </form>
                                 <form style="display:inline-block" method="post" action="{{ url_for('trigger.do_refresh_calendar') }}">
                                     <input style="display:inline-block" class="w3-button w3-green w3-round-xxlarge" type="submit" value="Refresh">

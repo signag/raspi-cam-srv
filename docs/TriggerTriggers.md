@@ -35,10 +35,13 @@ Information about their function can be obtained from the gpiozero class documen
 Control parameters are not part of the class functionality but they can affect how **raspiCamSrv** processes a captured event:
 
 - *bounce_time*<br>This is a time interval given in seconds.<br>After an event has been processed, other events occurring within this interval will be ignored.<br>This shall avoid jitter in triggered actions. For some devices (e.g. Button), bounce time can already be specified for the device and will be handled by gpiozero.
+- *event_log*<br>The value of this parameter decides whether or not a trigger and its [associated actions](./TriggerTriggerActions.md) will be treated as events and included in [event logging](./TriggerActive.md) and [event viewer](./TriggerEventViewer.md).<br>If **False**, events triggered by the trigger will not be logged in [event logging](./TriggerActive.md) and they will also not be visible in the [event viewer](./TriggerEventViewer.md). Instead, if camera actions are associated with the trigger, the resulting photos and videos will be visible in the normal [Photo Viewer](./PhotoViewer.md).
 
 ### Restrictions
 
-Only one trigger can be configured for a specific device-event.
+Only one active trigger can be configured for a specific device-event.
+
+If another trigger is configured for the same event, only one trigger will remain active.
 
 If you want multiple actions on a specific trigger, you will specify this in [Trigger-Actions](./TriggerTriggerActions.md).
 
