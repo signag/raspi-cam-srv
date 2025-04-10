@@ -7,7 +7,7 @@ On this Settings screen you can configure devices connected to the Raspberry Pi 
 ![Devices](./img/Settings_Devices.jpg)
 
 
-**IMPORTANT**: To preserve any configurations ofer server restart, you need to [store the configuration and activate *Start Server with stored Configuration*](./SettingsConfiguration.md)
+**IMPORTANT**: To preserve any configurations over server restart, you need to [store the configuration and activate *Start Server with stored Configuration*](./SettingsConfiguration.md)
 
 ## Creating a Device
 

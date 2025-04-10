@@ -2,8 +2,10 @@
 
 The Raspberry Pi Camera Server (raspiCamSrv) is a web server which can be deployed on a Raspberry Pi device giving access to installed cameras and allows to control these.
 
-It can be installed on all Raspberry Pi platforms which allow connection of one or multiple cameras and supports the currently existing camera types.
-Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2, 3, HQ and GS. On Pi 5, also parallel installation of two different cameras was tested.
+In addition, also a large variety of [GPIO-connected devices](./docs/SettingsDevices.md) can be controlled through the user interface or within the freely configurable [event handling infrastructure](./docs/Trigger.md) which integrates camera functions with devices.
+
+**raspiCamSrv** can be installed on all Raspberry Pi platforms which allow connection of one or multiple cameras and supports the currently existing camera types.
+Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2, 3, HQ and GS. On Pi 5, also parallel installation of two different cameras is supported.
 
 **raspiCamSrv** is built with [Flask 3.x](https://flask.palletsprojects.com/en/stable/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 

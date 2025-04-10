@@ -41,14 +41,14 @@ If you have input devices, such as sensors or buttons and/or output devices, suc
 
 - You start with configuring the connected devices in the [Settings/Devices](./SettingsDevices.md) screen.    
 - Then, for the configured input devices, you configure [Triggers](./TriggerTriggers.md) which can also be based on camera events, such as start or stop of video recording, streaming or motion capturing.
-- Es next, you configure any type of [actions](./TriggerActions.md) which you want to see, such as LEDs being switched on, a stepper motor executing a certain number of steps or photos and/or videos being taken with the camera.<br>In addition, you can also configure an SMTP action for being informed about an event by mail.
+- As next, you configure any type of [actions](./TriggerActions.md) which you want to see, such as LEDs being switched on, a stepper motor executing a certain number of steps or photos and/or videos being taken with the camera.<br>In addition, you can also configure an SMTP action for being informed about an event by mail.
 - Once this is done, you need to specify for each of the triggers, which actions shall be processed once an event has been triggered. This is done in dialog [Trigger Actions](./TriggerTriggerActions.md).
 - In the [Triggers](./TriggerTriggers.md) and [Actions](./TriggerActions.md) dialogs, you also have the possibility to deactivate or activate triggers and actions, respectively.
 
 ### Integration
 
 The two types of event handling exist independently from each other and can be used separately or simultaneously.    
-Events from [Triggers](./TriggerTriggers.md) defined as part of the [General Event Handling](#2-general-event-handling) can also be [logged](./TriggerActive.md) and visualized in the [Event Viewer](./TriggerEventViewer.md) if their *event_log* control parameter is set to "True".
+Events from [Triggers](./TriggerTriggers.md) defined as part of the [General Event Handling](#2-general-event-handling) can also be [logged](./TriggerActive.md#log-file) and visualized in the [Event Viewer](./TriggerEventViewer.md) if their *event_log* control parameter is set to "True".
 
 SMTP actions for mailing use the [Notification](./TriggerNotification.md) settings. Whether photos and/or videos, created during action processing, shall be included in a mail, can be configured independently for each SMTP [action](./TriggerActions.md).
 
