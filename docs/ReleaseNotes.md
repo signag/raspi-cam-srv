@@ -37,6 +37,30 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.5.0
+
+### New Features
+
+- [StepperMotor](./gpioDevices/StepperMotor.md) has got new functionality. In addition to the new methods ```swing()``` and ```rotate_to(angle)```, the ```current_angle``` of rotation is tracked and can be set and queried.<br>```swing()``` allows stepwise rotations within given boundaries whereas ```rotate_to(angle)``` rotates to a specified angle.<br>This functionality relies on [Calibration](./SettingsDevices.md#calibrating-a-device) and device status tracking.<br>**NOTE**: If you have already a StepperMotor configured, it will not inherit the new functions. You will need to recreate it.
+- [Device Configuration](./SettingsDevices.md) for StepperMotor allows [Calibration](./SettingsDevices.md#calibrating-a-device) to set a specific orientation as zero reference.
+- For devices requiring [Calibration](./SettingsDevices.md#calibrating-a-device) (currently only StepperMotor), the status is continuously tracked and memorized so that it can be restored after a restart or a renewed device access.<br>**NOTE**: This may not work if the **raspiCamSrv** server is stopped while the StepperMotor is active.
+- A new Camera [Trigger] is available: ```when_series_photo_taken``` allows assigning [Actions](./TriggerActions.md) when a photo has been taken within a [Photo Series](./PhotoSeries.md).<br>The trigger does not fire in case of an [Exposure Series](./PhotoSeriesExp.md) or a [Focus Stack](./PhotoSeriesFocus.md)
+
+### Changes
+
+- Camera [Actions](./TriggerActions.md) do no longer trigger events. This means: if, for example, a [Trigger](./TriggerTriggers.md) has been specified when a Photo is taken, this trigger will no longer fire if the photo is taken as an action of another trigger.
+
+### Bugfixes
+
+- [API](./API.md) endpoint ```api/start_triggered_capture``` now also starts event handling and not only motion detection
+- [API](./API.md) endpoint ```api/stop_triggered_capture``` now also stops event handling and not only motion detection
+- Fixed error ```Camera.frames - Exception: argument of type 'NoneType' is not iterable``` which could occur if button [Load Stored Configuration](./SettingsConfiguration.md) has been pressed.
+- Fixed [Load Stored Configuration](./SettingsConfiguration.md): Now, all background processes are stopped before the stored configuration is loaded, and they are restarted afterwards, if they had been active before.
+- Fixed [Reset Server](./SettingsConfiguration.md): Now, all background processes are stopped before the configuration is set to default, and they are restarted afterwards, if they had been active before. Some missing configurations which may have led to errors have also been fixed.
+- Made ```table-layout:fixed``` for [Versatile Buttons](./ConsoleVButtons.md) and [Action Buttons](./ConsoleActionButtons.md) so that all columns have equal width and empty rows are shown.
+- Multiple SMTP mails for the same [Trigger](./TriggerTriggers.md) are avoided.
+- Fixed event notification. Due to a timing issue, sent mails could be incomplete and attachments may have been missing.
+
 ## V3.4.0
 
 ### New Features

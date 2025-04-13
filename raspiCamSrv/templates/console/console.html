@@ -50,9 +50,9 @@
             {% set cst = 'style=width:' + cws + '%'%}
     -->
             {% set cst = 'width:' + cws + '%; min-height:38.5px; height:38.5px' %}
-            <table style="width:100%">
+            <table style="table-layout:fixed; width:100%">
                 {% for r in sc.vButtons %}
-                <tr>
+                <tr style="height:38.5px">
                     {% for btn in r %}
                     {% set shape = btn["buttonShape"] %}
                     {% set color = btn["buttonColor"] %}
@@ -211,9 +211,9 @@
             {% set cst = 'style=width:' + cws + '%'%}
     -->
             {% set cst = 'width:' + cws + '%; min-height:38.5px; height:38.5px' %}
-            <table style="width:100%">
+            <table style="table-layout:fixed; width:100%">
                 {% for r in sc.aButtons %}
-                <tr>
+                <tr style="height:38.5px">
                     {% for btn in r %}
                     {% set shape = btn["buttonShape"] %}
                     {% set color = btn["buttonColor"] %}

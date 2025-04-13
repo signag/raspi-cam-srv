@@ -1305,16 +1305,45 @@
             {% set device = sc.curDevice %}
             {% if device.isOk == True %}
             <hr>
+            {% if device.needsCalibration == True %}
+            <h3>Device Test & Calibration</h3>
+            {% else %}
             <h3>Device Test</h3>
-            <table>
+            {% endif %}
+            <table style="table-layout: fixed; width:100%">
                 <tr>
-                    <td style="width:35%">
+                    <td style="width:25%">
                         <form method="post" id="testdevice" action="{{ url_for('settings.test_device') }}">
                             <input class="w3-button w3-black" style="width:95px" type="submit" value="Test" onclick="hideTestResults()">
                         </form>
                     </td>
-                    <td colspan="2" style="width:65%">
+                    <td style="width:25%">
+                        {% if device.needsCalibration == True %}
+                        <form method="post" id="calibratedevice" action="{{ url_for('settings.calibrate_device') }}">
+                            <input class="w3-button w3-black" style="width:95px" type="submit" value="Calibrate" onclick="hideTestResults()">
+                        </form>
+                        {% endif %}
                     </td>
+                    {% if device.isCalibrating == True %}
+                    <td style="width:10%">
+                        <a href="{{ url_for('settings.calibrate_fbwd') }}" class="w3-button w3-sand">&laquo;</a>
+                    </td>
+                    <td style="width:10%">
+                        <a href="{{ url_for('settings.calibrate_bwd') }}" class="w3-button w3-sand">&lt</a>
+                    </td>
+                    <td style="width:10%">
+                        <a href="{{ url_for('settings.docalibrate') }}" class="w3-button w3-sand">OK</a>
+                    </td>
+                    <td style="width:10%">
+                        <a href="{{ url_for('settings.calibrate_fwd') }}" class="w3-button w3-sand">&gt</a>
+                    </td>
+                    <td style="width:10%">
+                        <a href="{{ url_for('settings.calibrate_ffwd') }}" class="w3-button w3-sand">&raquo;</a>
+                    </td>
+                    {% else %}
+                    <td style="width:50%">
+                    </td>
+                    {% endif %}
                 </tr>
             </table>
             {% if result|length() > 0 %}

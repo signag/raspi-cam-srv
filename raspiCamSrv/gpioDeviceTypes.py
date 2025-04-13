@@ -824,11 +824,47 @@ gpioDeviceTypes = [
                 "max": 27,
                 "isPin": True
                 },
+            "mode": {
+                "value": 0,
+                "type": "int",
+                "min": 0,
+                "max": 1,
+                },
             "speed": {
                 "value": 1.0,
                 "type": "float",
                 "min": 0.0,
                 "max": 1.0,
+                },
+            "current_angle": {
+                "value": 0.0,
+                "type": "float",
+                "min": -360.0,
+                "max": 360.0,
+                },
+            "swing_from": {
+                "value": -45.0,
+                "type": "float",
+                "min": -360.0,
+                "max": 0.0,
+                },
+            "swing_to": {
+                "value": 45.0,
+                "type": "float",
+                "min": 0.0,
+                "max": 360.0,
+                },
+            "swing_step": {
+                "value": 9.0,
+                "type": "float",
+                "min": 0.0,
+                "max": 360.0,
+                },
+            "swing_direction": {
+                "value": 1,
+                "type": "int",
+                "min": -1,
+                "max": 1,
                 },
             "stride_angle": {
                 "value": 5.625,
@@ -844,10 +880,33 @@ gpioDeviceTypes = [
                 }
         },
         "testMethods":[
-            {"rotate_right":90},
-            {"rotate_left":90}
+            {"rotate_right":90.0},
+            {"rotate_left":90.0},
+            {"rotate_to":0.0}
         ],
         "testStepDuration": 1,
+        "calibration": {
+            "fbwd": {
+                "method": "rotate",
+                "params": {"angle":-10.0},
+            },
+            "bwd": {
+                "method": "rotate",
+                "params": {"angle":-1.0},
+            },
+            "calibrate": {
+                "method": "value",
+                "params": {"value":0.0},
+            },
+            "fwd": {
+                "method": "rotate",
+                "params": {"angle":1.0},
+            },
+            "ffwd": {
+                "method": "rotate",
+                "params": {"angle":10.0},
+            },
+        },
         "actionTargets":[
             {
                 "method": "step",
@@ -877,6 +936,16 @@ gpioDeviceTypes = [
             {
                 "method": "rotate_left",
                 "params": {"angle":1.0},
+                "control": {}
+            },
+            {
+                "method": "rotate_to",
+                "params": {"angle":1.0},
+                "control": {}
+            },
+            {
+                "method": "swing",
+                "params": {},
                 "control": {}
             }
         ]

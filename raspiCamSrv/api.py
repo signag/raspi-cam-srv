@@ -9,6 +9,7 @@ from _thread import get_ident
 import datetime
 import time
 from raspiCamSrv.motionDetector import MotionDetector
+from raspiCamSrv.triggerHandler import TriggerHandler
 from raspiCamSrv.version import version
 
 from raspiCamSrv.auth import login_required
@@ -116,9 +117,13 @@ def start_triggered_capture():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
-    if tc.triggeredByMotion:
-        MotionDetector().setAlgorithm()
-        MotionDetector().startMotionDetection()
+    if tc.triggeredByMotion \
+    or tc.triggeredByEvents:
+        if tc.triggeredByMotion:
+            MotionDetector().setAlgorithm()
+            MotionDetector().startMotionDetection()
+        if tc.triggeredByEvents:
+            TriggerHandler().start()
         if sc.error:
             msg = "Error in " + sc.errorSource + ": " + sc.error
             return jsonify(message=msg), 500
@@ -126,8 +131,15 @@ def start_triggered_capture():
             msg = "Error in " + tc.errorSource + ": " + tc.error
             return jsonify(message=msg), 500
         else:
-            sc.isTriggerRecording = True
-            msg = "Motion detection started"
+            if tc.triggeredByMotion:
+                sc.isTriggerRecording = True
+                msg = "Motion detection started"
+            if tc.triggeredByEvents:
+                sc.isEventhandling = True
+                msg = "Event handling started"
+            if tc.triggeredByMotion \
+            and tc.triggeredByEvents:
+                msg = "Motion detection and event handlinfg started"
             return jsonify(message=msg)
     else:
         msg = "There is no trigger activated"
@@ -140,10 +152,19 @@ def stop_triggered_capture():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
-    if tc.triggeredByMotion:
-        MotionDetector().stopMotionDetection()
-        sc.isTriggerRecording = False
-        msg = "Motion detection stopped"
+    if tc.triggeredByMotion \
+    or tc.triggeredByEvents:
+        if sc.isTriggerRecording:
+            MotionDetector().stopMotionDetection()
+            sc.isTriggerRecording = False
+            msg = "Motion detection stopped"
+        if sc.isEventhandling:
+            TriggerHandler().stop()
+            sc.isEventhandling = False
+            msg = "Event handling stopped"
+        if sc.isTriggerRecording \
+        and sc.isEventhandling:
+            msg = "Motion detection and event handling stopped"
         return jsonify(message=msg)
     else:
         msg = "There is no trigger activated"

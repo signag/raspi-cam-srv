@@ -20,7 +20,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V3.4.0
+## Feature Overview V3.5.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -38,6 +38,7 @@ The non-active camera stream and photo can be accessed through endpoints ```http
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
 - Support for interaction with GPIO-connected devices based on the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library. All basic input and output devices provided by *gpiozero* are supported and can be configured in the [Settings / Devices](./docs/SettingsDevices.md) dialog. In addition, also support for [Stepper Motor](./docs/gpioDevices/StepperMotor.md) is provided.
 - Events occurring on Input [Devices](./docs/SettingsDevices.md), such as sensors or buttons, can be configured as [Triggers](./docs/TriggerTriggers.md) for the execution of [Actions](./docs/TriggerActions.md). Various actors, such as LEDs, buzzers, motors and servos can thus be integrated. All this integrates well with available functionality of the camera system.
+- [Event Handling](./docs/Trigger.md#event-handling-infrastructure) fully integrates Camera with GPIO-connected devices 
 - Besides [Trigger](./docs/TriggerTriggers.md)-based [Action](./docs/TriggerActions.md) execution, actions can also be envoked through flexibly configurable [Action Buttons](./docs/ConsoleActionButtons.md).
 - [Event viewer](./docs/TriggerEventViewer.md) with calendar overview
 - Notification on captured events by e-Mail (see [Notification](./docs/TriggerNotification.md))
@@ -52,7 +53,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - For raw photos and videos, a jpeg placeholder is shown
 - The photos taken may be added to a display buffer for inspection of photos and metadata and for comparison (see [Photo Display](docs/Phototaking.md#photo-display))
 - On the [Config screen](docs/Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
-- When modifying [Stream Sizes](./docs/Configuration.md#stream-size-width-height) to non-standard aspect ratios, an option can assure that this is syncronously done for all camera configurations, so that Live Stream, Photos, Raw Photos and Videos have all the same aspect ratio and are not distorted.- The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
+- When modifying [Stream Sizes](./docs/Configuration.md#stream-size-width-height) to non-standard aspect ratios, an option can assure that this is syncronously done for all camera configurations, so that Live Stream, Photos, Raw Photos and Videos have all the same aspect ratio and are not distorted.
+- The [Info screen](docs/Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
 - The [Photos screen](docs/PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
 - This screen allows also photo/video download and deletion.
 - With the [Photo Series](docs/PhotoSeries.md) screen, different kinds of photo series ([Timelapse Series](./docs/PhotoSeriesTimelapse.md), [Exposure Series](./docs/PhotoSeriesExp.md), [Focus Stacks](./docs/PhotoSeriesFocus.md)) can be configured, executed and monitored during their progress.
@@ -68,8 +70,8 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V3.4**
-- [Event Handling](./docs/Trigger.md#event-handling-infrastructure) fully integrates Camera with GPIO-connected devices 
+**New in V3.5**
+- State tracking and calibration for output [Devices](./docs/SettingsDevices.md) available for [StepperMotor](./docs/gpioDevices/StepperMotor.md)
 
 ## Known Issues
 

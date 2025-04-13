@@ -945,6 +945,7 @@ class Camera():
     
     #Callbacks
     when_photo_taken = None
+    when_series_photo_taken = None
     when_recording_starts = None
     when_recording_stops = None
     when_streaming_1_starts = None
@@ -1250,6 +1251,7 @@ class Camera():
     @staticmethod
     def restartLiveStream():
         logger.debug("Thread %s: Camera.restartLiveStream", get_ident())
+        Camera.liveViewDeactivated = True
         Camera.stopLiveStream()
         time.sleep(0.5)
         logger.debug("Thread %s: Camera.restartLiveStream: Live stream stopped", get_ident())
@@ -1258,6 +1260,7 @@ class Camera():
         time.sleep(0.5)
         Camera.ctrl.clearConfig()
         logger.debug("Thread %s: Camera.restartLiveStream: Config cleared", get_ident())
+        Camera.liveViewDeactivated = False
         Camera.startLiveStream()
         logger.debug("Thread %s: Camera.restartLiveStream: Live stream started", get_ident())
     
@@ -2873,7 +2876,7 @@ class Camera():
                             logger.debug("Thread %s: Camera._photoSeriesThread Got camera for photo series exclusive: %s", get_ident(), exclusive)
                             photoseriesCtrls = Camera.applyControls(Camera.ctrl.configuration, exceptCtrl, exceptValue)
                             logger.debug("Thread %s: Camera._photoSeriesThread - selected controls applied", get_ident())
-                            time.sleep(1)
+                            time.sleep(1.5)
                             curTime = datetime.datetime.now()
                             timedif = nextTime - curTime
                             timedifSec = timedif.total_seconds()
@@ -2903,6 +2906,10 @@ class Camera():
                         logger.debug("Thread %s: Camera._photoSeriesThread - Request released", get_ident())
                         ser.curShots = curShots
                         ser.logPhoto(nextPhoto, lastTime, metadata)
+                        if ser.isFocusStackingSeries == False \
+                        and ser.isExposureSeries == False:
+                            if Camera().when_series_photo_taken:
+                                Camera().when_series_photo_taken()
                     except Exception as e:
                         ser.nextStatus("pause")
                         stop = True
@@ -2979,8 +2986,8 @@ class Camera():
                 CameraCfg().serverConfig.isPhotoSeriesRecording = False
                 #raise TimeoutError("Photoseries thread did not stop within 5 sec")
                 logger.debug("Thread %s: stopPhotoSeries: Thread seams to be dead", get_ident())
-            else:
-                logger.debug("Thread %s: stopPhotoSeries: Thread has stopped", get_ident())
+                break
+        logger.debug("Thread %s: stopPhotoSeries: Thread has stopped", get_ident())
         Camera.stopPhotoSeriesRequested = False
 
     @classmethod

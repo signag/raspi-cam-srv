@@ -29,6 +29,14 @@ class GPIODevice():
         self._usedPins = ""
         self._isOk = False
         self._docUrl = ""
+        self._needsCalibration = False
+        self._isCalibrating = False
+        self._deviceStatePath = ""
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        self._deviceStatePath = sc.cfgPath + "/device_state"
+        os.makedirs(self._deviceStatePath, exist_ok=True)
+        self._deviceStateFile = ""
 
     @property
     def id(self) -> str:
@@ -37,6 +45,7 @@ class GPIODevice():
     @id.setter
     def id(self, value: str):
         self._id = value
+        self._deviceStateFile = self._deviceStatePath + "/" + self._id + ".json"
 
     @property
     def usage(self) -> str:
@@ -85,6 +94,80 @@ class GPIODevice():
     @docUrl.setter
     def docUrl(self, value: str):
         self._docUrl = value
+
+    @property
+    def isCalibrating(self) -> bool:
+        return self._isCalibrating
+
+    @isCalibrating.setter
+    def isCalibrating(self, value: bool):
+        self._isCalibrating = value
+
+    @property
+    def needsCalibration(self) -> bool:
+        return self._needsCalibration
+
+    @needsCalibration.setter
+    def needsCalibration(self, value: bool):
+        self._needsCalibration = value
+        
+    def trackState(self, devObject:object) ->bool:
+        """ Track the state of a GPIO device for which calibration is required
+
+            The device object is expected to have the following attributes:
+            - value
+            The state is persisted in file
+
+        Args:
+            devObject (object): device object to track
+        Returns:
+            bool: True if the state is tracked successfully, False otherwise
+        """
+        logger.debug("GPIODevice.trackState - entry")
+        res = False
+        state = {}
+        if self._needsCalibration:
+            if hasattr(devObject, "value"):
+                try:
+                    value = getattr(devObject, "value")
+                    state["value"] = value
+                    logger.debug("GPIODevice.trackState - tracking value %s in file %s", value, self._deviceStateFile)
+                    with open(self._deviceStateFile, "w") as f:
+                        json.dump(state, f)
+                    res = True
+                except Exception as e:
+                    logger.error("GPIODevice.trackState: Error %s tracking device state: %s", type(e), e)
+        return res
+        
+    def setState(self, devObject:object) ->bool:
+        """ Set the state of a GPIO device for which calibration is required
+
+            The device object is expected to have the following attributes:
+            - value
+            The state is read from file
+
+        Args:
+            devObject (object): device object to track
+        Returns:
+            bool: True if the state is trasetcked successfully, False otherwise
+        """
+        logger.debug("GPIODevice.setState - entry")
+        res = False
+        state = {}
+        if self._needsCalibration:
+            try:
+                with open(self._deviceStateFile, "r") as f:
+                    state = json.load(f)
+                    logger.debug("GPIODevice.trackState - read from file %s : %s",self._deviceStateFile, state)
+                    if "value" in state:
+                        setattr(devObject, "value", state["value"])
+                        res = True
+            except FileNotFoundError:
+                # If state has not yet been persisted, keep default state
+                pass
+            except Exception as e:
+                logger.error("GPIODevice.setState: Error %s setting device state: %s", type(e), e)  
+        return res
 
     @classmethod                
     def initFromDict(cls, dict:dict):
@@ -1380,6 +1463,7 @@ class TriggerConfig():
             if device == "CAM-1":
                 events = [
                     "when_photo_taken", 
+                    "when_series_photo_taken", 
                     "when_recording_starts",
                     "when_recording_stops",
                     "when_streaming_1_starts",
@@ -3086,6 +3170,7 @@ class ServerConfig():
         self._curDevice = None
         self._curDeviceType = None
         self._gpioDevices = []
+        self._cfgPath = None
         
         # Check access of microphone
         self.checkMicrophone()
@@ -4103,6 +4188,14 @@ class ServerConfig():
     @gpioDevices.setter
     def gpioDevices(self, value: list[GPIODevice]):
         self._gpioDevices = value
+
+    @property
+    def cfgPath(self) -> str:
+        return self._cfgPath
+
+    @cfgPath.setter
+    def cfgPath(self, value: str):
+        self._cfgPath = value
 
     @property
     def API_active(self) -> bool:

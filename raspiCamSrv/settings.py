@@ -3,6 +3,9 @@ from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig, vButton, ActionButton
 from raspiCamSrv.camCfg import GPIODevice
 from raspiCamSrv.camera_pi import Camera, CameraEvent
+from raspiCamSrv.photoseriesCfg import PhotoSeriesCfg
+from raspiCamSrv.motionDetector import MotionDetector
+from raspiCamSrv.triggerHandler import TriggerHandler
 from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
 from gpiozero import Button, RotaryEncoder, MotionSensor, DistanceSensor, LightSensor, LineSensor, DigitalInputDevice
@@ -142,7 +145,30 @@ def resetServer():
     result = {}
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
+        if sc.isVideoRecording:
+            Camera().stopVideoRecording()
+        if sc.isPhotoSeriesRecording == True:
+            tl = PhotoSeriesCfg()
+            sr = tl.curSeries
+            sr.nextStatus("pause")
+            sr.persist()
+            Camera().stopPhotoSeries()
+            logger.debug("In resetServer - photo series stopped")
+        if sc.isTriggerRecording == True:
+            MotionDetector().stopMotionDetection()
+            sc.isTriggerRecording = False
+            logger.debug("In resetServer - Motion detection stopped")
+        if sc.isEventhandling:
+            TriggerHandler().stop()
+            sc.isEventhandling = False
+        if sc.isLiveStream == True:
+            Camera().stopLiveStream()
+            logger.debug("In resetServer - Live stream stopped")
+        if sc.isLiveStream2 == True:
+            Camera().stopLiveStream2()
+            logger.debug("In resetServer - Live stream 2 stopped")
         logger.debug("Stopping camera system")
+        time.sleep(3)
         Camera().stopCameraSystem()
         Camera.liveViewDeactivated = False
         Camera.thread = None
@@ -150,7 +176,11 @@ def resetServer():
         Camera.videoThread = None
         Camera.photoSeriesThread = None
         logger.debug("Resetting server configuration")
+        setLoadConfigOnStart(cfgPath, False)
         photoRoot = sc.photoRoot
+        prgOutpiutPath = sc.prgOutputPath
+        database = sc.database
+        actionPath = tc.actionPath
         cfg = CameraCfg()
         cfg.cameras = []
         cfg.sensorModes = []
@@ -190,6 +220,9 @@ def resetServer():
         sc = cfg.serverConfig
         tc = cfg.triggerConfig
         sc.photoRoot = photoRoot
+        sc.prgOutputPath = prgOutpiutPath
+        sc.database = database
+        tc.actionPath = actionPath
         if sc.raspiModelLower5:
             cfg.liveViewConfig.format = "YUV420"
         if sc.raspiModelFull.startswith("Raspberry Pi Zero") \
@@ -210,6 +243,8 @@ def resetServer():
         sc.isLiveStream2 = False
         sc.checkMicrophone()
         sc.checkEnvironment()
+        if sc.supportsExtMotionDetection == False:
+            cfg.triggerConfig.motionDetectAlgos = ["Mean Square Diff",]
         sc.curMenu = "settings"
         
         Camera.cam = None
@@ -383,22 +418,85 @@ def load_config():
     result = {}
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
-        cfg.loadConfig(cfgPath)
-        msg = "Configuration loaded from " + cfgPath
-        flash(msg)
-        Camera().restartLiveStream()
-        if Camera().cam2:
-            Camera().restartLiveStream2()
-        cam = Camera()
-        cfg = CameraCfg()
-        cs = cfg.cameras
-        sc = cfg.serverConfig
-        sc.checkMicrophone()
-        cp = cfg.cameraProperties
-        sc.curMenu = "settings"
-        cfgPath = current_app.static_folder + "/config"
-        los = getLoadConfigOnStart(cfgPath)
-        sc.unsavedChanges = False
+        msg = ""
+        # Stop background threads
+        if sc.isVideoRecording:
+            msg = "Please stop video recording before loading the configuration"
+        if msg == "":
+            if sc.isPhotoSeriesRecording == True:
+                tl = PhotoSeriesCfg()
+                sr = tl.curSeries
+                #sr.nextStatus("pause")
+                #sr.persist()
+                Camera().stopPhotoSeries()
+                logger.debug("In load_config - photo series stopped")
+                restartPhotoSeries = True
+            else:
+                restartPhotoSeries = False
+            if sc.isTriggerRecording == True:
+                MotionDetector().stopMotionDetection()
+                sc.isTriggerRecording = False
+                logger.debug("In load_config - Motion detection stopped")
+                restartTriggerRecording = True
+            else:
+                restartTriggerRecording = False
+            if sc.isEventhandling:
+                TriggerHandler().stop()
+                sc.isEventhandling = False
+                logger.debug("In load_config - Eventhandling stopped")
+                restartEventhandling = True
+            else:
+                restartEventhandling = False
+            if sc.isLiveStream == True:
+                Camera().stopLiveStream()
+                logger.debug("In load_config - Live stream stopped")
+                restartLiveStream = True
+            else:
+                restartLiveStream = False
+            if sc.isLiveStream2 == True:
+                Camera().stopLiveStream2()
+                logger.debug("In load_config - Live stream 2 stopped")
+                restartLiveStream2 = True
+            else:
+                restartLiveStream2 = False
+                
+            # Load stored configuration
+            cfg.loadConfig(cfgPath)
+            msg = "Configuration loaded from " + cfgPath
+            cam = Camera()
+            cfg = CameraCfg()
+            cs = cfg.cameras
+            sc = cfg.serverConfig
+            sc.checkMicrophone()
+            cp = cfg.cameraProperties
+            sc.curMenu = "settings"
+            cfgPath = current_app.static_folder + "/config"
+            los = getLoadConfigOnStart(cfgPath)
+
+            # Restart threads
+            if restartLiveStream == True:
+                Camera().restartLiveStream()
+                sc.isLiveStream = True
+                logger.debug("In load_config - Live stream started")
+            if restartLiveStream2 == True:
+                Camera().restartLiveStream2()
+                sc.isLiveStream2 = True
+                logger.debug("In load_config - Live stream 2 started")
+            if restartPhotoSeries == True:
+                Camera().startPhotoSeries(sr)
+                sc.isPhotoSeriesRecording = True
+                logger.debug("In load_config - photo series started")
+            if restartTriggerRecording == True:
+                MotionDetector().startMotionDetection()
+                sc.isTriggerRecording = True
+                logger.debug("In load_config - Motion detection started")
+            if restartEventhandling == True:
+                TriggerHandler().start()
+                sc.isEventhandling = True
+                logger.debug("In load_config - Eventhandling started")
+            sc.unsavedChanges = False
+        if msg != "":
+            flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 def getLoadConfigOnStart(cfgPath: str) -> bool:
@@ -798,6 +896,8 @@ def new_device():
                     for key, value in dt["params"].items():
                         params[key] = value["value"]
                     device.params = params
+                    if "calibration" in dt:
+                        device.needsCalibration = True
             sc.gpioDevices.append(device)
             sc.curDeviceId = deviceId
             sc.curDevice = device
@@ -874,7 +974,6 @@ def checkDeviceDeletion(deviceId: str, tc:TriggerConfig) -> str:
             msg = msg + " Actions " + str(inAction)
     return msg        
             
-    
 @bp.route('/delete_device', methods=("GET", "POST"))
 @login_required
 def delete_device():
@@ -905,7 +1004,11 @@ def delete_device():
                     break
                 idx += 1
             if idxDel >= 0:
-                pass
+                dev = sc.curDevice
+                if dev.needsCalibration == True:
+                    if dev._deviceStateFile != "":
+                        if os.path.exists(dev._deviceStateFile):
+                            os.remove(dev._deviceStateFile)
                 del sc.gpioDevices[idxDel]
             
             if len(sc.gpioDevices) > 0:
@@ -1170,6 +1273,7 @@ def test_device():
             try:
                 logger.debug("settings.test_device -instantiating %s(**%s)", devClass, devArgs)
                 devObj = globals()[devClass](**devArgs)
+                dev.setState(devObj)
             except Exception as e:
                 logger.debug("settings.test_device - Error while instantiating %s:%s, %s", devClass, type(e), e)
                 msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
@@ -1221,6 +1325,7 @@ def test_device():
                                     dispTest = f"{devClass}.{testMethod}"
                                     result = storeResult(result, dispTest, attr)
                                 logger.debug("settings.test_device - %s.%s=%s",devClass, testMethod, result[dispTest])
+                            dev.trackState(devObj)
                         except Exception as e:
                             result = storeResult(result, testMethod, f"{type(e)} : {e}")
                             logger.debug("settings.test_device - Exception %s, %s", type(e), e)
@@ -1243,4 +1348,389 @@ def test_device():
         if msg != "":
             flash(msg)
     logger.debug("settings.test_device - result %s", result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+
+@bp.route('/calibrate_device', methods=("GET", "POST"))
+@login_required
+def calibrate_device():
+    logger.debug("In calibrate_device")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsdevices"
+    if request.method == "POST":
+        msg = ""
+        dev = sc.curDevice
+        if dev.needsCalibration == True:
+            dev.isCalibrating = True
+            devClass = f"{dev.type}"
+            devArgs = dev.params
+            try:
+                logger.debug("settings.calibrate_device -instantiating %s(**%s)", devClass, devArgs)
+                devObj = globals()[devClass](**devArgs)
+                dev.setState(devObj)
+                if hasattr(devObj, "value"):
+                    result["value"] = getattr(devObj, "value")
+                dev.isCalibrating = True
+                sc.unsavedChanges = True
+            except Exception as e:
+                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+        else:
+            msg = f"Device {dev.id} does not need calibration."
+        if msg != "":
+            flash(msg)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+
+@bp.route('/calibrate_fbwd', methods=("GET", "POST"))
+@login_required
+def calibrate_fbwd():
+    logger.debug("In calibrate_fbwd reqest.method=%s", request.method)
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsdevices"
+
+    msg = ""
+    dev = sc.curDevice
+    dev.isCalibrating = True        
+    devType = sc.curDeviceType
+    if "calibration" in devType:
+        logger.debug("settings.calibrate_fbwd - calibrating")
+        calibration = devType["calibration"]
+        method = ""
+        params = ""
+        if "fbwd" in calibration:
+            adjust = calibration["fbwd"]
+            logger.debug("settings.calibrate_fbwd - calibrating method=%s", adjust)
+            if "method" in adjust:
+                method = adjust["method"]
+            if "params" in adjust:
+                params = adjust["params"]
+        if method != "":
+            devClass = f"{dev.type}"
+            devArgs = dev.params
+            try:
+                logger.debug("settings.calibrate_fbwd -instantiating %s(**%s)", devClass, devArgs)
+                devObj = globals()[devClass](**devArgs)
+            except Exception as e:
+                logger.debug("settings.calibrate_fbwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+            if msg == "":
+                dev.setState(devObj)
+                if hasattr(devObj, method):
+                    try:
+                        attr = getattr(devObj, method)
+                        if callable(attr) == True:
+                            logger.debug("settings.calibrate_fbwd - calling %s.%s(**%s)", devClass, method, params)
+                            res = attr(**params)
+                        else:
+                            msg = f"{devClass}.{method} is not callable."
+                    except Exception as e:
+                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                dev.trackState(devObj)
+                if hasattr(devObj, "value"):
+                    try:
+                        result["value"] = getattr(devObj, "value")
+                    except Exception as e:
+                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if msg != "":
+        flash(msg)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+
+@bp.route('/calibrate_bwd', methods=("GET", "POST"))
+@login_required
+def calibrate_bwd():
+    logger.debug("In calibrate_bwd reqest.method=%s", request.method)
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsdevices"
+
+    msg = ""
+    dev = sc.curDevice
+    dev.isCalibrating = True        
+    devType = sc.curDeviceType
+    if "calibration" in devType:
+        logger.debug("settings.calibrate_bwd - calibrating")
+        calibration = devType["calibration"]
+        method = ""
+        params = ""
+        if "bwd" in calibration:
+            adjust = calibration["bwd"]
+            logger.debug("settings.calibrate_bwd - calibrating method=%s", adjust)
+            if "method" in adjust:
+                method = adjust["method"]
+            if "params" in adjust:
+                params = adjust["params"]
+        if method != "":
+            devClass = f"{dev.type}"
+            devArgs = dev.params
+            try:
+                logger.debug("settings.calibrate_bwd -instantiating %s(**%s)", devClass, devArgs)
+                devObj = globals()[devClass](**devArgs)
+            except Exception as e:
+                logger.debug("settings.calibrate_bwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+            if msg == "":
+                dev.setState(devObj)
+                if hasattr(devObj, method):
+                    try:
+                        attr = getattr(devObj, method)
+                        if callable(attr) == True:
+                            logger.debug("settings.calibrate_bwd - calling %s.%s(**%s)", devClass, method, params)
+                            res = attr(**params)
+                        else:
+                            msg = f"{devClass}.{method} is not callable."
+                    except Exception as e:
+                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                dev.trackState(devObj)
+                if hasattr(devObj, "value"):
+                    try:
+                        result["value"] = getattr(devObj, "value")
+                    except Exception as e:
+                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if msg != "":
+        flash(msg)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+
+@bp.route('/docalibrate', methods=("GET", "POST"))
+@login_required
+def docalibrate():
+    logger.debug("In docalibrate")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsdevices"
+
+    msg = ""
+    dev = sc.curDevice
+    dev.isCalibrating = True        
+    devType = sc.curDeviceType
+    if "calibration" in devType:
+        logger.debug("settings.docalibrate - calibrating")
+        calibration = devType["calibration"]
+        method = ""
+        params = ""
+        if "calibrate" in calibration:
+            adjust = calibration["calibrate"]
+            logger.debug("settings.docalibrate - calibrating method=%s", adjust)
+            if "method" in adjust:
+                method = adjust["method"]
+            if "params" in adjust:
+                params = adjust["params"]
+        if method != "":
+            devClass = f"{dev.type}"
+            devArgs = dev.params
+            try:
+                logger.debug("settings.docalibrate -instantiating %s(**%s)", devClass, devArgs)
+                devObj = globals()[devClass](**devArgs)
+            except Exception as e:
+                logger.debug("settings.docalibrate - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+            if msg == "":
+                dev.setState(devObj)
+                if hasattr(devObj, method):
+                    try:
+                        attr = getattr(devObj, method)
+                        if callable(attr) == True:
+                            logger.debug("settings.docalibrate - calling %s.%s(**%s)", devClass, method, params)
+                            res = attr(**params)
+                        else:
+                            if "value" in params:
+                                value = params["value"]
+                                logger.debug("settings.docalibrate - calling %s.%s", devClass, method)
+                                setattr(devObj,"value", value)
+                            else:
+                                msg = f"'value' not not in {params}."
+                    except Exception as e:
+                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                dev.trackState(devObj)
+                if hasattr(devObj, "value"):
+                    try:
+                        result["value"] = getattr(devObj, "value")
+                    except Exception as e:
+                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+                dev.isCalibrating = False
+                sc.unsavedChanges = True
+                
+    if msg != "":
+        flash(msg)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+
+@bp.route('/calibrate_fwd', methods=("GET", "POST"))
+@login_required
+def calibrate_fwd():
+    logger.debug("In calibrate_fwd reqest.method=%s", request.method)
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsdevices"
+
+    msg = ""
+    dev = sc.curDevice
+    dev.isCalibrating = True        
+    devType = sc.curDeviceType
+    if "calibration" in devType:
+        logger.debug("settings.calibrate_fwd - calibrating")
+        calibration = devType["calibration"]
+        method = ""
+        params = ""
+        if "fwd" in calibration:
+            adjust = calibration["fwd"]
+            logger.debug("settings.calibrate_fwd - calibrating method=%s", adjust)
+            if "method" in adjust:
+                method = adjust["method"]
+            if "params" in adjust:
+                params = adjust["params"]
+        if method != "":
+            devClass = f"{dev.type}"
+            devArgs = dev.params
+            try:
+                logger.debug("settings.calibrate_fwd -instantiating %s(**%s)", devClass, devArgs)
+                devObj = globals()[devClass](**devArgs)
+            except Exception as e:
+                logger.debug("settings.calibrate_fwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+            if msg == "":
+                dev.setState(devObj)
+                if hasattr(devObj, method):
+                    try:
+                        attr = getattr(devObj, method)
+                        if callable(attr) == True:
+                            logger.debug("settings.calibrate_fwd - calling %s.%s(**%s)", devClass, method, params)
+                            res = attr(**params)
+                        else:
+                            msg = f"{devClass}.{method} is not callable."
+                    except Exception as e:
+                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                dev.trackState(devObj)
+                if hasattr(devObj, "value"):
+                    try:
+                        result["value"] = getattr(devObj, "value")
+                    except Exception as e:
+                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if msg != "":
+        flash(msg)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+
+@bp.route('/calibrate_ffwd', methods=("GET", "POST"))
+@login_required
+def calibrate_ffwd():
+    logger.debug("In calibrate_ffwd reqest.method=%s", request.method)
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingsdevices"
+
+    msg = ""
+    dev = sc.curDevice
+    dev.isCalibrating = True        
+    devType = sc.curDeviceType
+    if "calibration" in devType:
+        logger.debug("settings.calibrate_ffwd - calibrating")
+        calibration = devType["calibration"]
+        method = ""
+        params = ""
+        if "ffwd" in calibration:
+            adjust = calibration["ffwd"]
+            logger.debug("settings.calibrate_ffwd - calibrating method=%s", adjust)
+            if "method" in adjust:
+                method = adjust["method"]
+            if "params" in adjust:
+                params = adjust["params"]
+        if method != "":
+            devClass = f"{dev.type}"
+            devArgs = dev.params
+            try:
+                logger.debug("settings.calibrate_ffwd -instantiating %s(**%s)", devClass, devArgs)
+                devObj = globals()[devClass](**devArgs)
+            except Exception as e:
+                logger.debug("settings.calibrate_ffwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+            if msg == "":
+                dev.setState(devObj)
+                if hasattr(devObj, method):
+                    try:
+                        attr = getattr(devObj, method)
+                        if callable(attr) == True:
+                            logger.debug("settings.calibrate_ffwd - calling %s.%s(**%s)", devClass, method, params)
+                            res = attr(**params)
+                        else:
+                            msg = f"{devClass}.{method} is not callable."
+                    except Exception as e:
+                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                dev.trackState(devObj)
+                if hasattr(devObj, "value"):
+                    try:
+                        result["value"] = getattr(devObj, "value")
+                    except Exception as e:
+                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if msg != "":
+        flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)

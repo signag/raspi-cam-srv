@@ -134,6 +134,7 @@ class TriggerHandler():
 
                     # Instantiate device object
                     deviceObj = globals()[deviceClass](**deviceArgs)
+                    device.setState(deviceObj)
                     logger.debug("Thread %s: TriggerHandler._findDeviceInRegistry - instantiated: %s(%s)", get_ident(), deviceClass, deviceArgs)
                     cls._registry[source][deviceId]["deviceObject"] = deviceObj
                 elif source == "Camera":
@@ -340,6 +341,9 @@ class TriggerHandler():
                             attr()
                         except Exception as e:
                             logger.error("TriggerHandler._doGpioAction - Error while stopping %s with %s: %s: %s", deviceId, method, type(e), e)
+            # Track state
+            device = sc.getDevice(deviceId)
+            device.trackState(deviceObj)
 
             # Release busy state
             cls._findDeviceInRegistry("GPIO", deviceId, sc, busy=False)
@@ -478,7 +482,7 @@ class TriggerHandler():
         video["video_file"] = filenameVid
         logger.debug("Thread %s: TriggerHandler._doStartVideo - Recording a video %s", get_ident(), filenameVid)
         try:
-            fp = Camera().recordVideo(filenameVid, filename, alternatePath=path)
+            fp = Camera().recordVideo(filenameVid, filename, alternatePath=path, noEvents=True)
             video["video_path"] = fp
             time.sleep(2)
             if not sc.error:
@@ -538,7 +542,7 @@ class TriggerHandler():
             ctx["video"] = {}
         video = ctx["video"]
         try:
-            Camera().stopVideoRecording()
+            Camera().stopVideoRecording(noEvents=True)
             video["video_stop"] = datetime.now()
             time.sleep(2)
             if Camera.isVideoRecording() == False:
@@ -626,10 +630,10 @@ class TriggerHandler():
                 if typ == "dng":
                     filename = file + "." + sc.photoType
                     filenameRaw = file + "." + typ
-                    fp = Camera().takeRawImage(filenameRaw, filename, alternatePath=path)
+                    fp = Camera().takeRawImage(filenameRaw, filename, alternatePath=path, noEvents=True)
                 else:
                     filename = file + "." + typ
-                    fp = Camera().takeImage(filename, alternatePath=path)
+                    fp = Camera().takeImage(filename, alternatePath=path, noEvents=True)
                     
                 photoCtx = {}
                 photoCtx["photo_time"] = timeImg
@@ -1120,6 +1124,7 @@ class TriggerHandler():
         Args:
             eventId (UUID): Unique ID of event
         """
+        time.sleep(1.0)
         logger.debug("Thread %s: TriggerHandler._waitForCompletion - entry", get_ident())
         ctxActions = None
         if eventId:
@@ -1402,24 +1407,25 @@ class TriggerHandler():
                     if status == True:
                         action = tc.getAction(act)
                         if action.isActive:
-                            actionCtx = {}
-                            actionCtx["action"] = action.id
-                            actionCtx["is_last"] = setAsLast
-                            eventCtx["actions"]. append(actionCtx)
-                            if action.source == "GPIO":
-                                gpioActionThread = threading.Thread(target=cls._doGpioAction, args=(action, trigger, eventId, setAsLast))
-                                actionCtx["thread"] = gpioActionThread
-                                gpioActionThread.start()
-                                cls._sub_threads.append(gpioActionThread)
-                            if action.source == "Camera":
-                                # For camera action, do not wait for the camera.
-                                # Waits would mainly occur with video recording. There, it does no make sense
-                                # to wait until current recording is finished and start new recording afterwards.
-                                camActionThread = threading.Thread(target=cls._doCameraAction, args=(action, trigger, eventId, setAsLast, True, False))
-                                actionCtx["thread"] = camActionThread
-                                camActionThread.start()
-                                cls._sub_threads.append(camActionThread)
-                            setAsLast = False
+                            if action.source != "SMTP":
+                                actionCtx = {}
+                                actionCtx["action"] = action.id
+                                actionCtx["is_last"] = setAsLast
+                                eventCtx["actions"]. append(actionCtx)
+                                if action.source == "GPIO":
+                                    gpioActionThread = threading.Thread(target=cls._doGpioAction, args=(action, trigger, eventId, setAsLast))
+                                    actionCtx["thread"] = gpioActionThread
+                                    gpioActionThread.start()
+                                    cls._sub_threads.append(gpioActionThread)
+                                if action.source == "Camera":
+                                    # For camera action, do not wait for the camera.
+                                    # Waits would mainly occur with video recording. There, it does no make sense
+                                    # to wait until current recording is finished and start new recording afterwards.
+                                    camActionThread = threading.Thread(target=cls._doCameraAction, args=(action, trigger, eventId, setAsLast, True, False))
+                                    actionCtx["thread"] = camActionThread
+                                    camActionThread.start()
+                                    cls._sub_threads.append(camActionThread)
+                                setAsLast = False
                 logger.debug("Thread %s: TriggerHandler._actionDispatcher - cls._event_contexts: %s", get_ident(), cls._event_contexts)
 
     @classmethod

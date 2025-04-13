@@ -70,6 +70,32 @@ After the test is completed, the return values of the configured test methods wi
 
 For a test either the entire test or the individual steps may have preconfigured durations. So you need to wait until the test is completed and observe the device.
 
+## Calibrating a Device
+
+Some devices require state tracking and, therefore, calibration.
+
+This applies currently to the StepperMotor:    
+The StepperMotor itself does not have knowledge about its current position and if the class is instantiated, the *current_angle* is set to zero.   
+For usage of the StepperMotor it is, however, essential to know the position at any time.
+
+It is, therefore, necessary to
+1. set a certain state as reference "Zero"
+2. track and memorize any movements
+3. set the last state whenever the device class is instantiated
+
+Devices requiring this procedure have an element ```"calibration"``` in their [Device Type Configuration](#device-type-configuration).
+
+If such a device is configured, a **Calibrate** button will be shown.
+
+Pressing **Calibrate** will show additional buttons for calibration as well as the current state (```current_angle``` for StepperMotor):
+![Calibration](./img/Settings_Devices_Calibration.jpg)
+You can now change the device status using the arrow buttons until you reach the desired zero.   
+Pushing **OK** will then set the current state as reference and hide the calibration buttons.
+
+**raspiCamSrv** will track all status changes in a JSON file named after the device ID:     
+![Status](./img/Settings_Devices_Calibration_State.jpg)
+
+**ATTENTION**: If you are using such devices in any triggered [Actions](./TriggerActions.md) you should avoid shutting down the server while event handling is activated. The system might not be able to memorize the latest device state and may, therefore start with an incorrect state.
 
 ## Device Type Configuration
 
