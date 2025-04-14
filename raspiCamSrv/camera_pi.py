@@ -2391,9 +2391,13 @@ class Camera():
                     
                 stream = cfg.videoConfig.stream
                 # For Pi Zero take video with liveView (lowres stream)
-                # The lower buffer size of lowres is too small for video and we do not want to switch mode
+                # The lower buffer size of these devices is too small for full size video 
+                # and we do not want to switch mode
                 if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1"):
                     stream = cfg.liveViewConfig.stream
                 Camera.cam.start_encoder(encoder, name=stream)
                 done = True

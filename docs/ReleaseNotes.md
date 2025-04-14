@@ -37,6 +37,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.5.1
+
+### Bugfixes
+
+- Fixed video recording during motion tracking for Raspberry Pi models 1, 2, 3:<br>For models Pi 4 and lower, video recording during motion tracking should use the *Live View* [Configuration](./Configuration.md) because this is usually set to lower resolution and should, therefore, not cause memory issues with these devices.<br>Only for Pi 5, the *Video* Configuration should be used.<br>Unfortunately, in versions up to V3.5.0, this was only applied to Pi 4 and Pi Zero, whereas for Pi 1, Pi 2 and Pi 3 the *Video* configuration was used.<br>This is now corrected and for all models <= Pi 4 the *Live View* configuration is used.
+
 ## V3.5.0
 
 ### New Features
