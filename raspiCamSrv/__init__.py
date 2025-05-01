@@ -126,6 +126,9 @@ def create_app(test_config=None):
     sc.photoRoot = app.static_folder
     sc.prgOutputPath = prgOutPath
     sc.checkEnvironment()
+    # Wait for system time syncronization
+    sc.wait_for_time_sync()
+    serverStartTime = sc.serverStartTime
     if sc.supportsExtMotionDetection == False:
         cfg.triggerConfig.motionDetectAlgos = ["Mean Square Diff",]
     cfgPath = app.static_folder + "/config"
@@ -134,6 +137,7 @@ def create_app(test_config=None):
         cfg.loadConfig(cfgPath)
     cfg = camCfg.CameraCfg()
     sc = cfg.serverConfig
+    sc.serverStartTime = serverStartTime
     sc.cfgPath = cfgPath
     sc.checkEnvironment()
     sc.database = os.path.join(app.instance_path, "raspiCamSrv.sqlite")

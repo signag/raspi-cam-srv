@@ -24,6 +24,14 @@ For the operating system, the kernel version (result of ```uname -r```) and the 
 *FFmpeg Info* shows information on an ffmpeg process if encoding of .mp4 videos is currently active.   
 Recording of .mp4 videos may have been [started manually](./Phototaking.md) or as an action within [motion capturing](./Trigger.md)
 
+*raspiCamSrv Start* shows the time when the raspiCamSrv server has been started.   
+At server start, raspiCamSrv checks whether or not the Raspberry Pi system time is synchronized with the time server.   
+When the device is booted and raspiCamSrv is automatically started, the time syncronization will occasionally be done after the Flask server has already been started.    
+In this case, in order to avoid timing issues, raspiCamSrv will wait at startup until time syncronization is completed.   
+The time shown here is the system time at the moment when the check for time synchrinization was successful.   
+raspiCamSrv analyzes the output of command ```timedatectl``` to check the system clock synchronization status.    
+If this check fails or times out (60 sec), raspiCamSrv will start nevertheless. In this case, the information "System time not synced at raspiCamSrv start" will be shown here.
+
 ### Camera x
 
 The tab lists all cameras currently connected to the system.

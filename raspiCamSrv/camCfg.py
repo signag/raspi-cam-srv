@@ -17,6 +17,7 @@ from pathlib import Path
 import zoneinfo
 from secrets import token_urlsafe
 import threading
+from time import sleep
 
 logger = logging.getLogger(__name__)
 
@@ -3070,6 +3071,7 @@ class ActionButton():
 
 class ServerConfig():
     def __init__(self):
+        self._serverStartTime = None
         self._unsavedChanges = False
         self._error = None
         self._error2 = None
@@ -3203,6 +3205,21 @@ class ServerConfig():
 
         kernelVers = self.getKernelVersion()
         self._kernelVersion = kernelVers
+
+    @property
+    def serverStartTime(self) -> datetime:
+        return self._serverStartTime
+
+    @serverStartTime.setter
+    def serverStartTime(self, value: datetime):
+        self._serverStartTime = value
+
+    @property
+    def serverStartTimeStr(self) -> str:
+        if self._serverStartTime is None:
+            return "System time not synced at raspiCamSrv start"
+        else:
+            return self._serverStartTime.isoformat()
 
     @property
     def unsavedChanges(self) -> bool:
@@ -4307,6 +4324,48 @@ class ServerConfig():
         else:
             self.useAPI = False
         logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s flaskJwtLibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable, self.flaskJwtLibAvailable)
+
+    def is_time_synchronized(self) -> tuple[bool, bool]:
+        """ Check if the system time is synchronized with NTP server
+        
+        """
+        err = False
+        sync = False
+        try:
+            output = subprocess.check_output(["timedatectl"], text=True)
+            for line in output.splitlines():
+                if "System clock synchronized:" in line:
+                    sync = "yes" in line.split(":")[1].strip().lower()
+                    return (err, sync)
+        except Exception as e:
+            logger.error(f"Error checking time sync: {e}")
+            err = True
+        return (err, sync)
+
+    def wait_for_time_sync(self, timeout:int=60, interval:int=2) -> bool:
+        """ Wait for time synchronization with NTP server
+
+        Args:
+            timeout (int, optional): Timeout in seconds. Defaults to 60.
+            interval (int, optional): test cycle interval in seconds. Defaults to 2.
+
+        Returns:
+            bool: True if time is synchronized, False otherwise
+        """
+        logger.debug("ServerConfig.wait_for_time_sync")
+        for _ in range(int(timeout / interval)):
+            (err, sync) = self.is_time_synchronized()
+            if err == True:
+                break
+            if sync == True:
+                logger.debug("System time is synchronized")
+                self.serverStartTime = datetime.now()
+                return True
+            else:
+                logger.debug("Still waiting for time synchronization...")
+            sleep(interval)
+        logger.debug("Timeout while waiting for system time synchronization")
+        return False    
     
     @property
     def displayBufferCount(self) -> int:
@@ -5063,6 +5122,10 @@ class ServerConfig():
                             break
             elif key == "_unsavedChanges":
                 setattr(sc, key, False)
+            elif key == "_serverStartTime":
+                # Do not overwrite the server start time
+                # It has been set when the ServerConfig singleton has been instantiated
+                pass
             else:
                 setattr(sc, key, value)
         # Reset process status variables

@@ -55,6 +55,11 @@
                 <td>{{sc.ffmpegProcessInfo}}</td>
                 <td></td>
             </tr>
+            <tr>
+                <td>raspiCamSrv Start</td>
+                <td>{{sc.serverStartTimeStr}}</td>
+                <td></td>
+            </tr>
         </table>
         {% for cam in cs %}
         {% if cam.num == sc.activeCamera %}

@@ -37,6 +37,18 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.5.2
+
+### Bugfixes
+
+- Fixed a bug which caused [motion detection](./TriggerMotion.md) to be stalled after booting the Raspberry Pi.<br>The error was caused by a race condition between start of the raspiCamSrv server and syncronization of system time with a time server.<br>When time synchronization resets the system time while the live view is already active, this will signal inactivity for more than 10 sec and, therefore, immediately stop the live stream and subsequently close the camera.<br>Since motion detection relies on an active live stream, this could cause blocking of the motion detection thread which then cannot be stopped except by restarting the server.<br>Now, the system checks the system time synchronization status at startup and, if necessary, waits until time is syncronized with the time server.<br>This resolves [raspiCamSrv Issue #28: raspi-cam-srv seems to be frozen sometimes](https://github.com/signag/raspi-cam-srv/issues/28)<br>**NOTE**: This fix does not currently work when running raspiCamSrv as [Docker Container](./SetupDocker.md)
+
+- Fixed missing [Config](./Configuration.md) screen for [Docker installations](./SetupDocker.md)
+
+### New Feature
+
+- The [Info](./Information.md) screen now shows the time when **raspiCamSrv** has recognized time synchronization, which can be considered as the server start time.
+
 ## V3.5.1
 
 ### Bugfixes

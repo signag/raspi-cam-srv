@@ -20,7 +20,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V3.5.1
+## Feature Overview V3.5.2
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 

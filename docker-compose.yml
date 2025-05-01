@@ -12,9 +12,11 @@ services:
       - /dev/gpiochip0:/dev/gpiochip0
     volumes:
       - /run/udev/:/run/udev:ro
+      - /run/systemd:/run/systemd:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
       - GPIOZERO_PIN_FACTORY=lgpio
+      - SYSTEMD_BUS_ADDRESS=unix:path=/run/systemd/private
     restart: unless-stopped
     privileged: true

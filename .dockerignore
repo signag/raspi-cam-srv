@@ -3,7 +3,7 @@
 **/.git
 **/.venv
 **/.vscode
-**/config
+config
 **/docs
 **/instance
 **/logs
