@@ -23,7 +23,7 @@ The links shown on the page open a new browser window.
 
 ### Buttons
 
-#### Memorize Configuration and Controls for Camera Change
+#### Save Active Camera Settings for Camera Switch
 
 This button stores the current [Camera Configuration](./Configuration.md) for *Live View* and *Video* as well as the current [Controls](./CameraControls.md) settings for the active camera in a specific structure (streamingCfg) so that it can be reused for streaming in a case that the other camera has been activated. (See also [Configuring MJPEG Stream and jpeg Photo](#configuring-mjpeg-stream-and-jpeg-photo))
 
@@ -56,7 +56,7 @@ When the Flask server starts up without preloading stored configurations, the ac
 
 The Live View Configuration as well as the Controls for both cameras are stored in a specific streaming datastructure.
 
-When [Camera Configuration](./Configuration.md) and/or [Controls](./CameraControls.md) for the active camera are modified, these settings can be memorized with the **Memorize Configuration and Controls for Camera Change**.   
+When [Camera Configuration](./Configuration.md) and/or [Controls](./CameraControls.md) for the active camera are modified, these settings can be saved with the **Save Active Camera Settings for Camera Switch**.   
 When cameras are switched, their specific configurations and controls will be applied.
 
 In order to configure your camera setup, you can proceed as follows:
@@ -66,7 +66,7 @@ In order to configure your camera setup, you can proceed as follows:
 for example *Transform* and/or *Sensor Mode* with *Stream Size*
 3. Adjust the [Controls](./CameraControls.md),    
 for example *focus*/*lensposition*, *zoom*, *AutoExposure* or others
-4. When the setup is satisfactory, go to the *Webcam* dialog and press the **Memorize Configuration and Controls for Camera Change** button.
+4. When the setup is satisfactory, go to the *Webcam* dialog and press the **Save Active Camera Settings for Camera Switch** button.
 5. Then switch cameras with the **<<< Switch Cameras >>>** button.
 6. Repeat steps 2. to 4. for the other camera
 7. If you now switch cameras, each stream and photo should show in the way specifically configured for the camera.

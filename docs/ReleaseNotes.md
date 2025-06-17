@@ -37,6 +37,13 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.5.3
+
+### Changes
+
+In dialog [Web Cam](./Webcam.md), the button **Memorize Configuration and Controls for Camera Change** was renamed to **Save Active Camera Settings for Camera Switch** in order to more clearly express its functionality.   
+See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
+
 ## V3.5.2
 
 ### Bugfixes

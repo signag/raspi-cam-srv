@@ -145,7 +145,7 @@
                 {% if str2 != None and sc.isLiveStream == True %}
                 <form method="post" action="{{ url_for('webcam.store_streaming_config') }}">
                     <p style="margin-bottom: 0"></p>
-                    <input class="w3-button w3-black" type="submit" value="Memorize Configuration and Controls for Camera Change">
+                    <input class="w3-button w3-black" type="submit" value="Save Active Camera Settings for Camera Switch">
                 </form>
                 {% endif %}
             </td>
