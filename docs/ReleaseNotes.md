@@ -37,6 +37,13 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.5.4
+
+### Bugfixes
+
+- Corrected deprecated log level for Picamera2 logging from ```Picamera2.ERROR``` to ```logging.ERROR```   
+(See [raspi-cam-srv Issue #62](https://github.com/signag/raspi-cam-srv/issues/62))
+
 ## V3.5.3
 
 ### Changes

@@ -81,7 +81,7 @@ def create_app(test_config=None):
     #logging.getLogger("raspiCamSrv.api").setLevel(logging.DEBUG)
     
     #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
-    Picamera2.set_logging(Picamera2.ERROR)
+    Picamera2.set_logging(logging.ERROR)
     #>>>>> Uncomment the following line to let Picamera2 log to the log file
     #logging.getLogger("picamera2").addHandler(filehandler)
         

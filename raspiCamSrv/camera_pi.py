@@ -983,7 +983,8 @@ class Camera():
         prgLogger.debug("import time")
         prgLogger.debug("import os")
         prgLogger.debug("import gc")
-        prgLogger.debug("Picamera2.set_logging(Picamera2.ERROR)")
+        prgLogger.debug("import logging")
+        prgLogger.debug("Picamera2.set_logging(logging.ERROR)")
         prgLogger.debug('os.environ["LIBCAMERA_LOG_LEVELS"] = "*:3"')
         prgLogger.debug("videoDuration = 10")
         
