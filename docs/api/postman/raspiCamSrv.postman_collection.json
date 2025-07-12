@@ -350,6 +350,47 @@
 				"description": "Stop motion detection"
 			},
 			"response": []
+		},
+		{
+			"name": "api probe",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"properties\": [\r\n        {\r\n            \"property\": \"Camera().event\"\r\n        },\r\n        {\r\n            \"property\": \"Camera().event2\"\r\n        },\r\n        {\r\n            \"property\": \"Camera().last_access\"\r\n        },\r\n        {\r\n            \"property\": \"Camera().last_access2\"\r\n        },\r\n        {\r\n            \"property\": \"Camera().threadLock.locked()\"\r\n        },\r\n        {\r\n            \"property\": \"Camera().thread2Lock.locked()\"\r\n        },\r\n        {\r\n            \"property\": \"CameraCfg().serverConfig.error\"\r\n        },\r\n        {\r\n            \"property\": \"CameraCfg().serverConfig.error2\"\r\n        },\r\n        {\r\n            \"property\": \"CameraCfg().serverConfig.errorc2\"\r\n        },\r\n        {\r\n            \"property\": \"CameraCfg().serverConfig.errorc22\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/probe",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"probe"
+					]
+				},
+				"description": "Probe a set of object properties.\n\nYou need to specify an object through one of the singleton base classes (Camera(), CameraCfg(), MotionDetector(), PhotoSeriesCfg() or TriggerHandler()) and then specify valid properties with dot-notation.\n\nNote: Not all properties might be JSON-serializable."
+			},
+			"response": []
 		}
 	],
 	"event": [

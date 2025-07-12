@@ -4740,9 +4740,33 @@ class ServerConfig():
             logger.error("Error opening /etc/debian_version : %s", e)
             debianVers = ""
         
-        debianVers = self.getOsName() + " - Version " + debianVers
+        debianVers = self.getOsName() + " - Version " + debianVers + " - " + self.getOSArch()
         logger.debug("CameraCfg.getDebianVersion - debianVers = %s", debianVers)
         return debianVers
+
+    def getOSArch(self):
+        """ Get the architecture (32/64) of the installed OS
+        
+        """
+        logger.debug("CameraCfg.getOSArch")
+        osArch = ""
+        arch = ""
+        try:
+            result = subprocess.run(["dpkg-architecture", "--query", "DEB_HOST_ARCH"], capture_output=True, text=True, check=True).stdout
+            for line in self._lineGen(result):
+                arch += line.strip()
+                if arch == "arm64" \
+                or arch == "aarch64" \
+                or arch.find("64") >= 0:
+                    osArch = "64-bit"
+                else:
+                    osArch = "32-bit"
+        except Exception as e:
+            logger.error("Error executing dpkg-architecture --query DEB_HOST_ARCH : %s", e)
+            osArch = "error"
+        
+        logger.debug("CameraCfg.getOSArch - osArch = %s", osArch)
+        return osArch
 
     def getKernelVersion(self):
         """ Get the Kernel Version of the installed OS
@@ -5122,6 +5146,14 @@ class ServerConfig():
                             break
             elif key == "_unsavedChanges":
                 setattr(sc, key, False)
+            elif key == "_debianVersion":
+                # Do not overwrite the Debian version from stored configuration
+                # It has been set when the ServerConfig singleton has been instantiated
+                pass
+            elif key == "_kernelVersion":
+                # Do not overwrite the kernel version from stored configuration
+                # It has been set when the ServerConfig singleton has been instantiated
+                pass
             elif key == "_serverStartTime":
                 # Do not overwrite the server start time
                 # It has been set when the ServerConfig singleton has been instantiated

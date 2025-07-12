@@ -72,7 +72,7 @@ def refresh():
 def protected():
     current_user = get_jwt_identity()
     return jsonify(message=f"Hello, {current_user}! You accessed a protected route.")
-            
+
 @bp.route("/api/take_photo", methods=["GET"])
 @jwt_required()
 def take_photo():
@@ -304,3 +304,113 @@ def record_video():
     else:
         msg = "Error in " + sc.errorSource + ": " + sc.error
         return jsonify(message=msg), 500
+
+def propGen(property):
+    """Generator to yield properties of a property separated by dot."""
+    while len(property) > 0:
+        p = property.find(".")
+        if p >= 0:
+            if p == 0:
+                method = ""
+            else:
+                method = property[:p]
+            property = property[p + 1 :]
+        else:
+            method = property
+            property = ""
+        params = []
+        ps = method.find("(")
+        if ps >= 0:
+            pe = method.find(")", ps)
+            if pe < 0:
+                raise ValueError("Missing closing parenthesis in method: " + method)
+            else:
+                pars = method[ps + 1 : pe]
+                if len(pars) > 0:
+                    params = [p.strip() for p in pars.split(",")]
+            method = method[:ps]
+        yield (method, params, len(property) == 0)
+
+def probeTerm(property):
+    """Evaluate a property."""
+    logger.debug("Thread %s: In probeTerm - property=%s", get_ident(), property)
+    res = None
+    obj = None
+    for prop, params, last in propGen(property):
+        logger.debug("Thread %s: In probeTerm - prop=%s, params=%s, last=%s", get_ident(), prop, params, last)
+        if obj is None:
+            if len(params) > 0:
+                obj = globals()[prop](**params)
+            else:
+                obj = globals()[prop]()
+            if last == True:
+                res = obj
+            logger.debug("Thread %s: In probeTerm - Instantiated %s(%s)", get_ident(), prop, params)
+        else:
+            if hasattr(obj, prop):
+                method = getattr(obj, prop)
+                if callable(method):
+                    logger.debug("Thread %s: In probeTerm - Calling method %s with params %s", get_ident(), prop, params)
+                    if last == True:
+                        if len(params) > 0:
+                            res = method(*params)
+                        else:
+                            res = method()
+                    else:
+                        if len(params) > 0:
+                            obj = method(*params)
+                        else:
+                            obj = method()
+                else:
+                    logger.debug("Thread %s: In probeTerm - Accessing property %s", get_ident(), prop)
+                    if last == True:
+                        res = method
+                    else:
+                        obj = method
+            else:
+                raise AttributeError(f"Object {obj} has no attribute {prop}")
+    try:
+        result = jsonify(res)
+    except TypeError as e:
+        if hasattr(res, "toDict"):
+            res = res.toDict()
+        elif hasattr(res, "__dict__"):
+            res = res.__dict__
+        else:
+            logger.error("Error in probeTerm - jsonify(res), error: %s", str(e))
+            res = "Error : " + str(e)
+    except Exception as e:
+        logger.error("Error in probeTerm - jsonify(res), error: %s", str(e))
+        res = "Error : " + str(e)
+    return res
+
+@bp.route("/api/probe", methods=["GET"])
+@jwt_required()
+def get():
+    logger.debug("Thread %s: In /api/probe", get_ident())
+    result = {}
+    data = request.get_json()
+    if "properties" in data:
+        properties = data.get("properties")
+    else:
+        result["error"] = "No properties provided"
+        return jsonify(result), 400
+    
+    if len(properties) == 0:
+        result["error"] = "properties must not be empty"
+        return jsonify(result), 400
+    
+    results = []
+    result["results"] = results
+    for t in properties:
+        property = t["property"]
+        logger.debug("Thread %s: In api/probe - property:%2s", get_ident(), property)
+        res = {}
+        try:
+            res[property] = probeTerm(property)
+        except Exception as e:
+            logger.error("Error in api/probe - property: %s, error: %s", property, str(e))
+            res["property"] = "ERROR:" + str(e)
+        results.append(res)
+
+    return jsonify(result)

@@ -36,7 +36,7 @@ The effective ScalerCrop rectangle (ScalerCrop Zoop/Pan) is restricted by parame
 **NOTE**: All rectangles are specified by a tuple (xOffset, yOffset, width, height)
 
 - ScalerCrop Maximum    
-This is the largest rectangle in which the effective ScalerCrop rectanglemust be completely enclosed.    
+This is the largest rectangle in which the effective ScalerCrop rectangle must be completely enclosed.    
 This rectangle is limited by the Crop Limits of the Sensor Mode.
 - Scaler Crop Minimum   
 This is the smallest area which can be delivered by the camera.    

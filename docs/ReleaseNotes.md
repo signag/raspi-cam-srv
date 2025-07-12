@@ -37,6 +37,34 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.5.5
+
+### Bugfixes
+
+- Thread-safe handling of last live stream access. The last access of a client to a camera stream controls automatic shutdown of the streaming server after 10 sec of inactivity (see [Streaming](./UserGuide.md#streaming)).    
+Since streaming clients and servers are executed in different threads, it could happen in rare cases that a client has tried to access a stream in a phase where the server has started but not yet completed to shut down because of inactivity.    
+Since the camera is closed when streaming is shut down, different camera errors could occur, depending on camera shutdown status.   
+This could occur in particular when taking photos or taking [Photo Snapshots](./Webcam.md#photo-snapshot) through the Web URL.   
+Now, access to the time of last stream access has been made thread-safe by holding locks while a process is evaluating or changing this value and, in cases where inactivity is detected by the server, the lock is only released after the server has completely shut down.    
+(Fixes [raspi-cam-srv issue #61](https://github.com/signag/raspi-cam-srv/issues/61))
+
+- After an OS upgrade, *Kernel Version* and *Debian Version* in the [Info/Installed Cameras screen](./Information.md) did not show the correct values if the server was configured to [start with the stored configuration](./SettingsConfiguration.md). Instead, the values from the stored configuration were shown.   
+This has been fixed.   
+The entry in the [server configuration storage file](./SettingsConfiguration.md#server-configuration-storage) will have the old value until the configuration has been stored.
+
+### Changes
+
+- Information on the *Debian Version* in the [Info/Installed Cameras screen](./Information.md) now includes information on the system architecture (32-/64-bit) of the installed OS.
+
+### New Features
+
+- A new [API](./API.md) WebService endpoint is provided:   
+```GET api probe``` allows probing oject properties of live objects of an active **raspiCamSrv** server.   
+**NOTE:** This service is mainly intended for error analysis within a live system and requires detailed knowledge of the raspiCamSrv object model.   
+You can specify a set of object attributes for which attribute values shall be queried.   
+As objects, you select from the base singleton objects {Camera(), CameraCfg(), MotionDetector(), PhotoSeriesCfg() or TriggerHandler()} and then specify valid properties with dot-notation.    
+The result is returned in JSON format. Error messages are shown if an attribute is not JSON serializable.
+
 ## V3.5.4
 
 ### Bugfixes
