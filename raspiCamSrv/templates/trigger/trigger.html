@@ -6,7 +6,7 @@
 
 {% block content %}
     <div class="w3-bar w3-green">
-        <!-- Trigger menue -->
+        <!-- Trigger menu -->
         {% if sc.lastTriggerTab == "trgcontrol" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgCtrlBtn"
             onclick="openTriggerTab('trgcontrol', 'trgCtrlBtn')">Control</button>
@@ -114,7 +114,7 @@
                     </td>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Activate checkbox if video recording shall be teiggered.<br>
+                            Activate if you wish to capture video on a trigger event.<br>
                             You need to specify details on the Action tab
                         </span>
                         <label for="triggervideo">Record Video:</label>
@@ -132,7 +132,7 @@
                 <tr>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Activate checkbox if actions shall be triggered by events<br>
+                            Activate if you wish to execute actions on a trigger event.<br>
                            which are configured on the Triggers, Actions and Trigger-Actions tabs
                         </span>
                         <label for="triggerbyevents">Configured Triggers:</label>
@@ -146,7 +146,7 @@
                     </td>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Activate checkbox if a photo shall be taken.<br>
+                            Activate if you wish to capture images on a trigger event.<br>
                             You need to specify details on the Action tab
                         </span>
                         <label for="triggerphoto">Take Photo:</label>
@@ -168,7 +168,7 @@
                     </td>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Activate checkbox in order to be notified in case of events.<br>
+                            Activate if you wish to send a notification on a trigger event.<br>
                             You need to specify details on the Notification tab
                         </span>
                         <label for="triggernotify">Notification:</label>
@@ -361,7 +361,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:20%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Choose the source system for the trigger: Camera or GPIO
+                                Choose the source system for the trigger: Camera or use a GPIO pin.
                             </span>
                             <label for="triggersource">Trigger Source:</label>
                         </td>
@@ -388,7 +388,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:20%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Choose the device for which to register a trigger
+                                Choose the device for which to register a trigger with.
                             </span>
                             <label for="triggerdevice">Trigger Device:</label>
                         </td>
@@ -687,7 +687,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:20%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Choose the device for which to register an action
+                                Choose the device for which to register an action with.
                             </span>
                             <label for="actiondevice">Action Device:</label>
                         </td>
@@ -831,7 +831,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:20%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Every action must be identified by a unique ID.
+                                Every action should and must be identified by a unique ID.
                             </span>
                             <label for="actionid">Unique Action ID:</label>
                         </td>
@@ -1017,7 +1017,7 @@
     {% else %}
     <div id="trgmotion" class="triggergroup" style="display:none">
     {% endif %}
-        <h3>Motion Capturing Settings</h3>
+        <h3>Motion Detection Configuration</h3>
         <div class="w3-half">
             <form method="post" action="{{ url_for('trigger.motion') }}">
                 <table class="w3-table-all">
@@ -1089,7 +1089,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Minimum flow threshold for motion
+                                Minimum threshold for motion detection.
                             </span>
                             <label for="motionthreshold">Motion Threshold:</label>
                         </td>
@@ -1129,7 +1129,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Record video with bounding boxes instead of normal video.
+                                Record video with bounding boxes instead of full view video.
                             </span>
                             <label for="videobboxes">Video with Bounding Boxes:</label>
                         </td>
@@ -1257,10 +1257,10 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Size of circular buffer in seconds.<br>
-                                The recorded video starts the given number of seconds before the event.
+                                Size of circular buffer (pre-recording, buffered video to have before a event occurs) in seconds.<br>
+                                The recorded video starts the given number of seconds before the event. Recommended max of 10 seconds (Longer = More used memory).
                             </span>
-                            <label for="actioncircsize">Circular Buffer Size (sec):</label>
+                            <label for="actioncircsize">Pre-Record Length (sec):</label>
                         </td>
                         <td style="width:50%">
                             <input type="number" id="actioncircsize" name="actioncircsize" min="0" max="10" step="1"
@@ -1270,9 +1270,9 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                The duration of each video take.
+                                The duration of a sectioned video recording for when an event occurs.
                             </span>
-                            <label for="actionvideoduration">Video Duration (sec):</label>
+                            <label for="actionvideoduration">Post-Record Duration (sec):</label>
                         </td>
                         <td style="width:50%">
                             <input type="number" id="actionvideoduration" name="actionvideoduration" min="0" max="9999" step="1"
@@ -1398,7 +1398,7 @@
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 User<br>
-                                Must not be specified if mail account is already verified.
+                                Leave this empty if a E-Mail account is already verified.
                             </span>
                             <label for="notifyuser">User:</label>
                         </td>
@@ -1414,7 +1414,7 @@
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Password<br>
-                                Must not be specified if mail account is already verified.
+                                Leave this empty if a E-Mail account is already verified.
                             </span>
                             <label for="notifypassword">Password:</label>
                         </td>
@@ -1468,9 +1468,9 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                E-Mail of sender
+                                Sender Address
                             </span>
-                            <label for="notifyfrom">From e-Mail:</label>
+                            <label for="notifyfrom">From:</label>
                         </td>
                         <td style="width:50%">
                             <input style="width: 100%" type="email" id="notifyfrom" name="notifyfrom" value="{{ tc.notifyFrom }}">
@@ -1479,9 +1479,9 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                E-Mail of receipient
+                                Receipient Address
                             </span>
-                            <label for="notifyto">To e-Mail:</label>
+                            <label for="notifyto">To:</label>
                         </td>
                         <td style="width:50%">
                             <input style="width: 100%" type="email" id="notifyto" name="notifyto" value="{{ tc.notifyTo }}">
@@ -1490,7 +1490,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Subject to be be shown in the mail
+                                Message Subject
                             </span>
                             <label for="notifysubject">Subject:</label>
                         </td>
@@ -1501,10 +1501,10 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Number of seconds after a notification in which no other notification shall be sent.<br>
+                                The amount of time to wait before another notification can send.<br>
                                 Should be a multiple of the detection pause to be effective.
                             </span>
-                            <label for="notifypause">Notification Pause:</label>
+                            <label for="notifypause">Notification Cooldown:</label>
                         </td>
                         <td style="width:50%">
                             <input type="number" id="notifypause" name="notifypause" min="0" max="999999" step="1" value="{{ tc.notifyPause }}">
@@ -1513,7 +1513,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Activate checkbox if you want the event video included in the mail.
+                                Activate to include the recorded video in the message.
                             </span>
                             <label for="notifyincludevideo">Include Video:</label>
                         </td>
@@ -1528,7 +1528,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Activate checkbox if you want the event photo(s) included in the mail.
+                                Enable this to send one, or multiple images in the message.
                             </span>
                             <label for="notifyincludephoto">Include Photos:</label>
                         </td>
@@ -1810,13 +1810,13 @@
             <table>
                 <tr>
                     <td style="width:30px"></td>
-                    <td style="width:50px">Mo</td>
-                    <td style="width:50px">Tu</td>
-                    <td style="width:50px">We</td>
-                    <td style="width:50px">Th</td>
-                    <td style="width:50px">Fr</td>
-                    <td style="width:50px">Sa</td>
-                    <td style="width:50px">Su</td>
+                    <td style="width:50px">Mon</td>
+                    <td style="width:50px">Tue</td>
+                    <td style="width:50px">Wed</td>
+                    <td style="width:50px">Thu</td>
+                    <td style="width:50px">Fri</td>
+                    <td style="width:50px">Sat</td>
+                    <td style="width:50px">Sun</td>
                 </tr>
                 {% for week in tc.calendar%}
                 <tr>
