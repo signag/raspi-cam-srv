@@ -178,11 +178,11 @@ def create_app(test_config=None):
                 sr.nextStatus("pause")
 
     # Autostart triggered capture, if configured
-    if tc.operationAutoStart:
-        if tc.triggeredByMotion:
+    if tc.operationAutoStart == True:
+        if tc.triggeredByMotion == True:
             MotionDetector().startMotionDetection()
             sc.isTriggerRecording = True
-        if tc.triggeredByEvents:
+        if tc.triggeredByEvents == True:
             TriggerHandler().start()
             sc.isEventhandling = True
     

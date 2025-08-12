@@ -1,5 +1,8 @@
 from gpiozero import OutputDevice
+import threading
+from _thread import allocate_lock
 import time
+from datetime import datetime
 import math
 
 class StepperMotor():
@@ -9,7 +12,7 @@ class StepperMotor():
         Stepper motor: 28BYJ-48
         Motor driver : ULN2003A
     """
-    
+
     def __init__(self, \
             in1:int, \
             in2:int, \
@@ -65,8 +68,8 @@ class StepperMotor():
         """
         # Constant waiting times for highest (1) and lowest (0) speed
         self._WAIT_HIGH_SPEED = 0.001
-        self._WAIT_LOW_SPEED = 0.004
-        
+        self._WAIT_LOW_SPEED = 0.040
+
         # Set the pins
         self._in1 = OutputDevice(in1)
         self._in2 = OutputDevice(in2)
@@ -79,7 +82,7 @@ class StepperMotor():
         self._wait = self._WAIT_HIGH_SPEED
 
         self._pins = [self._in1, self._in2, self._in3, self._in4]
-        
+
         # Step sequence for half-step operation
         self._seq_half_step = [ \
             [1,0,0,0], 
@@ -103,7 +106,7 @@ class StepperMotor():
         else:
             self._seq = self._seq_full_step
         self._seq_len = len(self._seq)
-            
+
         # Set the waiting time tepending on the speed
         if self._speed < 0.0:
             self._speed = 0.0
@@ -114,16 +117,21 @@ class StepperMotor():
         # For full-step mode, the wait time is doubled
         if self._mode == 1:
             self._wait = self._wait * 2
-        
+
         # Set the current step
         self._current_step = 0
-        
+
         # Set parameters for swinging
         self._current_angle = current_angle
         self._swing_from = swing_from
         self._swing_to = swing_to
         self._swing_step = swing_step
         self._swing_direction = swing_direction
+
+        # Set parameters for swiping
+        self.wipe_active = False
+        self.wipeLock = allocate_lock()  # lock for wipe status
+        self.wipeThread = None  # thread for wipe operation
 
     @property
     def in1(self) -> int:
@@ -322,7 +330,7 @@ class StepperMotor():
         """
         for step in range(0, steps):
             self._step(-1)
-            
+
     def rotate(self, angle:float):
         """ Rotate right by the given angle
 
@@ -336,13 +344,12 @@ class StepperMotor():
         motor_steps = round(self.gear_reduction * abs_angle / self._stride_angle)
         if self.mode == 1:
             motor_steps = round(motor_steps / 2)
-            
+
         for motor_step in range(0, motor_steps):
             self._motor_step(dir)
 
         self._current_angle += angle
-            
-            
+
     def rotate_right(self, angle:float):
         """ Rotate right by the given angle
 
@@ -350,7 +357,7 @@ class StepperMotor():
             angle (float): angle to rotate
         """
         self.rotate(angle)
-            
+
     def rotate_left(self, angle:float):
         """ Rotate left by the given angle
 
@@ -358,7 +365,7 @@ class StepperMotor():
             angle (float): angle to rotate
         """
         self.rotate(-angle)
-            
+
     def rotate_to(self, target:float):
         """ Rotate to a given angle
         Args:
@@ -366,7 +373,7 @@ class StepperMotor():
         """
         angle = target - self._current_angle
         self.rotate(angle)
-        
+
     def swing(self):
         """ Swing the motor back and forth between the given angles
         """
@@ -384,18 +391,77 @@ class StepperMotor():
             self._swing_direction = -self._swing_direction
             angle_step = -angle_rest
             self.rotate(angle_step)
+
+    def wipe(self, angle_from:float=-45, angle_to:float=45, speed:float=1.0, count:int=1):
+        """Start swiping in a separate thread
+        Args:
+            angle_from (float): left limit of the wipe
+            angle_to (float): right limit of the wipe
+            duration (float): duration of the wipe in seconds
+            count (int): number of wipes
+        """
+        if self.wipeThread is not None and self.wipeThread.is_alive():
+            return
+        self.wipeThread = threading.Thread(target=self._do_wipe, args=(angle_from, angle_to, speed, count))
+        self.wipeThread.start()
+
+    def _do_wipe(self, angle_from, angle_to, speed, count):
+        """ Wipe the motor back and forth between the given angles
+        Args:
+            angle_from (float): left limit of the wipe
+            angle_to (float): right limit of the wipe
+            duration (float): duration of the wipe in seconds
+            count (int): number of wipes
+        """
+        self.wipe_active = True
+        current_angle = self._current_angle
+        current_speed = self._speed
+        self.speed = speed
+        self.rotate_to(angle_from)
+        i = count
+        if i == 0:
+            i = 1
+        while i > 0:
+            self.rotate_to(angle_to)
+            with self.wipeLock:
+                if self.wipe_active == False:
+                    i = 0
+            if i > 0:
+                self.rotate_to(angle_from)
+                if count > 0:
+                    i -= 1
+                with self.wipeLock:
+                    if self.wipe_active == False:
+                        i = 0
+        self.speed = current_speed
+        self.rotate_to(current_angle)
+
+        self.wipe_active = False
+        self.wipeThread = None
+
+    def stop(self):
+        """ Stop any activity
         
+        """
+        with self.wipeLock:
+            self.wipe_active = False
+
+        while self.wipeThread is not None and self.wipeThread.is_alive():
+            time.sleep(0.1)
+
     def close(self):
         """ Close gpiozero resources associated with pins
         
         """
+        self.stop()
         for pin in range(0, 4):
             self._pins[pin].close()
-        
+
 if __name__ == "__main__":
-    test = 3
+    test = 6
     print("==== Test StepperMotor ======")
     sm = StepperMotor(10, 9, 11, 0, 0, 1)
+    #    sm = StepperMotor(14, 15, 18, 23, 0, 1)
     if test == 3:
         print(f"==== Test Calibration ====")
         print (f"==== 1. current_angle:{sm.current_angle}")
@@ -415,7 +481,7 @@ if __name__ == "__main__":
             sm.swing()
             print (f"==== Step {i + 1} End   {sm.current_angle} ====")
             print(" ")
-    if test == 1:
+    if test == 3:
         print(f"==== Test mode & speed ====")
         for mode in range(0, 2):
             sm.mode = mode
@@ -447,6 +513,71 @@ if __name__ == "__main__":
                 print(f"==== rotate(-360) =======")
                 sm.rotate(-360) 
                 time.sleep(2)
+    if test == 4:
+        sm.value = 0.0
+        sm.rotate_to(0)
+        sm.mode = 0
+        sm.speed = 1.0
+        for a in range(0, -91, -15):
+            sm.rotate_to(a)
+            time.sleep(0.5)
+        for a in range(-80, 91, 15):
+            sm.rotate_to(a)
+            time.sleep(0.5)
+        sm.rotate_to(0)
+        
+    if test == 5:
+        print(f"==== Test wipe ====")
+        sm.value = 0.0
+        sm.rotate_to(0)
+        sm.mode = 0
+        sm.speed = 0.0
+        sm.wipe(angle_from=-45, angle_to=45, speed=0, count=3)
+        time.sleep(5)
+        sm.stop()
+        
+    if test == 5:
+        print(f"==== Measuring  Angular Velocity ====")
+        sm.value = 0.0
+        sm.rotate_to(0)
+        print("")
+        print(f"==== Half-Step Mode ====")
+        sm.mode = 0
+        print(f"==== Slow (speed=0) ====")
+        sm.speed = 0.0
+        startTime = datetime.now()
+        sm.rotate_to(360)
+        endTime = datetime.now()
+        duration = (endTime - startTime).total_seconds()
+        print(f"==== Duration: {duration} seconds ====")
+        print(f"==== Angular Velocity: {360 / duration} degrees/second ====")
+        print(f"==== Fast (speed=1) ====")
+        sm.speed = 1.0
+        startTime = datetime.now()
+        sm.rotate_to(0)
+        endTime = datetime.now()
+        duration = (endTime - startTime).total_seconds()
+        print(f"==== Duration: {duration} seconds ====")
+        print(f"==== Angular Velocity: {360 / duration} degrees/second ====")
+        print("")
+        print(f"==== Full-Step Mode ====")
+        sm.mode = 1
+        print(f"==== Slow (speed=0) ====")
+        sm.speed = 0.0
+        startTime = datetime.now()
+        sm.rotate_to(360)
+        endTime = datetime.now()
+        duration = (endTime - startTime).total_seconds()
+        print(f"==== Duration: {duration} seconds ====")
+        print(f"==== Angular Velocity: {360 / duration} degrees/second ====")
+        print(f"==== Fast (speed=1) ====")
+        sm.speed = 1.0
+        startTime = datetime.now()
+        sm.rotate_to(0)
+        endTime = datetime.now()
+        duration = (endTime - startTime).total_seconds()
+        print(f"==== Duration: {duration} seconds ====")
+        print(f"==== Angular Velocity: {360 / duration} degrees/second ====")
     print(f"==== close ====")
     sm.close()
     print(f"==== Test completed ====")

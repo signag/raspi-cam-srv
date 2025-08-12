@@ -121,6 +121,7 @@ def serverconfig():
             sc.locElevation = float(request.form["locelevation"])
             sc.locTzKey = request.form["loctzkey"]
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Settings/General Parameters changed")
         if msg:
             flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
@@ -276,6 +277,8 @@ def resetServer():
         
         msg = "Server configuration has been reset to default values"
         flash(msg)
+        sc.unsavedChanges = False
+        sc.clearChangeLog()
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 @bp.route("/remove_users", methods=("GET", "POST"))
@@ -395,6 +398,7 @@ def store_config():
         cfg.persist(cfgPath)
         msg = "Configuration stored under " + cfgPath
         sc.unsavedChanges = False
+        sc.clearChangeLog()
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
@@ -495,6 +499,7 @@ def load_config():
                 sc.isEventhandling = True
                 logger.debug("In load_config - Eventhandling started")
             sc.unsavedChanges = False
+            sc.clearChangeLog()
         if msg != "":
             flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
@@ -546,7 +551,7 @@ def loadConfigOnStart():
         setLoadConfigOnStart(cfgPath, cb)
         los = getLoadConfigOnStart(cfgPath)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
-    
+
 @bp.route('/shutdown', methods=("GET", "POST"))
 @login_required
 def shutdown():
@@ -633,6 +638,7 @@ def api_config():
                 or jwtRefreshTokenExpirationDays != sc.jwtRefreshTokenExpirationDays:
                     sc.jwtAuthenticationActive = False
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/API Settings changed")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 @bp.route("/generate_token", methods=("GET", "POST"))
@@ -657,7 +663,7 @@ def generate_token():
     if request.method == "POST":
         access_token = create_access_token(identity=g.user['username'])
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, access_token=access_token)
-    
+
 @bp.route('/vbutton_dimensions', methods=("GET", "POST"))
 @login_required
 def vbutton_dimensions():
@@ -713,8 +719,9 @@ def vbutton_dimensions():
         if msg != "":
             flash(msg)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Versatile Buttons changed")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
-    
+
 @bp.route('/vbutton_settings', methods=("GET", "POST"))
 @login_required
 def vbutton_settings():
@@ -755,8 +762,9 @@ def vbutton_settings():
         if msg != "":
             flash(msg)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Versatile Buttons changed")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
-    
+
 @bp.route('/abutton_dimensions', methods=("GET", "POST"))
 @login_required
 def abutton_dimensions():
@@ -811,8 +819,9 @@ def abutton_dimensions():
         if msg != "":
             flash(msg)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Action Buttons changed")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
-    
+
 @bp.route('/abutton_settings', methods=("GET", "POST"))
 @login_required
 def abutton_settings():
@@ -853,8 +862,9 @@ def abutton_settings():
         if msg != "":
             flash(msg)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Action Buttons changed")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
-    
+
 @bp.route('/new_device', methods=("GET", "POST"))
 @login_required
 def new_device():
@@ -905,8 +915,9 @@ def new_device():
         if msg != "":
             flash(msg)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Devices - new device added: {deviceId}")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
-    
+
 @bp.route('/select_device', methods=("GET", "POST"))
 @login_required
 def select_device():
@@ -973,7 +984,7 @@ def checkDeviceDeletion(deviceId: str, tc:TriggerConfig) -> str:
         if len(inAction) > 0:
             msg = msg + " Actions " + str(inAction)
     return msg        
-            
+
 @bp.route('/delete_device', methods=("GET", "POST"))
 @login_required
 def delete_device():
@@ -996,6 +1007,7 @@ def delete_device():
     if request.method == "POST":
         msg = checkDeviceDeletion(sc.curDeviceId, tc)
         if msg == "":
+            deviceDel = sc.curDeviceId
             idxDel = -1
             idx = 0
             for device in sc.gpioDevices:
@@ -1010,16 +1022,17 @@ def delete_device():
                         if os.path.exists(dev._deviceStateFile):
                             os.remove(dev._deviceStateFile)
                 del sc.gpioDevices[idxDel]
-            
+
             if len(sc.gpioDevices) > 0:
                 sc.curDevice = sc.gpioDevices[0]
                 sc.curDeviceId = sc.curDevice.id
                 for deviceType in sc.deviceTypes:
                     if deviceType["type"] == sc.curDevice.type:
                         sc.curDeviceType = deviceType
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Settings/Devices - device deleted: {deviceDel}")
         if msg != "":
             flash(msg)
-        sc.unsavedChanges = True
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 def parseTuple(stuple: str) -> tuple[str, tuple]:
@@ -1125,7 +1138,7 @@ def parseColorTuple(stuple: str) -> tuple:
         err="Tuple does not start with '('."
     return err, rest
 
-    
+
 @bp.route('/device_properties', methods=("GET", "POST"))
 @login_required
 def device_properties():
@@ -1216,6 +1229,7 @@ def device_properties():
         else:
             flash(msg)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Devices - device properties changed for {sc.curDeviceId}")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 def storeResult(result:dict, test:str, testResult:str) -> dict:
@@ -1239,7 +1253,7 @@ def storeResult(result:dict, test:str, testResult:str) -> dict:
         n+= 1
     result[testu] = testResult
     return result
-    
+
 @bp.route('/test_device', methods=("GET", "POST"))
 @login_required
 def test_device():
@@ -1384,6 +1398,7 @@ def calibrate_device():
                     result["value"] = getattr(devObj, "value")
                 dev.isCalibrating = True
                 sc.unsavedChanges = True
+                sc.addChangeLogEntry(f"Settings/Devices - device calibration started: {sc.curDeviceId}")
             except Exception as e:
                 msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
         else:
@@ -1596,6 +1611,7 @@ def docalibrate():
                         msg = f"Property Error {devClass}.value: {type(e)} : {e}"
                 dev.isCalibrating = False
                 sc.unsavedChanges = True
+                sc.addChangeLogEntry(f"Settings/Devices - device calibrated: {sc.curDeviceId}")
                 
     if msg != "":
         flash(msg)

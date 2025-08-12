@@ -3,13 +3,15 @@
 [![Up](img/goup.gif)](./Settings.md)
 
 
-The *Settings* screen includes a *Configuration* section with functions to control the **raspiCamSrv** configuration:
+The *Settings* screen includes a *Configuration* section with functions to control the **raspiCamSrv** configuration.
+
+The list of *Unsaved Configuration Changes* lists all actions with their time of execution, which have been made during the current session and which have not yet been saved to the server.
 
 ![Configuration](./img/Settings_Config.jpg)
 
 - Button *Store Configuration* generates a set of JSON files which include the entire configuration of the **raspiCamSrv** server (see [below](#configuration-storage)).<br>**NOTE**: This does not include [Photo Series](./PhotoSeries.md). These are persisted automatically and independently. It also does not include [Events](./TriggerActive.md).
 - Button *Load Stored Configuration* replaces the current configuration with the previously stored configuration.<br>[Photo Series](./PhotoSeries.md) and [Events](./TriggerEventViewer.md) are not affected.<br>**NOTE**: If you had activated [API](./SettingsAPI.md) access before, this will be deactivated when the stored configuration is loaded. You need to restart the server to activate it again.
-- Button *Reset Server* stops any background activity (live stream, video, photo series, motion capturing and event handling) and replaces the current configuration with the default configuration.<br>[Photo Series](./PhotoSeries.md) and [Events](./TriggerEventViewer.md) are not affected. Any associated resources remain unchanged. However, an active [Photo Series](./PhotoSeries.md) will be paused and needs to be continued.<br>**NOTE**: If you had activated [API](./SettingsAPI.md) access before, this will no longer be available when the configuration is reset.<br>The same applies to [Notification Settings](./TriggerNotification.md) which need to be reconfigured.<br>**NOTE**: If you had activated *Start Server with Stored Configuration*, this will be deactivated. Probably, you might want to store the new configuration bofore activationg this again.
+- Button *Reset Server* stops any background activity (live stream, video, photo series, motion capturing and event handling) and replaces the current configuration with the default configuration.<br>[Photo Series](./PhotoSeries.md) and [Events](./TriggerEventViewer.md) are not affected. Any associated resources remain unchanged. However, an active [Photo Series](./PhotoSeries.md) will be paused and needs to be continued.<br>**NOTE**: If you had activated [API](./SettingsAPI.md) access before, this will no longer be available when the configuration is reset.<br>The same applies to [Notification Settings](./TriggerNotification.md) which need to be reconfigured.<br>**NOTE**: If you had activated *Start Server with Stored Configuration*, this will be deactivated. Probably, you might want to store the new configuration bofore activating this again.
 - *Start server with stored Configuration* controls whether a server start shall use the default configuration or the stored configuration.
 
 #### Server Configuration Storage

@@ -2733,7 +2733,7 @@ class CameraConfig():
                 else:
                     setattr(cc, key, value)
         return cc
-        
+
 class CameraProperties():
     def __init__(self):
         self._hasFocus = True
@@ -3173,10 +3173,11 @@ class ServerConfig():
         self._curDeviceType = None
         self._gpioDevices = []
         self._cfgPath = None
-        
+        self._changeLog = []
+
         # Check access of microphone
         self.checkMicrophone()
-        
+
         # Get Raspi Info
         model = self.getPiModel()
         self._raspiModelFull = model
@@ -3228,6 +3229,27 @@ class ServerConfig():
     @unsavedChanges.setter
     def unsavedChanges(self, value: bool):
         self._unsavedChanges = value
+
+    @property
+    def changeLog(self) -> list[dict]:
+        return self._changeLog
+
+    @changeLog.setter
+    def changeLog(self, value: list):
+        self._changeLog = value
+        
+    def addChangeLogEntry(self, entry: str):
+        """ Adds a new entry to the change log
+        """
+        entry = {
+            "time": datetime.now(),
+            "entry": entry}
+        self._changeLog.append(entry)
+    
+    def clearChangeLog(self):
+        """ Clears the change log
+        """
+        self._changeLog = []
 
     @property
     def error(self) -> str:
@@ -3468,7 +3490,7 @@ class ServerConfig():
     @isZoomModeDraw.setter
     def isZoomModeDraw(self, value: bool):
         self._isZoomModeDraw = value
-        
+
     @property
     def zoomFactor(self):
         return self._zoomFactor
@@ -3500,7 +3522,7 @@ class ServerConfig():
     @scalerCropLiveView.setter
     def scalerCropLiveView(self, value: tuple):
         self._scalerCropLiveView = value
-        
+
     @property
     def scalerCropLiveViewStr(self) -> str:
         return "(" + str(self._scalerCropLiveView[0]) + "," + str(self._scalerCropLiveView[1]) + "," + str(self._scalerCropLiveView[2]) + "," + str(self._scalerCropLiveView[3]) + ")"
@@ -3890,7 +3912,7 @@ class ServerConfig():
     @locTzKey.setter
     def locTzKey(self, value: str):
         self._locTzKey = value
-        
+
     def timeZoneKeys(self) -> list:
         tzl = []
         tzs = zoneinfo.available_timezones()
@@ -3906,7 +3928,7 @@ class ServerConfig():
     @pvCamera.setter
     def pvCamera(self, value: int):
         self._pvCamera = value
- 
+
     @property
     def pvFrom(self) -> date:
         return self._pvFrom
@@ -3927,7 +3949,7 @@ class ServerConfig():
             d = datetime.now()
         v = datetime(year=d.year, month=d.month, day=d.day, hour=0, minute=0)     
         self._pvFrom = v
- 
+
     @property
     def pvTo(self) -> date:
         return self._pvTo
@@ -3948,7 +3970,7 @@ class ServerConfig():
             d = datetime.now()
         v = datetime(year=d.year, month=d.month, day=d.day, hour=23, minute=59, second=59)        
         self._pvTo = v
- 
+
     @property
     def pvList(self) -> list:
         return self._pvList
@@ -3956,7 +3978,7 @@ class ServerConfig():
     @pvList.setter
     def pvList(self, value: list):
         self._pvList = value
- 
+
     @property
     def jwtAuthenticationActive(self) -> bool:
         return self._jwtAuthenticationActive
@@ -3972,7 +3994,7 @@ class ServerConfig():
     @jwtKeyStore.setter
     def jwtKeyStore(self, value: str):
         self._jwtKeyStore = value
-        
+
     @property
     def jwtAccessTokenExpirationMin(self) -> int:
         return self._jwtAccessTokenExpirationMin
@@ -3980,7 +4002,7 @@ class ServerConfig():
     @jwtAccessTokenExpirationMin.setter
     def jwtAccessTokenExpirationMin(self, value: int):
         self._jwtAccessTokenExpirationMin = value
- 
+
     @property
     def jwtRefreshTokenExpirationDays(self) -> int:
         return self._jwtRefreshTokenExpirationDays
@@ -3988,7 +4010,7 @@ class ServerConfig():
     @jwtRefreshTokenExpirationDays.setter
     def jwtRefreshTokenExpirationDays(self, value: int):
         self._jwtRefreshTokenExpirationDays = value
- 
+
     @property
     def streamingClients(self) -> list:
         return self._streamingClients
@@ -4059,7 +4081,7 @@ class ServerConfig():
                     else:
                         res = res + ", " + stream
         return res
-    
+
     def updateStreamingClients(self):
         for cl in self.streamingClients:
             ip = cl["ipaddr"]
@@ -4077,7 +4099,7 @@ class ServerConfig():
     @vButtonsRows.setter
     def vButtonsRows(self, value: int):
         self._vButtonsRows = value
-        
+
     @property
     def vButtonsCols(self) -> int:
         return self._vButtonsCols
@@ -4085,7 +4107,7 @@ class ServerConfig():
     @vButtonsCols.setter
     def vButtonsCols(self, value: int):
         self._vButtonsCols = value
-        
+
     @property
     def vButtons(self) -> list[list[vButton]]:
         return self._vButtons
@@ -4093,7 +4115,7 @@ class ServerConfig():
     @vButtons.setter
     def vButtons(self, value: list):
         self._vButtons = value
-        
+
     @property
     def vButtonCommand(self) -> str:
         return self._vButtonCommand
@@ -4101,7 +4123,7 @@ class ServerConfig():
     @vButtonCommand.setter
     def vButtonCommand(self, value: str):
         self._vButtonCommand = value
-        
+
     @property
     def vButtonArgs(self) -> list:
         return self._vButtonArgs
@@ -4109,7 +4131,7 @@ class ServerConfig():
     @vButtonArgs.setter
     def vButtonArgs(self, value: list):
         self._vButtonArgs = value
-        
+
     @property
     def vButtonReturncode(self) -> int:
         return self._vButtonReturncode
@@ -4117,7 +4139,7 @@ class ServerConfig():
     @vButtonReturncode.setter
     def vButtonReturncode(self, value: int):
         self._vButtonReturncode = value
-        
+
     @property
     def vButtonStdout(self) -> str:
         return self._vButtonStdout
@@ -4125,7 +4147,7 @@ class ServerConfig():
     @vButtonStdout.setter
     def vButtonStdout(self, value: str):
         self._vButtonStdout = value
-        
+
     @property
     def vButtonStderr(self) -> str:
         return self._vButtonStderr
@@ -4149,7 +4171,7 @@ class ServerConfig():
     @aButtonsRows.setter
     def aButtonsRows(self, value: int):
         self._aButtonsRows = value
-        
+
     @property
     def aButtonsCols(self) -> int:
         return self._aButtonsCols
@@ -4157,7 +4179,7 @@ class ServerConfig():
     @aButtonsCols.setter
     def aButtonsCols(self, value: int):
         self._aButtonsCols = value
-        
+
     @property
     def aButtons(self) -> list[list[ActionButton]]:
         return self._aButtons
@@ -4165,7 +4187,7 @@ class ServerConfig():
     @aButtons.setter
     def aButtons(self, value: list):
         self._aButtons = value
-        
+
     @property
     def aButtonAction(self) -> str:
         return self._aButtonAction
@@ -4197,7 +4219,7 @@ class ServerConfig():
     @curDeviceType.setter
     def curDeviceType(self, value: dict):
         self._curDeviceType = value
-    
+
     @property
     def gpioDevices(self) ->list[GPIODevice]:
         return self._gpioDevices
@@ -4221,7 +4243,7 @@ class ServerConfig():
     @API_active.setter
     def API_active(self, value: bool):
         self._API_active = value
- 
+
     @property
     def useAPI(self) -> bool:
         return self._useAPI
@@ -4237,7 +4259,7 @@ class ServerConfig():
         # So we need to reduce prcNlwp to get the real number of threads
         threadCount = pi[2] - 1
         return f"PID:{pi[0]} Start:{pi[1]} #Threads:{threadCount} CPU Process:{pi[3]} Threads:{pi[4]}"
-    
+
     @property
     def ffmpegProcessInfo(self) -> str:
         pi = self._countThreads("ffmpeg")
@@ -4245,11 +4267,11 @@ class ServerConfig():
             return f"No ffmpeg process active"
         else:
             return f"PID:{pi[0]} Start:{pi[1]} #Threads:{pi[2]} CPU Process:{pi[3]} Threads:{pi[4]}"
-    
+
     @property
     def deviceTypes(self) -> list:
         return gpioDeviceTypes
-    
+
     def getDevice(self, id: str) -> GPIODevice:
         device = None
         for dev in self.gpioDevices:
@@ -4257,7 +4279,7 @@ class ServerConfig():
                 device = dev
                 break
         return device
-    
+
     def getDeviceType(self, id: str) -> dict:
         deviceType = None
         for typ in self.deviceTypes:
@@ -4265,7 +4287,7 @@ class ServerConfig():
                 deviceType = typ
                 break
         return deviceType
-    
+
     @property
     def freeGpioPins(self) -> list[int]:
         """ Return a list with the numbers of free GPIO pins
@@ -4289,7 +4311,7 @@ class ServerConfig():
                             if pin in pins:
                                 pins.remove(pin)
         return pins
-    
+
     def _checkModule(self, moduleName: str):
         module = None
         try:
@@ -4366,13 +4388,13 @@ class ServerConfig():
             sleep(interval)
         logger.debug("Timeout while waiting for system time synchronization")
         return False    
-    
+
     @property
     def displayBufferCount(self) -> int:
         """ Returns the number of elements in the display buffer
         """
         return len(self._displayBuffer)
-    
+
     @property
     def displayBufferIndex(self) -> str:
         """ Returns the index of the active element in the form (x/y)
@@ -4383,7 +4405,7 @@ class ServerConfig():
                 if key == self.displayFile:
                     res = "(" + str(i + 1) + "/" + str(self.displayBufferCount) + ")"
                     break
-            
+
         return res
 
     def isDisplayBufferIn(self) -> bool:
@@ -4393,7 +4415,7 @@ class ServerConfig():
             if self._displayFile in self._displayBuffer:
                 res = True
         return res
-        
+
     def displayBufferAdd(self):
         """ Adds the current display photo to the buffer
             if it is not yet included
@@ -4407,7 +4429,7 @@ class ServerConfig():
             el["displayMetaFirst"]  = self._displayMetaFirst
             el["displayMetaLast"]  = self._displayMetaLast
             self._displayBuffer[self._displayFile] = el
-        
+
     def displayBufferRemove(self):
         """ Removes the current display photo from the buffer
             and set active display to next element
@@ -4462,7 +4484,7 @@ class ServerConfig():
             self.displayHistogram = None
             self.displayMetaFirst = 0
             self.displayMetaLast = 999
-        
+
     def displayBufferClear(self):
         """ Clears the display buffer as well as the current display
         """
@@ -4585,7 +4607,7 @@ class ServerConfig():
         try:
             result = subprocess.run(["pactl", "list", "sources"], capture_output=True, text=True, check=True).stdout
             logger.debug("ServerConfig._checkMicrophoneNoJson - got result from 'pactl list sources: \n%s'", result)
-            
+
             sourceId = ""
             desc = ""
             getPorts = False
@@ -4618,17 +4640,17 @@ class ServerConfig():
                         else:
                             if line.startswith("Ports:"):
                                 getPorts = True
-        
+
         except CalledProcessError as e:
             # In case pactl cannot be run, ignore the exception
             # And assume that no microphone is connected
             pass
         except Exception as e:
             pass
-        
+
         logger.debug("ServerConfig._checkMicrophoneNoJson - hasMic=%s, defMic=%s'", hasMic, defMic)
         return hasMic, defMic, isMute
-            
+
     def checkMicrophone(self):
         """Check whether a microphone is connected.
            Update configuration with description of default configuration.
@@ -4674,7 +4696,7 @@ class ServerConfig():
             hasMic, defMic, isMute = self._checkMicrophoneNoJson()
         except Exception as e:
             pass
-        
+
         if hasMic == True:
             self.hasMicrophone = True
             if len(defMic) > 0:
@@ -4722,7 +4744,7 @@ class ServerConfig():
         except Exception as e:
             logger.error("Error opening /proc/cpuinfo : %s", e)
             boardRev = "0000"
-        
+
         logger.debug("CameraCfg.getBoardRevision - boardRev = %s", boardRev)
         return boardRev
 
@@ -4739,7 +4761,7 @@ class ServerConfig():
         except Exception as e:
             logger.error("Error opening /etc/debian_version : %s", e)
             debianVers = ""
-        
+
         debianVers = self.getOsName() + " - Version " + debianVers + " - " + self.getOSArch()
         logger.debug("CameraCfg.getDebianVersion - debianVers = %s", debianVers)
         return debianVers
@@ -4764,7 +4786,7 @@ class ServerConfig():
         except Exception as e:
             logger.error("Error executing dpkg-architecture --query DEB_HOST_ARCH : %s", e)
             osArch = "error"
-        
+
         logger.debug("CameraCfg.getOSArch - osArch = %s", osArch)
         return osArch
 
@@ -4781,7 +4803,7 @@ class ServerConfig():
         except Exception as e:
             logger.error("Error opening /etc/debian_version : %s", e)
             kernelVers = ""
-        
+
         logger.debug("CameraCfg.getKernelVersion - kernelVers = %s", kernelVers)
         return kernelVers
 
@@ -4802,7 +4824,7 @@ class ServerConfig():
                     break
         except Exception as e:
             osName = ""
-            
+
         if osName == "":
             logger.debug("CameraCfg.getOsName - trying cat /etc/os-release")
             try:
@@ -4815,10 +4837,10 @@ class ServerConfig():
                         break
             except Exception as e:
                 osName = ""
-        
+
         logger.debug("CameraCfg.getOsName - osName = %s", osName)
         return osName
-            
+
     def checkJwtSettings(self) -> tuple:
         """ Get secret key for JSON Wob Tokens JWT
 
@@ -4918,7 +4940,7 @@ class ServerConfig():
         prcTime = ""
         thrTime = ""
         thrTimed = timedelta(0)
-        
+
         try:
             result = subprocess.run(["ps", "-e", "-L", "-f"], capture_output=True, text=True, check=True).stdout
             for line in self._lineGen(result):
@@ -4981,23 +5003,23 @@ class ServerConfig():
                     sTIME = eTTY
                     p = line.find("CMD", p + 4)
                     sCMD = p
-                    
+
         except CalledProcessError as e:
             pass
         except Exception as e:
             pass
-        
+
         if process is None:
             return (cntAll,)
         else:
             thrTime = str(thrTimed)
             return (prcPid, prcStime, prcNlwp, prcTime, thrTime)
-    
+
     @classmethod                
     def initFromDict(cls, dict:dict):
         sc = ServerConfig()
         for key, value in dict.items():
-            #logger.debug("serverConfig.initFromDict - processing key %s", key)
+            # logger.debug("serverConfig.initFromDict - processing key %s", key)
             if key == "_scalerCropLiveView":
                 setattr(sc, key, tuple(value))
             elif key == "_scalerCropMin":
@@ -5095,7 +5117,7 @@ class ServerConfig():
                             vButtonRow.append(button)
                         vButtons.append(vButtonRow)
                     setattr(sc, key, vButtons)
-            #Initialize last vButton execution result
+            # Initialize last vButton execution result
             elif key == "_vButtonCommand":
                 setattr(sc, key, None)
             elif key == "_vButtonArgs":
@@ -5166,17 +5188,19 @@ class ServerConfig():
         sc.isPhotoSeriesRecording = False
         sc.isTriggerRecording = False
         sc.isVideoRecording = False
+        sc.isEventhandling = False
+        sc.changeLog = []
 
-        #Set the sc.curDevice attribute to the corresponding object from sc.gpioDevices
+        # Set the sc.curDevice attribute to the corresponding object from sc.gpioDevices
         # After import fom the JSON file sc.curDevice is an own object and not the one
         # from the sc.gpioDevices list.
         for device in sc.gpioDevices:
             if device.id == sc.curDeviceId:
                 sc.curDevice = device
                 break
-        
+
         return sc
-    
+
 class Secrets():
     """ Class for secrets which are never persisted
     """
@@ -5208,7 +5232,7 @@ class Secrets():
     @jwtSecretKey.setter
     def jwtSecretKey(self, value: str):
         self._jwtSecretKey = value
-    
+
 class CameraCfg():
     _instance = None
     def __new__(cls):

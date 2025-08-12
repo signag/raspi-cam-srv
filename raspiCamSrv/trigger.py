@@ -105,6 +105,7 @@ def trgcontrol():
         if err:
             flash(err)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Trigger Control changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/motion", methods=("GET", "POST"))
@@ -149,6 +150,7 @@ def motion():
                 msg = "Please restart motion detection to use the changed parameters!"
                 flash(msg)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Trigger Motion settings changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/test_motion_detection", methods=("GET", "POST"))
@@ -324,6 +326,7 @@ def action():
         if err:
             flash(err)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Trigger Camera Actions changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/notify", methods=("GET", "POST"))
@@ -379,7 +382,7 @@ def notify():
                         err = "Please provide 'Credentials File Path'"
                 else:
                     tc.notifyPwdPath = ""
-            
+
         if err != "":
             tc.notifyConOK = False
             flash(err)
@@ -415,6 +418,7 @@ def notify():
                 scr.notifyPwd = pwd
                 flash("Connection test successful")
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Trigger Notification settings changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/start_triggered_capture", methods=("GET", "POST"))
@@ -865,7 +869,7 @@ def new_trigger():
                         err = " "
                         break
                 logger.debug("trigger.new_trigger - eventsettings=%s", triggerEventSettings)
-                
+
             logger.debug("trigger.new_trigger - control=%s", control)
             if len(control) > 0:
                 triggerControl = copy.deepcopy(control)
@@ -880,7 +884,7 @@ def new_trigger():
                         err = " "
                         break
                 logger.debug("trigger.new_trigger - control=%s", triggerControl)
-                
+
         if err == "":
             if not request.form.get("triggerid") is None:
                 triggerId = request.form["triggerid"]
@@ -913,10 +917,11 @@ def new_trigger():
                     trigger.isActive = True
             tc.triggers.append(trigger)
             tmp = {}
-        
+
         if err.strip() != "":
             flash(err)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Trigger created: {triggerId}")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def countEvent(source:str, device:str, event:str, tc:TriggerConfig) -> int:
@@ -981,12 +986,13 @@ def trigger_activation():
                 cnt += 1
         if cnt > 0:
             tc.triggers = newTriggers
-            
+
         if checkTrigger(tc) == False:
             err = "Some triggers werde deactivated because they used the same event"
         if err.strip() != "":
             flash(err)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Trigger activation changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def parseTuple(stuple: str) -> tuple[str, tuple]:
@@ -1135,9 +1141,9 @@ def new_action():
                                             break
                             else:
                                 control = {}
-                            
+
                 logger.debug("action.new_action - tmp=%s", tmp)
-                
+
         if err == "":
             if not request.form.get("actionid") is None:
                 actionId = request.form["actionid"]
@@ -1151,7 +1157,7 @@ def new_action():
                     err = "Please enter a unique action ID"
             else:
                 err = " "
-                    
+
         if err == "":
             action = Action()
             action.id = actionId
@@ -1172,10 +1178,11 @@ def new_action():
                     err = "Graduall approach in steps is currently not yet supported."
                     control["steps"] = 1
                     control["duration"] = 0.0
-                
+
         if err.strip() != "":
             flash(err)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Action created: {action.id}")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def checkActionUsage(actionId:str, actionUsage: list, sc:ServerConfig) -> tuple[bool, list]:
@@ -1234,10 +1241,11 @@ def action_activation():
             tc.actions = newActions
         if len(nondelete) > 0:
             err = f"Actions {nondelete} could not be deleted because they are used in action buttons {actionUsage}"
-        
+
         if err.strip() != "":
             flash(err)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Action activation changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/trigger_action", methods=("GET", "POST"))
@@ -1292,4 +1300,5 @@ def trigger_action():
         if err.strip() != "":
             flash(err)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Trigger-Action settings changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)

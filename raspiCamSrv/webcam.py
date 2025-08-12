@@ -61,6 +61,8 @@ def store_streaming_config():
         scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
         scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
         scfg["controls"] = copy.deepcopy(cfg.controls)
+        sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Camera settings for {sc.activeCameraInfo} saved for camera switch and streaming")
     return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2)
 
 @bp.route("/switch_cameras", methods=("GET", "POST"))
@@ -116,6 +118,8 @@ def switch_cameras():
                 if sc.isLiveStream2:
                     str2 = cfg.streamingCfg[str(Camera().camNum2)]
                 logger.debug("switch_cameras - active camera set to %s", sc.activeCamera)
+                sc.unsavedChanges = True
+                sc.addChangeLogEntry(f"Cameras switched: Active camera now: {sc.activeCameraInfo}")
         if msg:
             flash(msg)
     return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2)

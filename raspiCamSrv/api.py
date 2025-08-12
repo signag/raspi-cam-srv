@@ -367,6 +367,9 @@ def probeTerm(property):
                         res = method
                     else:
                         obj = method
+                if obj is None:
+                    logger.debug("Thread %s: In probeTerm - obj is None after accessing %s", get_ident(), prop)
+                    break
             else:
                 raise AttributeError(f"Object {obj} has no attribute {prop}")
     try:

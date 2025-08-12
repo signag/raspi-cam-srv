@@ -209,6 +209,7 @@ def syncAspectRatio():
             Camera.resetScalerCropRequested = True
             Camera().restartLiveStream()
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Sync Aspect Ratio set to {sc.syncAspectRatio}")
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
 
 def findTuningFile(tuning_file: str, dir=None) -> str:
@@ -253,7 +254,7 @@ def isTuningFile(file: str, folder:str) -> bool:
         res = False
     logger.debug("isTuningFile - res=%s", res)
     return res
-    
+
 def getTuningFiles(folder, defFile) -> list:
     """Create a list of all .json files in the given folder
 
@@ -337,6 +338,7 @@ def tuningCfg():
                     restart = True
                 tc.loadTuningFile = loadTuningFile
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Configuration for tuning changed")
         if restart:
             Camera().restartLiveStream()
         if len(msg) > 0:
@@ -427,6 +429,7 @@ def customTuning():
                                     restart = True
                                     tc.loadTuningFile = False
                         sc.unsavedChanges = True
+                        sc.addChangeLogEntry(f"Tuning folder set to custom folder")
         if restart:
             Camera().restartLiveStream()
         if len(msg) > 0:
@@ -497,6 +500,7 @@ def defaultTuning():
                             if tc.loadTuningFile == True:
                                 restart = True
                 sc.unsavedChanges = True
+                sc.addChangeLogEntry(f"Tuning folder set to default folder")
         if restart:
             Camera().restartLiveStream()
         if len(msg) > 0:
@@ -568,6 +572,7 @@ def deleteTuningFile():
                 tc.loadTuningFile = False
         tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Tuning file deleted: {fp}")
         if restart:
             Camera().restartLiveStream()
         if msg != "":
@@ -807,6 +812,7 @@ def liveViewCfg():
                     msg = msg + "\n"
                 msg = msg + "WARNING: If you do not set Stream to 'lores', the Live Stream cannot be shown parallel to other activities!"
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Configuration for Live View changed")
         if len(msg) > 0:
             flash(msg)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -847,6 +853,7 @@ def addLiveViewControls():
                         cfg.liveViewConfig.controls[key] = value[1]
             Camera().restartLiveStream()
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Controls added to Configuration for Live View")
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -903,6 +910,7 @@ def remLiveViewControls():
                 msg="No controls were selected"
                 flash(msg)
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Controls removed from Configuration for Live View")
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -1021,6 +1029,7 @@ def photoCfg():
             doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Raw Photo", "Video"])
             Camera().restartLiveStream()
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Configuration for Photo changed")
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -1060,6 +1069,7 @@ def addPhotoControls():
                     if key not in cfg.photoConfig.controls:
                         cfg.photoConfig.controls[key] = value[1]
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Controls added to Configuration for Photo")
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -1107,6 +1117,7 @@ def remPhotoControls():
                         del cfg.photoConfig.controls[ctrlDel]
                         cnt -= 1
                     sc.unsavedChanges = True
+                    sc.addChangeLogEntry(f"Controls removed from Configuration for Photo")
                 else:
                     msg="At least one control must remain in the configuration"
                     flash(msg)
@@ -1183,6 +1194,7 @@ def rawCfg():
             doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Photo", "Video"])
             Camera().restartLiveStream()
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Configuration for Raw Photo changed")
         if err:
             flash(err)            
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -1222,6 +1234,7 @@ def addRawControls():
                     if key not in cfg.rawConfig.controls:
                         cfg.rawConfig.controls[key] = value[1]
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Controls added to Configuration for Raw Photo")
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -1269,6 +1282,7 @@ def remRawControls():
                         del cfg.rawConfig.controls[ctrlDel]
                         cnt -= 1
                     sc.unsavedChanges = True
+                    sc.addChangeLogEntry(f"Controls removed from Configuration for Raw Photo")
                 else:
                     msg="At least one control must remain in the configuration"
                     flash(msg)
@@ -1389,6 +1403,7 @@ def videoCfg():
             doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Photo", "Raw Photo"])
             Camera().restartLiveStream()
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Configuration for Video changed")
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -1428,6 +1443,7 @@ def addVideoControls():
                     if key not in cfg.videoConfig.controls:
                         cfg.videoConfig.controls[key] = value[1]
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Controls added to Configuration for Video")
         if err:
             flash(err)
     return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
@@ -1475,6 +1491,7 @@ def remVideoControls():
                         del cfg.videoConfig.controls[ctrlDel]
                         cnt -= 1
                     sc.unsavedChanges = True
+                    sc.addChangeLogEntry(f"Controls removed from Configuration for Video")
                 else:
                     msg="At least one control must remain in the configuration"
                     flash(msg)

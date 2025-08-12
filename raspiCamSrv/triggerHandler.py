@@ -278,6 +278,7 @@ class TriggerHandler():
             method = action.method
             methodParams = action.params
             actionCtrl = action.control
+            logger.debug("Thread %s: TriggerHandler._doGpioAction - deviceClass=%s method=%s params=%s", get_ident(), deviceClass, method, methodParams)
 
             # Update action context
             eCtx = cls._getEventContext(eventId)
@@ -287,16 +288,22 @@ class TriggerHandler():
             try:
                 # Apply action method
                 if hasattr(deviceObj, method):
+                    logger.debug("Thread %s: TriggerHandler._doGpioAction - class: %s has method: %s", get_ident(), deviceClass, method)
                     attr = getattr(deviceObj, method)
                     if callable(attr) == True:
+                        logger.debug("Thread %s: TriggerHandler._doGpioAction - method: %s - is callable", get_ident(), method)
                         if len(methodParams) > 0:
                             call = f"{deviceClass}.{method}({methodParams})"
+                            logger.debug("Thread %s: TriggerHandler._doGpioAction - calling: %s", get_ident(), call)
                             result = attr(**methodParams)
+                            logger.debug("Thread %s: TriggerHandler._doGpioAction Action:%s - %s=%s", get_ident(),  action.id, call, result)
                         else:
                             call = f"{deviceClass}.{method}()"
+                            logger.debug("Thread %s: TriggerHandler._doGpioAction - calling: %s", get_ident(), call)
                             result = attr()
-                        logger.debug("Thread %s: TriggerHandler._doGpioAction Action:%s - %s=%s", get_ident(),  action.id, call, result)
+                            logger.debug("Thread %s: TriggerHandler._doGpioAction Action:%s - %s=%s", get_ident(),  action.id, call, result)
                     else:
+                        logger.debug("Thread %s: TriggerHandler._doGpioAction - method: %s - is not callable", get_ident(), method)
                         if len(methodParams) > 0:
                             for key, value in methodParams.items():
                                 if value != "":
@@ -312,6 +319,9 @@ class TriggerHandler():
                             call = f"{deviceClass}.{method}"
                             result = attr
                             logger.debug("Thread %s: TriggerHandler._doGpioAction Action: %s - %s", get_ident(),  action.id, call)
+                else:
+                    logger.debug("TriggerHandler._doGpioAction - Action %s - Method %s not found in %s", action.id, method, deviceClass)
+
                 # Log
                 if isEvent == True:
                     cls._logEvent(db, "gpio_action", tc, eCtx, ctx)

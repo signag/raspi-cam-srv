@@ -43,6 +43,8 @@ Returns or sets the mode of operation.
 
 Returns or sets the speed.
 
+Allowed values range from 0 for lowest speed (164.20 seconds for 360°) to 1 for highest speed (4.24 seconds for 360°)
+
 ### *property* **stride_angle**
 
 Returns the stride angle.
@@ -147,6 +149,26 @@ If the *current_angle* would exceed *swing_from* or *swing_to*, rotation will re
 **Parameters**:
 
 - **angle** (*float*) Angle to rotate (positive)
+
+### **wipe**(*angle_from=?, angle_to=?, speed=?, count=?*)
+
+Wipe back and forth within a given range of angles with the given speed.
+
+With the *count* parameter you can specify a certain number of cycles.    
+in case of *count=0*, swiping will continue until **stop** is called.
+
+After termination, the motor returns to the starting position.
+
+**Parameters**:
+
+- **angle_from** (*float*) Start angle (defaults to -45.0)
+- **angle_to** (*float*) End angle (defaults to 45.0)
+- **speed** (*float*) Speed to be used for swiping. Can be in the range from 0 (slow) to 1 (fast). Default is 0.
+- **count** (*int*) Number of cycles. A value of 0 will cause infinite swiping which needs to be stopped with **stop()**
+
+### **stop()***
+
+Terminate swiping after the active cycle is finished.
 
 ### **close()**
 

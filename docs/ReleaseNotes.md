@@ -37,6 +37,39 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.5.6
+
+### Bugfixes
+
+- Fixed an issue, where a request did not return when trying to take a photo in cases, where the [configuration](./Configuration.md) for Live View and Photo both use the same stream but with different stream size.
+- Fixed missing Live view after an error has occurred during photo taking or video recording.    
+In some cases, the Live view needs to be deactivated while taking a photo or recording a video because of incompatible [configuration](./Configuration.md).    
+The deactivation flag is now cleared so that the Live view will show up after an error has occurred.    
+**NOTE:** that you need to push the *Live* menu button for refreshing the screen.
+- Fixed wrong [Status Indicator](./UserGuide.md#process-status-indicators) for [Trigger](./TriggerTriggers.md) thread after [starting server with stored configuration](./SettingsConfiguration.md)
+- Improved exception handling for camera access:    
+Exception occurring during camera configuration are now not only logged but also shown within the UI.    
+Low level error messages, indicating the error source as reported by Picamera2, are no longer overwritten by higher level more general messages.
+
+### New Features
+
+- The [Settings/Configuration](./SettingsConfiguration.md) screen now shows all unsaved configuration changes which have been made during a session. This can help to decide whether or not the current configuration needs to be saved.    
+Thus, whenever the [Configuration Status Indicator](./UserGuide.md#process-status-indicators) is switched on, a new entry for unsaved configuration changes is made.
+- [StepperMotor](./gpioDevices/StepperMotor.md) has got new functionality.   
+[wipe](./gpioDevices/StepperMotor.md#wipeangle_from-angle_to-speed-count) will rotate back and forth between given angles for a certain nomber of cycles or until [stop](./gpioDevices/StepperMotor.md#stop) is called.
+
+### Changes
+
+- Adapted [Installation procedure](./../README.md#raspicamsrv-installation) step 10 for version of [matplotlib](https://matplotlib.org/).    
+As discussed in [picamera2 issue \#1211](https://github.com/raspberrypi/picamera2/issues/1211), Picamera2 relies on the numpy version coming with Debian installation, which is numpy 1.x.  
+On the other hand, matplotlib version 3.8 and later seem to require numpy 2.x, which is binary incompatible to version 1.x.
+- For [StepperMotor](./gpioDevices/StepperMotor.md), the minimum speed (which is achieved by setting *speed=0*) has been reduced by a factor of 10.    
+The angular velocity is now:
+For speed=0: 164.20 seconds for 360°    
+For speed=1: 4.42 seconds for 360°
+- Extended capabilities of ```GET api probe``` [API](./API.md) WebService endpoint:    
+Now ```Camera.streamOutput``` and ```Camera.stream2Output``` are accessible which represent the streaming output of the primary and secondary camera.
+
 ## V3.5.5
 
 ### Bugfixes

@@ -11,7 +11,7 @@ This section allows specification of aspects for photos and/or videos recorded i
 With *Normal*, video recording starts with the event or, if configured, after a specified dalay.   
 With "Circular*, the system continuesly captures video in a circular buffer with a capacity of a few seconds. In case of an event, also the seconds before the event will be available in the video.   
 Currently, only *Normal* is supported.
-- *Circular Buffer Size* is the number of seconds, the system shall look 'backwards' from the time of an event.
+- *Pre-Record Length (sec)* is the number of seconds, the system shall look 'backwards' from the time of an event.
 - *Video Duration* specifies the length of videos captured in case of an event.    
 If a new event is registered while video recording from the previous event is still active, this will be stopped before recording for the new event starts.
 - *Photo Burst - Number of Photos* allows specifying a number of photos which will be successively captured in case of an event.   

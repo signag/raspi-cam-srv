@@ -100,7 +100,7 @@
                 <tr>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Activate checkbox if actions shall be triggered by motion detection.<br>
+                            Activate if you wish to trigger actions by motion detection.<br>
                             You need to specify details on the Motion tab
                         </span>
                         <label for="triggerbymotion">Motion Detection:</label>
@@ -115,7 +115,7 @@
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Activate if you wish to capture video on a trigger event.<br>
-                            You need to specify details on the Action tab
+                            You need to specify details on the Camera tab.
                         </span>
                         <label for="triggervideo">Record Video:</label>
                     </td>
@@ -132,8 +132,8 @@
                 <tr>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Activate if you wish to execute actions on a trigger event.<br>
-                           which are configured on the Triggers, Actions and Trigger-Actions tabs
+                            Activate if you wish to use general event handling.<br>
+                            Details need to be configured on the Triggers, Actions and Trigger-Actions tabs.
                         </span>
                         <label for="triggerbyevents">Configured Triggers:</label>
                     </td>
@@ -147,7 +147,7 @@
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Activate if you wish to capture images on a trigger event.<br>
-                            You need to specify details on the Action tab
+                            You need to specify details on the Camera tab
                         </span>
                         <label for="triggerphoto">Take Photo:</label>
                     </td>
@@ -169,7 +169,7 @@
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Activate if you wish to send a notification on a trigger event.<br>
-                            You need to specify details on the Notification tab
+                            You need to specify details on the Notification tab.
                         </span>
                         <label for="triggernotify">Notification:</label>
                     </td>
@@ -190,13 +190,13 @@
                 <tr>
                     <td style="width:25%">
                     </td>
-                    <td style="width: 5%;">Mo</td>
-                    <td style="width: 5%;">Tu</td>
-                    <td style="width: 5%;">We</td>
-                    <td style="width: 5%;">Th</td>
-                    <td style="width: 5%;">Fr</td>
-                    <td style="width: 5%;">Sa</td>
-                    <td style="width: 5%;">Su</td>
+                    <td style="width: 5%;">Mon</td>
+                    <td style="width: 5%;">Tue</td>
+                    <td style="width: 5%;">Wed</td>
+                    <td style="width: 5%;">Thu</td>
+                    <td style="width: 5%;">Fri</td>
+                    <td style="width: 5%;">Sat</td>
+                    <td style="width: 5%;">Sun</td>
                     <td style="width: 40%;"></td>
                 </tr>
                 <tr>
@@ -361,7 +361,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:20%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Choose the source system for the trigger: Camera or use a GPIO pin.
+                                Choose the source system for the trigger: Camera, GPIO or Motion Detector.
                             </span>
                             <label for="triggersource">Trigger Source:</label>
                         </td>
@@ -1089,7 +1089,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Minimum threshold for motion detection.
+                                Minimum threshold for Optical Flow algorithm.
                             </span>
                             <label for="motionthreshold">Motion Threshold:</label>
                         </td>
@@ -1129,7 +1129,7 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Record video with bounding boxes instead of full view video.
+                                Show bounding boxes of motion detection on recorded video.
                             </span>
                             <label for="videobboxes">Video with Bounding Boxes:</label>
                         </td>
@@ -1270,9 +1270,9 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                The duration of a sectioned video recording for when an event occurs.
+                                The intended duration of videos recorded on an event.
                             </span>
-                            <label for="actionvideoduration">Post-Record Duration (sec):</label>
+                            <label for="actionvideoduration">Video Duration (sec):</label>
                         </td>
                         <td style="width:50%">
                             <input type="number" id="actionvideoduration" name="actionvideoduration" min="0" max="9999" step="1"

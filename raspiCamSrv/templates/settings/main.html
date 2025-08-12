@@ -471,6 +471,34 @@
                 </td>
             </tr>
         </table>
+        <h3>Unsaved Configuration Changes:</h3>
+        <div style="max-height:65vh;overflow-y:auto">
+            <table class="w3-table-all">
+                <thead>
+                    <tr>
+                        <th style="width:20%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                            Time
+                        </th>
+                        <th style="width:80%; position:sticky;top:0;z-index:1000; background-color: #f1f1f1;">
+                            Action
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in sc.changeLog %}
+                    <tr>
+                        <td style="width:20%">
+                            {{ entry["time"].strftime("%Y-%m-%d %H:%M:%S") }}
+                        </td>
+                        <td style="width:80%">
+                            {{ entry["entry"] }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
     </div>
     {% if sc.lastSettingsTab == "settingsusers" %}
     <div id="settingsusers" class="settingsgroup">

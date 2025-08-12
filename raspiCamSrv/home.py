@@ -173,11 +173,12 @@ def focus_control():
                 ctrls["AfWindows"] = cc.afWindows
                 if len(cc.afWindows) == 0:
                     cc.include_afWindows = False
-                    
+
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Focus handling changed for {sc.activeCameraInfo}")
             Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-    
+
 @bp.route("/trigger_autofocus", methods=("GET", "POST"))
 @login_required
 def trigger_autofocus():
@@ -203,6 +204,7 @@ def trigger_autofocus():
                         cc.afMode = 0
                         msg = "Autofocus successful. See Focal Distance. Autofocus Mode set to 'Manual'."
                         sc.unsavedChanges = True
+                        sc.addChangeLogEntry(f"Autofocus triggered for {sc.activeCameraInfo}")
                     else:
                         msg = "Camera returned LensPosition 0. Ignored"
                 else:
@@ -211,7 +213,7 @@ def trigger_autofocus():
                 msg="ERROR: Autofocus Mode must be set to 'Auto'!"
             flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-    
+
 @bp.route("/set_zoom", methods=("GET", "POST"))
 @login_required
 def set_zoom():
@@ -245,8 +247,9 @@ def set_zoom():
                 zoomFactor = sc.zoomFactorStep
             sc.zoomFactor = zoomFactor
             sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-    
+
 @bp.route("/zoom_in", methods=("GET", "POST"))
 @login_required
 def zoom_in():
@@ -298,6 +301,7 @@ def zoom_in():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 def checkScalerCrop(crop: tuple, range: tuple) -> tuple:
@@ -330,7 +334,7 @@ def checkScalerCrop(crop: tuple, range: tuple) -> tuple:
         msg.append("WARNING: lower border reached")
         y0 = range[1] + range[3] - height
     return ((x0, y0, crop[2], crop[3]), msg)
-    
+
 @bp.route("/zoom_out", methods=("GET", "POST"))
 @login_required
 def zoom_out():
@@ -376,8 +380,9 @@ def zoom_out():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-    
+
 @bp.route("/zoom_full", methods=("GET", "POST"))
 @login_required
 def zoom_full():
@@ -414,6 +419,7 @@ def zoom_full():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_up", methods=("GET", "POST"))
@@ -446,6 +452,7 @@ def pan_up():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_left", methods=("GET", "POST"))
@@ -484,6 +491,7 @@ def pan_left():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_center", methods=("GET", "POST"))
@@ -521,6 +529,7 @@ def pan_center():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 @bp.route("/pan_right", methods=("GET", "POST"))
@@ -553,8 +562,9 @@ def pan_right():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-    
+
 @bp.route("/pan_down", methods=("GET", "POST"))
 @login_required
 def pan_down():
@@ -585,8 +595,9 @@ def pan_down():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-    
+
 @bp.route("/zoom_default", methods=("GET", "POST"))
 @login_required
 def zoom_default():
@@ -610,8 +621,9 @@ def zoom_default():
         metadata = Camera().getMetaData()
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Image section set to default for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-    
+
 @bp.route("/zoom_draw", methods=("GET", "POST"))
 @login_required
 def zoom_draw():
@@ -682,6 +694,7 @@ def ae_control():
                 cc.aeFlickerPeriod = aeFlickerPeriod
 
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Auto-Exposure settings changed for {sc.activeCameraInfo}")
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
@@ -746,6 +759,7 @@ def exposure_control():
                 cc.hdrMode = hdrMode
 
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Exposure settings changed for {sc.activeCameraInfo}")
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
@@ -811,9 +825,10 @@ def image_control():
             cc.brightness = brightness
 
         sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Image settings changed for {sc.activeCameraInfo}")
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-        
+
 @bp.route("/meta_clear", methods=("GET", "POST"))
 @login_required
 def meta_clear():
@@ -831,7 +846,7 @@ def meta_clear():
         sc.displayMetaFirst = 0
         sc.displayMetaLast = 999
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-        
+
 @bp.route("/meta_prev", methods=("GET", "POST"))
 @login_required
 def meta_prev():
@@ -850,7 +865,7 @@ def meta_prev():
         if sc.displayMetaLast > len(sc.displayMeta):
             sc.displayMetaLast = 999
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
-        
+
 @bp.route("/meta_next", methods=("GET", "POST"))
 @login_required
 def meta_next():
@@ -983,7 +998,7 @@ def clear_buffer():
     if request.method == "POST":
         sc.displayBufferClear()        
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
-            
+
 @bp.route("/take_photo", methods=("GET", "POST"))
 @login_required
 def take_photo():
