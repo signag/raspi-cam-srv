@@ -1797,7 +1797,7 @@ class Camera():
                 scfg["hasfocus"] = hasFocus
                 scfg["tuningconfig"] = TuningConfig()
                 scfg["liveconfig"] = liveViewConfig
-                scfg["photoconfig"] = photoViewConfig
+                scfg["photoconfig"] = photoConfig
                 scfg["rawconfig"] = rawConfig
                 scfg["videoconfig"] = videoConfig
                 scfg["controls"] = copy.deepcopy(cfg.controls)
