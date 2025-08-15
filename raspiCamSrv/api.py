@@ -11,6 +11,7 @@ import time
 from raspiCamSrv.motionDetector import MotionDetector
 from raspiCamSrv.triggerHandler import TriggerHandler
 from raspiCamSrv.version import version
+from raspiCamSrv.home import generateHistogram
 
 from raspiCamSrv.auth import login_required
 import logging
@@ -85,10 +86,76 @@ def take_photo():
     fp = Camera().takeImage(filename)
     if not sc.error:
         logger.debug("take_photo - success")
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
         msg=f"Photo taken: {fp}"
         return jsonify(message=msg)
     else:
         msg = "Error in " + sc.errorSource + ": " + sc.error
+        return jsonify(message=msg), 500
+
+@bp.route("/api/take_photo2", methods=["GET"])
+@jwt_required()
+def take_photo2():
+    logger.debug("Thread %s: In /api/take_photo2", get_ident())
+    if Camera().isCamera2Available():
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        timeImg = datetime.datetime.now()
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        logger.debug("Saving image %s", filename)
+        fp = Camera().takeImage2(filename)
+        if not sc.errorc2:
+            logger.debug("take_photo2 - success")
+            msg=f"Photo taken: {fp}"
+            return jsonify(message=msg)
+        else:
+            msg = "Error in " + sc.errorc2Source + ": " + sc.errorc2
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("take_photo2 - %s", msg)
+        return jsonify(message=msg), 500
+
+@bp.route("/api/take_photo_both", methods=["GET"])
+@jwt_required()
+def take_photo_both():
+    logger.debug("Thread %s: In /api/take_photo_both", get_ident())
+    if Camera().isCamera2Available():
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        timeImg = datetime.datetime.now()
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        logger.debug("Saving image2 %s", filename)
+        fp1 = Camera().takeImage(filename)
+        fp2 = Camera().takeImage2(filename)
+        msg = {}
+        err = False
+        if not sc.error:
+            logger.debug("takeImage - success")
+            if sc.displayContent == "hist":
+                if sc.displayHistogram is None:
+                    if sc.displayPhoto:
+                        generateHistogram(sc)
+            msg["Photo1"] = fp1
+        else:
+            msg["Photo1"] = "Error in " + sc.errorcSource + ": " + sc.errorc
+            err = True
+        if not sc.errorc2:
+            logger.debug("takeImage2 - success")
+            msg["Photo2"] = fp2
+        else:
+            msg["Photo2"] = "Error in " + sc.errorc2Source + ": " + sc.errorc2
+            err = True
+        if not err:
+            return jsonify(message=msg)
+        else:
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("take_photo_both - %s", msg)
         return jsonify(message=msg), 500
 
 @bp.route("/api/take_raw_photo", methods=["GET"])
@@ -103,11 +170,79 @@ def take_raw_photo():
     logger.debug("Saving raw image %s", filenameRaw)
     fp = Camera().takeRawImage(filenameRaw, filename)
     if not sc.error:
-        logger.debug("take_photo - success")
-        msg=f"Raw photo taken: {fp}"
+        logger.debug("take_raw_photo - success")
+        if sc.displayContent == "hist":
+            if sc.displayHistogram is None:
+                if sc.displayPhoto:
+                    generateHistogram(sc)
+        msg = f"Raw photo taken: {fp}"
         return jsonify(message=msg)
     else:
         msg = "Error in " + sc.errorSource + ": " + sc.error
+        return jsonify(message=msg), 500
+
+@bp.route("/api/take_raw_photo2", methods=["GET"])
+@jwt_required()
+def take_raw_photo2():
+    logger.debug("Thread %s: In /api/take_raw_photo2", get_ident())
+    if Camera().isCamera2Available():
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        timeImg = datetime.datetime.now()
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        logger.debug("Saving raw image %s", filenameRaw)
+        fp = Camera().takeRawImage2(filenameRaw, filename)
+        if not sc.error:
+            logger.debug("take_raw_photo2 - success")
+            msg=f"Raw photo taken: {fp}"
+            return jsonify(message=msg)
+        else:
+            msg = "Error in " + sc.errorc2Source + ": " + sc.errorc2
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("take_raw_photo2 - %s", msg)
+        return jsonify(message=msg), 500
+
+@bp.route("/api/take_raw_photo_both", methods=["GET"])
+@jwt_required()
+def take_raw_photo_both():
+    logger.debug("Thread %s: In /api/take_raw_photo_both", get_ident())
+    if Camera().isCamera2Available():
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        timeImg = datetime.datetime.now()
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        logger.debug("Saving raw images %s", filenameRaw)
+        fp1 = Camera().takeRawImage(filenameRaw, filename)
+        fp2 = Camera().takeRawImage2(filenameRaw, filename)
+        msg = {}
+        err = False
+        if not sc.error:
+            logger.debug("takeRawImage - success")
+            if sc.displayContent == "hist":
+                if sc.displayHistogram is None:
+                    if sc.displayPhoto:
+                        generateHistogram(sc)
+            msg["Photo1"] = fp1
+        else:
+            msg["Photo1"] = "Error in " + sc.errorcSource + ": " + sc.errorc
+            err = True
+        if not sc.errorc2:
+            logger.debug("takeRawImage2 - success")
+            msg["Photo2"] = fp2
+        else:
+            msg["Photo2"] = "Error in " + sc.errorc2Source + ": " + sc.errorc2
+            err = True
+        if not err:
+            return jsonify(message=msg)
+        else:
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("take_raw_photo_both - %s", msg)
         return jsonify(message=msg), 500
 
 @bp.route("/api/start_triggered_capture", methods=["GET"])
@@ -200,11 +335,15 @@ def info():
     info["cameras"] = infoCams
     infoStatus = {}
     infoStatus["livestream_active"] = sc.isLiveStream
-    infoStatus["livestream2_active"] = sc.isLiveStream2
+    if len(cams) > 1:
+        infoStatus["livestream2_active"] = sc.isLiveStream2
     infoStatus["photoseries_recording"] = sc.isPhotoSeriesRecording
     infoStatus["motion_capturing"] = sc.isTriggerRecording == True and tc.triggeredByMotion == True
+    infoStatus["event_handling"] = sc.isEventhandling == True and sc.isEventsWaiting == False
     infoStatus["video_recording"] = sc.isVideoRecording
     infoStatus["audio_recording"] = sc.isAudioRecording
+    if len(cams) > 1:
+        infoStatus["video_recording2"] = sc.isVideoRecording2
     info["operation_status"] = infoStatus
     
     return jsonify(message=info)
@@ -290,6 +429,10 @@ def record_video():
         # Check whether video is being recorded
         if Camera.isVideoRecording():
             logger.debug("Video recording started")
+            if sc.displayContent == "hist":
+                if sc.displayHistogram is None:
+                    if sc.displayPhoto:
+                        generateHistogram(sc)
             sc.isVideoRecording = True
             if sc.recordAudio:
                 sc.isAudioRecording = True
@@ -303,6 +446,190 @@ def record_video():
             return jsonify(message=msg), 500
     else:
         msg = "Error in " + sc.errorSource + ": " + sc.error
+        return jsonify(message=msg), 500
+
+@bp.route("/api/stop_video", methods=["GET"])
+@jwt_required()
+def stop_video():
+    logger.debug("Thread %s: In /api/stop_video", get_ident())
+
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    if sc.isVideoRecording == True:
+        fp = Camera().videoOutput
+        Camera().stopVideoRecording()
+        time.sleep(1)
+        msg = {"Video": fp, "Status": "Stopped"}
+        sc.isVideoRecording = False
+        return jsonify(message=msg)
+    else:
+        msg = "No video recording in progress"
+        return jsonify(message=msg), 500
+
+@bp.route("/api/record_video2", methods=["GET"])
+@jwt_required()
+def record_video2():
+    logger.debug("Thread %s: In /api/record_video2", get_ident())
+    if Camera().isCamera2Available():
+        data = request.get_json()
+        duration = 0
+        if "duration" in data:
+            duration = data.get("duration")
+        logger.debug("Thread %s: /api/record_video2 - requested duration: %s", get_ident(), duration)
+
+        cfg = CameraCfg()
+        cc = cfg.controls
+        sc = cfg.serverConfig
+        cp = cfg.cameraProperties
+        timeImg = datetime.datetime.now()
+        filenameVid = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        logger.debug("Recording a video %s", filenameVid)
+        fp = Camera().recordVideo2(filenameVid, filename, duration)
+        time.sleep(4)
+        if not sc.errorc2:
+            # Check whether video is being recorded
+            if Camera.isVideoRecording2():
+                logger.debug("Video recording 2 started")
+                sc.isVideoRecording2 = True
+                msg = "Video recorded to " + fp
+                return jsonify(message=msg)
+            else:
+                logger.debug("Video recording 2 did not start")
+                sc.isVideoRecording2 = False
+                msg = "Video recording failed. Requested resolution too high"
+                return jsonify(message=msg), 500
+        else:
+            msg = "Error in " + sc.errorc2Source + ": " + sc.errorc2
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("record_video2 - %s", msg)
+        return jsonify(message=msg), 500
+
+@bp.route("/api/stop_video2", methods=["GET"])
+@jwt_required()
+def stop_video2():
+    logger.debug("Thread %s: In /api/stop_video2", get_ident())
+    if Camera().isCamera2Available():
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        if sc.isVideoRecording2 == True:
+            fp = Camera().videoOutput2
+            Camera().stopVideoRecording2()
+            time.sleep(1)
+            msg = {"Video": fp, "Status": "Stopped"}
+            sc.isVideoRecording2 = False
+            return jsonify(message=msg)
+        else:
+            msg = "No video recording in progress"
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("stop_video2 - %s", msg)
+        return jsonify(message=msg), 500
+
+@bp.route("/api/record_video_both", methods=["GET"])
+@jwt_required()
+def record_video_both():
+    logger.debug("Thread %s: In /api/record_video_both", get_ident())
+    if Camera().isCamera2Available():
+        data = request.get_json()
+        duration = 0
+        if "duration" in data:
+            duration = data.get("duration")
+        logger.debug("Thread %s: /api/record_video_both - requested duration: %s", get_ident(), duration)
+
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+
+        timeImg = datetime.datetime.now()
+        filenameVid = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
+        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
+        logger.debug("Recording 2 videos %s", filenameVid)
+        fp1 = Camera().recordVideo(filenameVid, filename, duration)
+        fp2 = Camera().recordVideo2(filenameVid, filename, duration)
+        time.sleep(4)
+        msg = {}
+        err = False
+        if not sc.error:
+            # Check whether video is being recorded
+            if Camera.isVideoRecording():
+                logger.debug("Video recording 1 started")
+                if sc.displayContent == "hist":
+                    if sc.displayHistogram is None:
+                        if sc.displayPhoto:
+                            generateHistogram(sc)
+                sc.isVideoRecording = True
+                msg["Video 1"] = fp1
+            else:
+                logger.debug("Video recording 1 did not start")
+                sc.isVideoRecording = False
+                msg["Video 1"] = "Video recording failed"
+                err = True
+        else:
+            err = True
+            msg["Video 1"] = "Error in " + sc.errorSource + ": " + sc.error
+        if not sc.errorc2:
+            # Check whether video is being recorded
+            if Camera.isVideoRecording2():
+                logger.debug("Video recording 2 started")
+                sc.isVideoRecording2 = True
+                msg["Video 2"] = fp2
+            else:
+                logger.debug("Video recording 2 did not start")
+                sc.isVideoRecording2 = False
+                msg["Video 2"] = "Video recording failed"
+                err = True
+        else:
+            msg["Video 2"] = "Error in " + sc.errorc2Source + ": " + sc.errorc2
+            err = True
+        if err == False:
+            return jsonify(message=msg)
+        else:
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("record_video_both - %s", msg)
+        return jsonify(message=msg), 500
+
+@bp.route("/api/stop_video_both", methods=["GET"])
+@jwt_required()
+def stop_video_both():
+    logger.debug("Thread %s: In /api/stop_video_both", get_ident())
+    if Camera().isCamera2Available():
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+
+        msg = {}
+        err = False
+        if sc.isVideoRecording == False:
+            msg["Video 1"] = "No video recording in progress for camera 1"
+            err = True
+        else:
+            fp1 = Camera().videoOutput
+            Camera().stopVideoRecording()
+            sc.isVideoRecording = False
+            msg["Video 1"] = {"Video": fp1, "Status": "Stopped"}
+
+        if sc.isVideoRecording2 == False:
+            msg["Video 2"] = "No video recording in progress for camera 2"
+            err = True
+        else:
+            fp2 = Camera().videoOutput2
+            Camera().stopVideoRecording2()
+            sc.isVideoRecording2 = False
+            msg["Video 2"] = {"Video": fp2, "Status": "Stopped"}
+
+        time.sleep(1)
+
+        if err == False:
+            return jsonify(message=msg)
+        else:
+            return jsonify(message=msg), 500
+    else:
+        msg = "Second camera is not available"
+        logger.error("stop_video_both - %s", msg)
         return jsonify(message=msg), 500
 
 def propGen(property):

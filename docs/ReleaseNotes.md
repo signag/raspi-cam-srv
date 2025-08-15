@@ -37,6 +37,19 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.6.0
+
+### New Features
+
+- Now supporting alternate or simultaneous photo taking and video recording with both cameras for systems which allow connecting two (non-USB) cameras (currently Raspberry Pi 5).
+- [API](./API.md) extended with new web services supporting photo taking and video recording with both cameras.
+- The new [Multi-Cam](./CamMulticam.md) dialog gives access to photo taking and video recording functions for both cameras, if available.
+
+### Bugfixes
+
+- Fixes "KeyError: 'GPIO'" which could occur when the [event handling system](./Trigger.md) was stopped without having fired a GPIO trigger during its life time.
+- Fixed an issue where [Test Motion Detection](./TriggerMotion.md#testing-motion-capturing) did not work if it was started within a period where [Trigger Operation](./Trigger.md#control) was not active.
+
 ## V3.5.6
 
 ### Bugfixes

@@ -1134,6 +1134,8 @@ def generateHistogram(sc:ServerConfig):
     import cv2
     import numpy as np
     from matplotlib import pyplot as plt
+    import matplotlib
+    matplotlib.use("agg")
 
     source = sc.photoRoot + "/" + sc.displayPhoto
     destPath = sc.photoRoot + "/" + sc.cameraHistogramSubPath

@@ -3113,11 +3113,13 @@ class ServerConfig():
         self._lastInfoTab = "camprops"
         self._lastPhotoSeriesTab = "series"
         self._lastTriggerTab = "trgcontrol"
+        self._lastCamTab = "webcam"
         self._lastConsoleTab = "versbuttons"
         self._lastSettingsTab = "settingsparams"
         self._isLiveStream = False
         self._isLiveStream2 = None
         self._isVideoRecording = False
+        self._isVideoRecording2 = False
         self._isAudioRecording = False
         self._isPhotoSeriesRecording = False
         self._isTriggerRecording = False
@@ -3237,7 +3239,7 @@ class ServerConfig():
     @changeLog.setter
     def changeLog(self, value: list):
         self._changeLog = value
-        
+
     def addChangeLogEntry(self, entry: str):
         """ Adds a new entry to the change log
         """
@@ -3245,7 +3247,7 @@ class ServerConfig():
             "time": datetime.now(),
             "entry": entry}
         self._changeLog.append(entry)
-    
+
     def clearChangeLog(self):
         """ Clears the change log
         """
@@ -3612,6 +3614,14 @@ class ServerConfig():
         self._lastTriggerTab = value
 
     @property
+    def lastCamTab(self):
+        return self._lastCamTab
+
+    @lastCamTab.setter
+    def lastCamTab(self, value: str):
+        self._lastCamTab = value
+
+    @property
     def lastConsoleTab(self):
         return self._lastConsoleTab
 
@@ -3658,6 +3668,14 @@ class ServerConfig():
     @isVideoRecording.setter
     def isVideoRecording(self, value: bool):
         self._isVideoRecording = value
+
+    @property
+    def isVideoRecording2(self) -> bool:
+        return self._isVideoRecording2
+
+    @isVideoRecording2.setter
+    def isVideoRecording2(self, value: bool):
+        self._isVideoRecording2 = value
 
     @property
     def isAudioRecording(self) -> bool:
@@ -5489,6 +5507,10 @@ class CameraCfg():
                 for key, value in camValue.items():
                     if key == "liveconfig":
                         scfg["liveconfig"] = CameraConfig.initFromDict(value)
+                    elif key == "photoconfig":
+                        scfg["photoconfig"] = CameraConfig.initFromDict(value)
+                    elif key == "rawconfig":
+                        scfg["rawconfig"] = CameraConfig.initFromDict(value)
                     elif key == "videoconfig":
                         scfg["videoconfig"] = CameraConfig.initFromDict(value)
                     elif key == "controls":

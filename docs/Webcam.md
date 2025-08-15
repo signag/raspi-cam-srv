@@ -1,5 +1,7 @@
 # Web Cam Settings
 
+**NOTE** This page is kept for legacy reasons. Since V3.6.0 it is replaced by [Web Cam](./CamWebcam.md).
+
 [![Up](img/goup.gif)](./UserGuide.md)
 
 **raspiCamSrv** enables webcam functionalities with Raspberry Pi cameras.
@@ -25,7 +27,7 @@ The links shown on the page open a new browser window.
 
 #### Save Active Camera Settings for Camera Switch
 
-This button stores the current [Camera Configuration](./Configuration.md) for *Live View* and *Video* as well as the current [Controls](./CameraControls.md) settings for the active camera in a specific structure (streamingCfg) so that it can be reused for streaming in a case that the other camera has been activated. (See also [Configuring MJPEG Stream and jpeg Photo](#configuring-mjpeg-stream-and-jpeg-photo))
+This button stores the current [Camera Configuration](./Configuration.md) for all configurations as well as the current [Controls](./CameraControls.md) settings for the active camera in a specific structure (streamingCfg) so that it can be reused for streaming in a case that the other camera has been activated. (See also [Configuring MJPEG Stream and jpeg Photo](#configuring-mjpeg-stream-and-jpeg-photo))
 
 
 #### <<< Switch Cameras >>>
@@ -69,7 +71,7 @@ for example *focus*/*lensposition*, *zoom*, *AutoExposure* or others
 4. When the setup is satisfactory, go to the *Webcam* dialog and press the **Save Active Camera Settings for Camera Switch** button.
 5. Then switch cameras with the **<<< Switch Cameras >>>** button.
 6. Repeat steps 2. to 4. for the other camera
-7. If you now switch cameras, each stream and photo should show in the way specifically configured for the camera.
+7. If you now switch cameras, each stream, photo, raw photo and video should show in the way specifically configured for the camera.
 8. Now you can go to the [Settings](./Settings.md) screen and push the **Store Configuration** button
 9. If you want the entire configuration, including the streaming configuration, to be loaded when the server starts up, check the related checkbox in the [Settings](./Settings.md) screen.
 

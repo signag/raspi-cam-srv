@@ -1,169 +1,369 @@
 {% extends 'base.html' %}
 
 {% block header %}
-{% block title %}Web Cam Access{% endblock %}
+{% block title %}Camera Access{% endblock %}
 {% endblock %}
 
 {% block content %}
     <div class="w3-bar w3-green">
+        <!-- Cam menue -->
+        {% if sc.lastCamTab == "webcam" %}
+        <button class="w3-bar-item w3-button cammenu w3-light-green" id="webcambtn"
+            onclick="openCamTab('webcam', 'webcambtn')">Web Cam</button>
+        {% else %}
+        <button class="w3-bar-item w3-button cammenu" id="webcambtn"
+            onclick="openCamTab('webcam', 'webcambtn')">Web Cam</button>
+        {% endif %}
+        {% if sc.lastCamTab == "multicam" %}
+        <button class="w3-bar-item w3-button cammenu w3-light-green" id="multicambtn"
+            onclick="openCamTab('multicam', 'multicambtn')">Multi-Cam</button>
+        {% else %}
+        {% if sc.isLiveStream2 != None %}
+        <button class="w3-bar-item w3-button cammenu" id="multicambtn"
+            onclick="openCamTab('multicam', 'multicambtn')">Multi-Cam</button>
+        {% endif %}
+        {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
             <div class="w3-tooltip">
-                <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
-                    GitHub
+                <span style="position:absolute;right:45px;top:5px;width:200px"
+                    class="w3-text w3-tag">Online help from GitHub
                 </span>
                 <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp"
-                    alt="Online help" style="height:34px; width:34px" onclick="onlineHelp()">
+                    alt="Online help" style="height:34px; width:34px"
+                    onclick="onlineHelp()">
             </div>
         </div>
     </div>
-    <h2>Web Cam</h2>
-    <table>
-        <tr>
-            <td style="width: 50%;">
-                {% if sc.isLiveStream %}
-                <h3 style="margin: 0px;">{{ sc.activeCameraInfo}}</h3>
+    {% if sc.lastCamTab == "webcam" %}
+    <div id="webcam" class="camgroup">
+    {% else %}
+    <div id="webcam" class="camgroup" style="display:none">
+    {% endif %}
+        <h2>Web Cam</h2>
+        <table>
+            <tr>
+                <td style="width: 50%;">
+                    {% if sc.isLiveStream %}
+                    <h3 style="margin: 0px;">{{ sc.activeCameraInfo}}</h3>
+                    {% endif %}
+                </td>
+                <td style="width: 50%;">
+                    {% if str2 != None %}
+                    <h3 style="margin: 0px;">{{ str2["camerainfo"]}}</h3>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if sc.isLiveStream %}
+                    <h4 style="margin: 0px;">Video Stream:</h4>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if str2 != None %}
+                    <h4 style="margin: 0px;">Video Stream:</h4>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if sc.isLiveStream %}
+                    Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
                 {% endif %}
-            </td>
-            <td style="width: 50%;">
-                {% if str2 != None %}
-                <h3 style="margin: 0px;">{{ str2["camerainfo"]}}</h3>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if sc.isLiveStream %}
-                <h4 style="margin: 0px;">Video Stream:</h4>
-                {% endif %}
-            </td>
-            <td>
-                {% if str2 != None %}
-                <h4 style="margin: 0px;">Video Stream:</h4>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if sc.isLiveStream %}
-                Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
-            {% endif %}
-            </td>
-            <td>
-                {% if str2 != None %}
-                Using stored configuration with camera stream <b>{{ str2["liveconfig"].stream }}</b>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-            <!-- Live stream -->
-                {% if sc.isLiveStream %}
-                <img src="{{ url_for('home.video_feed') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
-                {% else %}
-                {% if sc.isVideoRecording %}
-                {% if sc.recordAudio == False %}
-                <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
-                {% else %}
-                <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
-                {% endif %}
-                {% elif sc.isPhotoSeriesRecording %}
-                <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
-                {% endif %}
-                {% endif %}
-            </td>
-            <td>
-            <!-- Live stream 2 -->
-                {% if str2 != None %}
-                <img src="{{ url_for('home.video_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if sc.isLiveStream %}
-                MJPEG Streaming URL: <a href="http://{{ g.hostname }}/video_feed" target="_blank">http://{{ g.hostname }}/video_feed</a>
-                {% endif %}
-            </td>
-            <td>
-                {% if str2 != None %}
-                MJPEG Streaming URL: <a href="http://{{ g.hostname }}/video_feed2" target="_blank">http://{{ g.hostname }}/video_feed2</a>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if sc.isLiveStream %}
-                <h4 style="margin: 0px;">Photo:</h4>
-                {% endif %}
-            </td>
-            <td>
-                {% if str2 != None %}
-                <h4 style="margin: 0px;">Photo:</h4>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if sc.isLiveStream %}
-                Using Configuration <b>LIVE</b> 
-                with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
-                {% endif %}
-            </td>
-            <td>
-                {% if str2 != None %}
-                Using stored Configuration
-                with camera stream <b>{{ str2["liveconfig"].stream }}</b>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if sc.isLiveStream %}
-                <img src="{{ url_for('webcam.photo_feed') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
-                {% endif %}
-            </td>
-            <td>
-                {% if str2 != None %}
-                <img src="{{ url_for('webcam.photo_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if sc.isLiveStream %}
-                Photo URL: <a href="http://{{ g.hostname }}/photo_feed" target="_blank">http://{{ g.hostname }}/photo_feed</a>
-                {% endif %}
-            </td>
-            <td>
-                {% if str2 != None %}
-                Photo URL: <a href="http://{{ g.hostname }}/photo_feed2" target="_blank">http://{{ g.hostname }}/photo_feed2</a>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if str2 != None and sc.isLiveStream == True %}
-                <form method="post" action="{{ url_for('webcam.store_streaming_config') }}">
-                    <p style="margin-bottom: 0"></p>
-                    <input class="w3-button w3-black" type="submit" value="Save Active Camera Settings for Camera Switch">
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                {% if str2 != None and sc.isLiveStream == True %}
-                <form method="post" action="{{ url_for('webcam.switch_cameras') }}">
-                    <p style="margin-bottom: 0"></p>
-                    <input class="w3-button w3-black" type="submit" value="<<< Switch Cameras >>>">
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-    </table>
+                </td>
+                <td>
+                    {% if str2 != None %}
+                    Using stored configuration with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                <!-- Live stream -->
+                    {% if sc.isLiveStream %}
+                    <img src="{{ url_for('home.video_feed') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% else %}
+                    {% if sc.isVideoRecording %}
+                    {% if sc.recordAudio == False %}
+                    <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% elif sc.isPhotoSeriesRecording %}
+                    <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                <!-- Live stream 2 -->
+                    {% if str2 != None %}
+                    <img src="{{ url_for('home.video_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if sc.isLiveStream %}
+                    MJPEG Streaming URL: <a href="http://{{ g.hostname }}/video_feed" target="_blank">http://{{ g.hostname }}/video_feed</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if str2 != None %}
+                    MJPEG Streaming URL: <a href="http://{{ g.hostname }}/video_feed2" target="_blank">http://{{ g.hostname }}/video_feed2</a>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if sc.isLiveStream %}
+                    <h4 style="margin: 0px;">Photo:</h4>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if str2 != None %}
+                    <h4 style="margin: 0px;">Photo:</h4>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if sc.isLiveStream %}
+                    Using Configuration <b>LIVE</b> 
+                    with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if str2 != None %}
+                    Using stored Configuration
+                    with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if sc.isLiveStream %}
+                    <img src="{{ url_for('webcam.photo_feed') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% endif %}
+                </td>
+                <td>
+                    {% if str2 != None %}
+                    <img src="{{ url_for('webcam.photo_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if sc.isLiveStream %}
+                    Photo URL: <a href="http://{{ g.hostname }}/photo_feed" target="_blank">http://{{ g.hostname }}/photo_feed</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if str2 != None %}
+                    Photo URL: <a href="http://{{ g.hostname }}/photo_feed2" target="_blank">http://{{ g.hostname }}/photo_feed2</a>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+    {% if sc.lastCamTab == "multicam" %}
+    <div id="multicam" class="camgroup">
+    {% else %}
+    <div id="multicam" class="camgroup" style="display:none">
+    {% endif %}
+        <h2>Multi Cam</h2>
+        <table>
+            <tr>
+                <td style="width: 50%;">
+                    {% if sc.isLiveStream %}
+                    <h3 style="margin: 0px;">Active: {{ sc.activeCameraInfo}}</h3>
+                    {% endif %}
+                </td>
+                <td style="width: 50%;">
+                    {% if str2 != None %}
+                    <h3 style="margin: 0px;">{{ str2["camerainfo"]}}</h3>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                <!-- Live stream -->
+                    {% if sc.isLiveStream %}
+                    <img src="{{ url_for('home.video_feed') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% else %}
+                    {% if sc.isVideoRecording %}
+                    {% if sc.recordAudio == False %}
+                    <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% elif sc.isPhotoSeriesRecording %}
+                    <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                <!-- Live stream 2 -->
+                    {% if str2 != None %}
+                    <img src="{{ url_for('home.video_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="width:56%">
+                    <!-- Photo button -->
+                    {% if sc.isVideoRecording or sc.isPhotoSeriesRecording %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_take_photo') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo" disabled>
+                    </form>
+                    {% else %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_take_photo') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo">
+                    </form>
+                    {% endif %}
+
+                    <!-- raw button -->
+                    {% if sc.isVideoRecording or sc.isPhotoSeriesRecording %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_take_raw_photo') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Raw" disabled>
+                    </form>
+                    {% else %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_take_raw_photo') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Raw">
+                    </form>
+                    {% endif %}
+                    {% if sc.isPhotoSeriesRecording %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_record_video') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Video" disabled>
+                    </form>
+                    {% else %}
+                    {% if sc.isVideoRecording == false %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_record_video') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Video">
+                    </form>
+                    {% endif %}
+                    {% if sc.isVideoRecording == true %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_stop_recording') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td style="width:56%">
+                    <!-- Photo button -->
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.take_photo2') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo">
+                    </form>
+
+                    <!-- Raw button -->
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_take_raw_photo2') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Raw">
+                    </form>
+
+                    {% if sc.isVideoRecording2 == false %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_record_video2') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Video">
+                    </form>
+                    {% endif %}
+                    {% if sc.isVideoRecording2 == true %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_stop_recording2') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    &nbsp;
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:56%">
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.take_photo_both') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo - Both">
+                    </form>
+
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_take_raw_photo_both') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Raw - Both">
+                    </form>
+
+                    {% if sc.isVideoRecording == false and sc.isVideoRecording2 == false %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_record_video_both') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Video - Both">
+                    </form>
+                    {% endif %}
+                    {% if sc.isVideoRecording == true or sc.isVideoRecording2 == true %}
+                    <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_stop_recording_both') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop - Both">
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    &nbsp;
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if str2 != None and sc.isLiveStream == True %}
+                    <form method="post" action="{{ url_for('webcam.store_streaming_config') }}">
+                        <p style="margin-bottom: 0"></p>
+                        <input class="w3-button w3-black" type="submit" value="Save Active Camera Settings for Camera Switch">
+                    </form>
+                    {% endif %}
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if str2 != None and sc.isLiveStream == True %}
+                    <form method="post" action="{{ url_for('webcam.switch_cameras') }}">
+                        <p style="margin-bottom: 0"></p>
+                        <input class="w3-button w3-black" type="submit" value="<<< Switch Cameras >>>">
+                    </form>
+                    {% endif %}
+                </td>
+                <td>
+                </td>
+            </tr>
+        </table>
+    </div>
     <script>
+        function openCamTab(infoTabName, infoTabButton) {
+            var i;
+            var x = document.getElementsByClassName("camgroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(infoTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("cammenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button cammenu";
+            }
+            document.getElementById(infoTabButton).classList = "w3-bar-item w3-button cammenu w3-light-green";
+        }
+        function doSubmit(form) {
+            document.getElementById(form).submit();
+        }
+        function confirmAction(form, action, needsConfirm) {
+            //console.log("confirmExecution - needsConfirm=", needsConfirm);
+            if (needsConfirm == "True") {
+                if (confirm("Do you want to execute the following action?\n" + action)) {
+                    document.getElementById(form).method = "post";
+                    document.getElementById(form).submit();
+                } else {
+                    document.getElementById(form).method = "get";
+                }
+            }
+        }
         function onlineHelp() {
-            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Webcam.md");
+            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/CamWebcam.md");
         }
     </script>
 {% endblock %}

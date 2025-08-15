@@ -73,9 +73,9 @@ Tuning files are specific for a camera and not for a camera model.
 
 If two cameras are used with a Pi5, the tuning file needs to be individually specified for each camera, also if both are the same model.
 
-To preserve the tuning configuration for a camera, it must be memorized using the *Memorize Configuration and Controls for Camera Change* in screen [Web Cam](./Webcam.md)
+To preserve the tuning configuration for a camera, it must be memorized using the *Memorize Configuration and Controls for Camera Change* in screen [Multi Cam](./CamMulticam.md)
 
-Because of a Threading issue in Picamera2 (see Picamera2 Issue #1103 [Tuning file support not thread-safe?](https://github.com/raspberrypi/picamera2/issues/1103)), the streams from the two cameras in dialog [Web Cam](./Webcam.md) may look as if the tuning file of the first camera would have also been applied to the second one.
+Because of a Threading issue in Picamera2 (see Picamera2 Issue #1103 [Tuning file support not thread-safe?](https://github.com/raspberrypi/picamera2/issues/1103)), the streams from the two cameras in dialog [Web Cam](./CamWebcam.md) may look as if the tuning file of the first camera would have also been applied to the second one.
 
 Nevertheless, the handling in raspiCamSrv is correct.   
 You may proof this in the following way:

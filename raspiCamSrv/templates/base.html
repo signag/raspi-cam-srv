@@ -72,9 +72,9 @@
                 <a href="{{ url_for('trigger.trigger') }}" class="w3-bar-item w3-button" id='triggerbtn' onclick="openMenu('triggerbtn')">Trigger</a>
                 {% endif %}
                 {% if sc.curMenu == "webcam" %}
-                <a href="{{ url_for('webcam.webcam') }}" class="w3-bar-item w3-button w3-dark-grey" id='webcambtn' onclick="openMenu('webcambtn')">Web Cam</a>
+                <a href="{{ url_for('webcam.webcam') }}" class="w3-bar-item w3-button w3-dark-grey" id='cambtn' onclick="openMenu('cambtn')">Cam</a>
                 {% else %}
-                <a href="{{ url_for('webcam.webcam') }}" class="w3-bar-item w3-button" id='webcambtn' onclick="openMenu('webcambtn')">Web Cam</a>
+                <a href="{{ url_for('webcam.webcam') }}" class="w3-bar-item w3-button" id='cambtn' onclick="openMenu('cambtn')">Cam</a>
                 {% endif %}
                 {% if sc.curMenu == "console" %}
                 <a href="{{ url_for('console.console') }}" class="w3-bar-item w3-button w3-dark-grey" id='consolebtn' onclick="openMenu('consolebtn')">Console</a>
@@ -93,6 +93,11 @@
                 {% endif %}
                 <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
                     {% if sc.isLiveStream2 != None %}
+                    {% if sc.isVideoRecording2 %}
+                    <img src="{{ url_for('static', filename='recording_video2_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_video2_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
                     {% if sc.isLiveStream2 == True %}
                     <img src="{{ url_for('static', filename='recording_live2_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px"> 
                     {% else %}

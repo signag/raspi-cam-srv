@@ -55,7 +55,7 @@ In the latter case, action execution is done in an own thread which allows the a
 This means that actions are always completed and not interrupted.
 
 This applies to actions with a configured duration, such as an LED which shall be 'on' for a certain time or a video with a given duration.    
-However, it applies also to actions with an inherent time consumtion. For example the movement of a StepperMotor can consist of hundrets of steps with a waiting tyme of 1 to 4 ms after each step. This require in total several seconds to complete.
+However, it applies also to actions with an inherent time consumtion. For example the movement of a StepperMotor can consist of hundreds of steps with a waiting time of 1 to 4 ms after each step. This requires in total several seconds to complete.
 
 If for such an action a new action is requested before the previous action is completed, it will wait until the device is no longer busy.
 

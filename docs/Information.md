@@ -42,7 +42,7 @@ Each camera has an identifying number (0, 1, ...) shown in the title above each 
 
 When the server starts up, the first camera, which is not a USB camera, is selected.
 
-You may later switch to another non-USB camera on the [Settings](./Settings.md) screen or the [Web Cam](./Webcam.md) screen
+You may later switch to another non-USB camera on the [Settings](./Settings.md) screen or the [Multi Cam](./CamMulticam.md) screen
 
 The active camera is indicated in the list.
 
@@ -68,8 +68,8 @@ See [raspiCamSrv Camera Tuning](./Tuning.md).
 The tab lists the clients which are currently using one of the camera streams.   
 Along with the IP address of the client, a list of streams is shown which the client is using:
 - *live_view*<br> [The Live View](./LiveScreen.md) stream<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLiveActive.jpg)
-- *video_feed*<br>The [video Stream](./Webcam.md#video-stream) for the active camera<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLiveActive.jpg)
-- *video_feed2*<br>The [video Stream](./Webcam.md#video-stream) for the second camera, if available<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLive2Active.jpg)
+- *video_feed*<br>The [video Stream](./CamWebcam.md#video-stream) for the active camera<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLiveActive.jpg)
+- *video_feed2*<br>The [video Stream](./CamWebcam.md#video-stream) for the second camera, if available<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLive2Active.jpg)
 
 ## Camera Properties
 

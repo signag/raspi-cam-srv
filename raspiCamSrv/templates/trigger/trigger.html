@@ -307,9 +307,15 @@
             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Start">
         </form>
         {% else %}
+        {% if sc.isTriggerTesting == False %}
         <form method="post" action="{{ url_for('trigger.stop_triggered_capture') }}">
             <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
         </form>
+        {% else %}
+        <form method="post" action="{{ url_for('trigger.stop_triggered_capture') }}">
+            <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop" disabled>
+        </form>
+        {% endif %}
         {% endif %}
         {% if tc.error %}
         <p>&nbsp;</p>
@@ -1147,9 +1153,15 @@
             </form>
             <hr>
             {% if sc.isTriggerTesting == False %}
+            {% if sc.isTriggerRecording == False %}
             <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
                 <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection">
             </form>
+            {% else %}
+            <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
+                <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection" disabled>
+            </form>
+            {% endif %}
             {% else %}
             <form method="post" action="{{ url_for('trigger.stop_test_motion_detection') }}">
                 <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop Test Motion Detection">

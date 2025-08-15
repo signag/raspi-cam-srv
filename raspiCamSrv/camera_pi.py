@@ -87,6 +87,7 @@ class CameraController():
         else:
             logger.debug("Thread %s: CameraController.requestCameraForConfig - cfgPhoto: %s", get_ident(), cfgPhoto)
         logger.debug("Thread %s: CameraController.requestCameraForConfig - forLiveStream: %s", get_ident(), forLiveStream)
+        logger.debug("Thread %s: CameraController.requestCameraForConfig - forActiveCamera: %s", get_ident(), forActiveCamera)
 
         exclusive = False
 
@@ -98,13 +99,22 @@ class CameraController():
         else:
             logger.debug("Thread %s: CameraController.requestCameraForConfig: Camara stop required", get_ident())
             if not forLiveStream:
-                Camera.liveViewDeactivated = True
+                if forActiveCamera == True:
+                    Camera.liveViewDeactivated = True
+                else:
+                    Camera.liveView2Deactivated = True
                 logger.debug("Thread %s: CameraController.requestCameraForConfig - Live stream deactivated", get_ident())
-            Camera.stopLiveStream()
+            if forActiveCamera == True:
+                Camera.stopLiveStream()
+            else:
+                Camera.stopLiveStream2()
             logger.debug("Thread %s: CameraController.requestCameraForConfig: Live stream stopped", get_ident())
             cam, stopped = self.requestStop(cam)
             if stopped:
-                cam, started = Camera.ctrl.requestStart(cam, camNum, forActiveCamera)
+                if forActiveCamera == True:
+                    cam, started = Camera.ctrl.requestStart(cam, camNum, forActiveCamera)
+                else:
+                    cam, started = Camera.ctrl2.requestStart(cam, camNum, forActiveCamera)
                 if started:
                     logger.debug("Thread %s: CameraController.requestCameraForConfig - camera started", get_ident())
                 else:
@@ -132,6 +142,24 @@ class CameraController():
             logger.debug("Thread %s: CameraController.restoreLivestream: Live stream started", get_ident())
         else:
             logger.debug("Thread %s: CameraController.restoreLivestream - Restart live stream not required", get_ident())
+        return cam
+
+    def restoreLivestream2(self, cam, exclusive: bool):
+        """ Restart the live stream 2 after exclusive camera use by other task
+        """
+        logger.debug("Thread %s: CameraController.restoreLivestream2 - exclusive: %s", get_ident(), exclusive)
+        if exclusive:
+            logger.debug("Thread %s: CameraController.restoreLivestream2 - Need to stop camera and restart live stream", get_ident())
+            cam, stopped = self.requestStop(cam)
+            if not stopped:
+                logger.error("Thread %s: CameraController.restoreLivestream2 - camera did not stop", get_ident())
+                raise RuntimeError("CameraController.restoreLivestream2 - Camera did not stop")
+            Camera.liveView2Deactivated = False
+            logger.debug("Thread %s: CameraController.restoreLivestream2 - Live stream activated", get_ident())
+            Camera.startLiveStream2()
+            logger.debug("Thread %s: CameraController.restoreLivestream2: Live stream started", get_ident())
+        else:
+            logger.debug("Thread %s: CameraController.restoreLivestream2 - Restart live stream not required", get_ident())
         return cam
 
     def requestStart(self, cam, camNum, forActiveCamera=True):
@@ -951,7 +979,9 @@ class Camera():
     ctrl:CameraController = None
     ctrl2:CameraController = None
     videoOutput = None
+    videoOutput2 = None
     prgVideoOutput = None
+    prgVideoOutput2 = None
     photoSeries:Series = None
 
     thread = None                   # background thread that reads frames from camera
@@ -959,7 +989,9 @@ class Camera():
     thread2 = None                  # background thread for second camera
     thread2Lock = allocate_lock()   # lock for stopping the second camera thread
     liveViewDeactivated = False
+    liveView2Deactivated = False
     videoThread = None
+    videoThread2 = None
     photoSeriesThread = None
     frame = None                    # current frame is stored here by background thread
     frame2 = None                   # current frame for second camera
@@ -970,7 +1002,9 @@ class Camera():
     stopRequested = False           # Request to stop the background thread
     stopRequested2 = False          # Request to stop the background thread for second camera
     stopVideoRequested = False      # Request to stop the video thread
+    stopVideoRequested2 = False     # Request to stop the video thread
     videoDuration = 0               # Planned duration of video recording in sec
+    videoDuration2 = 0               # Planned duration of video recording in sec
     stopPhotoSeriesRequested = False  # Request to stop the photoseries thread
     resetScalerCropRequested = False
     event = CameraEvent()
@@ -978,9 +1012,12 @@ class Camera():
 
     # Callbacks
     when_photo_taken = None
+    when_photo_2_taken = None
     when_series_photo_taken = None
     when_recording_starts = None
     when_recording_stops = None
+    when_recording_2_starts = None
+    when_recording_2_stops = None
     when_streaming_1_starts = None
     when_streaming_1_stops = None
     when_streaming_2_starts = None
@@ -998,6 +1035,19 @@ class Camera():
             else:
                 CameraCfg().serverConfig.error = None
         return cls._instance
+
+    @classmethod
+    def isCamera2Available(cls) -> bool:
+        """ Check if the second camera is available
+            Returns True if the second camera is available, False otherwise
+        """
+        logger.debug("Thread %s: Camera.isCamera2Available", get_ident())
+        if cls.cam2 is not None:
+            return True
+            logger.debug("Thread %s: Camera.isCamera2Available - Second camera is available", get_ident())
+        else:
+            logger.debug("Thread %s: Camera.isCamera2Available - Second camera not available", get_ident())
+            return False
 
     @classmethod
     def initCamera(cls):
@@ -1159,7 +1209,7 @@ class Camera():
 
         # Restore streaming config, if available
         if cls.cam2:
-            cls.restoreLiveViewFromStreamingConfig() 
+            cls.restoreConfigFromStreamingConfig() 
 
         logger.debug("Thread %s: Camera.switchCamera - starting Live Stream", get_ident())
         cls.startLiveStream()
@@ -1211,30 +1261,34 @@ class Camera():
         logger.debug("Thread %s: Camera.startLiveStream2", get_ident())
         if not CameraCfg().serverConfig.errorc2:
             if cls.cam2:
-                # logger.debug("Thread %s: Camera.startLiveStream2 - About to acquire Lock: thread2Lock=%s.", get_ident(), Camera.thread2Lock.locked())
-                with Camera.thread2Lock:
-                    Camera.last_access2 = time.time()
-                # logger.debug("Thread %s: Camera.startLiveStream2 - last_access2 set", get_ident())
-                if Camera.thread2 is None:
-                    logger.debug("Thread %s: Camera.startLiveStream2: Starting new thread", get_ident())
-
-                    # start background frame thread
-                    Camera.thread2 = threading.Thread(target=cls._thread2)
-                    Camera.thread2.start()
-                    logger.debug("Thread %s: Camera.startLiveStream2 - Thread started", get_ident())
-
-                    # wait until first frame is available
-                    logger.debug("Thread %s: Camera.startLiveStream2 - waiting for frame", get_ident())
-                    Camera.event2.wait()
-                    if not CameraCfg().serverConfig.errorc2:
-                        CameraCfg().serverConfig.isLiveStream2 = True
+                if Camera.liveView2Deactivated:
+                    logger.debug("Thread %s: Not starting Live View 2 thread. Live View 2 deactivated", get_ident())
+                    CameraCfg().serverConfig.isLiveStream2 = False
                 else:
-                    logger.debug("Thread %s: Camera.startLiveStream2 - Thread exists", get_ident())
-                    if not Camera.thread2.is_alive:
-                        logger.debug("Thread %s: Camera.startLiveStream2 - Thread is not alive", get_ident())
+                    # logger.debug("Thread %s: Camera.startLiveStream2 - About to acquire Lock: thread2Lock=%s.", get_ident(), Camera.thread2Lock.locked())
+                    with Camera.thread2Lock:
+                        Camera.last_access2 = time.time()
+                    # logger.debug("Thread %s: Camera.startLiveStream2 - last_access2 set", get_ident())
+                    if Camera.thread2 is None:
+                        logger.debug("Thread %s: Camera.startLiveStream2: Starting new thread", get_ident())
+
+                        # start background frame thread
                         Camera.thread2 = threading.Thread(target=cls._thread2)
                         Camera.thread2.start()
                         logger.debug("Thread %s: Camera.startLiveStream2 - Thread started", get_ident())
+
+                        # wait until first frame is available
+                        logger.debug("Thread %s: Camera.startLiveStream2 - waiting for frame", get_ident())
+                        Camera.event2.wait()
+                        if not CameraCfg().serverConfig.errorc2:
+                            CameraCfg().serverConfig.isLiveStream2 = True
+                    else:
+                        logger.debug("Thread %s: Camera.startLiveStream2 - Thread exists", get_ident())
+                        if not Camera.thread2.is_alive:
+                            logger.debug("Thread %s: Camera.startLiveStream2 - Thread is not alive", get_ident())
+                            Camera.thread2 = threading.Thread(target=cls._thread2)
+                            Camera.thread2.start()
+                            logger.debug("Thread %s: Camera.startLiveStream2 - Thread started", get_ident())
 
     @classmethod
     def stopLiveStream(cls):
@@ -1308,12 +1362,14 @@ class Camera():
     @staticmethod
     def restartLiveStream2():
         logger.debug("Thread %s: Camera.restartLiveStream2", get_ident())
+        Camera.liveView2Deactivated = True
         Camera.stopLiveStream2()
         logger.debug("Thread %s: Camera.restartLiveStream2: Live stream stopped", get_ident())
         Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2)
         logger.debug("Thread %s: Camera.restartLiveStream2: Camera stopped", get_ident())
         Camera.ctrl2.clearConfig()
         logger.debug("Thread %s: Camera.restartLiveStream2: Config cleared", get_ident())
+        Camera.liveView2Deactivated = False
         Camera.startLiveStream2()
         logger.debug("Thread %s: Camera.restartLiveStream2: Live stream started", get_ident())
 
@@ -1625,6 +1681,12 @@ class Camera():
         cls.setStreamingConfigs()
         logger.debug("Thread %s: Camera.setSecondCamera - second camera set to %s", get_ident(), cls.camNum2)
 
+        cameraPhotoSubPath = "photos/" + "camera_" + str(camNum2)
+        fp = sc.photoRoot + "/" + cameraPhotoSubPath
+        if not os.path.exists(fp):
+            os.makedirs(fp)
+            logger.debug("Thread %s: Camera.setSecondCamera - Photo directory created %s", get_ident(), fp)
+
     @classmethod
     def setStreamingConfigs(cls):
         """Set the configuration for streaming which will be used for the second camera
@@ -1643,6 +1705,8 @@ class Camera():
             scfg["hasfocus"] = cfg.cameraProperties.hasFocus
             scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
             scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
+            scfg["photoconfig"] = copy.deepcopy(cfg.photoConfig)
+            scfg["rawconfig"] = copy.deepcopy(cfg.rawConfig)
             scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
             scfg["controls"] = copy.deepcopy(cfg.controls)
             strc[cn] = scfg
@@ -1696,6 +1760,33 @@ class Camera():
                     videoConfig.sensor_mode = str(maxMode)
                     videoConfig.stream_size = sensorModes[maxMode]["size"]
 
+                photoConfig = CameraConfig()
+                photoConfig.id = "FOTO"
+                photoConfig.use_case = "Photo"
+                photoConfig.buffer_count = 1
+                photoConfig.encode = "main"
+                photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+
+                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
+                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
+                    photoConfig.sensor_mode = 0
+                    photoConfig.stream_size = sensorModes[0]["size"]
+                else:
+                    photoConfig.sensor_mode = str(maxMode)
+                    photoConfig.stream_size = sensorModes[maxMode]["size"]
+
+                rawConfig = CameraConfig()
+                rawConfig.id = "PRAW"
+                rawConfig.use_case = "Raw Photo"
+                rawConfig.buffer_count = 1
+                rawConfig.encode = "raw"
+                rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+                rawConfig.sensor_mode = str(maxMode)
+                rawConfig.stream_size = sensorModes[maxMode]["size"]
+
                 scfg = {}
                 model = ""
                 for cfgCam in cfg.cameras:
@@ -1706,16 +1797,18 @@ class Camera():
                 scfg["hasfocus"] = hasFocus
                 scfg["tuningconfig"] = TuningConfig()
                 scfg["liveconfig"] = liveViewConfig
+                scfg["photoconfig"] = photoViewConfig
+                scfg["rawconfig"] = rawConfig
                 scfg["videoconfig"] = videoConfig
                 scfg["controls"] = copy.deepcopy(cfg.controls)
                 strc[cn] = scfg
                 logger.debug("Thread %s: Camera.setStreamingConfigs - created  entry for second camera %s", get_ident(), cn)
 
     @classmethod
-    def restoreLiveViewFromStreamingConfig(cls):
-        """Restore live view configuration and controls from a previously saved streaming config
+    def restoreConfigFromStreamingConfig(cls):
+        """Restore active configuration and controls from a previously saved streaming config
         """
-        logger.debug("Thread %s: Camera.restoreLiveViewFromStreamingConfig", get_ident())
+        logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
         strc = cfg.streamingCfg
@@ -1724,9 +1817,17 @@ class Camera():
         cn = str(sc.activeCamera)
         if cn in strc:
             scfg = strc[cn]
-            cfg.liveViewConfig = copy.deepcopy(scfg["liveconfig"])
-            cfg.controls = copy.deepcopy(scfg["controls"])
-            logger.debug("Thread %s: Camera.restoreLiveViewFromStreamingConfig - restored live view config and controls from streaming config %s", get_ident(), cn)
+            if "liveconfig" in scfg:
+                cfg.liveViewConfig = copy.deepcopy(scfg["liveconfig"])
+            if "photoconfig" in scfg:
+                cfg.photoConfig = copy.deepcopy(scfg["photoconfig"])
+            if "rawconfig" in scfg:
+                cfg.rawConfig = copy.deepcopy(scfg["rawconfig"])
+            if "videoconfig" in scfg:
+                cfg.videoConfig = copy.deepcopy(scfg["videoconfig"])
+            if "controls" in scfg:
+                cfg.controls = copy.deepcopy(scfg["controls"])
+            logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored live view config and controls from streaming config %s", get_ident(), cn)
 
     @staticmethod
     def configure(cfg: CameraConfig, cfgPhoto: CameraConfig):
@@ -2431,6 +2532,67 @@ class Camera():
         return fp
 
     @staticmethod
+    def takeImage2(filename: str, keepExclusive:bool=False, noEvents:bool=False, alternatePath:str="") -> str:
+        """ Takes a photo with second camera with the specified file name and returns the path
+
+            filename:       file name for the photo
+            keepExclusive:  If True, keep the exclusive mode
+                            This can be used for example if a jpg photo shall be taken
+                            before a video is recorded
+            noEvents:       If True, no events are triggered
+            alternatePath:  If not empty, the file path of the photo, 
+                            otherwise the standard photo path is taken
+                            and the display buffer is not updated
+
+        """
+        logger.debug("Thread %s: Camera.takeImage2 - filename: %s keepExclusive: %s", get_ident(), filename, keepExclusive)
+        fp = ""
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+
+        if noEvents == False:
+            logger.debug("Thread %s: Camera.takeImage2 Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            if Camera().when_photo_2_taken:
+                Camera().when_photo_2_taken()
+        try:
+            photoConfig = cfg.streamingCfg[str(Camera.camNum2)]["photoconfig"]
+            logger.debug("Thread %s: Camera.takeImage2 Requesting camera for photoConfig", get_ident())
+            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(Camera.cam2, Camera.camNum2, photoConfig, forActiveCamera=False)
+            logger.debug("Thread %s: Camera.takeImage2 Got camera for photoConfig exclusive: %s", get_ident(), exclusive)
+
+            Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
+            logger.debug("Thread %s: Camera.takeImage2 - controls applied", get_ident())
+
+            logger.debug("Thread %s: Camera.takeImage2 - Camera.cam2.controls=%s", get_ident(), Camera.cam2.controls)
+            request = Camera.cam2.capture_request()
+            prgLogger.debug("request = picam2.capture_request()")
+            logger.debug("Thread %s: Camera.takeImage2: Request started", get_ident())
+            cameraPhotoSubPath = "photos/" + "camera_" + str(Camera.camNum2)
+            path = sc.photoRoot + "/" + cameraPhotoSubPath
+            if alternatePath != "":
+                path = alternatePath
+            fp = path + "/" + filename
+            request.save(photoConfig.stream, fp)
+            prgLogger.debug("request.save(\"%s\", \"%s\")", photoConfig.stream, sc.prgOutputPath + "/" + filename)
+            logger.debug("Thread %s: Camera.takeImage2: Image saved as %s", get_ident(), fp)
+            request.release()
+            prgLogger.debug("request.release()")
+            logger.debug("Thread %s: Camera.takeImage2: Request released", get_ident())
+
+            if not keepExclusive:
+                Camera.cam2 = Camera.ctrl2.restoreLivestream2(Camera.cam2, exclusive)
+                if sc.isVideoRecording2 == False \
+                and sc.isLiveStream2 == False:
+                    Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
+        except Exception as e:
+            logger.error("Thread %s: Camera.takeImage2: Error %s", get_ident(), e)
+            if not sc.errorc2:
+                sc.errorc2 = "Phototaking caused error: " + str(e)
+                sc.errorc2Source = "Camera.takeImage2"
+        Camera.liveView2Deactivated = False
+        return fp
+
+    @staticmethod
     def quickPhoto(fp: str) -> tuple:
         """ Take a photo assuming that the camera is started
         """
@@ -2669,6 +2831,67 @@ class Camera():
         return fpr
 
     @staticmethod
+    def takeRawImage2(filenameRaw: str, filename: str, noEvents:bool=False, alternatePath:str=""):
+        """ Takes a photo as well as a raw image with the specified file names 
+            and returns the path for the raw photo
+            filenameRaw: file name for the raw image
+            filename:    file name for the photo   
+            noEvents:       If True, no events are triggered
+            alternatePath:  If not empty, the file path of the photo, 
+                            otherwise the standard photo path is taken
+                            and the display buffer is not updated
+        """
+        logger.debug("Thread %s: Camera.takeRawImage2", get_ident())
+        fpr = ""
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+
+        if noEvents == False:
+            logger.debug("Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            if Camera().when_photo_2_taken:
+                Camera().when_photo_2_taken()
+
+        try:
+            rawConfig = cfg.streamingCfg[str(Camera.camNum2)]["rawconfig"]
+            photoConfig = cfg.streamingCfg[str(Camera.camNum2)]["photoconfig"]
+            logger.debug("Thread %s: Camera.takeRawImage2 Requesting camera for rawConfig", get_ident())
+            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(Camera.cam2, Camera.camNum2, rawConfig, photoConfig, forActiveCamera=False)
+            logger.debug("Thread %s: Camera.takeRawImage2 Got camera for rawConfig exclusive: %s", get_ident(), exclusive)
+
+            Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
+            logger.debug("Thread %s: Camera.takeRawImage2: controls applied", get_ident())
+
+            request = Camera.cam2.capture_request()
+            prgLogger.debug("request = picam2.capture_request()")
+            logger.debug("Thread %s: Camera.takeRawImage2: Request started", get_ident())
+            cameraPhotoSubPath = "photos/" + "camera_" + str(Camera.camNum2)
+            path = sc.photoRoot + "/" + cameraPhotoSubPath
+            if alternatePath != "":
+                path = alternatePath
+            fp = path + "/" + filename
+            request.save(photoConfig.stream, fp)
+            prgLogger.debug("request.save(\"%s\", \"%s\")", photoConfig.stream, sc.prgOutputPath + "/" + filename)
+            fpr = path + "/" + filenameRaw
+            request.save_dng(fpr)
+            prgLogger.debug("request.save_dng(\"%s\")", fpr)
+            logger.debug("Thread %s: Camera.takeRawImage2: Raw Image saved as %s", get_ident(), fpr)
+            request.release()
+            prgLogger.debug("request.release()")
+            logger.debug("Thread %s: Camera.takeRawImage2: Request released", get_ident())
+
+            Camera.cam2 = Camera.ctrl2.restoreLivestream2(Camera.cam2, exclusive)
+            if sc.isVideoRecording2 == False \
+            and sc.isLiveStream2 == False:
+                Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
+        except Exception as e:
+            logger.error("Thread %s: Camera.takeRawImage2: Error %s", get_ident(), e)
+            if not sc.errorc2:
+                sc.errorc2 = "Taking raw photo caused error: " + str(e)
+                sc.errorc2Source = "Camera.takeRawImage2"
+        Camera.liveView2Deactivated = False
+        return fpr
+
+    @staticmethod
     def _videoThread():
         logger.debug("Thread %s: Camera._videoThread", get_ident())
         cfg = CameraCfg()
@@ -2758,6 +2981,90 @@ class Camera():
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
 
     @staticmethod
+    def _videoThread2():
+        logger.debug("Thread %s: Camera._videoThread2", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+
+
+        logger.debug("Thread %s: Camera._videoThread2 - Requesting camera for videoConfig", get_ident())
+        videoConfig = cfg.streamingCfg[str(Camera.camNum2)]["videoconfig"]
+        Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(Camera.cam2, Camera.camNum2, videoConfig)
+        logger.debug("Thread %s: Camera._videoThread2 - Got camera for videoConfig exclusive: %s", get_ident(), exclusive)
+
+        Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
+        logger.debug("Thread %s: Camera._videoThread2 - controls applied", get_ident())
+        time.sleep(0.5)
+
+        encoder = H264Encoder()
+        prgLogger.debug("encoder = H264Encoder()")
+        output = Camera.videoOutput2
+        prgLogger.debug("output=\"%s\"", Camera.prgVideoOutput)
+        if output.lower().endswith(".mp4"):
+            encoder.output = FfmpegOutput(output, audio=False)
+            prgLogger.debug("encoder.output = FfmpegOutput(output, audio=False)")
+            logger.debug("Thread %s: Camera._videoThread2 - mp4 Video output to %s", get_ident(), output)
+        else:
+            encoder.output = FileOutput(output)
+            prgLogger.debug("encoder.output = FileOutput(output)")
+            logger.debug("Thread %s: Camera._videoThread2 - h264 Video output to %s", get_ident(), output)
+        try:
+            videoStart = time.time()
+            duration = float(Camera.videoDuration2)
+            logger.debug("Thread %s: Camera._videoThread2 - video started at %s, duration is %s", get_ident(), videoStart, duration)
+            Camera.cam2.start_encoder(encoder, name=videoConfig.stream)
+            prgLogger.debug("picam2.start_encoder(encoder, name=\"%s\")", videoConfig.stream)
+            prgLogger.debug("time.sleep(videoDuration)")
+            Camera.ctrl2.registerEncoder(Camera.ENCODER_VIDEO, encoder)
+            logger.debug("Thread %s: Camera._videoThread2 - Encoder started", get_ident())
+            if duration > 0.0:
+                elapsed = time.time() - videoStart
+                while elapsed <= duration:
+                    if Camera.stopVideoRequested2 == True:
+                        break
+                    time.sleep(0.1)
+                    elapsed = time.time() - videoStart
+                sc.isVideoRecording2 = False
+            else:
+                while Camera.stopVideoRequested2 == False:
+                    time.sleep(0.1)
+            logger.debug("Thread %s: Camera._videoThread2 - stop video requested", get_ident())
+            Camera.ctrl2.stopEncoder(Camera.cam2, Camera.ENCODER_VIDEO)
+            logger.debug("Thread %s: Camera._videoThread2 - encoder stopped", get_ident())
+            Camera.stopVideoRequested2 = False
+            Camera.videoDuration2 = 0
+        except ProcessLookupError as e:
+            logger.error("Thread %s: Camera._videoThread2 - Error: %s", get_ident(), e)
+            Camera.liveView2Deactivated = False
+            if not sc.errorc2:
+                sc.errorc2 = "Error in encoder: " + str(e)
+                sc.errorc22 = "Probably, the requested resolution is too high."
+                sc.errorc2Source = "Camera._videoThread2"
+        except RuntimeError as e:
+            logger.error("Thread %s: Camera._videoThread2 - Error: %s)", get_ident(), e)
+            Camera.liveView2Deactivated = False
+            if not sc.errorc2:
+                sc.errorc2 = "Error in encoder: " + str(e)
+                sc.errorc22 = "Probably, there is not sufficient memory for the requested resolution."
+                sc.errorc2Source = "Camera._videoThread2"
+            logger.debug("Thread %s: Camera._videoThread2 - sc.errorc2: %s)", get_ident(), sc.errorc2)
+        except Exception as e:
+            logger.error("Thread %s: Camera._videoThread2 - Exception: %s", get_ident(), e)
+            Camera.liveView2Deactivated = False
+            if not sc.errorc2:
+                sc.errorc2 = "Error in video recording: " + str(e)
+                sc.errorc2Source = "Camera._videoThread2"
+
+        Camera.videoThread2 = None
+        logger.debug("Thread %s: Camera._videoThread2 - videoThread2 terminated", get_ident())
+
+        Camera.cam2 = Camera.ctrl2.restoreLivestream2(Camera.cam2, exclusive)
+        logger.debug("Thread %s: Camera._videoThread2 - sc.errorc2: %s)", get_ident(), sc.errorc2)
+
+        if sc.isLiveStream2 == False:
+            Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
+
+    @staticmethod
     def recordVideo(filenameVid: str, filename: str, duration: int = 0, noEvents:bool=False, alternatePath:str=""):
         """ Start recrding video in an own thread
 
@@ -2802,6 +3109,49 @@ class Camera():
         return output
 
     @staticmethod
+    def recordVideo2(filenameVid: str, filename: str, duration: int = 0, noEvents:bool=False, alternatePath:str=""):
+        """ Start recording video with second camera in an own thread
+
+        Args:
+            filenameVid (str): File name for video
+            filename (str): filename for placeholder image
+                            If empty, no placeholder image is created
+            duration (int, optional): Video duration. Defaults to 0.
+            noEvents (bool, optional): Dont fire events. Defaults to False.
+            alternatePath (str, optional): Alternate path. 
+                        If set, display buffer will not be upfated
+                        Defaults to "".
+        """
+        logger.debug("Thread %s: Camera.recordVideo2. filename=%s, duration=%s", get_ident(), filename, duration)
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        # First take a normal photo as placeholder
+        if filename != "":
+            Camera.takeImage2(filename, keepExclusive=True, noEvents=True, alternatePath=alternatePath)
+
+        # Configure output for video file
+        cameraPhotoSubPath = "photos/" + "camera_" + str(Camera.camNum2)
+        path = sc.photoRoot + "/" + cameraPhotoSubPath
+        if alternatePath != "":
+            path = alternatePath
+        output = path + "/" + filenameVid
+        prgoutput = sc.prgOutputPath + "/" + filenameVid
+
+        if Camera.videoThread2 is None:
+            Camera.videoOutput2 = output
+            Camera.prgVideoOutput2 = prgoutput
+            Camera.videoDuration2 = duration
+            logger.debug("Thread %s: Camera.recordVideo2 - Starting new videoThread with output=%s", get_ident(), Camera.prgVideoOutput2)
+            Camera.videoThread2 = threading.Thread(target=Camera._videoThread2, daemon=True)
+            Camera.videoThread2.start()
+            logger.debug("Thread %s: Camera.recordVideo2 - videoThread2 started", get_ident())
+
+            if noEvents == False:
+                if Camera().when_recording_2_starts:
+                    Camera().when_recording_2_starts()
+        return output
+
+    @staticmethod
     def stopVideoRecording(noEvents:bool=False):
         """stops the video recording"""
         logger.debug("Thread %s: Camera.stopVideoRecording", get_ident())
@@ -2821,8 +3171,31 @@ class Camera():
         Camera.liveViewDeactivated = False
 
     @staticmethod
+    def stopVideoRecording2(noEvents:bool=False):
+        """stops the video recording for second camera"""
+        logger.debug("Thread %s: Camera.stopVideoRecording2", get_ident())
+        Camera.stopVideoRequested2 = True
+        Camera.videoDurations = 0
+        cnt = 0
+        while Camera.videoThread2:
+            time.sleep(0.01)
+            cnt += 1
+            if cnt > 500:
+                raise TimeoutError("Video thread 2 did not stop within 5 sec")
+        logger.debug("Thread %s: Camera.stopVideoRecording2: Thread has stopped", get_ident())
+
+        if noEvents == False:
+            if Camera().when_recording_2_stops:
+                Camera().when_recording_2_stops()
+        Camera.liveView2Deactivated = False
+
+    @staticmethod
     def isVideoRecording() -> bool:
         return Camera.videoThread is not None
+
+    @staticmethod
+    def isVideoRecording2() -> bool:
+        return Camera.videoThread2 is not None
 
     @staticmethod
     def getLensPosition() -> float:

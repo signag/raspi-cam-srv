@@ -170,6 +170,7 @@ def test_motion_detection():
                 if sc.isTriggerRecording == True:
                     MotionDetector().stopMotionDetection()
                     sc.isTriggerRecording = False
+                    sc.isTriggerWaiting = False
                 err = None
                 sc.isTriggerTesting = True
                 MotionDetector().setAlgorithm()
@@ -482,6 +483,7 @@ def stop_triggered_capture():
         if sc.isTriggerRecording:
             MotionDetector().stopMotionDetection()
             sc.isTriggerRecording = False
+            sc.isTriggerWaiting = False
             logger.debug("In motion - detection stopped")
         if sc.isEventhandling:
             TriggerHandler().stop()

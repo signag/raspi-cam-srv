@@ -1736,8 +1736,9 @@ class TriggerHandler():
                                 logger.error("TriggerHandler._closeDevices - Error while closing %s: %s - %s", deviceClass, type(e), e)                        
         for dev in closed:
             cls._registry["GPIO"].pop(dev)
-        if len(cls._registry["GPIO"]) > 0:
-            logger.error("TriggerHandler._closeDevices - Rgegistry not empty, not all devices closed. Resetting aniway")                        
+        if "GPIO" in cls._registry:
+            if len(cls._registry["GPIO"]) > 0:
+                logger.error("TriggerHandler._closeDevices - Rgegistry not empty, not all devices closed. Resetting aniway")                        
         cls._registry["GPIO"] = {}            
 
     @classmethod

@@ -166,6 +166,64 @@
 			"response": []
 		},
 		{
+			"name": "api take_photo 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/take_photo2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"take_photo2"
+					]
+				},
+				"description": "Take photo with second (non-active) camera"
+			},
+			"response": []
+		},
+		{
+			"name": "api take_photo both",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/take_photo_both",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"take_photo_both"
+					]
+				},
+				"description": "Take photos simultaneously with both cameras.\n\nThe photos will have the same file name, but are stored in camera-specific subfolders."
+			},
+			"response": []
+		},
+		{
 			"name": "api take_raw_photo",
 			"request": {
 				"auth": {
@@ -190,7 +248,65 @@
 						"take_raw_photo"
 					]
 				},
-				"description": "Take raw photo with active camera"
+				"description": "Take raw photo with active camera.\n\nIn addition to the raw photo, also a normal photo is stored."
+			},
+			"response": []
+		},
+		{
+			"name": "api take_raw_photo2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/take_raw_photo2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"take_raw_photo2"
+					]
+				},
+				"description": "Take raw photo with second (non-active) camera.\n\nIn addition to the raw photo, also a normal photo is stored."
+			},
+			"response": []
+		},
+		{
+			"name": "api take_raw_photo both",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/take_raw_photo_both",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"take_raw_photo_both"
+					]
+				},
+				"description": "Take raw photos simultaneously with both cameras.\n\nThe photos will have the same file name, but are stored in camera-specific subfolders.\n\nIn addition to the raw photo, also a normal photo is stored."
 			},
 			"response": []
 		},
@@ -231,7 +347,335 @@
 						"record_video"
 					]
 				},
-				"description": "Record video with active camera\n\nData: video duration (0 = infinite)"
+				"description": "Record video with fixed duration using the active camera.\n\nData: video duration."
+			},
+			"response": []
+		},
+		{
+			"name": "api record video until stop",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/record_video",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"record_video"
+					]
+				},
+				"description": "Start recording a video with active camera.\n\nRecording must be stopped with **api stop video.**"
+			},
+			"response": []
+		},
+		{
+			"name": "api stop video",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/stop_video",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"stop_video"
+					]
+				},
+				"description": "Stop video recording with the active camera."
+			},
+			"response": []
+		},
+		{
+			"name": "api record video 2",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"duration\": {{video_duration}}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/record_video2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"record_video2"
+					]
+				},
+				"description": "Record video with fixed duration using the second (non-active) camera.\n\nData: video duration."
+			},
+			"response": []
+		},
+		{
+			"name": "api record video 2 until stop",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/record_video2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"record_video2"
+					]
+				},
+				"description": "Start recording a video with the second (non-active) camera.\n\nRecording must be stopped with **api stop video2.**"
+			},
+			"response": []
+		},
+		{
+			"name": "api stop video 2",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/stop_video2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"stop_video2"
+					]
+				},
+				"description": "Stop recording a video with the second camera."
+			},
+			"response": []
+		},
+		{
+			"name": "api record video both",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"duration\": {{video_duration}}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/record_video_both",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"record_video_both"
+					]
+				},
+				"description": "Simultaneously record fixed-length videos with both cameras.\n\nThe videos will get the same name but will be stored in camera-specific subdirectories.\n\nData: video duration."
+			},
+			"response": []
+		},
+		{
+			"name": "api record video both until stop",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/record_video_both",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"record_video_both"
+					]
+				},
+				"description": "Start simultaneously recording videos with both cameras.\n\nThe videos will get the same name but will be stored in camera-specific subdirectories."
+			},
+			"response": []
+		},
+		{
+			"name": "api stop video both",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczODk1Nzc1MSwianRpIjoiNDNiMDM0MWEtNjk3Zi00MjFlLTkwNmUtZjgxMTJlY2VlNzI0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InNuIiwibmJmIjoxNzM4OTU3NzUxLCJjc3JmIjoiZTlmZDZmY2UtYjA2NS00NzUwLTk4NTQtNDBiM2ZhNjZkNGUzIiwiZXhwIjoxNzM4OTYxMzUxfQ.P3bXCCEoZGIwR9l-00l4xwuQYR05Q9ELqC66DhqCX7M",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/stop_video_both",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"stop_video_both"
+					]
+				},
+				"description": "Stop recording videos with both cameras"
 			},
 			"response": []
 		},
@@ -261,35 +705,6 @@
 					]
 				},
 				"description": "Switch cameras for systems with 2 cameras."
-			},
-			"response": []
-		},
-		{
-			"name": "api info",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{access_token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/api/info",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"info"
-					]
-				},
-				"description": "Get status information from server:\n\n```\n{\n    \"message\": {\n        \"active_camera\": \"Camera 0 (imx708)\",\n        \"cameras\": [\n            {\n                \"active\": true,\n                \"is_usb\": false,\n                \"model\": \"imx708\",\n                \"num\": 0,\n                \"status\": \"closed\"\n            },\n            {\n                \"active\": false,\n                \"is_usb\": false,\n                \"model\": \"imx296\",\n                \"num\": 1,\n                \"status\": \"closed\"\n            }\n        ],\n        \"operation_status\": {\n            \"audio_recording\": false,\n            \"livestream2_active\": false,\n            \"livestream_active\": false,\n            \"motion_capturing\": false,\n            \"photoseries_recording\": false,\n            \"video_recording\": false\n        },\n        \"server\": \"raspi06:5000\",\n        \"version\": \"raspiCamSrv V2.11.0\"\n    }\n}\n\n ```"
 			},
 			"response": []
 		},
@@ -348,6 +763,35 @@
 					]
 				},
 				"description": "Stop motion detection"
+			},
+			"response": []
+		},
+		{
+			"name": "api info",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/info",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"info"
+					]
+				},
+				"description": "Get status information from server:\n\n```\n{\n    \"message\": {\n        \"active_camera\": \"Camera 0 (imx708)\",\n        \"cameras\": [\n            {\n                \"active\": true,\n                \"is_usb\": false,\n                \"model\": \"imx708\",\n                \"num\": 0,\n                \"status\": \"open - started - current Sensor Mode: 2\"\n            },\n            {\n                \"active\": false,\n                \"is_usb\": false,\n                \"model\": \"imx477\",\n                \"num\": 1,\n                \"status\": \"closed\"\n            }\n        ],\n        \"operation_status\": {\n            \"audio_recording\": false,\n            \"event_handling\": false,\n            \"livestream2_active\": false,\n            \"livestream_active\": true,\n            \"motion_capturing\": false,\n            \"photoseries_recording\": false,\n            \"video_recording\": false,\n            \"video_recording2\": false\n        },\n        \"server\": \"raspi06:5000\",\n        \"version\": \"raspiCamSrv V3.6.0\"\n    }\n}\n\n ```"
 			},
 			"response": []
 		},

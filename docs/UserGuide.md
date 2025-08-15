@@ -38,7 +38,7 @@ The main menu (black background) allows navigation to different screens:
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
 - **Trigger** Allows configuring and controlling [triggered actions](./Trigger.md), based on [Motion Capturing](./TriggerMotion.md) as well as on configured [events from GPIO-connected sensors](./TriggerTriggers.md)
-- **Web Cam** opens the [Web Cam](./Webcam.md) page showing web cam features of **raspiCamSrv**
+- **Cam** gives access to the dialogs for [Web Cam](./CamWebcam.md) access [Multi Cam](./CamMulticam.md) for multi-camera control.
 - **Console** is dedicated to manually controlled interactions with the [Raspberry Pi OS](./ConsoleVButtons.md) or with [GPIO-connected Actors](./ConsoleActionButtons.md), such as motors, servos or LEDs.
 - **Settings** opens the [Settings](./Settings.md) page for all kinds of static configurations for **raspiCamSrv**.
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
@@ -66,16 +66,17 @@ On the right side of the menu bar there is a group of status indicators for the 
 From right to left, these indicate the status of
 
 - Live stream thread for active camera
-- Video thread
-- Recording [audio](./Settings.md#recording-audio-along-with-video) along with video
+- Video thread for the active camera
+- Recording [audio](./Settings.md#recording-audio-along-with-video) along with video for the active camrera
 - [Photo Series](./PhotoSeries.md) thread
 - [Motion Capture](./Trigger.md) thread
 - [Trigger](./TriggerTriggers.md) thread
-- Live stream thread for the other camera, if available (see [Webcam](./Webcam.md))
+- Live stream thread for the second camera, if available (see [Web Cam](./CamWebcam.md) or [Multi-Cam](./CamMulticam.md))
+- Video thread for the second camera, if available (see [Multi-Cam](./CamMulticam.md))
 
 Red color indicates that a process is active whereas gray indicates that it is inactive.   
 
-In the case of [motion capture](./TriggerMotion.md),    
+In the case of [motion capture](./TriggerMotion.md) or [event handling](./Trigger.md),    
 - yellow color indicates that the process is active but currently not scheduled to register events
 - turquoise color indicates that the motion capture process runs in [test mode](./TriggerMotion.md#testing-motion-capturing)
 
@@ -101,7 +102,7 @@ In the web client, an active streaming server is indicated with the process stat
 ![ProcessStatusIndicator](./img/ProcessIndicator10.jpg) if both cameras are streaming or     
 ![ProcessStatusIndicator](./img/ProcessIndicator11.jpg) if if only the other (not active) camera is streaming     
 
-A live stream is shown in in the [Live Screen](./LiveScreen.md) for the active camera or on the [Webcam](./Webcam.md) page for both cameras.
+A live stream is shown in in the [Live Screen](./LiveScreen.md) for the active camera or on the [Web Cam](./CamWebcam.md) or [Multi-Cam](./CamMulticam.md) pages for both cameras.
 
 The streaming servers are automatically shut down if no client has been streaming within the last 10 seconds.   
 This is independently controlled for both cameras.   

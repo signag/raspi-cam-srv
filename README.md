@@ -20,7 +20,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V3.5.6
+## Feature Overview V3.6.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -31,12 +31,13 @@ For more details, see the [User Guide](docs/UserGuide.md).
 It can be configured whether or not authentication is required.
 - Web access to photo snapshots is achieved through the URL ```http://<server>:<port>/photo_feed```.   
 The setting for necessity of authentication applies also to photo snapshots.
-- For systems with 2 Raspberry Pi cameras (currently Pi 5) both cameras can stream simultaneously.    
+- For systems with 2 Raspberry Pi cameras (currently Pi 5) both cameras can stream and record simultaneously.    
 The non-active camera stream and photo can be accessed through endpoints ```http://<server>:<port>/video_feed2``` and ```http://<server>:<port>/photo_feed2```, respectively.
 - Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
 - Support of [Tuning](./docs/Tuning.md) by selection and management of tuning files.
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
 - Support for interaction with GPIO-connected devices based on the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library. All basic input and output devices provided by *gpiozero* are supported and can be configured in the [Settings / Devices](./docs/SettingsDevices.md) dialog. In addition, also support for [Stepper Motor](./docs/gpioDevices/StepperMotor.md) is provided.
+- State tracking and calibration for output [Devices](./docs/SettingsDevices.md) available for [StepperMotor](./docs/gpioDevices/StepperMotor.md)
 - Events occurring on Input [Devices](./docs/SettingsDevices.md), such as sensors or buttons, can be configured as [Triggers](./docs/TriggerTriggers.md) for the execution of [Actions](./docs/TriggerActions.md). Various actors, such as LEDs, buzzers, motors and servos can thus be integrated. All this integrates well with available functionality of the camera system.
 - [Event Handling](./docs/Trigger.md#event-handling-infrastructure) fully integrates Camera with GPIO-connected devices 
 - Besides [Trigger](./docs/TriggerTriggers.md)-based [Action](./docs/TriggerActions.md) execution, actions can also be envoked through flexibly configurable [Action Buttons](./docs/ConsoleActionButtons.md).
@@ -70,8 +71,11 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V3.5**
-- State tracking and calibration for output [Devices](./docs/SettingsDevices.md) available for [StepperMotor](./docs/gpioDevices/StepperMotor.md)
+**New in V3.6**
+
+- The second camera can be used in parallel to the active camera for taking photos, raw photos and videos.<br>(Sound recording with videos is restricted to the active camera)
+- The second camera can be controlled through the [API](./docs/API.md) as well as through the [Multi-Cam](./docs/CamMulticam.md) dialog.
+- Photo taking and video recording can be started synchronously with both cameras.
 
 ## Known Issues
 
