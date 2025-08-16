@@ -836,6 +836,7 @@ def new_trigger():
     tmp = {}
     if request.method == "POST":
         err = ""
+        triggerId = None
         if err == "":
             triggerSource = request.form["triggersource"]
             logger.debug("trigger.new_trigger - triggerSource=%s", triggerSource)
@@ -922,8 +923,9 @@ def new_trigger():
 
         if err.strip() != "":
             flash(err)
-        sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Trigger created: {triggerId}")
+        if not triggerId is None:
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Trigger created: {triggerId}")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def countEvent(source:str, device:str, event:str, tc:TriggerConfig) -> int:
@@ -1088,6 +1090,7 @@ def new_action():
     tmp = {}
     if request.method == "POST":
         err = ""
+        action = None
         if err == "":
             actionSource = request.form["actionsource"]
             logger.debug("action.new_action - actionSource=%s", actionSource)
@@ -1183,8 +1186,9 @@ def new_action():
 
         if err.strip() != "":
             flash(err)
-        sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Action created: {action.id}")
+        if not action is None:
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Action created: {action.id}")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 def checkActionUsage(actionId:str, actionUsage: list, sc:ServerConfig) -> tuple[bool, list]:

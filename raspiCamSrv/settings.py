@@ -914,8 +914,9 @@ def new_device():
         
         if msg != "":
             flash(msg)
-        sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Settings/Devices - new device added: {deviceId}")
+        if not deviceId is None:
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Settings/Devices - new device added: {deviceId}")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 @bp.route('/select_device', methods=("GET", "POST"))
@@ -1006,6 +1007,7 @@ def delete_device():
     sc.lastSettingsTab = "settingsdevices"
     if request.method == "POST":
         msg = checkDeviceDeletion(sc.curDeviceId, tc)
+        deviceDel = None
         if msg == "":
             deviceDel = sc.curDeviceId
             idxDel = -1
@@ -1029,8 +1031,9 @@ def delete_device():
                 for deviceType in sc.deviceTypes:
                     if deviceType["type"] == sc.curDevice.type:
                         sc.curDeviceType = deviceType
-            sc.unsavedChanges = True
-            sc.addChangeLogEntry(f"Settings/Devices - device deleted: {deviceDel}")
+            if not deviceDel is None:
+                sc.unsavedChanges = True
+                sc.addChangeLogEntry(f"Settings/Devices - device deleted: {deviceDel}")
         if msg != "":
             flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
@@ -1228,8 +1231,9 @@ def device_properties():
             sc.curDevice.isOk = ok
         else:
             flash(msg)
-        sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Settings/Devices - device properties changed for {sc.curDeviceId}")
+        if not sc.curDeviceId is None:
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Settings/Devices - device properties changed for {sc.curDeviceId}")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 def storeResult(result:dict, test:str, testResult:str) -> dict:

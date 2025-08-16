@@ -37,6 +37,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.6.2
+
+### Bugfixes
+
+- Fixed "UnboundLocalError" which occurred when creating a new [Trigger](./TriggerTriggers.md) or a new [Action](./TriggerActions.md).
+
 ## V3.6.1
 
 ### Bugfixes

@@ -534,6 +534,7 @@ def deleteTuningFile():
     tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
     if request.method == "POST":
         restart = False
+        fp = None
         if tc.isDefaultFolder == True:
             msg = "You cannot delete a tuning file from the default folder"
         else:
@@ -571,8 +572,9 @@ def deleteTuningFile():
             else:
                 tc.loadTuningFile = False
         tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
-        sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Tuning file deleted: {fp}")
+        if not fp is None:
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Tuning file deleted: {fp}")
         if restart:
             Camera().restartLiveStream()
         if msg != "":
