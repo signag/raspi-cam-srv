@@ -105,7 +105,7 @@ In the web client, an active streaming server is indicated with the process stat
 
 A live stream is shown in in the [Live Screen](./LiveScreen.md) for the active camera or on the [Web Cam](./CamWebcam.md) or [Multi-Cam](./CamMulticam.md) pages for both cameras.
 
-If [Stereo Vision](./CamStereo.md) is active, both cameras are streaming:
+If [Stereo Vision](./CamStereo.md) is active, both cameras are streaming:             
 ![ProcessStatusIndicator](./img/ProcessIndicator21.jpg)      
 ![ProcessStatusIndicator](./img/ProcessIndicator20.jpg)      
 When these indicators turn yellow, this indicates that the additional stereo camera process is active, serving the stereo vision stream.
