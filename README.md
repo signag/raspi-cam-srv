@@ -20,7 +20,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V3.6.0
+## Feature Overview V3.7.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -33,7 +33,9 @@ It can be configured whether or not authentication is required.
 The setting for necessity of authentication applies also to photo snapshots.
 - For systems with 2 Raspberry Pi cameras (currently Pi 5) both cameras can stream and record simultaneously.    
 The non-active camera stream and photo can be accessed through endpoints ```http://<server>:<port>/video_feed2``` and ```http://<server>:<port>/photo_feed2```, respectively.
-- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
+- The second camera can be used in parallel to the active camera for taking photos, raw photos and videos.<br>(Sound recording with videos is restricted to the active camera)
+- The second camera can be controlled through the [API](./docs/API.md) as well as through the [Multi-Cam](./docs/CamMulticam.md) dialog.
+- Photo taking and video recording can be started synchronously with both cameras.- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
 - Support of [Tuning](./docs/Tuning.md) by selection and management of tuning files.
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
 - Support for interaction with GPIO-connected devices based on the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library. All basic input and output devices provided by *gpiozero* are supported and can be configured in the [Settings / Devices](./docs/SettingsDevices.md) dialog. In addition, also support for [Stepper Motor](./docs/gpioDevices/StepperMotor.md) is provided.
@@ -61,7 +63,7 @@ This includes a continuous live stream while taking photos, videos or photo seri
 - With the [Photo Series](docs/PhotoSeries.md) screen, different kinds of photo series ([Timelapse Series](./docs/PhotoSeriesTimelapse.md), [Exposure Series](./docs/PhotoSeriesExp.md), [Focus Stacks](./docs/PhotoSeriesFocus.md)) can be configured, executed and monitored during their progress.
 - For [Timelapse Series](./docs/PhotoSeriesTimelapse.md), it is possible to define active periods depending on sunrise and sunset.
 - The [Photo Series](docs/PhotoSeries.md) screen allows also to persist specific [Camera Configurations](docs/Configuration.md) together with [Camera Controls](docs/CameraControls.md) in the file system for later reuse.
-- Photo Series can be set to be [automatically continued](./docs/PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shotdown or reboot.
+- Photo Series can be set to be [automatically continued](./docs/PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shutdown or reboot.
 - On the [Console](./docs/Console.md), configurable buttons allow execution of arbitrary OS commands and scripts including restart of the Flask service or reboot of the Raspberry Pi.
 - The [Settings screen](docs/Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
 - The Settings screen includes also functions to control the **raspiCamSrv** [Server Configuration](./docs/SettingsConfiguration.md).<br>The entire configuration can be persisted or loaded from stored configuration files.
@@ -71,11 +73,11 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V3.6**
+**New in V3.7**
 
-- The second camera can be used in parallel to the active camera for taking photos, raw photos and videos.<br>(Sound recording with videos is restricted to the active camera)
-- The second camera can be controlled through the [API](./docs/API.md) as well as through the [Multi-Cam](./docs/CamMulticam.md) dialog.
-- Photo taking and video recording can be started synchronously with both cameras.
+- [Stereo Vision](./docs/CamStereo.md) allows generation of 3D videos and depth maps
+- [Camera Calibration](./docs/CamCalibration.md) supports calibration of a stereo-camera pair as well as rectification based on [OpenCV](https://opencv.org/)
+
 
 ## Known Issues
 
@@ -142,7 +144,7 @@ In case of problems during installation and usage, see [Troubleshooting](./docs/
 |7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
 |8.  | Make sure that picamera2 is available on the system:<br>```python```<br>```>>>import picamera2```<br>```>>>quit()```<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
 |9.  | Install Flask 3.x **with the virtual environment activated**.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.x, which can be installed with<br>```pip install "Flask>=3,<4"```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.1.0' or another 3.x version.<br><br>Make sure that Flask is really installed in the virtual environment:<br>```which flask``` should output<br>```/home/<user>/prg/raspi-cam-srv/.venv/bin/flask```
-|10.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>or if you are interesten in using [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md).<br>It is recommended to do the installation with an activated virtual environment (see step 7), although some of these packages might come preinstalled.<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): ```sudo apt-get install python3-opencv```<br>Install [numpy](https://numpy.org/): ```pip install numpy```<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): ```pip install "matplotlib<3.8"``` (The version restriction assures compatibility with numpy 1.x which is [required for Picamera2](https://github.com/raspberrypi/picamera2/issues/1211))<br><br>The following installation is required for enabling the [raspiCamSrv API](./docs/API.md)<br>Install [flask-jwt-extended](https://flask-jwt-extended.readthedocs.io/en/stable/): ```pip install flask-jwt-extended```
+|10.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>or if you are interesten in using [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) or [Stereo Vision](./docs/CamStereo.md).<br>It is recommended to do the installation with an activated virtual environment (see step 7), although some of these packages might come preinstalled.<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): ```sudo apt-get install python3-opencv```<br>Install [numpy](https://numpy.org/): ```pip install numpy```<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): ```pip install "matplotlib<3.8"``` (The version restriction assures compatibility with numpy 1.x which is [required for Picamera2](https://github.com/raspberrypi/picamera2/issues/1211))<br><br>The following installation is required for enabling the [raspiCamSrv API](./docs/API.md)<br>Install [flask-jwt-extended](https://flask-jwt-extended.readthedocs.io/en/stable/): ```pip install flask-jwt-extended```
 |11.  | Initialize the database for Flask <br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv init-db```
 |12. | Check that the Flask default port 5000 is available<br>```sudo netstat -nlp \| grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
 |13. | Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```

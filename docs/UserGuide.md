@@ -38,7 +38,8 @@ The main menu (black background) allows navigation to different screens:
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
 - **Trigger** Allows configuring and controlling [triggered actions](./Trigger.md), based on [Motion Capturing](./TriggerMotion.md) as well as on configured [events from GPIO-connected sensors](./TriggerTriggers.md)
-- **Cam** gives access to the dialogs for [Web Cam](./CamWebcam.md) access [Multi Cam](./CamMulticam.md) for multi-camera control.
+- **Cam** gives access to the dialogs for [Web Cam](./CamWebcam.md) access [Multi Cam](./CamMulticam.md) for multi-camera control.    
+If a [Stereo Camera configuration](./Settings#activating--deactivating-stereo-vision) is activated, it hosts also the dialogs for [Camera Calibration](./CamCalibration.md) as well as for [Stereo Vision](./CamStereo.md).
 - **Console** is dedicated to manually controlled interactions with the [Raspberry Pi OS](./ConsoleVButtons.md) or with [GPIO-connected Actors](./ConsoleActionButtons.md), such as motors, servos or LEDs.
 - **Settings** opens the [Settings](./Settings.md) page for all kinds of static configurations for **raspiCamSrv**.
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
@@ -104,8 +105,14 @@ In the web client, an active streaming server is indicated with the process stat
 
 A live stream is shown in in the [Live Screen](./LiveScreen.md) for the active camera or on the [Web Cam](./CamWebcam.md) or [Multi-Cam](./CamMulticam.md) pages for both cameras.
 
+If [Stereo Vision](./CamStereo.md) is active, both cameras are streaming:
+![ProcessStatusIndicator](./img/ProcessIndicator21.jpg)      
+![ProcessStatusIndicator](./img/ProcessIndicator20.jpg)      
+When these indicators turn yellow, this indicates that the additional stereo camera process is active, serving the stereo vision stream.
+
+
 The streaming servers are automatically shut down if no client has been streaming within the last 10 seconds.   
-This is independently controlled for both cameras.   
+This is independently controlled for both cameras as well as for the stereo camera process.   
 For example if one is working in other dialogs rather than *Live Screen*, straming is not used and the streaming servers are shut down, which is indicated by   
 ![ProcessStatusIndicator](./img/ProcessIndicator0.jpg)   
 Streaming is automatically reactivated, if a streaming client connects, for example if the *Live Screen* is activated.

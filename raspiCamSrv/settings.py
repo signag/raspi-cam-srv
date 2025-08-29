@@ -109,6 +109,8 @@ def serverconfig():
             sc.recordAudio = recordAudio        
             audioSync = request.form["audiosync"]
             sc.audioSync = audioSync
+            useStereo = not request.form.get("usestereo") is None
+            sc.useStereo = useStereo
             useHist = not request.form.get("showhistograms") is None
             if not useHist:
                 sc.displayContent = "meta"
@@ -179,61 +181,26 @@ def resetServer():
         logger.debug("Resetting server configuration")
         setLoadConfigOnStart(cfgPath, False)
         photoRoot = sc.photoRoot
-        prgOutpiutPath = sc.prgOutputPath
+        prgOutputPath = sc.prgOutputPath
         database = sc.database
         actionPath = tc.actionPath
         cfg = CameraCfg()
         cfg.cameras = []
         cfg.sensorModes = []
         cfg.rawFormats = []
-        cfg.tuningConfig = TuningConfig()
-        cfg.controls = CameraControls()
-        cfg.controlsBackup = None
-        cfg.cameraProperties = CameraProperties()
-        cfg.liveViewConfig = CameraConfig()
-        cfg.liveViewConfig.id = "LIVE"
-        cfg.liveViewConfig.use_case = "Live view"
-        cfg.liveViewConfig.stream = "lores"
-        cfg.liveViewConfig.buffer_count = 6
-        cfg.liveViewConfig.encode = "main"
-        cfg.liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
-        cfg.photoConfig = CameraConfig()
-        cfg.photoConfig.id = "FOTO"
-        cfg.photoConfig.use_case = "Photo"
-        cfg.photoConfig.buffer_count = 1
-        cfg.photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
-        cfg.rawConfig = CameraConfig()
-        cfg.rawConfig.id = "PRAW"
-        cfg.rawConfig.use_case = "Raw Photo"
-        cfg.rawConfig.buffer_count = 1
-        cfg.rawConfig.stream = "raw"
-        cfg.rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
-        cfg.videoConfig = CameraConfig()
-        cfg.videoConfig.buffer_count = 6
-        cfg.videoConfig.id = "VIDO"
-        cfg.videoConfig.use_case = "Video"
-        cfg.videoConfig.buffer_count = 6
-        cfg.videoConfig.encode = "main"
-        cfg.videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
+
+        cfg.resetActiveCameraSettings()
+        
         cfg._cameraConfigs = []
         cfg.triggerConfig = TriggerConfig()
         cfg.serverConfig = ServerConfig()
+
         sc = cfg.serverConfig
         tc = cfg.triggerConfig
         sc.photoRoot = photoRoot
-        sc.prgOutputPath = prgOutpiutPath
+        sc.prgOutputPath = prgOutputPath
         sc.database = database
         tc.actionPath = actionPath
-        if sc.raspiModelLower5:
-            cfg.liveViewConfig.format = "YUV420"
-        if sc.raspiModelFull.startswith("Raspberry Pi Zero") \
-        or sc.raspiModelFull.startswith("Raspberry Pi 4") \
-        or sc.raspiModelFull.startswith("Raspberry Pi 3") \
-        or sc.raspiModelFull.startswith("Raspberry Pi 2") \
-        or sc.raspiModelFull.startswith("Raspberry Pi 1"):
-            # For Pi Zero and 4 reduce buffer_count defaults for live view and video
-            cfg.liveViewConfig.buffer_count = 2
-            cfg.videoConfig.buffer_count = 2
         cfg.streamingCfg = {}
         
         sc.isVideoRecording = False
@@ -279,6 +246,7 @@ def resetServer():
         flash(msg)
         sc.unsavedChanges = False
         sc.clearChangeLog()
+        los = getLoadConfigOnStart(cfgPath)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 @bp.route("/remove_users", methods=("GET", "POST"))

@@ -5,6 +5,8 @@ __pycache__/
 tests/
 logs/
 output/
+raspiCamSrv/static/calib_data/
+raspiCamSrv/static/calib_photos/
 raspiCamSrv/static/photos/
 raspiCamSrv/static/timelapse/
 raspiCamSrv/static/photoseries/

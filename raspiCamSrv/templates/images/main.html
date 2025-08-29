@@ -36,6 +36,13 @@
                         {% endif %}
                         {% endif %}
                         {% endfor %}
+                        {% if sc.useStereo == True %}
+                        {% if sc.pvCamera == "S" %}
+                        <option value="S" selected>Stereo</option>
+                        {% else %}
+                        <option value="S">Stereo</option>
+                        {% endif %}
+                        {% endif %}
                     </select>
                 </td>
                 <td>

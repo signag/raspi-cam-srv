@@ -22,6 +22,7 @@ The General Paramenters include
 - [Audio settings](#recording-audio-along-with-video) for systems with microphones if sound is to be recorded along with videos
 - *Path for Photos/Videos* shows the path where media will be stored.
 - File types for *Photo*, *Raw* Photo and *Video*
+- *Use Stereo Vision* allows activating [Stereo capabilities](#activating--deactivating-stereo-vision) for systems having 2 non-USB cameras of the same type connected.
 - *Show Histograms* allows [activatig/deactivating Histograms](#activating--deactivating-histograms) display of histograms
 - *Ext. Motion Detection supported* shows whether the actually installed libraries allow support of [Extended Motion Tracking Algoritms](#extended-motion-detection-support)
 - *Req. Auth for Streaming* controls whether [streaming requires authentication](#configuring-authentication-for-streaming)
@@ -47,6 +48,24 @@ It can be configured whether streaming of videos or photos requires authenticati
 If a streaming URL is entered in a browser and there is no valid Flask session, the login screen is shown and, after having entered valid credentials, the [Live](./LiveScreen.md) screen is shown. Now, the desired streaming URL can be directly entered or selected from the [Web Cam](./CamWebcam.md) screen.   
 A valid Flask session exists, if login has been passed once within an active browser instance, either in another tab of the browser window intended for streaming or within another window of the **same** browser.   
 Closing all windows of a browser kills the session. 
+
+## Activating / Deactivating Stereo Vision
+
+If your system has 2 non-USB cameras of the seme model connected, you can use these as [stereo camera system](https://en.wikipedia.org/wiki/Computer_stereo_vision).
+
+**raspiCamSrv** supports basic stereo features such as [3D Videos and Depth Maps](./CamStereo.md) as well as [Calibration and Rectification](./CamCalibration.md).
+
+These features can only be activated if it has been recognized at system startup that 2 non-USB cameras of the same model are connected to the system.    
+In addition, it is required that OpenCV, and numpy are installed (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation) Step 10).    
+
+If any of these conditions is not met, the reason will be indicated:
+
+![NoStereo](img/Settings_noStereo.jpg)
+
+**NOTE**: *Stereo Vision* should only be activated if both cameras are mounted (or at least arranged) in a typical stereo camera setup. <br>I am using a 3D-printed [Raspberry Pi Camera 3 Stereo Case](https://makerworld.com/en/models/1742837-raspberry-pi-camera-3-stereo-case)
+
+![Stereo](img/Pi_Camera_3_Case_Stereo_front.JPG)
+
 
 
 ## Activating / Deactivating Histograms

@@ -262,6 +262,32 @@
                         </td>
                         <td style="width:25%" class="w3-tooltip">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select if you want to use two cameras as stereo cameras.
+                            </span>
+                            <label for="usestereo">Use Stereo Vision:</label>
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.supportsStereo == True %}
+                            {% if sc.useStereo == True %}
+                            <input type="checkbox" id="usestereo" name="usestereo" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="usestereo" name="usestereo" value="0">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="usestereo" name="usestereo" value="0" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:35%">
+                        {% if sc.supportsStereo == False %}
+                            <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotSupportsStereo|safe }}</p>
+                        {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Select whether you want to see histograms along with specific photo series.
                             </span>
                             <label for="showhistograms">Show Histograms:</label>

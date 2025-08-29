@@ -3069,6 +3069,621 @@ class ActionButton():
                 setattr(ab, key, value)
         return ab
 
+class StereoConfig():
+    intents = ["DepthMap", "3DVideo",]
+    intentNames = ["Depth Map", "3D Video",]
+    intentAlgos = [["StereoBM", "StereoSGBM",],[]]
+    intentAlgoNames = [["Block Matching", "Semi-Global Matching",],[]]
+    intentAlgoLinks = [
+        [
+            "https://docs.opencv.org/4.6.0/d9/dba/classcv_1_1StereoBM.html",
+            "https://docs.opencv.org/4.6.0/d2/d85/classcv_1_1StereoSGBM.html",
+        ],
+        [],
+    ]
+    calibrationPatterns = ["Chessboard",]
+    calibrationPatternRefs = ["https://github.com/opencv/opencv/blob/4.x/doc/pattern.png",]
+    def __init__(self):
+        self._calibPhotosOK = {}
+        self._calibShowCorners = False
+        self._calibPhotos = {}
+        self._calibPhotosCrn = {}
+        self._calibPhotosCount = {}
+        self._calibPhotosPath = ""
+        self._calibPhotosSubPath = ""
+        self._calibPhotosIdx = {}
+        self._calibCameraOK = {}
+        self._calibRmsReproError = {}
+        self._calibStereoOK = False
+        self._rectifyScale = 1
+        self._stereoRectifyOK = False
+        self._calibDataSubPath = ""
+        self._calibDataFile = ""
+        self._calibDate = None
+        self._calibDataOK = False
+        self._calibPatternIdx = 0
+        self._calibPatternSize = (9, 6)  # Default chessboard size
+        self._calibPhotosTarget = 20  # Default number of calibration photos
+        self._calibPhotoRecording = False
+        self._calibPhotoRecordingMsg = ""
+        self._applyCalibRectify = False
+        self._intentIdx = 0
+        self._intentAlgoIdx = 0
+        self._bm_numDisparitiesFactor = 1
+        self._bm_blockSize = 21
+        self._sgbm_minDisparity = 0
+        self._sgbm_numDisparitiesFactor = 1
+        self._sgbm_blockSize = 3
+        self._sgbm_P1 = 0
+        self._sgbm_P2 = 0
+        self._sgbm_disp12MaxDiff = 0
+        self._sgbm_preFilterCap = 0
+        self._sgbm_uniquenessRatio = 0
+        self._sgbm_speckleWindowSize = 0
+        self._sgbm_speckleRange = 0
+        self._sgbm_mode = 0
+
+    @property
+    def calibPhotosOK(self) -> dict:
+        return self._calibPhotosOK
+
+    @calibPhotosOK.setter
+    def calibPhotosOK(self, value: dict):
+        if isinstance(value, dict):
+            self._calibPhotosOK = value
+        else:
+            raise ValueError("calibPhotosOK must be a dictionary")
+
+    @property
+    def calibShowCorners(self) -> bool:
+        return self._calibShowCorners
+
+    @calibShowCorners.setter
+    def calibShowCorners(self, value: bool):
+        self._calibShowCorners = value
+
+    def isCalibPhotosOK(self, camL: str, camR: str) -> bool:
+        """ Check if calibration photos are OK for the given camera IDs """
+        res = True
+        if camL in self._calibPhotosOK:
+            res = res and self._calibPhotosOK[camL]
+        else:
+            res = False
+        if not camR is None:
+            if camR in self._calibPhotosOK:
+                res = res and self._calibPhotosOK[camR]
+            else:
+                res = False
+        return res
+
+    def isCalibCamerasOK(self, camL: str, camR: str) -> bool:
+        """ Check if camera calibration is OK for the given camera IDs """
+        res = True
+        if camL in self._calibCameraOK:
+            res = res and self._calibCameraOK[camL]
+        else:
+            res = False
+        if not camR is None:
+            if camR in self._calibCameraOK:
+                res = res and self._calibCameraOK[camR]
+            else:
+                res = False
+        return res
+
+    @property
+    def calibPhotos(self) -> dict:
+        return self._calibPhotos
+
+    @calibPhotos.setter
+    def calibPhotos(self, value: dict):
+        if isinstance(value, dict):
+            self._calibPhotos = value
+        else:
+            raise ValueError("calibPhotos must be a dictionary")
+
+    @property
+    def calibPhotosCrn(self) -> dict:
+        return self._calibPhotosCrn
+
+    @calibPhotosCrn.setter
+    def calibPhotosCrn(self, value: dict):
+        if isinstance(value, dict):
+            self._calibPhotosCrn = value
+        else:
+            raise ValueError("calibPhotosCrn must be a dictionary")
+
+    @property
+    def calibPhotosCount(self) -> dict:
+        return self._calibPhotosCount
+
+    @calibPhotosCount.setter
+    def calibPhotosCount(self, value: dict):
+        if isinstance(value, dict):
+            self._calibPhotosCount = value
+        else:
+            raise ValueError("calibPhotosCount must be a dictionary")
+
+    def getCalibPhotosCount(self, cam: str) -> int:
+        """ Get the number of calibration photos for the given camera ID """
+        if cam is None:
+            return 0
+        if cam in self._calibPhotosCount:
+            return self._calibPhotosCount[cam]
+        else:
+            return 0
+
+    def hasCalibPhotos(self, camL: str, camR: str) -> bool:
+        """ Check if calibration photos have been taken for the given camera IDs """
+        res = True
+        if camL in self._calibPhotosCount:
+            res = res and self._calibPhotosCount[camL] > 0
+        else:
+            res = False
+        if camR in self._calibPhotosCount:
+            res = res and self._calibPhotosCount[camR] > 0
+        else:
+            res = False
+        return res
+
+    @property
+    def calibPhotosPath(self) -> str:
+        return self._calibPhotosPath
+
+    @calibPhotosPath.setter
+    def calibPhotosPath(self, value: str):
+        if isinstance(value, str):
+            self._calibPhotosPath = value
+        else:
+            raise ValueError("calibPhotosPath must be a string")
+
+    @property
+    def calibPhotosSubPath(self) -> str:
+        return self._calibPhotosSubPath
+
+    @calibPhotosSubPath.setter
+    def calibPhotosSubPath(self, value: str):
+        if isinstance(value, str):
+            self._calibPhotosSubPath = value
+        else:
+            raise ValueError("calibPhotosSubPath must be a string")
+
+    @property
+    def calibPhotosIdx(self) -> dict:
+        return self._calibPhotosIdx
+
+    @calibPhotosIdx.setter
+    def calibPhotosIdx(self, value: dict):
+        if isinstance(value, dict):
+            self._calibPhotosIdx = value
+        else:
+            raise ValueError("calibPhotosIdx must be a dictionary")
+
+    def getCalibPhotosIdx(self, cam: str) -> int:
+        """ Get the index of the calibration photos for the given camera ID """
+        res = 0
+        if not cam is None:
+            if cam in self._calibPhotosIdx:
+                res = self._calibPhotosIdx[cam]
+        return res
+
+    @property
+    def calibCameraOK(self) -> dict:
+        return self._calibCameraOK
+
+    @calibCameraOK.setter
+    def calibCameraOK(self, value: dict):
+        if isinstance(value, dict):
+            self._calibCameraOK = value
+        else:
+            raise ValueError("calibCameraOK must be a dictionary")
+
+    @property
+    def calibRmsReproError(self) -> dict:
+        return self._calibRmsReproError
+
+    @calibRmsReproError.setter
+    def calibRmsReproError(self, value: dict):
+        if isinstance(value, dict):
+            self._calibRmsReproError = value
+        else:
+            raise ValueError("calibRmsReproError must be a dictionary")
+
+    @property
+    def calibStereoOK(self) -> bool:
+        return self._calibStereoOK
+
+    @calibStereoOK.setter
+    def calibStereoOK(self, value: bool):   
+        if isinstance(value, bool):
+            self._calibStereoOK = value
+        else:
+            raise ValueError("calibStereoOK must be a boolean")
+
+    @property
+    def rectifyScale(self) -> int:
+        return self._rectifyScale
+
+    @rectifyScale.setter
+    def rectifyScale(self, value: int):
+        if isinstance(value, int):
+            self._rectifyScale = value
+        else:
+            raise ValueError("rectifyScale must be an integer")
+
+    @property
+    def stereoRectifyOK(self) -> bool:
+        return self._stereoRectifyOK 
+
+    @stereoRectifyOK.setter
+    def stereoRectifyOK(self, value: bool):
+        if isinstance(value, bool):
+            self._stereoRectifyOK = value
+        else:
+            raise ValueError("stereoRectifyOK must be a boolean")
+
+    @property
+    def calibDataSubPath(self) -> str:
+        return self._calibDataSubPath
+
+    @calibDataSubPath.setter
+    def calibDataSubPath(self, value: str):
+        if isinstance(value, str):
+            self._calibDataSubPath = value
+        else:
+            raise ValueError("calibDataSubPath must be a string")
+
+    @property
+    def calibDataFile(self) -> str:
+        return self._calibDataFile
+
+    @calibDataFile.setter
+    def calibDataFile(self, value: str):
+        if isinstance(value, str):
+            self._calibDataFile = value
+        else:
+            raise ValueError("calibDataFile must be a string")
+
+    @property
+    def calibDate(self) -> str:
+        return self._calibDate
+
+    @calibDate.setter
+    def calibDate(self, value: datetime):
+        if value is None:
+            val = None
+        else:
+            val = datetime(
+                year=value.year,
+                month=value.month,
+                day=value.day,
+                hour=value.hour,
+                minute=value.minute,
+            )
+        self._calibDate = val
+
+    @property
+    def calibDataOK(self) -> bool:
+        return self._calibDataOK
+
+    @calibDataOK.setter
+    def calibDataOK(self, value: bool):
+        if isinstance(value, bool):
+            self._calibDataOK = value
+        else:
+            raise ValueError("calibDataOK must be a boolean")
+
+    @property
+    def calibPatternIdx(self) -> int:
+        return self._calibPatternIdx
+
+    @calibPatternIdx.setter
+    def calibPatternIdx(self, value: int):
+        if value >= 0 and value < len(StereoConfig.calibrationPatterns):
+            self._calibPatternIdx = value
+        else:
+            raise ValueError("Invalid calibration pattern index")
+
+    @property
+    def calibPattern(self) -> str:
+        return StereoConfig.calibrationPatterns[self._calibPatternIdx]
+
+    @property
+    def calibPatternRef(self) -> str:
+        if self._calibPatternIdx < len(StereoConfig.calibrationPatternRefs):
+            return StereoConfig.calibrationPatternRefs[self._calibPatternIdx]
+        else:
+            return ""
+
+    @property
+    def calibPatternSize(self) -> tuple:
+        return self._calibPatternSize
+
+    @calibPatternSize.setter
+    def calibPatternSize(self, value: tuple):
+        if isinstance(value, tuple) and len(value) == 2:
+            if value[0] > 0 and value[1] > 0:
+                self._calibPatternSize = value
+            else:
+                raise ValueError("Invalid calibration pattern size. Must be positive integers")
+        else:
+            raise ValueError("calibPatternSize must be a tuple of two integers")
+
+    @property
+    def calibPhotosTarget(self) -> int:
+        return self._calibPhotosTarget
+
+    @calibPhotosTarget.setter
+    def calibPhotosTarget(self, value: int):
+        if isinstance(value, int) and value > 0:
+            self._calibPhotosTarget = value
+        else:
+            raise ValueError("calibPhotosTarget must be a positive integer")
+
+    @property
+    def calibPhotoRecording(self) -> bool:
+        return self._calibPhotoRecording
+
+    @calibPhotoRecording.setter
+    def calibPhotoRecording(self, value: bool):
+        if isinstance(value, bool):
+            self._calibPhotoRecording = value
+        else:
+            raise ValueError("calibPhotoRecording must be a boolean")
+
+    @property
+    def calibPhotoRecordingMsg(self) -> str:
+        return self._calibPhotoRecordingMsg
+
+    @calibPhotoRecordingMsg.setter
+    def calibPhotoRecordingMsg(self, value: str):
+        if isinstance(value, str):
+            self._calibPhotoRecordingMsg = value
+        else:
+            raise ValueError("calibPhotoRecordingMsg must be a string")
+
+    @property
+    def applyCalibRectify(self) -> bool:
+        return self._applyCalibRectify
+
+    @applyCalibRectify.setter
+    def applyCalibRectify(self, value: bool):
+        if isinstance(value, bool):
+            self._applyCalibRectify = value
+        else:
+            raise ValueError("applyCalibRectify must be a boolean")
+
+    @property
+    def intentIdx(self) -> int:
+        return self._intentIdx
+
+    @intentIdx.setter
+    def intentIdx(self, value: int):
+        if value >= 0 and value < len(StereoConfig.intents):
+            self._intentIdx = value
+        else:
+            raise ValueError("Invalid intent index")
+
+    @property
+    def intent(self) -> str:
+        return StereoConfig.intents[self._intentIdx]
+
+    @property
+    def intentName(self) -> str:
+        return StereoConfig.intentNames[self._intentIdx]
+
+    @property
+    def intentAlgoIdx(self) -> int:
+        return self._intentAlgoIdx
+
+    @intentAlgoIdx.setter
+    def intentAlgoIdx(self, value: int):
+        if value >= 0 and value < len(StereoConfig.intentAlgos[self._intentIdx]):
+            self._intentAlgoIdx = value
+        else:
+            raise ValueError("Invalid intent algorithm index")
+
+    @property
+    def intentAlgo(self) -> str:
+        return StereoConfig.intentAlgos[self._intentIdx][self._intentAlgoIdx]
+
+    @property
+    def intentAlgoName(self) -> str:
+        return StereoConfig.intentAlgoNames[self._intentIdx][self._intentAlgoIdx]
+
+    @property
+    def bm_numDisparitiesFactor(self) -> int:
+        return self._bm_numDisparitiesFactor
+
+    @bm_numDisparitiesFactor.setter
+    def bm_numDisparitiesFactor(self, value: int):
+        if value >= 0:
+            self._bm_numDisparitiesFactor = value
+        else:
+            raise ValueError("Invalid value for bm_numDisparitiesFactor. Must be >= 0")
+
+    @property
+    def bm_blockSize(self) -> int:
+        return self._bm_blockSize
+
+    @bm_blockSize.setter
+    def bm_blockSize(self, value: int):
+        if value > 1 and value <= 255 and value % 2 == 1:
+            self._bm_blockSize = value
+        else:
+            raise ValueError("Invalid value for bm_blockSize. Must be odd and in range [3;255]")
+
+    @property
+    def sgbm_minDisparity(self) -> int:
+        return self._sgbm_minDisparity
+
+    @sgbm_minDisparity.setter
+    def sgbm_minDisparity(self, value: int):
+        if value >= 0:
+            self._sgbm_minDisparity = value
+        else:
+            raise ValueError("Invalid value for sgbm_minDisparity. Must be >= 0")
+
+    @property
+    def sgbm_numDisparitiesFactor(self) -> int:
+        return self._sgbm_numDisparitiesFactor
+
+    @sgbm_numDisparitiesFactor.setter
+    def sgbm_numDisparitiesFactor(self, value: int):
+        if value >= 0:
+            self._sgbm_numDisparitiesFactor = value
+        else:
+            raise ValueError("Invalid value for sgbm_numDisparitiesFactor. Must be >= 0")
+
+    @property
+    def sgbm_blockSize(self) -> int:
+        return self._sgbm_blockSize
+
+    @sgbm_blockSize.setter
+    def sgbm_blockSize(self, value: int):
+        if value > 1 and value <= 255 and value % 2 == 1:
+            self._sgbm_blockSize = value
+        else:
+            raise ValueError("Invalid value for sgbm_blockSize. Must be odd and in range [3;255]")
+
+    @property
+    def sgbm_P1(self) -> int:
+        return self._sgbm_P1
+
+    @sgbm_P1.setter
+    def sgbm_P1(self, value: int):
+        if value >= 0:
+            self._sgbm_P1 = value
+        else:
+            raise ValueError("Invalid value for sgbm_P1. Must be >= 0")
+
+    @property
+    def sgbm_P2(self) -> int:
+        return self._sgbm_P2
+
+    @sgbm_P2.setter
+    def sgbm_P2(self, value: int):
+        if value >= 0:
+            self._sgbm_P2 = value
+        else:
+            raise ValueError("Invalid value for sgbm_P2. Must be >= 0")
+
+    @property
+    def sgbm_disp12MaxDiff(self) -> int:
+        return self._sgbm_disp12MaxDiff
+
+    @sgbm_disp12MaxDiff.setter
+    def sgbm_disp12MaxDiff(self, value: int):
+        if value >= 0:
+            self._sgbm_disp12MaxDiff = value
+        else:
+            raise ValueError("Invalid value for sgbm_disp12MaxDiff. Must be >= 0")
+
+    @property
+    def sgbm_preFilterCap(self) -> int:
+        return self._sgbm_preFilterCap
+
+    @sgbm_preFilterCap.setter
+    def sgbm_preFilterCap(self, value: int):
+        if value >= 0:
+            self._sgbm_preFilterCap = value
+        else:
+            raise ValueError("Invalid value for sgbm_preFilterCap. Must be >= 0")
+
+    @property
+    def sgbm_uniquenessRatio(self) -> int:
+        return self._sgbm_uniquenessRatio
+
+    @sgbm_uniquenessRatio.setter
+    def sgbm_uniquenessRatio(self, value: int):
+        if value >= 0:
+            self._sgbm_uniquenessRatio = value
+        else:
+            raise ValueError("Invalid value for sgbm_uniquenessRatio. Must be >= 0")
+
+    @property
+    def sgbm_speckleWindowSize(self) -> int:
+        return self._sgbm_speckleWindowSize
+
+    @sgbm_speckleWindowSize.setter
+    def sgbm_speckleWindowSize(self, value: int):
+        if value >= 0:
+            self._sgbm_speckleWindowSize = value
+        else:
+            raise ValueError("Invalid value for sgbm_speckleWindowSize. Must be >= 0")
+
+    @property
+    def sgbm_speckleRange(self) -> int:
+        return self._sgbm_speckleRange
+
+    @sgbm_speckleRange.setter
+    def sgbm_speckleRange(self, value: int):
+        if value >= 0:
+            self._sgbm_speckleRange = value
+        else:
+            raise ValueError("Invalid value for sgbm_speckleRange. Must be >= 0")
+
+    @property
+    def sgbm_mode(self) -> int:
+        return self._sgbm_mode
+
+    @sgbm_mode.setter
+    def sgbm_mode(self, value: int):
+        if value >= 0 and value <= 3:
+            self._sgbm_mode = value
+        else:
+            raise ValueError("Invalid value for sgbm_mode. Must be 0 (default), 1 (SGBM), 2 (H-H), or 3 (H-H with subpixel refinement)")
+
+    def getNextPhotoIdx(self) -> int:
+        """ Return the next available index for fotos
+        """
+        logger.debug("StereoConfig.getNextPhotoIdx")
+        index = -1
+        if len(self.calibPhotos) > 0:
+            for cam in self._calibPhotos:
+                logger.debug("StereoConfig.getNextPhotoIdx - cam: %s - len(calibPhotos[cam])=%s", cam, len(self._calibPhotos[cam]))
+                if len(self._calibPhotos[cam]) == 0:
+                    break
+                else:
+                    for idx in range(0, len(self._calibPhotos[cam])):
+                        sp = self._calibPhotos[cam][idx]
+                        logger.debug("StereoConfig.getNextPhotoIdx - calibPhotos[%s][%s]=%s", cam, idx, sp)
+                        p = sp.find("/img")
+                        if p >= 0:
+                            inds = sp[p+4:p+7]
+                            if inds.isdigit():
+                                ind = int(inds)
+                            else:
+                                raise ValueError(f"Invalid entry in calibration photos list: {sp}")
+                        else:
+                            raise ValueError(f"Invalid entry in calibration photos list: {sp}")
+                        logger.debug("StereoConfig.getNextPhotoIdx inds=%s, ind=%s", inds, ind)
+                        if ind > idx + 1:
+                            index = idx
+                            logger.debug("StereoConfig.getNextPhotoIdx - Found valid index: %s", index)
+                            break
+                    if index == -1:
+                        index = len(self._calibPhotos[cam])
+                        logger.debug("StereoConfig.getNextPhotoIdx - No gap fond. index: %s", index)
+                        break
+                if index >= 0:
+                    break
+            if index == -1:
+                index = 1
+        return index
+
+    @classmethod
+    def initFromDict(cls, dict:dict):
+        sc = StereoConfig()
+        for key, value in dict.items():
+            if key == "_calibPatternSize":
+                setattr(sc, key, tuple(value))
+            else:
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    setattr(sc, key, value)
+        return sc
+
 class ServerConfig():
     def __init__(self):
         self._serverStartTime = None
@@ -3085,6 +3700,7 @@ class ServerConfig():
         self._boardRevision = ""
         self._kernelVersion = ""
         self._debianVersion = ""
+        self._piCameras = []
         self._activeCamera = 0
         self._activeCameraInfo = ""
         self._activeCameraModel = ""
@@ -3120,6 +3736,8 @@ class ServerConfig():
         self._isLiveStream2 = None
         self._isVideoRecording = False
         self._isVideoRecording2 = False
+        self._isStereoCamActive = False
+        self._isStereoCamRecording = False
         self._isAudioRecording = False
         self._isPhotoSeriesRecording = False
         self._isTriggerRecording = False
@@ -3140,6 +3758,7 @@ class ServerConfig():
         self._numpyAvailable = False
         self._matplotlibAvailable = False
         self._flaskJwtLibAvailable = False
+        self._useStereo = False
         self._useHistograms = False
         self._requireAuthForStreaming = False
         self._locLongitude = 0.0
@@ -3354,6 +3973,14 @@ class ServerConfig():
     @debianVersion.setter
     def debianVersion(self, value: str):
         self._debianVersion = value
+
+    @property
+    def piCameras(self) -> list:
+        return self._piCameras
+
+    @piCameras.setter
+    def piCameras(self, value: list):
+        self._piCameras = value
 
     @property
     def activeCamera(self) -> int:
@@ -3678,6 +4305,22 @@ class ServerConfig():
         self._isVideoRecording2 = value
 
     @property
+    def isStereoCamActive(self) -> bool:
+        return self._isStereoCamActive
+
+    @isStereoCamActive.setter
+    def isStereoCamActive(self, value: bool):
+        self._isStereoCamActive = value
+
+    @property
+    def isStereoCamRecording(self) -> bool:
+        return self._isStereoCamRecording
+
+    @isStereoCamRecording.setter
+    def isStereoCamRecording(self, value: bool):
+        self._isStereoCamRecording = value
+
+    @property
     def isAudioRecording(self) -> bool:
         return self._isAudioRecording
 
@@ -3830,6 +4473,16 @@ class ServerConfig():
         self._flaskJwtLibAvailable = value
 
     @property
+    def useStereo(self) -> bool:
+        if self.supportsStereo == False:
+            self._useStereo = False
+        return self._useStereo
+
+    @useStereo.setter
+    def useStereo(self, value: bool):
+        self._useStereo = value
+
+    @property
     def useHistograms(self) -> bool:
         return self._useHistograms
 
@@ -3849,6 +4502,16 @@ class ServerConfig():
         sup = self.cv2Available \
           and self.matplotlibAvailable \
           and self.numpyAvailable
+        return sup
+
+    @property
+    def supportsStereo(self) -> bool:
+        sup = self.cv2Available \
+          and self.numpyAvailable \
+          and len(self.piCameras) > 1
+        if sup == True:
+            if self.piCameras[0].model != self.piCameras[1].model:
+                sup = False
         return sup
 
     @property
@@ -3880,6 +4543,22 @@ class ServerConfig():
                 why = why + "<br>module matplotlib is not available"
             if not self.numpyAvailable:
                 why = why + "<br>module numpy is not available"
+        return why
+
+    @property
+    def whyNotSupportsStereo(self) -> str:
+        why = ""
+        if not self.supportsStereo:
+            why = "Stereo Vision is not supported because"
+            if not self.cv2Available:
+                why = why + "<br>module cv2 is not available"
+            if not self.numpyAvailable:
+                why = why + "<br>module numpy is not available"
+            if not len(self.piCameras) > 1:
+                why = why + "<br>at least two Raspberry Pi cameras are required"
+            else:
+                if self.piCameras[0].model != self.piCameras[1].model:
+                    why = why + "<br>the two Raspberry Pi cameras must be of the same model"
         return why
 
     @property
@@ -5202,11 +5881,15 @@ class ServerConfig():
                 setattr(sc, key, value)
         # Reset process status variables
         sc.isLiveStream = False
+        sc.isLiveStream2 = False
+        sc.isStereoCamActive = False
         sc.isAudioRecording = False
         sc.isPhotoSeriesRecording = False
         sc.isTriggerRecording = False
         sc.isVideoRecording = False
         sc.isEventhandling = False
+        sc.isStereoCamActive = False
+        sc.isStereoCamRecording = False
         sc.changeLog = []
 
         # Set the sc.curDevice attribute to the corresponding object from sc.gpioDevices
@@ -5304,6 +5987,7 @@ class CameraCfg():
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 2
             cls._streamingCfg = {}
+            cls._stereoCfg = StereoConfig()
             cls._secrets = Secrets()
         return cls._instance
     
@@ -5432,12 +6116,75 @@ class CameraCfg():
         self._streamingCfg = value
     
     @property
+    def stereoCfg(self) -> StereoConfig:
+        return self._stereoCfg
+
+    @stereoCfg.setter
+    def stereoCfg(self, value: StereoConfig):
+        self._stereoCfg = value
+    
+    @property
     def secrets(self) -> Secrets:
         return self._secrets
 
     @secrets.setter
     def secrets(self, value: Secrets):
         self._secrets = value
+
+    def setPiCameras(self):
+        """ Set up the list of Raspberry Pi cameras
+        """
+        piCams = []
+        for cam in self._cameras:
+            if cam.isUsb == False:
+                piCams.append(cam)
+        self.serverConfig.piCameras = piCams
+
+    def resetActiveCameraSettings(self):
+        """ Reset configuration and controls for the active camera
+        """
+        self._tuningConfig = TuningConfig()
+        self._controls = CameraControls()
+        self._controlsBackup: CameraControls = None
+        self._cameraProperties = CameraProperties()
+        self._liveViewConfig = CameraConfig()
+        self._liveViewConfig.id = "LIVE"
+        self._liveViewConfig.use_case = "Live view"
+        self._liveViewConfig.stream = "lores"
+        self._liveViewConfig.buffer_count = 6
+        self._liveViewConfig.encode = "main"
+        self._liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
+        self._photoConfig = CameraConfig()
+        self._photoConfig.id = "FOTO"
+        self._photoConfig.use_case = "Photo"
+        self._photoConfig.buffer_count = 1
+        self._photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+        self._rawConfig = CameraConfig()
+        self._rawConfig.id = "PRAW"
+        self._rawConfig.use_case = "Raw Photo"
+        self._rawConfig.buffer_count = 1
+        self._rawConfig.stream = "raw"
+        self._rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+        self._videoConfig = CameraConfig()
+        self._videoConfig.buffer_count = 6
+        self._videoConfig.id = "VIDO"
+        self._videoConfig.use_case = "Video"
+        self._videoConfig.buffer_count = 6
+        self._videoConfig.encode = "main"
+        self._videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
+        # For Raspi models < 5 the lowres format must be YUV
+        # See Picamera2 manual ch. 4.2, p. 16
+        if self._serverConfig.raspiModelLower5:
+            self._liveViewConfig.format = "YUV420"
+        if self._serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
+        or self._serverConfig.raspiModelFull.startswith("Raspberry Pi 4") \
+        or self._serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
+        or self._serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
+        or self._serverConfig.raspiModelFull.startswith("Raspberry Pi 1"):
+            # For Pi Zero and 4 reduce buffer_count defaults for live view and video
+            self._liveViewConfig.buffer_count = 2
+            self._videoConfig.buffer_count = 2
+        
     
     def _persistCl(self, cl, fn: str, cfgPath: str):
         """ Store class dictionary for class cl in the config file fn
@@ -5469,6 +6216,7 @@ class CameraCfg():
             self._persistCl(self.serverConfig, "serverConfig.json", cfgPath)
             self._persistCl(self.triggerConfig, "triggerConfig.json", cfgPath)
             self._persistCl(self.streamingCfg, "streamingCfg.json", cfgPath)
+            self._persistCl(self.stereoCfg, "stereoCfg.json", cfgPath)
             
     def _toJson(self, cl):
         return json.dumps(cl, default=lambda o: getattr(o, '__dict__', str(o)), indent=4)
@@ -5555,6 +6303,7 @@ class CameraCfg():
                 self.controls = self._loadConfigCl(CameraControls, "controls.json", cfgPath)
                 self.triggerConfig = self._loadConfigCl(TriggerConfig, "triggerConfig.json", cfgPath)
                 self.streamingCfg = self._initStreamingConfigFromDisc("streamingCfg.json", cfgPath)
+                self.stereoCfg = self._loadConfigCl(StereoConfig, "stereoCfg.json", cfgPath)
                 self.gpioDevices = self._initGpioDevicesFromDisc("gpioDevices.json", cfgPath)
                 sc = self.secrets
                 tc = self.triggerConfig

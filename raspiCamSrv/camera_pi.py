@@ -1385,6 +1385,16 @@ class Camera():
         else:
             return Camera.cam.capture_array(cfg.liveViewConfig.stream)
 
+    def getLeftImageForStereo(self):
+        """Capture and return a buffer"""
+        return Camera.cam.capture_array(CameraCfg().liveViewConfig.stream)
+
+    def getRightImageForStereo(self):
+        """Capture and return a buffer"""
+        return Camera.cam2.capture_array(
+            CameraCfg().streamingCfg[str(Camera.camNum2)]["liveconfig"].stream
+        )
+
     def get_frame(self):
         """Return the current camera frame."""
         # logger.debug("Thread %s: Camera.get_frame", get_ident())
@@ -1498,9 +1508,17 @@ class Camera():
             if cfgCam.num == activeCam:
                 # Accept the active camera only if it is not a USB camera
                 if cfgCam.isUsb == False:
-                    activeCamOK = True
                     sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
                     sc.activeCameraModel = cfgCam.model
+                    # Check if model has changed
+                    if cfgCam.model != sc.activeCameraModel:
+                        logger.debug("Thread %s: Camera.getActiveCamera - Active camera model changed from %s to %s - Resetting configuration",
+                                     get_ident(), sc.activeCameraModel, cfgCam.model)
+                        # Reset active configuration
+                        cfg.resetActiveCameraSettings()
+                        sc.unsavedChanges = True
+                        sc.addChangeLogEntry(f"Camera settings for {sc.activeCameraInfo} were reset due to camera model change")
+                    activeCamOK = True
                 break
         logger.debug("Thread %s: Camera.getActiveCamera - Active camera:%s - activeCamOK:%s", get_ident(), activeCam, activeCamOK)
         # If config for active camera is not in the list, or if it is a USB cam,
@@ -1699,8 +1717,22 @@ class Camera():
 
         # For active camera
         cn = str(sc.activeCamera)
-        if not cn in strc:
+        resetActive = False
+        if cn in strc:
+            scfg = strc[cn]
+            if "camerainfo" in scfg:
+                if scfg["camerainfo"] != sc.activeCameraInfo:
+                    resetActive = True
+                    logger.debug("Thread %s: Camera.setStreamingConfigs - Resetting active camera config for camera %s", get_ident(), cn)
+                    sc.unsavedChanges = True
+                    sc.addChangeLogEntry(f"Streaming configuration for {sc.activeCameraInfo} was reset due to camera model change")
+            else:
+                resetActive = True
+        else:
+            restActive = True
+        if resetActive == True:
             scfg = {}
+            scfg["camnum"] = sc.activeCamera
             scfg["camerainfo"] = copy.copy(sc.activeCameraInfo)
             scfg["hasfocus"] = cfg.cameraProperties.hasFocus
             scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
@@ -1711,10 +1743,36 @@ class Camera():
             scfg["controls"] = copy.deepcopy(cfg.controls)
             strc[cn] = scfg
             logger.debug("Thread %s: Camera.setStreamingConfigs - created  entry for active camera %s", get_ident(), cn)
+        else:
+            if cn in strc:
+                scfg = strc[cn]
+                if not "camnum" in scfg:
+                    scfg["camnum"] = sc.activeCamera
+                    strc[cn] = scfg
+
         # For second camera
         if cls.cam2:
             cn = str(cls.camNum2)
-            if not cn in strc:
+            resetSecond = False
+            if cn in strc:
+                scfg = strc[cn]
+                if "camerainfo" in scfg:
+                    model = ""
+                    for cfgCam in cfg.cameras:
+                        if cfgCam.num == cls.camNum2:
+                            model = cfgCam.model
+                            break
+                    newCamInfo = "Camera " + str(cls.camNum2) + " (" + model + ")"
+                    if scfg["camerainfo"] != newCamInfo:
+                        resetSecond = True
+                        logger.debug("Thread %s: Camera.setStreamingConfigs - Resetting second camera config for camera %s", get_ident(), cn)
+                        sc.unsavedChanges = True
+                        sc.addChangeLogEntry(f"Streaming configuration for {newCamInfo} was reset due to camera model change")
+                else:
+                    resetSecond = True
+            else:
+                resetSecond = True
+            if resetSecond == True:
                 camPprops = cls.cam2.camera_properties
                 hasFocus = "AfMode" in cls.cam2.camera_controls
                 pixelArraySize = copy.copy(camPprops["PixelArraySize"])
@@ -1793,6 +1851,7 @@ class Camera():
                     if cfgCam.num == cls.camNum2:
                         model = cfgCam.model
                         break
+                scfg["camnum"] = cls.camNum2
                 scfg["camerainfo"] = "Camera " + cn + " (" + model + ")"
                 scfg["hasfocus"] = hasFocus
                 scfg["tuningconfig"] = TuningConfig()
@@ -1803,6 +1862,12 @@ class Camera():
                 scfg["controls"] = copy.deepcopy(cfg.controls)
                 strc[cn] = scfg
                 logger.debug("Thread %s: Camera.setStreamingConfigs - created  entry for second camera %s", get_ident(), cn)
+            else:
+                if cn in strc:
+                    scfg = strc[cn]
+                    if not "camnum" in scfg:
+                        scfg["camnum"] = cls.camNum2
+                        strc[cn] = scfg
 
     @classmethod
     def restoreConfigFromStreamingConfig(cls):
@@ -1819,15 +1884,22 @@ class Camera():
             scfg = strc[cn]
             if "liveconfig" in scfg:
                 cfg.liveViewConfig = copy.deepcopy(scfg["liveconfig"])
+                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored liveViewConfig from streaming config %s", get_ident(), cn)
             if "photoconfig" in scfg:
                 cfg.photoConfig = copy.deepcopy(scfg["photoconfig"])
+                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored photoconfig from streaming config %s", get_ident(), cn)
             if "rawconfig" in scfg:
                 cfg.rawConfig = copy.deepcopy(scfg["rawconfig"])
+                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored rawconfig from streaming config %s", get_ident(), cn)
             if "videoconfig" in scfg:
                 cfg.videoConfig = copy.deepcopy(scfg["videoconfig"])
+                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored videoconfig from streaming config %s", get_ident(), cn)
             if "controls" in scfg:
                 cfg.controls = copy.deepcopy(scfg["controls"])
-            logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored live view config and controls from streaming config %s", get_ident(), cn)
+                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored controls from streaming config %s", get_ident(), cn)
+                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - cfgCtrls=%s", get_ident(), scfg["controls"].__dict__)
+                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - cfg.controls=%s", get_ident(), cfg.controls.__dict__)
+            logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored config and controls from streaming config %s", get_ident(), cn)
 
     @staticmethod
     def configure(cfg: CameraConfig, cfgPhoto: CameraConfig):
@@ -2986,7 +3058,6 @@ class Camera():
         cfg = CameraCfg()
         sc = cfg.serverConfig
 
-
         logger.debug("Thread %s: Camera._videoThread2 - Requesting camera for videoConfig", get_ident())
         videoConfig = cfg.streamingCfg[str(Camera.camNum2)]["videoconfig"]
         Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(Camera.cam2, Camera.camNum2, videoConfig)
@@ -3500,6 +3571,9 @@ class Camera():
         sc.scalerCropDef = scInf[2]
         sc.zoomFactor = 100
         sc.scalerCropLiveView = sc.scalerCropDef
+        if cc.scalerCrop != sc.scalerCropDef:
+            cc.include_scalerCrop = True
+        else:
+            cc.include_scalerCrop = False
         cc.scalerCrop = sc.scalerCropDef
-        cc.include_scalerCrop = False
         cls.resetScalerCropRequested = False

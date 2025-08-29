@@ -716,8 +716,10 @@ def probeTerm(property):
 
 @bp.route("/api/probe", methods=["GET"])
 @jwt_required()
-def get():
+def probe():
     logger.debug("Thread %s: In /api/probe", get_ident())
+    if CameraCfg().serverConfig.useStereo == True:
+        from raspiCamSrv.stereoCam import StereoCam
     result = {}
     data = request.get_json()
     if "properties" in data:
@@ -725,11 +727,11 @@ def get():
     else:
         result["error"] = "No properties provided"
         return jsonify(result), 400
-    
+
     if len(properties) == 0:
         result["error"] = "properties must not be empty"
         return jsonify(result), 400
-    
+
     results = []
     result["results"] = results
     for t in properties:

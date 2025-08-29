@@ -14,6 +14,7 @@
         <button class="w3-bar-item w3-button cammenu" id="webcambtn"
             onclick="openCamTab('webcam', 'webcambtn')">Web Cam</button>
         {% endif %}
+        {% if sc.piCameras|length() > 1 %}
         {% if sc.lastCamTab == "multicam" %}
         <button class="w3-bar-item w3-button cammenu w3-light-green" id="multicambtn"
             onclick="openCamTab('multicam', 'multicambtn')">Multi-Cam</button>
@@ -21,6 +22,25 @@
         {% if sc.isLiveStream2 != None %}
         <button class="w3-bar-item w3-button cammenu" id="multicambtn"
             onclick="openCamTab('multicam', 'multicambtn')">Multi-Cam</button>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+        {% if sc.useStereo == True %}
+        {% if sc.lastCamTab == "calibcam" %}
+        <button class="w3-bar-item w3-button cammenu w3-light-green" id="calibcambtn"
+            onclick="openCamTab('calibcam', 'calibcambtn')">Camera Calibration</button>
+        {% else %}
+        <button class="w3-bar-item w3-button cammenu" id="calibcambtn"
+            onclick="openCamTab('calibcam', 'calibcambtn')">Camera Calibration</button>
+        {% endif %}
+        {% if sc.lastCamTab == "stereocam" %}
+        <button class="w3-bar-item w3-button cammenu w3-light-green" id="stereocambtn"
+            onclick="openCamTab('stereocam', 'stereocambtn')">Stereo-Cam</button>
+        {% else %}
+        {% if sc.isLiveStream2 != None %}
+        <button class="w3-bar-item w3-button cammenu" id="stereocambtn"
+            onclick="openCamTab('stereocam', 'stereocambtn')">Stereo-Cam</button>
+        {% endif %}
         {% endif %}
         {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
@@ -209,7 +229,7 @@
                 </td>
             </tr>
             <tr>
-                <td style="width:56%">
+                <td>
                     <!-- Photo button -->
                     {% if sc.isVideoRecording or sc.isPhotoSeriesRecording %}
                     <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_take_photo') }}">
@@ -248,7 +268,7 @@
                     {% endif %}
                     {% endif %}
                 </td>
-                <td style="width:56%">
+                <td>
                     <!-- Photo button -->
                     <form style="display:inline-block" method="post" action="{{ url_for('webcam.take_photo2') }}">
                         <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo">
@@ -279,7 +299,7 @@
                 </td>
             </tr>
             <tr>
-                <td style="width:56%">
+                <td>
                     <form style="display:inline-block" method="post" action="{{ url_for('webcam.take_photo_both') }}">
                         <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo - Both">
                     </form>
@@ -322,6 +342,25 @@
             <tr>
                 <td>
                     {% if str2 != None and sc.isLiveStream == True %}
+                    {% if sc.activeCameraInfo[8:] == str2["camerainfo"][8:] %}
+                    <form method="post" action="{{ url_for('webcam.sync_settings') }}">
+                        <p style="margin-bottom: 0"></p>
+                        <input class="w3-button w3-black" type="submit" value="Synchronize Configurations">
+                    </form>
+                    {% else %}
+                    <form method="post" action="{{ url_for('webcam.sync_settings') }}">
+                        <p style="margin-bottom: 0"></p>
+                        <input class="w3-button w3-black" type="submit" value="Synchronize Configurations" disabled>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if str2 != None and sc.isLiveStream == True %}
                     <form method="post" action="{{ url_for('webcam.switch_cameras') }}">
                         <p style="margin-bottom: 0"></p>
                         <input class="w3-button w3-black" type="submit" value="<<< Switch Cameras >>>">
@@ -332,6 +371,718 @@
                 </td>
             </tr>
         </table>
+    </div>
+    {% if sc.lastCamTab == "stereocam" %}
+    <div id="stereocam" class="camgroup">
+    {% else %}
+    <div id="stereocam" class="camgroup" style="display:none">
+    {% endif %}
+        <h2>Stereo Cam</h2>
+        <table style="layout:fixed; width: 100%;">
+            <tr>
+                <td colspan=2 style="width: 50%; text-align:center;">
+                    {% if sc.isLiveStream %}
+                    <h3 style="margin: 0px;">Left</h3>
+                    {% endif %}
+                </td>
+                <td colspan=2 style="width: 50%; text-align:center;">
+                    {% if str2 != None %}
+                    <h3 style="margin: 0px;">Right</h3>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td colspan=2 style="width: 50%;">
+                    {% if sc.isLiveStream %}
+                    <img src="{{ url_for('home.video_feed') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% else %}
+                    {% if sc.isVideoRecording %}
+                    {% if sc.recordAudio == False %}
+                    <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% elif sc.isPhotoSeriesRecording %}
+                    <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td colspan=2 style="width: 50%;">
+                    {% if str2 != None %}
+                    <img src="{{ url_for('home.video_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 25%;">
+                    &nbsp;
+                </td>
+                <td colspan=2 style="width: 50%; text-align:center;">
+                    <h3 style="margin: 0px;">Stereo</h3>
+                </td>
+                <td style="width: 25%;">
+                    &nbsp;
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 25%;">
+                    <table>
+                        <form id="stereodispform" method="post" action="{{ url_for('webcam.stereo_display') }}">
+                            <tr>
+                                <td class="w3-tooltip" style="width:15%">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        Apply calibration and rectification to camera images
+                                    </span>
+                                    <label for="applycalibrectify">Rectified Images:</label>
+                                </td>
+                                <td style="width:10%">
+                                    {% if ster.stereoRectifyOK == True %}
+                                    {% if ster.applyCalibRectify == True %}
+                                    <input type="checkbox" id="applycalibrectify" name="applycalibrectify" onchange="dosubmitApplyCalibRectify()" value="1" checked>
+                                    {% else %}
+                                    <input type="checkbox" id="applycalibrectify" name="applycalibrectify" onchange="dosubmitApplyCalibRectify()" value="1">
+                                    {% endif %}
+                                    {% else %}
+                                    <input type="checkbox" id="applycalibrectify" name="applycalibrectify" value="1" disabled>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td></td>
+                            </tr>
+                        </form>
+                        {% set intent = "" %}
+                        {% set stereoAlgo = "" %}
+                        {% if tmp|length() > 0 %}
+                        {% if "intent" in tmp %}
+                        {% set intent = tmp.intent %}
+                        {% set intentInt = tmp.intent|int %}
+                        {% endif %}
+                        {% if "stereoAlgo" in tmp %}
+                        {% set stereoAlgo = tmp.stereoAlgo %}
+                        {% set stereoAlgoInt = tmp.stereoAlgo|int %}
+                        {% endif %}
+                        {% endif %}
+                        <form id="stereoconfigform" method="post" action="{{ url_for('webcam.stereo_config') }}">
+                            <tr>
+                                <td class="w3-tooltip">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        The intended stereo processing.
+                                    </span>
+                                    <label for="intent">Intent:</label>
+                                </td>
+                                <td>
+                                    <select name="intent" id="intent"
+                                        onchange="dosubmitIntent()">
+                                        {% if intent == "" %}
+                                        <option value="" selected></option>
+                                        {% endif %}
+                                        {% for intent in ster.intents %}
+                                        {% if ster.intentIdx == loop.index -1 %}
+                                        <option value="{{ loop.index -1 }}" selected>{{ ster.intentNames[loop.index-1] }}</option>
+                                        {% else %}
+                                        <option value="{{ loop.index -1 }}">{{ ster.intentNames[loop.index -1] }}</option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            {% if ster.intentAlgoNames[intentInt]|length > 0 %}
+                            <tr>
+                                <td class="w3-tooltip" style="width: 50%;">
+                                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        The stereo algorithm to apply.
+                                    </span>
+                                    <label for="stereoalgo">Algorithm:</label>
+                                </td>
+                                <td style="width: 50%;">
+                                    {% if intent == "" %}
+                                    <select name="stereoalgo" id="stereoalgo"
+                                        onchange="dosubmitIntentAlgo()" disabled>
+                                    {% else %}
+                                    <select name="stereoalgo" id="stereoalgo"
+                                        onchange="dosubmitIntentAlgo()">
+                                    {% endif %}
+                                        {% if stereoAlgo == "" %}
+                                        <option value="" selected></option>
+                                        {% endif %}
+                                        {% for algo in ster.intentAlgos[0] %}
+                                        {% if ster.intentAlgoIdx == loop.index -1 %}
+                                        <option value="{{ loop.index -1 }}" selected>{{ ster.intentAlgoNames[intentInt][loop.index -1] }}</option>
+                                        {% else %}
+                                        <option value="{{ loop.index -1 }}">{{ ster.intentAlgoNames[intentInt][loop.index -1] }}</option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            <div id="stereoconfigparams">
+                                {% if intent == "0" %} <!-- Depth Map -->
+                                {% if stereoAlgo == "0" %} <!-- StereoBM -->
+                                {% if ster.intentAlgoLinks[0][0]|length > 0 %}
+                                <tr>
+                                    <td colspan="2">
+                                        <a href="{{ ster.intentAlgoLinks[0][0] }}" target="_blank">Algorithm Reference</a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Factor for the number of disparities.
+                                        </span>
+                                        <label for="bmnumdisparitiesfactor">Num Disparities Factor:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="bmnumdisparitiesfactor" name="bmnumdisparitiesfactor" min="0" max="9999" step="1" value={{ ster.bm_numDisparitiesFactor }} onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Block size.
+                                        </span>
+                                        <label for="bmblocksize">Block Size:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="bmblocksize" name="bmblocksize" min="3" max="255" step="2" value="{{ ster.bm_blockSize }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if stereoAlgo == "1" %} <!-- StereoSGBM -->
+                                {% if ster.intentAlgoLinks[0][1]|length > 0 %}
+                                <tr>
+                                    <td colspan="2">
+                                        <a href="{{ ster.intentAlgoLinks[0][1] }}" target="_blank">Algorithm Reference</a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Minimum possible disparity value.
+                                        </span>
+                                        <label for="sgbmmindisparity">Min. Disparity:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmmindisparity" name="sgbmmindisparity" min="0" max="9999" step="1" value="{{ ster.sgbm_minDisparity }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Num Disparities Factor. Multiplied by 16 to get Num Disparities
+                                        </span>
+                                        <label for="sgbmnumdisparitiesfactor">Num Disparities Factor:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmnumdisparitiesfactor" name="sgbmnumdisparitiesfactor" min="3" max="255" step="1" value="{{ ster.sgbm_numDisparitiesFactor }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Matched block size.
+                                        </span>
+                                        <label for="sgbmblocksize">Block Size:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmblocksize" name="sgbmblocksize" min="3" max="11" step="2" value="{{ ster.sgbm_blockSize }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            The first parameter controlling the disparity smoothness.
+                                        </span>
+                                        <label for="sgbmp1">P1:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmp1" name="sgbmp1" min="0" max="999" step="1" value="{{ ster.sgbm_P1 }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            The second parameter controlling the disparity smoothness.
+                                        </span>
+                                        <label for="sgbmp2">P2:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmp2" name="sgbmp2" min="0" max="999" step="1" value="{{ ster.sgbm_P2 }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Maximum allowed difference (in integer pixel units) in the left-right disparity check
+                                        </span>
+                                        <label for="sgbmdisp12maxdiff">Disp12 Max Diff:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmdisp12maxdiff" name="sgbmdisp12maxdiff" min="-1" max="255" step="1" value="{{ ster.sgbm_disp12MaxDiff }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Truncation value for the prefiltered image pixels.
+                                        </span>
+                                        <label for="sgbmprefiltercap">PreFilter Cap:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmprefiltercap" name="sgbmprefiltercap" min="0" max="255" step="1" value="{{ ster.sgbm_preFilterCap }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Margin in percentage by which the best (minimum) computed cost function value should "win" the second best value to consider the found match correct.
+                                        </span>
+                                        <label for="sgbmuniquenessratio">Uniqueness Ratio:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmuniquenessratio" name="sgbmuniquenessratio" min="0" max="255" step="1" value="{{ ster.sgbm_uniquenessRatio }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Maximum size of smooth disparity regions to consider their noise speckles and invalidate.
+                                        </span>
+                                        <label for="sgbmspecklewindowsize">Speckle Window Size:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmspecklewindowsize" name="sgbmspecklewindowsize" min="0" max="200" step="1" value="{{ ster.sgbm_speckleWindowSize }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Maximum disparity variation within each connected component.
+                                        </span>
+                                        <label for="sgbmspecklerange">Speckle Range:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <input type="number" id="sgbmspecklerange" name="sgbmspecklerange" min="3" max="255" step="1" value="{{ ster.sgbm_speckleRange }}" onchange="dosubmitStereoParam()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="w3-tooltip" style="width: 50%;">
+                                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                            Set it to MODE_HH to run the full-scale two-pass dynamic programming algorithm.
+                                        </span>
+                                        <label for="sgbmmode">Mode:</label>
+                                    </td>
+                                    <td style="width: 50%;">
+                                        <select name="sgbmmode" id="sgbmmode"
+                                            onchange="dosubmitStereoParam()">
+                                            {% if ster.sgbm_mode == 0 %}
+                                            <option value="0" selected>MODE_SGBM</option>
+                                            {% else %}
+                                            <option value="0">MODE_SGBM</option>
+                                            {% endif %}
+                                            {% if ster.sgbm_mode == 1 %}
+                                            <option value="1" selected>MODE_HH</option>
+                                            {% else %}
+                                            <option value="1">MODE_HH</option>
+                                            {% endif %}
+                                            {% if ster.sgbm_mode == 2 %}
+                                            <option value="2" selected>MODE_SGBM_3WAY</option>
+                                            {% else %}
+                                            <option value="2">MODE_SGBM_3WAY</option>
+                                            {% endif %}
+                                            {% if ster.sgbm_mode == 3 %}
+                                            <option value="3" selected>MODE_HH4</option>
+                                            {% else %}
+                                            <option value="3">MODE_HH4</option>
+                                            {% endif %}
+                                        </select>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </form>
+                    </table>
+                </td>
+                <td colspan=2 style="width: 50%;">
+                    {% if sc.isStereoCamActive %}
+                    <img src="{{ url_for('webcam.stereo_cam_feed') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_stereo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                </td>
+                <td style="width: 25%;">
+                    <table>
+                        <tr>
+                            <td>
+                                {% if sc.isStereoCamActive == False %}
+                                <form method="post" action="{{ url_for('webcam.start_stereo_cam') }}">
+                                    <p style="margin-bottom: 0"></p>
+                                    <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Start">
+                                </form>
+                                {% else %}
+                                <form method="post" action="{{ url_for('webcam.stop_stereo_cam') }}">
+                                    <p style="margin-bottom: 0"></p>
+                                    <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                {% if sc.isStereoCamActive == False or ster.intentIdx != 1 %}
+                                <form method="post" action="{{ url_for('webcam.start_record_stereo') }}">
+                                    <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Record" disabled>
+                                </form>
+                                {% else %}
+                                {% if sc.isStereoCamRecording == False %}
+                                <form method="post" action="{{ url_for('webcam.start_record_stereo') }}">
+                                    <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Record">
+                                </form>
+                                {% else %}
+                                <form method="post" action="{{ url_for('webcam.stop_record_stereo') }}">
+                                    <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop Recording">
+                                    <input class="w3-button w3-red w3-circle" type="submit" value=" ">
+                                </form>
+                                {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>            </tr>
+            <tr>
+                <td style="width: 25%;">
+                    &nbsp;
+                </td>
+                <td colspan=2 style="width: 50%; text-align:center;">
+                    Streaming URL: <a href="http://{{ g.hostname }}/stereo_feed" target="_blank">http://{{ g.hostname }}/stereo_feed</a>
+                </td>
+                <td style="width: 25%;">
+                    &nbsp;
+                </td>
+            </tr>
+
+        </table>
+    </div>
+    {% if sc.lastCamTab == "calibcam" %}
+    <div id="calibcam" class="camgroup">
+    {% else %}
+    <div id="calibcam" class="camgroup" style="display:none">
+    {% endif %}
+        <h2>Camera Calibration and Rectification</h2>
+        {% set camNumL = sc.activeCamera|string() %}
+        {% if str2 != None %}
+        {% set camNumR = str2.camnum|string() %}
+        {% else %}
+        {% set camNumR = None %}
+        {% endif %}
+        <table style="layout:fixed; width: 100%;">
+            <tr>
+                <td style="width: 50%;">
+                    {% if sc.isLiveStream %}
+                    <h3 style="margin: 0px;">Active: {{ sc.activeCameraInfo}}</h3>
+                    {% endif %}
+                </td>
+                <td style="width: 50%;">
+                    {% if str2 != None %}
+                    <h3 style="margin: 0px;">{{ str2["camerainfo"]}}</h3>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%;">
+                    {% if ster.calibPhotosOK[camNumL] == True or (ster.calibPhotosCount[camNumL] > 0 and ster.calibPhotoRecording == False) %}
+                    {% if ster.calibShowCorners == False %}
+                    <img src="{{ url_for('static', filename=ster.calibPhotos[camNumL][ster.calibPhotosIdx[camNumL]]) }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% else %}
+                    <img src="{{ url_for('static', filename=ster.calibPhotosCrn[camNumL][ster.calibPhotosIdx[camNumL]]) }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% else %}
+                    {% if sc.isLiveStream %}
+                    <img src="{{ url_for('home.video_feed') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% else %}
+                    {% if sc.isVideoRecording %}
+                    {% if sc.recordAudio == False %}
+                    <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recordingvideo_sound.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% elif sc.isPhotoSeriesRecording %}
+                    <img src="{{ url_for('static', filename='recordingphotoseries.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td style="width: 50%;">
+                    {% if camNumR != None %}
+                    {% if ster.calibPhotosOK[camNumL] == True or (ster.calibPhotosCount[camNumL] > 0 and ster.calibPhotoRecording == False) %}
+                    {% if ster.calibShowCorners == False %}
+                    <img src="{{ url_for('static', filename=ster.calibPhotos[camNumR][ster.calibPhotosIdx[camNumR]]) }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% else %}
+                    <img src="{{ url_for('static', filename=ster.calibPhotosCrn[camNumR][ster.calibPhotosIdx[camNumR]]) }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
+                    {% else %}
+                    {% if str2 != None %}
+                    <img src="{{ url_for('home.video_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                {% if ster.calibPhotosOK[camNumL] == True or (ster.calibPhotosCount[camNumL] > 0 and ster.calibPhotoRecording == False) %}
+                <td style="width: 50%; text-align: center;">
+                    {{ (ster.getCalibPhotosIdx(camNumL) + 1)|string() }} of {{ ster.calibPhotosTarget|string() }}  ({{ ster.calibPhotos[camNumL][ster.calibPhotosIdx[camNumL]] }})
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    {% if str2 != None %}
+                    {{ (ster.getCalibPhotosIdx(camNumR) + 1)|string() }} of {{ ster.calibPhotosTarget|string() }}  ({{ ster.calibPhotos[camNumR][ster.calibPhotosIdx[camNumR]] }})
+                    {% endif %}
+                </td>
+                {% else %}
+                <td style="width: 50%; text-align: center;">
+                    &nbsp;
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    &nbsp;
+                </td>
+                {% endif %}
+            </tr>
+            <tr>
+                {% if ster.calibPhotosOK[camNumL] == True or (ster.calibPhotosCount[camNumL] > 0 and ster.calibPhotoRecording == False) %}
+                <td colspan="2" style="width: 100%;">
+                    <div style="display:inline-block">
+                        <a href="{{ url_for('webcam.first_calib_photo') }}" class="w3-button w3-sand">&laquo;</a>
+                        <a href="{{ url_for('webcam.prev_calib_photo') }}" class="w3-button w3-sand">&lt;</a>
+                        <a href="{{ url_for('webcam.next_calib_photo') }}" class="w3-button w3-sand">&gt;</a>
+                        <a href="{{ url_for('webcam.last_calib_photo') }}" class="w3-button w3-sand">&raquo;</a>
+                        <p style="display:inline-block">&nbsp;&nbsp;&nbsp;</p>
+                        <a href="{{ url_for('webcam.remove_calib_photo') }}" class="w3-button w3-sand">Remove</a>
+                        <p style="display:inline-block">&nbsp;&nbsp;&nbsp;</p>
+                        <form id="displaycornersform" style="display:inline-block" method="post" action="{{ url_for('webcam.display_corners') }}">
+                            <label style="display:inline-block" for="displaycorners">Show corners:</label>
+                            {% if ster.calibShowCorners == True %}
+                            <input style="display:inline-block" type="checkbox" id="displaycorners" name="displaycorners" onchange="dosubmitDisplayCorners()" value="1" checked>
+                            {% else %}
+                            <input style="display:inline-block" type="checkbox" id="displaycorners" name="displaycorners" onchange="dosubmitDisplayCorners()" value="1">
+                            {% endif %}
+                        </form>
+                    </div>
+                </td>
+                {% else %}
+                <td colspan="2" style="width: 100%;">
+                    <div style="display:inline-block; height:52.5px">
+                        &nbsp;
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+        </table>
+        <form id="calibsettingsform" method="post" action="{{ url_for('webcam.calib_settings') }}">
+            <table>
+                <tr>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Type of pattern to be used for calibration.
+                        </span>
+                        <label for="calibpattern">Calibration Pattern:</label>
+                    </td>
+                    <td>
+                        <select name="calibpattern" id="calibpattern"
+                            onchange="confirmCalibSettings('calibsettingsform')">
+                            {% for pattern in ster.calibrationPatterns %}
+                            {% if ster.calibPatternIdx == loop.index -1 %}
+                            <option value="{{ loop.index -1 }}" selected>{{ ster.calibrationPatterns[loop.index-1] }}</option>
+                            {% else %}
+                            <option value="{{ loop.index -1 }}">{{ ster.calibrationPatterns[loop.index -1] }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <a href="{{ ster.calibrationPatternRefs[ster.calibPatternIdx] }}" target="_blank">Pattern Reference</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Number of intersections in x and y direction of the calibration pattern.
+                        </span>
+                        <label for="calibpatternsize">Pattern Size:</label>
+                    </td>
+                    <td>
+                        <div style="display:inline-block">
+                            <input type="number" id="calibpatternsize" name="calibpatternsize" min="2" max="99" step="1" value="{{ ster.calibPatternSize[0] }}" onchange="confirmCalibSettings('calibsettingsform')">
+                            &nbsp;x&nbsp;
+                            <input type="number" id="calibpatternsizey" name="calibpatternsizey" min="2" max="99" step="1" value="{{ ster.calibPatternSize[1] }}" onchange="confirmCalibSettings('calibsettingsform')">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The number of pattern photos required for calibration.
+                        </span>
+                        <label for="calibphotostarget">Number of Photos required:</label>
+                    </td>
+                    <td>
+                        <input type="number" id="calibphotostarget" name="calibphotostarget" min="5" max="99" step="1" value="{{ ster.calibPhotosTarget }}" onchange="doSubmit('calibsettingsform')">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            The number of pattern photos taken.
+                        </span>
+                        <label for="calibphotostaken">Number of Photos taken:</label>
+                    </td>
+                    <td>
+                        <input type="number" id="calibphotostaken" name="calibphotostaken" min="0" max="99" step="1" value="{{ ster.getCalibPhotosCount(camNumL) }}" disabled>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                           Controls scaling of the rectified image.<br>
+                           "Valid Pixels Only": Rectified image will show only valid pixels (no black areas)<br>
+                           "All Pixels": Rectified image will show all pixels (may result in black areas)<br>
+                        </span>
+                        <label for="rectifyscale">Rectify Scale:</label>
+                    </td>
+                    <td>
+                        <select name="rectifyscale" id="rectifyscale"
+                            onchange="doSubmit('calibsettingsform')">
+                            {% if ster.rectifyScale == 0 %}
+                            <option value="0" selected>Valid Pixels Only</option>
+                            <option value="1">All Pixels</option>
+                            {% else %}
+                            <option value="0">Valid Pixels Only</option>
+                            <option value="1" selected>All Pixels</option>
+                            {% endif %}
+                        </select>
+                    </td>
+                </tr>
+            </table>
+        </form>
+        <table>
+            <tr>
+                <td>
+                    <p style="margin-bottom: 0"></p>
+                    <form id="resetcalibphotos" method="post" action="{{ url_for('webcam.reset_calib_photos') }}">
+                        {% if ster.hasCalibPhotos(camNumL, camNumR) == True and ster.calibPhotoRecording == False %}
+                        <input class="w3-button w3-black" type="submit" onclick="confirmReset('resetcalibphotos')" value="Reset Calibration Photos">
+                        {% else %}
+                        <input class="w3-button w3-black" type="submit" onclick="confirmReset('resetcalibphotos')" value="Reset Calibration Photos" disabled>
+                        {% endif %}
+                    </form>
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p style="margin-bottom: 0"></p>
+                    {% if ster.calibPhotoRecording == True %}
+                    <form id="stoptakecalibphotos" method="post" action="{{ url_for('webcam.stop_take_calib_photos') }}">
+                        <input class="w3-button w3-black" type="submit" value="Stop taking Pattern Photos">
+                    </form>
+                    {% else %}
+                    {% if ster.isCalibPhotosOK(camNumL, camNumR) == True %}
+                    <form id="starttakecalibphotos" method="post" action="{{ url_for('webcam.start_take_calib_photos') }}">
+                        <input class="w3-button w3-black" type="submit" value="Start taking Pattern Photos" disabled>
+                    </form>
+                    {% else %}
+                    {% if ster.getCalibPhotosCount(camNumL) > 0 %}
+                    <form id="starttakecalibphotos" method="post" action="{{ url_for('webcam.start_take_calib_photos') }}">
+                        <input class="w3-button w3-black" type="submit" value="Continue taking Pattern Photos">
+                    </form>
+                    {% else %}
+                    <form id="starttakecalibphotos" method="post" action="{{ url_for('webcam.start_take_calib_photos') }}">
+                        <input class="w3-button w3-black" type="submit" onclick="confirmCalibPhotoTaking('starttakecalibphotos')" value="Start taking Pattern Photos">
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                    <p style="margin-bottom: 0"></p>
+                    {% if ster.calibPhotoRecording == True %}
+                    {% if ster.calibPhotoRecordingMsg.startswith("Taking") == True %}
+                    <p class="w3-button w3-yellow">{{ ster.calibPhotoRecordingMsg }}</p>
+                    {% elif ster.calibPhotoRecordingMsg.startswith("No") == True %}
+                    <p class="w3-button w3-red">{{ ster.calibPhotoRecordingMsg }}</p>
+                    {% else %}
+                    <p class="w3-button w3-green">{{ ster.calibPhotoRecordingMsg }}</p>
+                    {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>&nbsp;</p>
+                    {% if ster.isCalibPhotosOK(camNumL, camNumR) == True and camNumR != None %}
+                    <form id="calibrate" method="post" action="{{ url_for('webcam.calibrate_cameras') }}">
+                        <input class="w3-button w3-black" type="submit" onclick="confirmCalibration('calibratecameras')" value="Calibrate Cameras">
+                    </form>
+                    {% else %}
+                    <form id="calibratecameras" method="post" action="{{ url_for('webcam.calibrate_cameras') }}">
+                        <input class="w3-button w3-black" type="submit" value="Calibrate Cameras" disabled>
+                    </form>
+                    {% endif %}
+                    <p style="margin-bottom:0">&nbsp;</p>
+                </td>
+                <td>
+                    <p>&nbsp;</p>
+                    {% if ster.calibDate %}
+                    Last successful calibration: {{ ster.calibDate }}
+                    {% else %}
+                    No successful calibration yet.
+                    {% endif %}
+                    <p style="margin-bottom:0">&nbsp;</p>
+                </td>
+            </tr>
+        </table>
+        {% if ster.isCalibCamerasOK(camNumL, camNumR) == True %}
+        <table style="layout:fixed; width: 100%;">
+            <tr>
+                <td class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        This is a measure for the calibration quality.<br>
+                        &lt; 0.5 px: excellent<br>
+                        0.5 - 1.0 px: good<br>
+                        &gt; 1.0 px: poor
+                    </span>
+                    <label for="calibrmsreproerrorl">Overall RMS Re-Projection Error:</label>
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%;text-align:center;">
+                    {% if ster.calibRmsReproError[camNumL] < 0.5 %}
+                    <p class="w3-button w3-green" style="margin-top:0">{{ ster.calibRmsReproError[camNumL] }}</p>
+                    {% elif ster.calibRmsReproError[camNumL] <= 1.0 %}
+                    <p class="w3-button w3-yellow" style="margin-top:0">{{ ster.calibRmsReproError[camNumL] }}</p>
+                    {% else %}
+                    <p class="w3-button w3-red" style="margin-top:0">{{ ster.calibRmsReproError[camNumL] }}</p>
+                    {% endif %}
+                </td>
+                <td style="width: 50%;text-align:center;">
+                    {% if ster.calibRmsReproError[camNumR] < 0.5 %}
+                    <p class="w3-button w3-green" style="margin-top:0">{{ ster.calibRmsReproError[camNumR] }}</p>
+                    {% elif ster.calibRmsReproError[camNumR] <= 1.0 %}
+                    <p class="w3-button w3-yellow" style="margin-top:0">{{ ster.calibRmsReproError[camNumR] }}</p>
+                    {% else %}
+                    <p class="w3-button w3-red" style="margin-top:0">{{ ster.calibRmsReproError[camNumR] }}</p>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        {% endif %}
     </div>
     <script>
         function openCamTab(infoTabName, infoTabButton) {
@@ -362,8 +1113,84 @@
                 }
             }
         }
+        function dosubmitApplyCalibRectify(){
+            document.getElementById("stereodispform").submit();
+        }
+        function dosubmitDisplayCorners(){
+            document.getElementById("displaycornersform").submit();
+        }
+        function dosubmitIntent(){
+            sta = document.getElementById("stereoalgo");
+            if (sta != null) {
+                sta.value = "";
+                sta.disabled = true;
+            }
+            stc = document.getElementById("stereoconfigparams");
+            stc.display = "none";
+            document.getElementById("stereoconfigform").submit();
+        }
+        function dosubmitIntentAlgo(){
+            tt = document.getElementById("stereoconfigparams");
+            tt.display = "none";
+            document.getElementById("stereoconfigform").submit();
+        }
+        function dosubmitStereoParam(){
+            document.getElementById("stereoconfigform").submit();
+        }
+        function confirmReset(form) {
+            if (confirm("Do you want to reset camara calibration?\nThis will remove all available calibration photos!")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmCalibPhotoTaking(form) {
+            if (confirm(
+                "Show the calibration pattern to your camera(s)!\n" + 
+                "It must be fully visible in the camera (or in both cameras) frame.\n\n" +
+                "When the pattern is recognized, a photo will be taken\n" +
+                "about every 2 seconds, until the required number is reached.\n\n" +
+                "Change the orientation from time to time \n" +
+                "and wait until all photos have been taken,"
+               )) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmCalibration(form) {
+            if (confirm(
+                "Do you want to run the camera calibration?\n\n" +
+                "Existing calibration data will be overwritten."
+               )) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmCalibSettings(form) {
+            if (confirm(
+                "Changing the Calibration Pattern or the Pattern Size will reset the calibration data\n" +
+                "and remove all existing calibration photos."
+               )) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
         function onlineHelp() {
             window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Cam.md");
         }
     </script>
+    {% if sc.curMenu == "webcam" and sc.lastCamTab == "calibcam"  and ster.calibPhotoRecording == True %}
+    <script>
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000); 
+    </script>
+    {% endif %}
 {% endblock %}

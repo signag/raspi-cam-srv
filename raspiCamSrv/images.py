@@ -126,7 +126,11 @@ def control():
     cs = cfg.cameras
     sc.curMenu = "photos"
     if request.method == "POST":
-        sc.pvCamera = int(request.form["camera"])
+        pvCamera = request.form["camera"]
+        if pvCamera == "S":
+            sc.pvCamera = "S"
+        else:
+            sc.pvCamera = int(request.form["camera"])
         pvFromStr = request.form.get("pvfrom")
         sc.pvFromStr = pvFromStr
         pvToStr = request.form.get("pvto")
@@ -307,7 +311,7 @@ def deleteFile(fp: str, cntOK, cntErr):
         except:
             cntErr += 1
     return cntOK, cntErr
-    
+
 
 @bp.route("/download_selected", methods=("GET", "POST"))
 @login_required

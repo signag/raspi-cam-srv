@@ -37,6 +37,30 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V3.7.0
+
+### New Features
+
+- [Camera Calibration](./CamCalibration.md) uses an image series of a calibration pattern for calibration of a stereo camera pair.
+- [Stereo Vision](./CamStereo.md) uses a stereo camera setup for creation of 3D videos or depth maps.
+
+### Bugfixes
+
+- Fixed behavior when [starting server with stored configuration](./Settings.md#configuration) after the camera or one of the cameras has been replaced by a different model.    
+In the previous version, the settings for the second camera have been taken from the stored configuration.   
+Now, if a camera has been changed, the corresponding configuration is reset to default.    
+This will also be indicated with the yellow indicator for [unsaved configuration changes](./UserGuide.md#elements)
+- Layout of [Multi-Cam](./CamMulticam.md) dialog has been corrected. In the previous version the two columns had a different width.
+- Fixed wrong status of [Start server with stored Configuration](./Settings.md#configuration) after a [Reset Server](./Settings.md#configuration)
+- Fixed image distortion when the stream size of a [Configuration](./Configuration.md) has been changed to an aspect ratio which is not that of the default [ScalerCrop](./ScalerCrop.md).     
+In this case, scalerCrop is now activated in the controls, so that it will also be included in the streaming configuration and will also be synchronized with the second camera, if this is the same model as the active one.
+- Fixed inappropriate status indicators and [Multi-Cam](./CamMulticam.md) menu for systems having just one camera.
+
+### Note
+
+- For **Raspberry Pi Zero** running the latest builds of **Bookworm**, there seems to be an issue with MJPEG streaming. It has been observed that, after some time of streaming (a few minutes), the entire system gets stalled and does no longer react without rebooting. The reasons are not yet understood and need to be analyzed.    
+**This problem does not occur on Bullseye systems!**
+
 ## V3.6.2
 
 ### Bugfixes

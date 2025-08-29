@@ -25,7 +25,7 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-    
+
     # Configure loggers
     logsPath = os.path.dirname(app.instance_path) + "/logs"
     os.makedirs(logsPath, exist_ok=True)
@@ -33,7 +33,7 @@ def create_app(test_config=None):
     Path(logFile).touch(exist_ok=True)
     filehandler = logging.FileHandler(logFile)
     filehandler.setFormatter(app.logger.handlers[0].formatter)
-    for logger in(
+    for logger in (
         app.logger,
         logging.getLogger("werkzeug"),
         logging.getLogger("raspiCamSrv.db"),
@@ -56,41 +56,43 @@ def create_app(test_config=None):
         logging.getLogger("raspiCamSrv.console"),
         logging.getLogger("raspiCamSrv.sun"),
         logging.getLogger("raspiCamSrv.api"),
+        logging.getLogger("raspiCamSrv.stereoCam"),
     ):
         logger.setLevel(logging.ERROR)
 
-    #>>>>> Uncomment the following line in order to log to the log file
-    #app.logger.addHandler(filehandler)
+    # >>>>> Uncomment the following line in order to log to the log file
+    # app.logger.addHandler(filehandler)
 
-    #>>>>> Explicitely set specific log levels. Leave "werkzeug" at INFO
+    # >>>>> Explicitely set specific log levels. Leave "werkzeug" at INFO
     logging.getLogger("werkzeug").setLevel(logging.INFO)
-    #logging.getLogger("raspiCamSrv.auth").setLevel(logging.ERROR)
-    #logging.getLogger("raspiCamSrv.camCfg").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.images").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.webcam").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.trigger").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.photoseriesCfg").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.photoseries").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.sun").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.motionAlgoIB").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.triggerHandler").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.settings").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.console").setLevel(logging.DEBUG)
-    #logging.getLogger("raspiCamSrv.api").setLevel(logging.DEBUG)
-    
-    #>>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
+    # logging.getLogger("raspiCamSrv.auth").setLevel(logging.ERROR)
+    # logging.getLogger("raspiCamSrv.camCfg").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.camera_pi").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.images").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.webcam").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.trigger").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.photoseriesCfg").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.photoseries").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.sun").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.motionDetector").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.motionAlgoIB").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.triggerHandler").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.settings").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.console").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.api").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.stereoCam").setLevel(logging.DEBUG)
+
+    # >>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
     Picamera2.set_logging(logging.ERROR)
-    #>>>>> Uncomment the following line to let Picamera2 log to the log file
-    #logging.getLogger("picamera2").addHandler(filehandler)
-        
-    #>>>>> Set log level for libcamera (0:DEBUG, 1:INFO, 2:WARNING, 3:ERROR, 4:FATAL)
+    # >>>>> Uncomment the following line to let Picamera2 log to the log file
+    # logging.getLogger("picamera2").addHandler(filehandler)
+
+    # >>>>> Set log level for libcamera (0:DEBUG, 1:INFO, 2:WARNING, 3:ERROR, 4:FATAL)
     os.environ["LIBCAMERA_LOG_LEVELS"] = "*:3"
 
-    #Configure the logger for generation of program code
-    #This logger generates an executable Picamera2 Python application program
-    #including the entire interaction with Picamera2 during a server run
+    # Configure the logger for generation of program code
+    # This logger generates an executable Picamera2 Python application program
+    # including the entire interaction with Picamera2 during a server run
     prgOutPath = os.path.dirname(app.instance_path) + "/output"
     os.makedirs(prgOutPath, exist_ok=True)
     prgLogger = logging.getLogger("pc2_prg")
@@ -98,14 +100,14 @@ def create_app(test_config=None):
     prgLogTime = datetime.datetime.now()
     prgLogFilename = "prgLog_" + prgLogTime.strftime("%Y%m%d_%H%M%S") + ".log"
     prgLogFile = prgLogPath+ "/" + prgLogFilename
-    #>>>>> Uncomment the following 5 lines when code generation is activated (see below)
-    #Path(prgLogFile).touch(exist_ok=True)
-    #prgFilehandler = logging.FileHandler(prgLogFile)
-    #prgFormatter = logging.Formatter('%(message)s')
-    #prgFilehandler.setFormatter(prgFormatter)
-    #prgLogger.addHandler(prgFilehandler)
-    #>>>>> To activate Python code generation, set level to DEBUG
-    #prgLogger.setLevel(logging.DEBUG)
+    # >>>>> Uncomment the following 5 lines when code generation is activated (see below)
+    # Path(prgLogFile).touch(exist_ok=True)
+    # prgFilehandler = logging.FileHandler(prgLogFile)
+    # prgFormatter = logging.Formatter('%(message)s')
+    # prgFilehandler.setFormatter(prgFormatter)
+    # prgLogger.addHandler(prgFilehandler)
+    # >>>>> To activate Python code generation, set level to DEBUG
+    # prgLogger.setLevel(logging.DEBUG)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -117,7 +119,7 @@ def create_app(test_config=None):
     # Make database available in the application context
     from . import db
     db.init_app(app)
-    
+
     # Configure Config
     from . import camCfg
     from . import settings
@@ -141,14 +143,23 @@ def create_app(test_config=None):
     sc.cfgPath = cfgPath
     sc.checkEnvironment()
     sc.database = os.path.join(app.instance_path, "raspiCamSrv.sqlite")
-        
-    # Configure Triggered Capture        
+    stc = cfg.stereoCfg
+    stc.calibPhotosPath = app.static_folder + "/calib_photos/"
+    stc.calibPhotosSubPath = "calib_photos/"
+    stc.calibDataSubPath = "calib_data/"
+    stc.calibDataFile = "calib_params.xml"
+    cam = Camera()
+    cfg.setPiCameras()
+    # For testiing multi-camera features:
+    # sc.piCameras.pop(1)
+
+    # Configure Triggered Capture
     tcActionPath = app.static_folder + "/events"
     os.makedirs(tcActionPath, exist_ok=True)
     tc = cfg.triggerConfig
     tc.actionPath = tcActionPath
     Path(tc.logFilePath).touch(exist_ok=True)
-        
+
     # Configure Photoseries
     from . import photoseriesCfg
     tlRootPath = app.static_folder + "/photoseries"
@@ -157,7 +168,7 @@ def create_app(test_config=None):
     tlCfg.rootPath = tlRootPath
     tlCfg.initFromTlFolder()
     tlCfg = photoseriesCfg.PhotoSeriesCfg()
-    
+
     # Restart an active series if requested
     if tlCfg.hasCurSeries:
         sr = tlCfg.curSeries
@@ -185,11 +196,11 @@ def create_app(test_config=None):
         if tc.triggeredByEvents == True:
             TriggerHandler().start()
             sc.isEventhandling = True
-    
+
     # Register required blueprints
     from . import auth
     app.register_blueprint(auth.bp)
-    
+
     from . import home
     app.register_blueprint(home.bp)
     app.add_url_rule("/", endpoint="index")
@@ -223,7 +234,7 @@ def create_app(test_config=None):
         app.register_blueprint(api.bp)
 
         from flask_jwt_extended import JWTManager    
-        
+
         if sc.jwtAuthenticationActive == False:
             sc.API_active = False
         else:
