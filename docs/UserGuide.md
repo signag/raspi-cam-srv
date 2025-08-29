@@ -39,7 +39,7 @@ The main menu (black background) allows navigation to different screens:
 - **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
 - **Trigger** Allows configuring and controlling [triggered actions](./Trigger.md), based on [Motion Capturing](./TriggerMotion.md) as well as on configured [events from GPIO-connected sensors](./TriggerTriggers.md)
 - **Cam** gives access to the dialogs for [Web Cam](./CamWebcam.md) access [Multi Cam](./CamMulticam.md) for multi-camera control.    
-If a [Stereo Camera configuration](./Settings#activating--deactivating-stereo-vision) is activated, it hosts also the dialogs for [Camera Calibration](./CamCalibration.md) as well as for [Stereo Vision](./CamStereo.md).
+If a [Stereo Camera configuration](./Settings.md#activating--deactivating-stereo-vision) is activated, it hosts also the dialogs for [Camera Calibration](./CamCalibration.md) as well as for [Stereo Vision](./CamStereo.md).
 - **Console** is dedicated to manually controlled interactions with the [Raspberry Pi OS](./ConsoleVButtons.md) or with [GPIO-connected Actors](./ConsoleActionButtons.md), such as motors, servos or LEDs.
 - **Settings** opens the [Settings](./Settings.md) page for all kinds of static configurations for **raspiCamSrv**.
 - **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
