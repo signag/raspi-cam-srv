@@ -39,6 +39,13 @@ This allows identifying photos which have been synchronously taken and videos wh
 
 This button stores the current [Camera Configuration](./Configuration.md) for all configurations as well as the current [Controls](./CameraControls.md) settings for the active camera in a specific structure (streamingCfg) so that it can be reused for streaming in a case that the other camera has been activated. (See also [Configuring MJPEG Stream and jpeg Photo](#configuring-mjpeg-stream-and-jpeg-photo))
 
+#### Synchronize Configurations
+
+This button is disabled if the two cameras are of different model.
+
+If they are the same model, the button can be used to transfer the configuration as well as the controls settings from the active camera to the second camera. This is especially useful in the case of [Stereo Vision](./CamStereo.md) where both cameras should be operated with identical configuration.
+
+**NOTE**: the button does **not** save the settings for the active camera in the *streamingCfg* structure. This must be done explicitly and is recommended to be done before synchronizing.
 
 #### <<< Switch Cameras >>>
 

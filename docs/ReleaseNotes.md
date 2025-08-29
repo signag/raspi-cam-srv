@@ -43,6 +43,7 @@ In case that the server did not start correctly or if you see an unexpected beha
 
 - [Camera Calibration](./CamCalibration.md) uses an image series of a calibration pattern for calibration of a stereo camera pair.
 - [Stereo Vision](./CamStereo.md) uses a stereo camera setup for creation of 3D videos or depth maps.
+- The [Multi-Cam](./CamMulticam.md) dialog has a new function to [Synchronize Configurations](./CamMulticam.md#synchronize-configurations).
 
 ### Bugfixes
 
