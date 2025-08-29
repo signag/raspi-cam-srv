@@ -28,7 +28,7 @@ The dialog allows selecting as few as 5 photos but this is only to see how quali
 The process of photo taking is automatic:
 
 When the pattern is presented to the cameras so that it is fully visible in both cameras, the system will try to find the specified number of corners.   
-Only of this is successful, the image will be stored.   
+Only if this is successful, the image will be stored.   
 After 2 seconds, the next pair of images will be analyzed until sufficient photos have been taken.
 
 The process is started with button **Start taking Pattern Photos** which will request a confirmation:
