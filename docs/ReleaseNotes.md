@@ -61,6 +61,7 @@ In this case, scalerCrop is now activated in the controls, so that it will also 
 
 - For **Raspberry Pi Zero** running the latest builds of **Bookworm**, there seems to be an issue with MJPEG streaming. It has been observed that, after some time of streaming (a few minutes), the entire system gets stalled and does no longer react without rebooting. The reasons are not yet understood and need to be analyzed.    
 **This problem does not occur on Bullseye systems!**
+**The issue is no longer observed in Bookworm systems when updated after about mid September 2025!**
 
 ## V3.6.2
 
