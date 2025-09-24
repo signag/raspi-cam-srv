@@ -21,7 +21,7 @@
                 <div class="w3-bar-item w3-right" style="padding-top:0;padding-bottom:0">
                     {% if sc.unsavedChanges %}
                     <img src="{{ url_for('static', filename='save_changes.png') }}" class="w3-image" id="save_changes"
-                        alt="Save changes" style="height:34px; width:34px; margin-top:4px">
+                        alt="Save changes" onclick="fetch(`/store_config`,{method: `POST`}).then(location.replace(location.pathname))" style="cursor: pointer; height:34px; width:34px; margin-top:4px">
                     {% endif %}
                     <div class="w3-bar-item w3-right" style="padding-top:8px;padding-bottom:8px">
                         {{ g.user['username'] }}
