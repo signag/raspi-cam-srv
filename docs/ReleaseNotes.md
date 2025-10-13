@@ -37,6 +37,15 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+
+## V3.7.1
+
+### Bugfixes
+
+- Fixed [Notification](./TriggerNotification.md) for [Motion Capturing](./TriggerMotion.md).    
+In special cases of parameters for [Trigger Control](./Trigger.md#control), [Camera Actions](./TriggerCameraActions.md) or Video/Photos to be included in the message (see [Notification Settings](./TriggerNotification.md)), notification mails were not sent or images were not included in the mails.   
+This fix resolves [raspiCamSrv Issue #76 (Notification email)](https://github.com/signag/raspi-cam-srv/issues/76)
+
 ## V3.7.0
 
 ### New Features

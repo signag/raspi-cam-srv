@@ -1,7 +1,7 @@
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg
 import numpy as np
-from _thread import get_ident
+from _thread import get_ident, allocate_lock
 import threading
 import time
 from datetime import datetime
@@ -93,6 +93,7 @@ class MotionDetector():
     notificationDone = None
     notifyMail = None
     notifyBuffer = []
+    notifyBufferLock = allocate_lock()      # lock for making access to notifyBuffer thread-safe
     mdAlgo = None
     event = MotionEvent()
 
@@ -222,23 +223,26 @@ class MotionDetector():
         """ Execute action
         
         """
-        # logger.debug("Thread %s: MotionDetector._doAction", get_ident())
+        logger.debug("Thread %s: MotionDetector._doAction", get_ident())
         tc = CameraCfg().triggerConfig
 
         logEvent = False
 
         now = datetime.now()
+        logger.debug("Thread %s: MotionDetector._doAction - now: %s", get_ident(), now)
         if cls.eventStart is None:
             cls.eventKey = now.strftime("%Y-%m-%dT%H:%M:%S")
             cls.eventStart = now
             logEvent = True
+            logger.debug("Thread %s: MotionDetector._doAction - New event started with key: %s", get_ident(), cls.eventKey)
 
         delta = now - cls.eventStart
         deltaSec = delta.total_seconds()
+        logger.debug("Thread %s: MotionDetector._doAction - deltaSec: %s", get_ident(), deltaSec)
 
         if deltaSec > tc.detectionPauseSec:
             # Difference to previous event is larger than pause -> new event
-            # logger.debug("Thread %s: MotionDetector._doAction - Starting new event", get_ident())
+            logger.debug("Thread %s: MotionDetector._doAction - Starting new event", get_ident())
             cls.eventKey = now.strftime("%Y-%m-%dT%H:%M:%S")
             cls.eventStart = now
             cls.nrPhotos = 0
@@ -281,14 +285,17 @@ class MotionDetector():
                             cls.lastPhoto = now
 
             if tc.actionNotify == True:
-                if logEvent == True:
-                    if cls.notificationDone is None:
-                        doNotify = True
-                    else:
-                        notifyDelta = now - cls.notificationDone
-                        notifyDeltaSec = notifyDelta.total_seconds()
-                        if notifyDeltaSec >= tc.notifyPause:
+                if cls.notificationDone is None:
+                    doNotify = True
+                else:
+                    notifyDelta = cls.eventStart - cls.notificationDone
+                    notifyDeltaSec = notifyDelta.total_seconds()
+                    if notifyDeltaSec >= tc.notifyPause:
+                        if cls.notificationDone < cls.eventStart:
                             doNotify = True
+            logger.debug("Thread %s: MotionDetector._doAction - delta>=delay - logEvent: %s startVideo: %s recordVideo: %s doPhoto: %s doNotify: %s", get_ident(), logEvent, startVideo, recordVideo, doPhoto, doNotify)
+        else:
+            logger.debug("Thread %s: MotionDetector._doAction - delta<delay  - logEvent: %s startVideo: %s recordVideo: %s doPhoto: %s doNotify: %s", get_ident(), logEvent, startVideo, recordVideo, doPhoto, doNotify)
 
         fnRaw = now.strftime("%Y-%m-%dT%H-%M-%S")
         logTS = now.strftime("%Y-%m-%dT%H:%M:%S")
@@ -372,15 +379,19 @@ class MotionDetector():
 
         if doNotify:
             cls.notificationDone = now
-            cls.notifyMail = cls._initNotificationMessage(logTS, trigger)
+            logger.debug("Thread %s: MotionDetector._doAction - Notification time: %s", get_ident(), cls.notificationDone)
+            cls.notifyMail = cls._initNotificationMessage(cls.eventKey, trigger)
             if tc.notifyIncludePhoto:
                 if photoDone:
                     cls._attachToNotification(cls.notifyMail, fnPhoto)
-            if tc.notifyIncludeVideo == False \
-            and (tc.notifyIncludePhoto == False \
-            or  (tc.notifyIncludePhoto == True \
+            if (tc.notifyIncludeVideo == False or tc.actionVideo == False) \
+            and ((tc.notifyIncludePhoto == False or tc.actionPhoto == False) \
+            or  ((tc.notifyIncludePhoto == True and tc.actionPhoto == True) \
             and tc.actionPhotoBurst <= 1)):
+                logger.debug("Thread %s: MotionDetector._doAction - Notification to be sent now", get_ident())
                 cls._sendNotification()
+            else:
+                logger.debug("Thread %s: MotionDetector._doAction - Notification to be sent later", get_ident())
 
     @staticmethod            
     def _initNotificationMessage(logTS, trigger) -> EmailMessage:
@@ -427,7 +438,8 @@ class MotionDetector():
         logger.debug("Thread %s: MotionDetector._sendNotificationThread", get_ident())
         tc = CameraCfg().triggerConfig
         scr =CameraCfg().secrets
-        msg = cls.notifyBuffer.pop(0)
+        with cls.notifyBufferLock:
+            msg = cls.notifyBuffer.pop(0)
         try:
             if tc.notifyUseSSL == True:
                 server = smtplib.SMTP_SSL(host=tc.notifyHost, port=tc.notifyPort)
@@ -455,7 +467,8 @@ class MotionDetector():
         """
         logger.debug("Thread %s: MotionDetector._sendNotification", get_ident())
         msg = copy.copy(cls.notifyMail)
-        cls.notifyBuffer.append(msg)
+        with cls.notifyBufferLock:
+            cls.notifyBuffer.append(msg)
         thread = threading.Thread(target=cls._sendNotificationThread)
         thread.start()
         cls.notifyMail = None
@@ -485,10 +498,12 @@ class MotionDetector():
         """ Stop an active action, if required
         """
         # logger.debug("Thread %s: MotionDetector._stopAction", get_ident())
+        tc = CameraCfg().triggerConfig
+        waitForVideo = False
         if not cls.videoStart is None:
             if cls.videoStop is None:
+                logger.debug("Thread %s: MotionDetector._stopAction - video is running", get_ident())
                 if not cls.videoName is None:
-                    tc = CameraCfg().triggerConfig
                     now = datetime.now()
                     dur = now-cls.videoStart
                     durSec = dur.total_seconds()
@@ -520,11 +535,34 @@ class MotionDetector():
                             if not cls.notifyMail is None:
                                 if tc.notifyIncludeVideo == True:
                                     cls._attachToNotification(cls.notifyMail, cls.videoName)
-                                cls._sendNotification()
+                                now = datetime.now()
+                                dur = now -cls.notificationDone
+                                durSec = dur.total_seconds()
+                                noWait = durSec >= (tc.actionPhotoBurst + 1) * tc.actionPhotoBurstDelaySec
+                                if noWait:
+                                    cls._sendNotification()
                         else:
                             with open(tc.logFilePath, "a") as f:
                                 f.write(logTS + " Video: " + cls.videoName + " Stop     Error" + err + "\n")
                         cls.videoStop = now
+                    else:
+                        waitForVideo = True
+                        logger.debug("Thread %s: MotionDetector._stopAction - video still within duration", get_ident())
+
+        # Send outstanding mails
+        if not cls.notifyMail is None:
+            # A mail has been initialized but not sent yet
+            # Check whether we need to wait for more photos
+            now = datetime.now()
+            dur = now-cls.notificationDone
+            durSec = dur.total_seconds()
+            noWait = durSec >= (tc.actionPhotoBurst + 1) * tc.actionPhotoBurstDelaySec
+            if waitForVideo:
+                noWait = False
+
+            if force or noWait:
+                logger.debug("Thread %s: MotionDetector._stopAction - outstanding mail to be sent", get_ident())
+                cls._sendNotification()
 
     @staticmethod
     def _isActive() -> bool:
@@ -533,7 +571,7 @@ class MotionDetector():
         active = True
         cfg = CameraCfg()
         tc = cfg.triggerConfig
-        
+
         now = datetime.now()
         wd = str(now.isoweekday())
         if tc.operationWeekdays[wd] == True:
