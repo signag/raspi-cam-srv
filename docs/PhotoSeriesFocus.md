@@ -4,7 +4,8 @@
 
 
 A Focus Stack series iterates the Lens Position (or Focal Distance).   
-With suitable software, such a stack can be combined to achieve a large Depth of Field (DoF).
+With suitable software, such a stack can be combined to achieve a large Depth of Field (DoF).    
+**NOTE**: This function is not available for USB cameras.
 
 ![Focus Stack](img/PhotoSeriesFoc1.jpg)
 

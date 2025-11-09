@@ -35,6 +35,7 @@ def getFileList() -> list:
         path = "photos/" + "camera_" + str(sc.pvCamera) + "/" + file
         fpath = os.path.join(fp, file)
         if ext.lower() != ".dng" \
+        and ext.lower() != ".tiff" \
         and ext.lower() != ".mp4" \
         and ext.lower() != ".h264" \
         and (not os.path.isdir(fpath)):
@@ -66,12 +67,14 @@ def getFileList() -> list:
         name, ext = os.path.splitext(file)
         path = "photos/" + "camera_" + str(sc.pvCamera) + "/" + file
         if ext.lower() == ".dng" \
+        or ext.lower() == ".tiff" \
         or ext.lower() == ".mp4" \
         or ext.lower() == ".h264":
             # For raw and video, search the placeholder and update
             for entry in dl:
                 if entry["name"] == name:
-                    if ext.lower() == ".dng":
+                    if ext.lower() == ".dng" \
+                    or ext.lower() == ".tiff":
                         entry["type"] = "raw"
                         entry["file"] = file
                     else:
@@ -281,6 +284,8 @@ def delete_selected():
                     # Detete raw image
                     fnr = fp + name + ".dng"
                     cnt, cntErr = deleteFile(fnr, cnt, cntErr)
+                    fnr = fp + name + ".tiff"
+                    cnt, cntErr = deleteFile(fnr, cnt, cntErr)
                 if entry["type"] == "video":
                     # Detete video
                     fnv = fp + name + ".mp4"
@@ -293,7 +298,7 @@ def delete_selected():
                 
         # Clear displaybuffer
         if cntd > 0:
-            sc.displayBufferClear()
+            sc.displayBufferCheck()
 
         getFileList() 
                 
@@ -302,11 +307,11 @@ def delete_selected():
     return render_template("images/main.html", sc=sc, cp=cp, cs=cs)
 
 def deleteFile(fp: str, cntOK, cntErr):
-    logger.debug("images/delete_selected - trying : %s", fp)
+    logger.debug("images/deleteFile - trying : %s", fp)
     if os.path.exists(fp):
         try:
             os.remove(fp)
-            logger.debug("images/delete_selected - deleted: %s", fp)
+            logger.debug("images/deleteFile - deleted: %s", fp)
             cntOK += 1
         except:
             cntErr += 1
@@ -347,6 +352,12 @@ def download_selected():
                         zl.append(fn)
                 if entry["type"] == "raw":
                     fn = fp + name + ".dng"
+                    if os.path.exists(fn):
+                        cnt += 1
+                        cntRaw += 1
+                        logger.debug("images/download_selected - added %s", fn)
+                        zl.append(fn)
+                    fn = fp + name + ".tiff"
                     if os.path.exists(fn):
                         cnt += 1
                         cntRaw += 1

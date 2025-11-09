@@ -4,6 +4,7 @@ from subprocess import CalledProcessError
 import json
 import logging
 import os
+import re
 from ast import literal_eval
 from pathlib import Path
 from datetime import datetime
@@ -457,7 +458,8 @@ class TriggerConfig():
         self._errorSource = None
         self._triggers = []
         self._actions = []
-        
+        self._noCamera = False
+
     @property
     def logFileName(self) -> str:
         return "_events.log"
@@ -1364,8 +1366,10 @@ class TriggerConfig():
         Returns:
             list[str] : List of trigger sources
         """
-        triggerSources = ["Camera", "GPIO", "MotionDetector"]
-        
+        if self._noCamera == False:
+            triggerSources = ["Camera", "GPIO", "MotionDetector"]
+        else:
+            triggerSources = ["GPIO",]
         return triggerSources
         
     def actionSources(self) -> list[str]:
@@ -1378,8 +1382,10 @@ class TriggerConfig():
         Returns:
             list[str]: List of action sources
         """
-        actionSources = ["Camera", "GPIO", "SMTP"]
-        
+        if self._noCamera == False:
+            actionSources = ["Camera", "GPIO", "SMTP"]
+        else:
+            actionSources = ["GPIO", "SMTP"]
         return actionSources
     
     def triggerDevices(self, source:str) -> list[str]:
@@ -1552,16 +1558,26 @@ class TriggerConfig():
                 }
             ]
         elif source == "SMTP":
-            actionTargets = [
-                {
-                    "method": "send_mail",
-                    "params": {},
-                    "control": {
-                        "attach_photo": False,
-                        "attach_video": False
+            if self._noCamera == False:
+                actionTargets = [
+                    {
+                        "method": "send_mail",
+                        "params": {},
+                        "control": {
+                            "attach_photo": False,
+                            "attach_video": False
+                        }
                     }
-                }
-            ]
+                ]
+            else:
+                actionTargets = [
+                    {
+                        "method": "send_mail",
+                        "params": {},
+                        "control": {
+                        }
+                    }
+                ]
         elif source == "GPIO":
             gpioDev = CameraCfg().serverConfig.getDevice(device)
             if gpioDev is not None:
@@ -1645,6 +1661,7 @@ class CameraInfo():
     def __init__(self):
         self._model = ""
         self._isUsb = False
+        self._usbDev = ""
         self._location = 0
         self._rotation = 0
         self._id = ""
@@ -1666,7 +1683,15 @@ class CameraInfo():
     @isUsb.setter
     def isUsb(self, value: bool):
         self._isUsb = value
-        
+
+    @property
+    def usbDev(self) -> str:
+        return self._usbDev
+
+    @usbDev.setter
+    def usbDev(self, value: str):
+        self._usbDev = value
+
     @property
     def location(self) -> int:
         return self._location
@@ -1706,6 +1731,65 @@ class CameraInfo():
     @status.setter
     def status(self, value: str):
         self._status = value
+
+    def setUsbDev(self):
+        """Determine and set the device for a USB camera, based on camera model and USB port
+
+        The USB port is determined from the camera ID.
+        The ID is assumed to have the following structure (example):
+        /base/axi/pcie@1000120000/rp1/usb@200000-2:1.0-046d:085c
+        |_______________________||_____________| | |_| |__| |__|
+           USB root port path      USB root hub  |  |   |    |
+                                                 |  |   |    └ Product ID
+                                                 |  |   └ Vendor ID
+                                                 |  └ Interface
+                                                 └ USB port
+
+        Information from the ID is matched to information on video devices from 'v4l2-ctl --list-devices'
+        """
+        logger.debug("CameraInfo.setUsbDev for num=%s model=%s", self.num, self.model)
+        usbDev = ""
+        if self._isUsb:
+            usbDev = "UNKNOWN"
+            logger.debug("CameraInfo.setUsbDev - ID=%s", self.id)
+            idParts = self._id.split("-")
+            if len(idParts) >= 2:
+                usbPart = idParts[1]
+                productPart = idParts[2]
+                logger.debug("CameraInfo.setUsbDev - usbPart=%s", usbPart)
+                logger.debug("CameraInfo.setUsbDev - productPart=%s", productPart)
+                usbPort = usbPart.split(":")[0]
+                vidPid = productPart
+                model = self.model
+                logger.debug("CameraInfo.setUsbDev - usbPort=%s vidPid=%s model=%s", usbPort, vidPid, model)
+
+                # Find which /dev/video node has the same USB port and same model name or VID:PID
+                try:
+                    result = subprocess.run(
+                        ["v4l2-ctl", "--list-devices"], capture_output=True, text=True
+                    ).stdout
+
+                    # For each camera block in v4l2 output
+                    for block in result.strip().split("\n\n"):
+                        if vidPid in block or model in block:
+                            logger.debug("CameraInfo.setUsbDev - Found matching block in v4l2-ctl output")
+                            lines = [l.strip() for l in block.splitlines() if "/dev/video" in l]
+                            device = lines[0]
+                            logger.debug("CameraInfo.setUsbDev - Found device: %s", device)
+                            usbDev = device
+                            break
+                    if usbDev == "UNKNOWN":
+                        logger.debug("CameraInfo.setUsbDev - No matching device found in v4l2-ctl output")
+
+                except CalledProcessError as e:
+                    logger.error("CameraInfo.setUsbDev - CalledProcessError: %s", e)
+                    # In case v4l2-ctl cannot be run, ignore the exception
+                    pass
+                except Exception as e:
+                    logger.error("CameraInfo.setUsbDev - Exception: %s", e)
+                    pass
+        self._usbDev = usbDev
+        logger.debug("CameraInfo.setUsbDev - Set usbDev=%s", self._usbDev)
 
 class CameraControls():
     def __init__(self):
@@ -2589,12 +2673,7 @@ class CameraConfig():
 
     @colour_space.setter
     def colour_space(self, value: str):
-        if value == "sYCC" \
-        or value == "Smpte170m" \
-        or value == "Rec709":
-            self._colour_space = value
-        else:
-            raise ValueError("Invalid value for colour_space: %s", value)
+        self._colour_space = value
         
     @property
     def buffer_count(self) -> int:
@@ -2747,7 +2826,9 @@ class CameraProperties():
         self._pixelArrayActiveAreas = None
         self._colorFilterArrangement = None
         self._scalerCropMaximum = None
-        self.systemDevices = None
+        self._systemDevices = None
+        self._sensorSensitivity = None
+        self._colorSpace = None
 
     @property
     def hasFocus(self) -> bool:
@@ -2892,6 +2973,26 @@ class CameraProperties():
     @systemDevices.deleter
     def systemDevices(self):
         del self._systemDevices
+
+    @property
+    def sensorSensitivity(self) -> float:
+        return self._sensorSensitivity
+
+    @sensorSensitivity.setter
+    def sensorSensitivity(self, value: float):
+        self._sensorSensitivity = value
+
+    @property
+    def colorSpace(self):
+        return self._colorSpace
+
+    @colorSpace.setter
+    def colorSpace(self, value: str):
+        self._colorSpace = value
+
+    @colorSpace.deleter
+    def colorSpace(self):
+        del self._colorSpace
 
 class vButton():
     """ Versatile button
@@ -3700,10 +3801,20 @@ class ServerConfig():
         self._boardRevision = ""
         self._kernelVersion = ""
         self._debianVersion = ""
+        self._noCamera = False
+        self._supportedCameras = []
+        self._usbCamAvailable = False
         self._piCameras = []
         self._activeCamera = 0
+        self._activeCameraIsUsb = False
+        self._activeCameraUsbDev = ""
         self._activeCameraInfo = ""
         self._activeCameraModel = ""
+        self._secondCamera = None
+        self._secondCameraIsUsb = False
+        self._secondCameraUsbDev = ""
+        self._secondCameraInfo = ""
+        self._secondCameraModel = ""
         self._hasMicrophone = False
         self._defaultMic = ""
         self._isMicMuted = False
@@ -3758,6 +3869,7 @@ class ServerConfig():
         self._numpyAvailable = False
         self._matplotlibAvailable = False
         self._flaskJwtLibAvailable = False
+        self._useUsbCameras = True
         self._useStereo = False
         self._useHistograms = False
         self._requireAuthForStreaming = False
@@ -3975,6 +4087,34 @@ class ServerConfig():
         self._debianVersion = value
 
     @property
+    def noCamera(self) -> bool:
+        return self._noCamera
+
+    @noCamera.setter
+    def noCamera(self, value: bool):
+        self._noCamera = value
+
+    @property
+    def supportedCameras(self) -> list:
+        return self._supportedCameras
+
+    @supportedCameras.setter
+    def supportedCameras(self, value: list):
+        self._supportedCameras = value
+
+    @property
+    def usbCamAvailable(self) -> bool:
+        return self._usbCamAvailable
+
+    @usbCamAvailable.setter
+    def usbCamAvailable(self, value: bool):
+        self._usbCamAvailable = value
+
+    @noCamera.setter
+    def noCamera(self, value: bool):
+        self._noCamera = value
+
+    @property
     def piCameras(self) -> list:
         return self._piCameras
 
@@ -3991,6 +4131,22 @@ class ServerConfig():
         self._activeCamera = value
 
     @property
+    def activeCameraIsUsb(self) -> bool:
+        return self._activeCameraIsUsb
+
+    @activeCameraIsUsb.setter
+    def activeCameraIsUsb(self, value: bool):
+        self._activeCameraIsUsb = value
+
+    @property
+    def activeCameraUsbDev(self) -> str:
+        return self._activeCameraUsbDev
+
+    @activeCameraUsbDev.setter
+    def activeCameraUsbDev(self, value: str):
+        self._activeCameraUsbDev = value
+
+    @property
     def activeCameraInfo(self) -> str:
         return self._activeCameraInfo
 
@@ -4005,6 +4161,46 @@ class ServerConfig():
     @activeCameraModel.setter
     def activeCameraModel(self, value: str):
         self._activeCameraModel = value
+
+    @property
+    def secondCamera(self) -> int:
+        return self._secondCamera
+
+    @secondCamera.setter
+    def secondCamera(self, value: int):
+        self._secondCamera = value
+
+    @property
+    def secondCameraIsUsb(self) -> bool:
+        return self._secondCameraIsUsb
+
+    @secondCameraIsUsb.setter
+    def secondCameraIsUsb(self, value: bool):
+        self._secondCameraIsUsb = value
+
+    @property
+    def secondCameraUsbDev(self) -> str:
+        return self._secondCameraUsbDev
+
+    @secondCameraUsbDev.setter
+    def secondCameraUsbDev(self, value: str):
+        self._secondCameraUsbDev = value
+
+    @property
+    def secondCameraInfo(self) -> str:
+        return self._secondCameraInfo
+
+    @secondCameraInfo.setter
+    def secondCameraInfo(self, value: str):
+        self._secondCameraInfo = value
+
+    @property
+    def secondCameraModel(self) -> str:
+        return self._secondCameraModel
+
+    @secondCameraModel.setter
+    def secondCameraModel(self, value: str):
+        self._secondCameraModel = value
 
     @property
     def hasMicrophone(self) -> bool:
@@ -4473,6 +4669,16 @@ class ServerConfig():
         self._flaskJwtLibAvailable = value
 
     @property
+    def useUsbCameras(self) -> bool:
+        if self.supportsUsbCamera == False:
+            self._useUsbCameras = False
+        return self._useUsbCameras
+
+    @useUsbCameras.setter
+    def useUsbCameras(self, value: bool):
+        self._useUsbCameras = value
+
+    @property
     def useStereo(self) -> bool:
         if self.supportsStereo == False:
             self._useStereo = False
@@ -4508,15 +4714,17 @@ class ServerConfig():
     def supportsStereo(self) -> bool:
         sup = self.cv2Available \
           and self.numpyAvailable \
-          and len(self.piCameras) > 1
-        if sup == True:
-            if self.piCameras[0].model != self.piCameras[1].model:
-                sup = False
+          and self.activeCameraModel == self.secondCameraModel
         return sup
 
     @property
     def supportsAPI(self) -> bool:
         sup = self.flaskJwtLibAvailable == True
+        return sup
+
+    @property
+    def supportsUsbCamera(self) -> bool:
+        sup = self.cv2Available == True
         return sup
 
     @property
@@ -4554,11 +4762,11 @@ class ServerConfig():
                 why = why + "<br>module cv2 is not available"
             if not self.numpyAvailable:
                 why = why + "<br>module numpy is not available"
-            if not len(self.piCameras) > 1:
-                why = why + "<br>at least two Raspberry Pi cameras are required"
+            if self.secondCamera is None:
+                why = why + "<br>at least two cameras are required"
             else:
-                if self.piCameras[0].model != self.piCameras[1].model:
-                    why = why + "<br>the two Raspberry Pi cameras must be of the same model"
+                if self.activeCameraModel != self.secondCameraModel:
+                    why = why + "<br>active and second camera are of different model"
         return why
 
     @property
@@ -4568,6 +4776,15 @@ class ServerConfig():
             why = "The raspiCamSrv API is not supported because"
             if not self.flaskJwtLibAvailable:
                 why = why + "<br>module flask_jwt_extended is not available"
+        return why
+
+    @property
+    def whyNotSupportsUsbCamera(self) -> str:
+        why = ""
+        if not self.supportsUsbCamera:
+            why = "USB Camera support is not available because"
+            if not self.cv2Available:
+                why = why + "<br>module cv2 is not available"
         return why
 
     @property
@@ -5010,16 +5227,21 @@ class ServerConfig():
         return pins
 
     def _checkModule(self, moduleName: str):
+        logger.debug("_checkModule for module: %s", moduleName)
         module = None
         try:
             module = importlib.import_module(moduleName)
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as e:
+            logger.debug("_checkModule for module: %s - ModuleNotFoundError: %s", moduleName, e)
             module = None
-        except ImportError:
+        except ImportError as e:
+            logger.debug("_checkModule for module: %s - ImportError: %s", moduleName, e)
             module = None
-        except Exception:
+        except Exception as e:
+            logger.debug("_checkModule for module: %s - Exception: %s", moduleName, e)
             module = None
         except:
+            logger.debug("_checkModule for module: %s - Other exception", moduleName)
             module = None
         return module
 
@@ -5030,6 +5252,7 @@ class ServerConfig():
             - numpy
             - matplotlib
         """
+        logger.debug("checkEnvironment")
         self.cv2Available = self._checkModule("cv2") is not None
         self.numpyAvailable = self._checkModule("numpy") is not None
         self.matplotlibAvailable = self._checkModule("matplotlib") is not None
@@ -5192,6 +5415,28 @@ class ServerConfig():
         self.displayHistogram = None
         self.displayMetaFirst = 0
         self.displayMetaLast = 999
+
+    def displayBufferCheck(self):
+        """ Clear display info for entries for which files no longer exist
+        """
+        if not self.displayPhoto is None:
+            done = False
+            while not done:
+                fp = self.photoRoot + "/" + self.displayPhoto
+                if os.path.isfile(fp):
+                    done = True
+                else:
+                    self.displayBufferRemove()
+                if self.displayPhoto is None:
+                    done = True
+        if self.displayBufferCount > 0:
+            keysToRemove = []
+            for key, value in self._displayBuffer.items():
+                fp = self.photoRoot + "/" + value["displayPhoto"]
+                if not os.path.isfile(fp):
+                    keysToRemove.append(key)
+            for key in keysToRemove:
+                del self._displayBuffer[key]
 
     def isDisplayBufferFirst(self) -> bool:
         """Determine whether the current display is the first element in the buffer"""
@@ -5788,6 +6033,8 @@ class ServerConfig():
                                 belt[belmetakey] = belmetavalue
                         dbt[bkey] = belt
                     setattr(sc, key, dbt)
+            elif key == "_noCamera":
+                setattr(sc, key, False)
             elif key == "_pvList":
                 # Photo viewer list shall not be imported
                 # It will be filled on demand
@@ -5987,10 +6234,11 @@ class CameraCfg():
                 cls._liveViewConfig.buffer_count = 2
                 cls._videoConfig.buffer_count = 2
             cls._streamingCfg = {}
+            cls._streamingCfgInvalid = False
             cls._stereoCfg = StereoConfig()
             cls._secrets = Secrets()
         return cls._instance
-    
+
     @property
     def cameras(self) -> list:
         return self._cameras
@@ -5998,7 +6246,7 @@ class CameraCfg():
     @cameras.setter
     def cameras(self, value: list):
         self._cameras = value
-    
+
     @property
     def controls(self) -> CameraControls:
         return self._controls
@@ -6006,7 +6254,7 @@ class CameraCfg():
     @controls.setter
     def controls(self, value: CameraControls):
         self._controls = value
-    
+
     @property
     def tuningConfig(self) -> TuningConfig:
         return self._tuningConfig
@@ -6014,7 +6262,7 @@ class CameraCfg():
     @tuningConfig.setter
     def tuningConfig(self, value: TuningConfig):
         self._tuningConfig = value
-    
+
     @property
     def controlsBackup(self) -> CameraControls:
         return self._controlsBackup
@@ -6022,7 +6270,7 @@ class CameraCfg():
     @controlsBackup.setter
     def controlsBackup(self, value: CameraControls):
         self._controlsBackup = value
-    
+
     @property
     def cameraProperties(self) -> CameraProperties:
         return self._cameraProperties
@@ -6038,7 +6286,7 @@ class CameraCfg():
     @sensorModes.setter
     def sensorModes(self, value: list):
         self._sensorModes = value
-    
+
     @property
     def rawFormats(self) -> list:
         return self._rawFormats
@@ -6050,7 +6298,7 @@ class CameraCfg():
     @property
     def nrSensorModes(self) -> int:
         return len(self._sensorModes)
-    
+
     @property
     def liveViewConfig(self) -> CameraConfig:
         return self._liveViewConfig
@@ -6058,7 +6306,7 @@ class CameraCfg():
     @liveViewConfig.setter
     def liveViewConfig(self, value: CameraConfig):
         self._liveViewConfig = value
-    
+
     @property
     def photoConfig(self) -> CameraConfig:
         return self._photoConfig
@@ -6066,7 +6314,7 @@ class CameraCfg():
     @photoConfig.setter
     def photoConfig(self, value: CameraConfig):
         self._photoConfig = value
-    
+
     @property
     def rawConfig(self) -> CameraConfig:
         return self._rawConfig
@@ -6074,7 +6322,7 @@ class CameraCfg():
     @rawConfig.setter
     def rawConfig(self, value: CameraConfig):
         self._rawConfig = value
-    
+
     @property
     def videoConfig(self) -> CameraConfig:
         return self._videoConfig
@@ -6082,7 +6330,7 @@ class CameraCfg():
     @videoConfig.setter
     def videoConfig(self, value: CameraConfig):
         self._videoConfig = value
-    
+
     @property
     def cameraConfigs(self) -> list:
         return self._cameraConfigs
@@ -6090,7 +6338,7 @@ class CameraCfg():
     @cameraConfigs.setter
     def cameraConfigs(self, value: list):
         self._cameraConfigs = value
-    
+
     @property
     def triggerConfig(self) -> TriggerConfig:
         return self._triggerConfig
@@ -6098,7 +6346,7 @@ class CameraCfg():
     @triggerConfig.setter
     def triggerConfig(self, value: TriggerConfig):
         self._triggerConfig = value
-    
+
     @property
     def serverConfig(self) -> ServerConfig:
         return self._serverConfig
@@ -6106,7 +6354,7 @@ class CameraCfg():
     @serverConfig.setter
     def serverConfig(self, value: ServerConfig):
         self._serverConfig = value
-    
+
     @property
     def streamingCfg(self) -> dict:
         return self._streamingCfg
@@ -6114,7 +6362,15 @@ class CameraCfg():
     @streamingCfg.setter
     def streamingCfg(self, value: dict):
         self._streamingCfg = value
-    
+
+    @property
+    def streamingCfgInvalid(self) -> dict:
+        return self._streamingCfgInvalid
+
+    @streamingCfgInvalid.setter
+    def streamingCfgInvalid(self, value: dict):
+        self._streamingCfgInvalid = value
+
     @property
     def stereoCfg(self) -> StereoConfig:
         return self._stereoCfg
@@ -6122,7 +6378,7 @@ class CameraCfg():
     @stereoCfg.setter
     def stereoCfg(self, value: StereoConfig):
         self._stereoCfg = value
-    
+
     @property
     def secrets(self) -> Secrets:
         return self._secrets
@@ -6131,11 +6387,37 @@ class CameraCfg():
     def secrets(self, value: Secrets):
         self._secrets = value
 
+    def setSupportedCameras(self):
+        """ Set up the list of supported cameras
+        """
+        self.serverConfig.usbCamAvailable = False
+        supCams = []
+        for cam in self.cameras:
+            if cam.isUsb == False:
+                supCams.append(cam)
+            else:
+                if cam.usbDev != "UNKNOWN":
+                    self.serverConfig.usbCamAvailable = True
+                    if self.serverConfig.useUsbCameras == True:
+                        supCams.append(cam)
+        if len(self.cameras) == 0:
+            self.serverConfig.noCamera = True
+        else:
+            if len(supCams) == 0:
+                self.serverConfig.noCamera = True
+            else:
+                self.serverConfig.noCamera = False
+        if self.serverConfig.noCamera == True:
+            self.triggerConfig._noCamera = True
+        else:
+            self.triggerConfig._noCamera = False
+        self.serverConfig.supportedCameras = supCams
+
     def setPiCameras(self):
         """ Set up the list of Raspberry Pi cameras
         """
         piCams = []
-        for cam in self._cameras:
+        for cam in self.cameras:
             if cam.isUsb == False:
                 piCams.append(cam)
         self.serverConfig.piCameras = piCams
@@ -6184,8 +6466,7 @@ class CameraCfg():
             # For Pi Zero and 4 reduce buffer_count defaults for live view and video
             self._liveViewConfig.buffer_count = 2
             self._videoConfig.buffer_count = 2
-        
-    
+
     def _persistCl(self, cl, fn: str, cfgPath: str):
         """ Store class dictionary for class cl in the config file fn
         """
@@ -6195,7 +6476,7 @@ class CameraCfg():
         cj = self._toJson(cl)
         f.write(str(cj))
         f.close()
-    
+
     def persist(self, cfgPath: str):
         """ Store class dictionary in the config file
         """
@@ -6217,10 +6498,10 @@ class CameraCfg():
             self._persistCl(self.triggerConfig, "triggerConfig.json", cfgPath)
             self._persistCl(self.streamingCfg, "streamingCfg.json", cfgPath)
             self._persistCl(self.stereoCfg, "stereoCfg.json", cfgPath)
-            
+
     def _toJson(self, cl):
         return json.dumps(cl, default=lambda o: getattr(o, '__dict__', str(o)), indent=4)
-        
+
     def _loadConfigCl(self, cl, fn: str, cfgPath: str):
         """ Load configuration from files, except camera-specific configs
         """
@@ -6235,7 +6516,7 @@ class CameraCfg():
                     logger.error("Error loading from %s: %s", fp, e)
                     obj = cl()
         return obj
-    
+
     def _initStreamingConfigFromDisc(self, fn: str, cfgPath: str) -> dict:
         """ Load streaming configuration
         """
@@ -6269,7 +6550,7 @@ class CameraCfg():
                         scfg[key] = value
                 sc[camKey] = scfg
         return sc
-    
+
     def _initGpioDevicesFromDisc(self, fn: str, cfgPath: str) -> list:
         """ Load GPIO devices
         """
@@ -6288,7 +6569,7 @@ class CameraCfg():
                 devo = GPIODevice.initFromDict(dev)
                 devs.append(devo)
         return devs
-    
+
     def loadConfig(self, cfgPath):
         """ Load configuration from files, except camera-specific configs
         """
@@ -6316,3 +6597,198 @@ class CameraCfg():
                     (secretKey, err, msg) = srv.checkJwtSettings()
                     if err is None:
                         sc.jwtSecretKey = secretKey
+
+    @staticmethod
+    def _lineGen(s):
+        """Generator to yield lines of a text"""
+        while len(s) > 0:
+            p = s.find("\n")
+            if p >= 0:
+                if p == 0:
+                    line = ""
+                else:
+                    line = s[:p]
+                s = s[p + 1 :]
+            else:
+                line = s
+                s = ""
+            yield line
+
+    def setUsbCameraProperties(self) -> bool:
+        """Set properties of the active USB camera from v4l2-ctl output
+
+        Returns:
+            bool: True if properties have been found, False otherwise
+        """
+        logger.debug("CameraCfg.setUsbCameraProperties")
+        usbDev = self.serverConfig.activeCameraUsbDev
+
+        cfgProps = CameraProperties()
+        cfgProps.hasFocus = False  # Assume no focus control for USB cameras
+        cfgProps.hasFlicker = False  # Assume no flicker control for USB cameras
+        cfgProps.hasHdr = False  # Assume no HDR control for USB cameras
+        cfgProps.unitCellSize = None
+        cfgProps.location = None
+        cfgProps.rotation = None
+        cfgProps.pixelArraySize = None
+        cfgProps.pixelArrayActiveAreas = None
+        cfgProps.colorFilterArrangement = None
+        cfgProps.scalerCropMaximum = None
+        cfgProps.systemDevices = None
+        cfgProps.colorSpace = None
+
+        found = False
+        try:
+            result = subprocess.run(
+                ["v4l2-ctl", f"--device={usbDev}", "--all"],
+                capture_output=True,
+                text=True,
+            ).stdout
+            for line in self._lineGen(result):
+                # Find model
+                fmtMatch = re.match(r"Model\s+:\s+(.+)", line.strip())                
+                if fmtMatch:
+                    found = True
+                    cfgProps.model = fmtMatch.group(1)
+                # Find color space
+                fmtMatch = re.match(r"Colorspace\s+:\s+(.+)", line.strip())
+                if fmtMatch:
+                    cfgProps.colorSpace = fmtMatch.group(1)
+
+        except CalledProcessError as e:
+            logger.error("CameraInfo.setUsbCameraProperties - CalledProcessError: %s", e)
+            # In case v4l2-ctl cannot be run, ignore the exception
+            pass
+        except Exception as e:
+            logger.error("CameraInfo.setUsbCameraProperties - Exception: %s", e)
+            pass
+
+        if found == False:
+            logger.debug("CameraCfg.setUsbCameraProperties - No USB camera found")
+            return False
+
+        maxWidth, maxHeight = self.getUsbPixelArraySize()
+        cfgProps.pixelArraySize = (maxWidth, maxHeight)
+        activeAreas = []
+        activeArea = (0, 0, maxWidth, maxHeight)
+        activeAreas.append(activeArea)
+        cfgProps.pixelArrayActiveAreas = activeAreas
+        cfgProps.scalerCropMaximum = (0, 0, maxWidth, maxHeight)
+
+        self.cameraProperties = cfgProps
+        logger.debug("CameraCfg.setUsbCameraProperties - USB camera properties found")
+        return True
+
+    def getUsbPixelArraySize(self) -> tuple:
+        """Get the pixel array size of the active USB camera from v4l2-ctl output
+
+        Returns:
+            tuple: (maxWidth, maxHeight)
+        """
+        logger.debug("CameraCfg.getUsbPixelArraySize")
+        maxWidth = 0
+        maxHeight = 0
+
+        usbDev = self.serverConfig.activeCameraUsbDev
+
+        try:
+            result = subprocess.run(
+                ["v4l2-ctl", f"--device={usbDev}", "--list-formats-ext"],
+                capture_output=True,
+                text=True,
+            ).stdout
+            for line in self._lineGen(result):
+                # Evaluate size block header
+                fmtMatch = re.match(r"Size: Discrete (\d+)x(\d+)", line.strip())
+                if fmtMatch:
+                    width = int(fmtMatch.group(1))
+                    height = int(fmtMatch.group(2))
+                    if width > maxWidth:
+                        maxWidth = width
+                    if height > maxHeight:
+                        maxHeight = height
+
+        except CalledProcessError as e:
+            logger.error("CameraInfo.getUsbPixelArraySize - CalledProcessError: %s", e)
+            # In case v4l2-ctl cannot be run, ignore the exception
+            pass
+        except Exception as e:
+            logger.error("CameraInfo.getUsbPixelArraySize - Exception: %s", e)
+            pass
+        return (maxWidth, maxHeight)
+
+    def setUsbSensorModes(self) -> bool:
+        """Set the sensor modes of the active USB camera from v4l2-ctl output
+
+        Returns:
+            bool: True if sensor modes have been found, False otherwise
+
+        """
+        logger.debug("CameraCfg.setUsbSensorModes")
+        cfgSensorModes = []
+        cfgRawFormats = []
+
+        usbDev = self.serverConfig.activeCameraUsbDev
+
+        found = False
+        try:
+            result = subprocess.run(
+                ["v4l2-ctl", f"--device={usbDev}", "--list-formats-ext"],
+                capture_output=True,
+                text=True,
+            ).stdout
+            for line in self._lineGen(result):
+                # Evaluate format block header
+                fmtMatch = re.match(r"\[(\d+)\]: '(\w+)' \((.+)\)", line.strip())
+                if fmtMatch:
+                    fmtId = int(fmtMatch.group(1))
+                    fmtCode = fmtMatch.group(2)
+                    fmtDesc = fmtMatch.group(3)
+                    if not fmtId in cfgRawFormats:
+                        cfgRawFormats.append(fmtCode)
+
+                # Evaluate size block header
+                fmtMatch = re.match(r"Size: Discrete (\d+)x(\d+)", line.strip())
+                if fmtMatch:
+                    width = int(fmtMatch.group(1))
+                    height = int(fmtMatch.group(2))
+                    cfgSensorMode = SensorMode()
+                    cfgSensorMode.id = str(len(cfgSensorModes))
+                    cfgSensorMode.format = fmtCode
+                    if fmtCode == "YUYV":
+                        cfgSensorMode.bit_depth = 16
+                    elif fmtCode == "NV12":
+                        cfgSensorMode.bit_depth = 12
+                    elif fmtCode == "MJPG":
+                        cfgSensorMode.bit_depth = 8
+                    else:
+                        cfgSensorMode.bit_depth = None
+                    cfgSensorMode.size = (width, height)
+                    cfgSensorModes.append(cfgSensorMode)
+                    found = True
+
+                # Evaluate Interval line
+                fmtMatch = re.match(
+                    r"Interval: Discrete (\d).(\d+)s \((\d+).(\d+) fps\)", line.strip()
+                )
+                if fmtMatch:
+                    fps = int(fmtMatch.group(3))
+                    if len(cfgSensorModes) > 0:
+                        if cfgSensorModes[-1].fps is None:
+                            cfgSensorModes[-1].fps = fps
+
+        except CalledProcessError as e:
+            logger.error("CameraInfo.setUsbSensorModes - CalledProcessError: %s", e)
+            pass
+        except Exception as e:
+            logger.error("CameraInfo.setUsbSensorModes - Exception: %s", e)
+            pass
+
+        if found == False:
+            logger.debug("CameraCfg.setUsbSensorModes - No sensor modes found")
+            return False
+
+        self.sensorModes = cfgSensorModes
+        self.rawFormats = cfgRawFormats
+        logger.debug("CameraCfg.setUsbSensorModes - sensor modes found")
+        return True

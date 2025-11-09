@@ -65,8 +65,13 @@
             <div class="w3-tooltip">
                 <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from GitHub
                 </span>
+                {% if sc.NoCamera == True %}
+                {% set noCam = 1 %}
+                {% else %}
+                {% set noCam = 0 %}
+                {% endif %}
                 <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp" alt="Online help"
-                    style="height:34px; width:34px" onclick="onlineHelp()">
+                    style="height:34px; width:34px" onclick="onlineHelp({{ noCam }})">
             </div>
         </div>
     </div>
@@ -79,6 +84,7 @@
         <div>
             <form method="post" action="{{ url_for('settings.serverconfig') }}">
                 <table class="w3-table-all">
+                    {% if sc.noCamera == False %}
                     <tr>
                         <td style="width:5%">
                         </td>
@@ -93,17 +99,76 @@
                         <td style="width:70%" colspan="2">
                             <select name="activecamera" id="activecamera">
                             {% for cam in cs %}
-                                {% if cam.isUsb == false %}
+                                {% if cam.usbDev != "UNKNOWN" %}
+                                {% if cam.isUsb == False or sc.useUsbCameras == True %}
                                 {% if sc.activeCamera == cam.num %}
                                 <option value="{{ cam.num }}" selected>{{ cam.num }}: {{ cam.model }}</option>
                                 {% else %}
                                 <option value="{{ cam.num }}">{{ cam.num }}: {{ cam.model }}</option>
                                 {% endif %}
                                 {% endif %}
+                                {% endif %}
                             {% endfor %}
                             </select>
                         </td>
                     </tr>
+                    {% endif %}
+                    {% if sc.usbCamAvailable == True %}
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select if you want to use connected USB cameras.
+                            </span>
+                            <label for="useusbcameras">Use USB Cameras:</label>
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.supportsUsbCamera == True %}
+                            {% if sc.useUsbCameras == True %}
+                            <input type="checkbox" id="useusbcameras" name="useusbcameras" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="useusbcameras" name="useusbcameras" value="0">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="useusbcameras" name="useusbcameras" value="0" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:35%">
+                        {% if sc.supportsUsbCamera == False %}
+                            <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotSupportsUsbCamera|safe }}</p>
+                        {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    {% if sc.noCamera == False %}
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:25%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select if you want to use connected USB cameras.
+                            </span>
+                            <label for="useusbcameras">Use USB Cameras:</label>
+                        </td>
+                        <td style="width:35%">
+                            {% if sc.supportsUsbCamera == True %}
+                            <input type="checkbox" id="useusbcameras" name="useusbcameras" value="0" disabled>
+                            {% else %}
+                            <input type="checkbox" id="useusbcameras" name="useusbcameras" value="0" disabled>
+                            {% endif %}
+                        </td>
+                        <td style="width:35%">
+                        {% if sc.supportsUsbCamera == False %}
+                            <p style="margin-top:0; margin-bottom:0">{{ sc.whyNotSupportsUsbCamera|safe }}</p>
+                        {% else %}
+                            <p style="margin-top:0; margin-bottom:0">No USB cameras connected</p>
+                        {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endif %}
+                    {% if sc.noCamera == False %}
                     <tr>
                         <td style="width:5%">
                         </td>
@@ -349,6 +414,7 @@
                             {% endif %}
                         </td>
                     </tr>
+                    {% endif %}
                     <tr>
                         <td style="width:5%">
                         </td>
@@ -467,18 +533,15 @@
                     </form>
                 </td>
                 <td>
+                    <form id="reloadCameras" method="post" action="{{ url_for('settings.reloadCameras') }}">
+                        <input class="w3-button w3-black" style="width: 16ch" type="submit"  onclick="confirmReloadCams('reloadCameras')" value="Reload Cameras">
+                    </form>
+                </td>
+                <td>
                     <form id="resetserver" method="post" action="{{ url_for('settings.resetServer') }}">
                         <input class="w3-button w3-black" style="width: 16ch" type="submit"  onclick="confirmReset('resetserver')" value="Reset Server">
                     </form>
                 </td>
-                <!--
-                <td>
-                    <form id="shutdownserver" method="post" action="{{ url_for('settings.shutdown') }}">
-                        <input class="w3-button w3-black" style="width: 20ch" type="submit" onclick="confirmShutdown('shutdownserver')"
-                            value="Shutdown Server">
-                    </form>
-                </td>
-                -->
                 <td style="width:25%" class="w3-tooltip">
                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                         If selected, the system will load the stored configuration on server start.<br>
@@ -1507,6 +1570,16 @@
                 document.getElementById(form).method = "get";
             }
         }
+        
+        function confirmReloadCams(form) {
+            if (confirm("Do you want to reload the camera system?\nThe entire camera configuration will be adjusted to the currently connected cameras!")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+
         function confirmReset(form) {
             if (confirm("Do you want to reset the server?\nThe entire configuration will be reset to default!")) {
                 document.getElementById(form).method = "post";
@@ -1548,8 +1621,13 @@
         function doSubmit(form) {
             document.getElementById(form).submit();
         }
-        function onlineHelp() {
-            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Settings.md");
+
+        function onlineHelp(noCam) {
+            if (noCam == 0) {
+                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Settings.md");
+            } else {
+                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Settings_NoCam.md");
+            }
         }
         function confirmDeleteDevice(form) {
             if (confirm("Do you want to delete this device?")) {

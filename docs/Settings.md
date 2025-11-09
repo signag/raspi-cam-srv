@@ -12,13 +12,15 @@ Other sections focus on
 - [Action Buttons](./SettingsAButtons.md)
 - [Devices](./SettingsDevices.md)
 
-*Users* and/or *API* may be invisible, depending on context.
+*Users* and/or *API* may be invisible, depending on context.    
+For the case that no camera is connected, see [Settings (No Camera)](./Settings_NoCam.md).
 
 ![Settings](img/Settings.jpg)
 
 The General Paramenters include
 
 - *Active Camera* allows explicitely [setting the active camera](#switching-the-active-camera) for systems with multiple cameras.
+- *Use USB Cameras*, when activated will allow connected USB cameras to be used as *Active* or *Second Camera* (see also [Multi Cam](./CamMulticam.md))<br>**NOTE**: When deactivating *Use USB Cameras*, make sure that none of the USB cameras is currently streaming.
 - [Audio settings](#recording-audio-along-with-video) for systems with microphones if sound is to be recorded along with videos
 - *Path for Photos/Videos* shows the path where media will be stored.
 - File types for *Photo*, *Raw* Photo and *Video*
@@ -36,6 +38,15 @@ On systems which allow connection of multiple cameras (e.g. Pi 5), it is possibl
 Only non-USB cameras are offered for selection (see also [Information](./Information.md#installed-cameras))
 
 ![Camera Switch](img/Settings_CamSel.jpg)
+
+## Disabling Use of USB Cameras
+
+If you have connected one or more USB cameras to a Raspberry Pi, you can exclude them from being available in **raspiCamSrv**.   
+They will still be shown in the [Info](./Information.md) screen but they are no longer offered as choice for camera selection in the Settings or [Multi Cam](./CamMulticam.md) screen.
+
+If a USB camera was set as *Active Camera* or as *Second Camera*, this will be replaced by a CSI camera.
+
+If no CSI cameras are present, the UI will switch to the "No-Camera" mode ([Settings (No Camera)](./Settings_NoCam.md)).
 
 ## Configuring Authentication for Streaming
 

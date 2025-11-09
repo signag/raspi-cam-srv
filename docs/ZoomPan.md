@@ -2,6 +2,8 @@
 
 [![Up](img/goup.gif)](./LiveScreen.md)
 
+**NOTE**: This functionality is currently not available for USB cameras.
+
 ![ZoomAndPan](img/Zoom.jpg)
 
 This tab allows zooming and panning the image area within the dimensions supported by the camera pixel array size and Sensor Modes.

@@ -1,11 +1,15 @@
 # raspiCamSrv
 
-The Raspberry Pi Camera Server (raspiCamSrv) is a web server which can be deployed on a Raspberry Pi device giving access to installed cameras and allows to control these.
+**raspiCamSrv** is a Web server for Raspberry Pi systems for control and streaming of CSI and USB cameras as well as for controlling a large variety of connected [GPIO devices](./docs/SettingsDevices.md).
 
-In addition, also a large variety of [GPIO-connected devices](./docs/SettingsDevices.md) can be controlled through the user interface or within the freely configurable [event handling infrastructure](./docs/Trigger.md) which integrates camera functions with devices.
+While all currently connected cameras are accessible by the system, up to two cameras can be operated simultaneously at a time, supporting multi-camera features like [Stereo Vision](./docs/CamStereo.md).
 
-**raspiCamSrv** can be installed on all Raspberry Pi platforms which allow connection of one or multiple cameras and supports the currently existing camera types.
-Up to now, it was tested on Pi Zero W, Pi Zero 2 W, Pi 4 and Pi 5 running Bullseye as well as Bookworm together with camera modules 1, 2, 3, HQ and GS. On Pi 5, also parallel installation of two different cameras is supported.
+Interoperability between Cameras and GPIO devices is achieved through the freely configurable [event handling infrastructure](./docs/Trigger.md).
+
+**raspiCamSrv** supports all Raspberry Pi platforms from Pi Zero to Pi 5, running Bullseye, Bookworm or Trixie OS.
+
+Besides the currently available Raspberry Pi cameras, also compatible CSI cameras from other providers can be used.   
+USB web cams are seamlessly integrated, but control (focus, zoom, exposure) is still limited.
 
 **raspiCamSrv** is built with [Flask 3.x](https://flask.palletsprojects.com/en/stable/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 
@@ -20,7 +24,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V3.7.1
+## Feature Overview V4.0.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -36,6 +40,8 @@ The non-active camera stream and photo can be accessed through endpoints ```http
 - The second camera can be used in parallel to the active camera for taking photos, raw photos and videos.<br>(Sound recording with videos is restricted to the active camera)
 - The second camera can be controlled through the [API](./docs/API.md) as well as through the [Multi-Cam](./docs/CamMulticam.md) dialog.
 - Photo taking and video recording can be started synchronously with both cameras.- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
+- [Stereo Vision](./docs/CamStereo.md) allows generation of 3D videos and depth maps
+- [Camera Calibration](./docs/CamCalibration.md) supports calibration of a stereo-camera pair as well as rectification based on [OpenCV](https://opencv.org/)
 - Support of [Tuning](./docs/Tuning.md) by selection and management of tuning files.
 - Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./docs/Trigger.md)) with motion detection
 - Support for interaction with GPIO-connected devices based on the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library. All basic input and output devices provided by *gpiozero* are supported and can be configured in the [Settings / Devices](./docs/SettingsDevices.md) dialog. In addition, also support for [Stepper Motor](./docs/gpioDevices/StepperMotor.md) is provided.
@@ -73,10 +79,10 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V3.7**
-
-- [Stereo Vision](./docs/CamStereo.md) allows generation of 3D videos and depth maps
-- [Camera Calibration](./docs/CamCalibration.md) supports calibration of a stereo-camera pair as well as rectification based on [OpenCV](https://opencv.org/)
+**New in V4.0**
+- Support of USB cameras with seamless integration with CSI cameras (only if OpenCV is installed)
+- Hot plug-in/-out of USB cameras without server restart
+- The server can be used without connected cameras for controlling [GPIO devices](./docs/SettingsDevices.md) with the [Event handling system](./docs/Trigger.md) or from the [Console](./docs/Console.md)
 
 
 ## Known Issues
@@ -89,8 +95,7 @@ This includes a continuous live stream while taking photos, videos or photo seri
 ## Limitations
 The software is still being tested and extended.
 
-- USB cameras are detected but currently not supported. One reason is that many USB cameras use the YUYV format whereas **raspiCamSrv** uses MJPEG for the Live stream and YUYV would require OpenCV for rendering.
-- **raspiCamSrv** will not automatically detect a changed camera setup, for example if cameras are plugged in and out while the Raspberry Pi is running (certainly, this would apply only to USB cameras and nobody will unplug a Pi camera without shutting down the system). However, there is a **Reset Server** button on the [Settings](docs/Settings.md) screen, which, when pressed, will force the configuration to be updated.
+- Hot plug of CSI cameras is not supported. This will require rebooting the Raspberry Pi (Hot plug of USB cameras is supported).
 - Although the layout is responsive, it may not be "good-looking" with all sizes of browser windows
 
 ## Credits
@@ -132,22 +137,23 @@ If you want to update an existing installation to the latest version, see [Updat
 
 In case of problems during installation and usage, see [Troubleshooting](./docs/Troubelshooting.md)
 
+**NOTE**: For Debian-**Trixie**, some of the required packages are already preinstalled. To ensure everything is consistently installed in and run from the **raspiCamSrv** virtual environment, the respective ```pip install``` commands, below, have been extended with a ```--ignore-installed``` clause and the Flask server is started with ```python -m flask ...```
 |Step|Action
 |----|--------------------------------------------------
 |1.  | Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with \<user> and \<host> as specified during setup with Imager.
 |2.  | Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
 |2.a | If you intend to take videos and have installed a *lite* version of the OS, you may need to install *ffmpeg*:<br>Check whether ffmpeg is installed with<br>```which ffmpeg```<br>If you get an empty response, install with<br>```sudo apt install ffmpeg```
 |3.  | Create a root directory under which you will install programs (e.g. 'prg')<br>```mkdir prg```<br>```cd prg```
-|4.  | Check that git is installed (which is usually the case in current Bullseye and Bookworm distributions)<br>```git --version```<br>If git is not installed, install it with<br>```sudo apt install git```
+|4.  | Check that git is installed (which is usually the case in current Bullseye, Bookworm or Trixie distributions)<br>```git --version```<br>If git is not installed, install it with<br>```sudo apt install git```
 |5.  | Clone the raspi-cam-srv repository:<br>```git clone https://github.com/signag/raspi-cam-srv```
 |6.  | Create a virtual environment ('.venv') on the 'raspi-cam-srv' folder:<br>```cd raspi-cam-srv```<br>```python -m venv --system-site-packages .venv```<br>For the reasoning to include system site packages, see the [picamera2-manual.pdf](./docs/picamera2-manual.pdf), chapter 9.5.
-|7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt
-|8.  | Make sure that picamera2 is available on the system:<br>```python```<br>```>>>import picamera2```<br>```>>>quit()```<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
-|9.  | Install Flask 3.x **with the virtual environment activated**.<br>Raspberry Pi OS distributions come with Flask preinstalled, however with versions 1.1 or 2.2.<br>RaspiCamSrv requires Flask 3.x, which can be installed with<br>```pip install "Flask>=3,<4"```<br>If you want to check the Flask version, you may need to deactivate/activate the virtual environment first:<br>```deactivate```<br>```source .venv/bin/activate```<br>```flask --version```<br>This should reveal version 'Flask 3.1.0' or another 3.x version.<br><br>Make sure that Flask is really installed in the virtual environment:<br>```which flask``` should output<br>```/home/<user>/prg/raspi-cam-srv/.venv/bin/flask```
-|10.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>or if you are interesten in using [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) or [Stereo Vision](./docs/CamStereo.md).<br>It is recommended to do the installation with an activated virtual environment (see step 7), although some of these packages might come preinstalled.<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): ```sudo apt-get install python3-opencv```<br>Install [numpy](https://numpy.org/): ```pip install numpy```<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): ```pip install "matplotlib<3.8"``` (The version restriction assures compatibility with numpy 1.x which is [required for Picamera2](https://github.com/raspberrypi/picamera2/issues/1211))<br><br>The following installation is required for enabling the [raspiCamSrv API](./docs/API.md)<br>Install [flask-jwt-extended](https://flask-jwt-extended.readthedocs.io/en/stable/): ```pip install flask-jwt-extended```
-|11.  | Initialize the database for Flask <br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv init-db```
+|7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt. (Use ```deactivate``` to leave the virtual environment)
+|8.  | **Trixie**: Skip this step!<br>Make sure that picamera2 is available on the system:<br>```python```<br>```>>>import picamera2```<br>```>>>quit()```<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
+|9.  | Install Flask 3.x **with the virtual environment activated (Step 7)**.<br>Raspberry Pi OS distributions come with Flask preinstalled, however we need to run Flask from the virtual environment in order to see other packages which will be located there.<br>```pip install --ignore-installed "Flask>=3,<4"```<br><br>Make sure that Flask is really installed in the virtual environment:<br>```which flask``` should output<br>```/home/<user>/prg/raspi-cam-srv/.venv/bin/flask```
+|10.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>or if you are interested in using [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) or [Stereo Vision](./docs/CamStereo.md).<br>For use of USB cameras, OpenCV is required.<br><br>All installations must be done with the virtual environment activated (Step 7)<br><br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): <br>```sudo apt-get install python3-opencv```<br><br>Install [numpy](https://numpy.org/): <br>```pip install --ignore-installed numpy```<br>(There may be errors, which normally can be ignored)<br><br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): <br>**Trixie**:```pip install --ignore-installed matplotlib```<br>(There may be errors, which normally can be ignored) <br>**Bookworm**: ```pip install --ignore-installed "matplotlib<3.8"```<br>(The version restriction assures compatibility with numpy 1.x which is [required for Picamera2](https://github.com/raspberrypi/picamera2/issues/1211))<br><br>The following installation is required for enabling the [raspiCamSrv API](./docs/API.md)<br>Install [flask-jwt-extended](https://flask-jwt-extended.readthedocs.io/en/stable/): <br>```pip install --ignore-installed flask-jwt-extended```<br>(There may be errors, which normally can be ignored)
+|11.  | Initialize the database for Flask <br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```python -m flask --app raspiCamSrv init-db```
 |12. | Check that the Flask default port 5000 is available<br>```sudo netstat -nlp \| grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
-|13. | Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
+|13. | Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 7):<br>```python -m flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
 |14. | Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](docs/Authentication.md#log-in) screen.
 |15. | Before you can login, you first need to [register](docs/Authentication.md).<br>The first user will automatically be SuperUser who can later register other users ([User Management](docs/Authentication.md#user-management))
 |16. | After successful log-in, the [Live screen](docs/LiveScreen.md) will be shown
@@ -186,7 +192,7 @@ The following procedure is for the case where audio recording with video is **no
 If it is intended to record audio along with videos, a slightly different setup is required (see [Settings](docs/Settings.md#recording-audio-along-with-video)):   
 Instead of installing the service as a system unit, it needs to be installed as user unit (see [systemd/User](https://wiki.archlinux.org/title/Systemd/User)) in order to get access to [PulseAudio](https://wiki.archlinux.org/title/PulseAudio).
 
-#### Bookworm Systems
+#### Trixie and Bookworm Systems
 
 If your system is a bookworm system (```lsb_release -a```) follow these steps:
 
@@ -194,7 +200,7 @@ If your system is a bookworm system (```lsb_release -a```) follow these steps:
 |----|-----------------------------------------------
 |1.  | Open a SSH session on the Raspberry Pi
 |2.  | Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>If necessary, raplace also the standard port 5000 with your port.<br>Remove the entry User=\<user> from the [System] section<br>In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```
+|3.  | Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace all (4) occurrences of '\<user>' with the user ID, specified during [System Setup](#system-setup)<br>If necessary, raplace also the standard port 5000 with your port.<br>Remove the entry User=\<user> from the [System] section<br>In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```
 |4.  | Create the directory for systemd user units<br>```mkdir -p ~/.config/systemd/user```
 |5.  | Stage the service configuration file to systemd for user units:<br>```cp ~/raspiCamSrv.service ~/.config/systemd/user```
 |6.  | Start the service:<br>```systemctl --user start raspiCamSrv.service```

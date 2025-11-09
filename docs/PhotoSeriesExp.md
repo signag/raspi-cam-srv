@@ -11,6 +11,8 @@ Instead of ISO values, the Analogue gaing can be set. Roughly, the relation is *
 
 The *Exposure Series* subdialog allows specifying necessary parameters for series where either *Exposure Time* or *Analogue Gain* is varied.
 
+**NOTE**: This function is not available for USB cameras.
+
 ![Exposure Series](img/PhotoSeriesExp1.jpg)
 
 The dialog references the active Photo Series which is managed in the [Series](./PhotoSeries.md) subdialog of the *Photo Series* dialog.

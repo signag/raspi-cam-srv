@@ -21,6 +21,7 @@
         <button class="w3-bar-item w3-button photoseriesmenu" id="tldetailsbtn"
             onclick="openPhotoseriesTab('tldetails', 'tldetailsbtn')">Timelapse Series</button>
         {% endif %}
+        {% if sc.activeCameraIsUsb == False %}
         {% if sc.lastPhotoSeriesTab == "exposure" %}
         <button class="w3-bar-item w3-button photoseriesmenu w3-light-green" id="tlexposurebtn"
             onclick="openPhotoseriesTab('tlexposure', 'tlexposurebtn')">Exposure Series</button>
@@ -34,6 +35,7 @@
         {% else %}
         <button class="w3-bar-item w3-button photoseriesmenu" id="tlfocusstackbtn"
             onclick="openPhotoseriesTab('tlfocusstack', 'tlfocusstackbtn')">Focus Stack</button>
+        {% endif %}
         {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
             <div class="w3-tooltip">
@@ -1443,15 +1445,15 @@
 
         function showProgress() {
             // Show the remaining time until next shot as progress bar
-            //console.log("showProgress");
+            console.log("showProgress");
             var timeStr = document.getElementById("timertarget").innerText
-            //console.log("showProgress - timeStr=" + timeStr);
+            console.log("showProgress - timeStr=" + timeStr);
             var timeTgt = new Date(timeStr);
             var timeTgtMs = timeTgt.getTime();
             var nowMs = Date.now();
             var delta0 = (timeTgtMs - nowMs) / 1000;
             var delta = delta0;
-            //console.log("delta0: " + delta0 + " delta: " + delta)
+            console.log("delta0: " + delta0 + " delta: " + delta)
             var elem = document.getElementById("progressbar");
             var width = 0;
             var id = setInterval(frame, 100);
@@ -1470,14 +1472,15 @@
                     disp = disph.toFixed(1) + ' h';
                 }
                 width = 100 * (delta0 - delta) / delta0
-                //console.log("delta: " + delta + " width: " + width)
+                console.log("delta: " + delta + " width: " + width)
                 if (width < 0) {
                     clearInterval(id);
                 } else if (width >= 100) {
-                    //console.log("Sleeping 2 sec");
+                    console.log("Sleeping 2 sec");
                     await sleep(2000)
-                    //console.log("Reloading")
-                    location.reload();
+                    console.log("Reloading")
+                    await sleep(2000)
+                    window.location.reload();
                 } else {
                     elem.style.width = width + '%';
                     elem.innerHTML = disp;

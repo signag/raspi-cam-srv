@@ -21,12 +21,14 @@
 {% block content %}
     <div class="w3-bar w3-green">
         <!-- Config menue -->
+        {% if sc.activeCameraIsUsb == False %}
         {% if sc.lastConfigTab == "cfgtuning" %}
         <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgtuningbtn"
             onclick="openCfgTab('cfgtuning', 'cfgtuningbtn')">Tuning</button>
         {% else %}
         <button class="w3-bar-item w3-button configmenu" id="cfgtuningbtn" 
             onclick="openCfgTab('cfgtuning', 'cfgtuningbtn')">Tuning</button>
+        {% endif %}
         {% endif %}
         {% if sc.lastConfigTab == "cfglive" %}
         <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfglivebtn" 
@@ -307,6 +309,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="LIVE_colour_space" id="LIVE_colour_space">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.colour_space == "sYCC" %}
                                 <option value="sYCC" selected>sYCC</option>
                                 {% else %}
@@ -321,6 +324,9 @@
                                 <option value="Rec709" selected>Rec709</option>
                                 {% else %}
                                 <option value="Rec709">Rec709</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="{{ cfg.colour_space }}" selected>{{ cfg.colour_space }}</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -414,6 +420,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="LIVE_stream" id="LIVE_stream">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.stream == "main" %}
                                 <option value="main" selected>main</option>
                                 {% else %}
@@ -423,6 +430,9 @@
                                 <option value="lores" selected>lores</option>
                                 {% else %}
                                 <option value="lores">lores</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="main" selected>main</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -470,6 +480,7 @@
                             <label for="LIVE_stream_size_align">Stream size aligned with Sensor Modes:</label>
                         </td>
                         <td style="width:20%" colspan="2">
+                            {% if sc.activeCameraIsUsb == False %}
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
                             <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" aria-label="LIVE_stream_size_align" value="1" checked>
@@ -482,6 +493,9 @@
                             {% else %}
                             <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" aria-label="LIVE_stream_size_align" value="0" disabled>
                             {% endif %}
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="LIVE_stream_size_align" name="LIVE_stream_size_align" aria-label="LIVE_stream_size_align" value="0" disabled>
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -498,6 +512,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="LIVE_format" id="LIVE_format">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.format == "XBGR8888" %}
                                 <option value="XBGR8888" selected>XBGR8888</option>
                                 {% else %}
@@ -522,6 +537,15 @@
                                 <option value="YUV420" selected>YUV420</option>
                                 {% else %}
                                 <option value="YUV420">YUV420</option>
+                                {% endif %}
+                                {% else %}
+                                {% for fmt in cfgrf %}
+                                {% if cfg.format == fmt %}
+                                <option value="{{ fmt }}" selected>{{ fmt }}</option>
+                                {% else %}
+                                <option value="{{ fmt }}">{{ fmt }}</option>
+                                {% endif %}
+                                {% endfor %}
                                 {% endif %}
                             </select>
                         </td>
@@ -564,6 +588,7 @@
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Submit & Apply">
                 <p style="margin-bottom: 0"></p>
             </form>
+            {% if sc.activeCameraIsUsb == False %}
             <h5>Controls included in Configuration</h5>
             <form method="post" action="{{ url_for('config.remLiveViewControls') }}">
                 <table class="w3-table-all">
@@ -590,6 +615,7 @@
             <form method="post" action="{{ url_for('config.addLiveViewControls') }}">
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Add Active Ctrls">
             </form>
+            {% endif %}
         </div>
     </div>
 
@@ -679,6 +705,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_colour_space" id="{{ cfgId }}_colour_space">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.colour_space == "sYCC" %}
                                 <option value="sYCC" selected>sYCC</option>
                                 {% else %}
@@ -693,6 +720,9 @@
                                 <option value="Rec709" selected>Rec709</option>
                                 {% else %}
                                 <option value="Rec709">Rec709</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="{{ cfg.colour_space }}" selected>{{ cfg.colour_space }}</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -788,6 +818,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_stream" id="{{ cfgId }}_stream">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.stream == "main" %}
                                 <option value="main" selected>main</option>
                                 {% else %}
@@ -797,6 +828,9 @@
                                 <option value="lores" selected>lores</option>
                                 {% else %}
                                 <option value="lores">lores</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="main" selected>main</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -844,6 +878,7 @@
                             <label for="{{ cfgId }}_stream_size_align">Stream size aligned with Sensor Modes:</label>
                         </td>
                         <td style="width:20%" colspan="2">
+                            {% if sc.activeCameraIsUsb == False %}
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
                             <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked>
@@ -856,6 +891,9 @@
                             {% else %}
                             <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -872,6 +910,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_format" id="{{ cfgId }}_format">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.format == "XBGR8888" %}
                                 <option value="XBGR8888" selected>XBGR8888</option>
                                 {% else %}
@@ -896,6 +935,15 @@
                                 <option value="YUV420" selected>YUV420</option>
                                 {% else %}
                                 <option value="YUV420">YUV420</option>
+                                {% endif %}
+                                {% else %}
+                                {% for fmt in cfgrf %}
+                                {% if cfg.format == fmt %}
+                                <option value="{{ fmt }}" selected>{{ fmt }}</option>
+                                {% else %}
+                                <option value="{{ fmt }}">{{ fmt }}</option>
+                                {% endif %}
+                                {% endfor %}
                                 {% endif %}
                             </select>
                         </td>
@@ -938,6 +986,7 @@
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Submit">
                 <p style="margin-bottom: 0"></p>
             </form>
+            {% if sc.activeCameraIsUsb == False %}
             <h5>Controls included in Configuration</h5>
             <form method="post" action="{{ url_for('config.remPhotoControls') }}">
                 <table class="w3-table-all">
@@ -964,6 +1013,7 @@
             <form method="post" action="{{ url_for('config.addPhotoControls') }}">
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Add Active Ctrls">
             </form>
+            {% endif %}
         </div>    
     </div>
 
@@ -1053,6 +1103,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_colour_space" id="{{ cfgId }}_colour_space">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.colour_space == "sYCC" %}
                                 <option value="sYCC" selected>sYCC</option>
                                 {% else %}
@@ -1067,6 +1118,9 @@
                                 <option value="Rec709" selected>Rec709</option>
                                 {% else %}
                                 <option value="Rec709">Rec709</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="{{ cfg.colour_space }}" selected>{{ cfg.colour_space }}</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -1163,10 +1217,14 @@
                         <td style="width:20%" colspan="2">
                             <!-- A T T E N T I O N : Specific for raw -->
                             <select name="{{ cfgId }}_stream" id="{{ cfgId }}_stream">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.stream == "raw" %}
                                 <option value="raw" selected>raw</option>
                                 {% else %}
                                 <option value="raw">raw</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="main" selected>main</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -1214,6 +1272,7 @@
                             <label for="{{ cfgId }}_stream_size_align">Stream size aligned with Sensor Modes:</label>
                         </td>
                         <td style="width:20%" colspan="2">
+                            {% if sc.activeCameraIsUsb == False %}
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
                             <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked>
@@ -1226,6 +1285,9 @@
                             {% else %}
                             <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -1243,6 +1305,7 @@
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_format" id="{{ cfgId }}_format">
                                 <!-- A T T E N T I O N : Specific for raw -->
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% for fmt in cfgrf %}
                                 {% if cfg.format == fmt %}
                                 <option value="{{ fmt }}" selected>{{ fmt }}</option>
@@ -1250,6 +1313,9 @@
                                 <option value="{{ fmt }}">{{ fmt }}</option>
                                 {% endif %}
                                 {% endfor %}
+                                {% else %}
+                                <option value="tiff" selected>tiff</option>
+                                {% endif %}
                             </select>
                         </td>
                         <td style="width:45%">
@@ -1291,6 +1357,7 @@
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Submit">
                 <p style="margin-bottom: 0"></p>
             </form>
+            {% if sc.activeCameraIsUsb == False %}
             <h5>Controls included in Configuration</h5>
             <form method="post" action="{{ url_for('config.remRawControls') }}">
                 <table class="w3-table-all">
@@ -1317,6 +1384,7 @@
             <form method="post" action="{{ url_for('config.addRawControls') }}">
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Add Active Ctrls">
             </form>
+            {% endif %}
         </div>
     </div>
 
@@ -1406,6 +1474,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_colour_space" id="{{ cfgId }}_colour_space">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.colour_space == "sYCC" %}
                                 <option value="sYCC" selected>sYCC</option>
                                 {% else %}
@@ -1420,6 +1489,9 @@
                                 <option value="Rec709" selected>Rec709</option>
                                 {% else %}
                                 <option value="Rec709">Rec709</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="{{ cfg.colour_space }}" selected>{{ cfg.colour_space }}</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -1515,6 +1587,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_stream" id="{{ cfgId }}_stream">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.stream == "main" %}
                                 <option value="main" selected>main</option>
                                 {% else %}
@@ -1524,6 +1597,9 @@
                                 <option value="lores" selected>lores</option>
                                 {% else %}
                                 <option value="lores">lores</option>
+                                {% endif %}
+                                {% else %}
+                                <option value="main">main</option>
                                 {% endif %}
                             </select>
                         </td>
@@ -1571,6 +1647,7 @@
                             <label for="{{ cfgId }}_stream_size_align">Stream size aligned with Sensor Modes:</label>
                         </td>
                         <td style="width:20%" colspan="2">
+                            {% if sc.activeCameraIsUsb == False %}
                             {% if cfg.sensor_mode == "custom" %}
                             {% if cfg.stream_size_align == True %}
                             <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="1" checked>
@@ -1583,6 +1660,9 @@
                             {% else %}
                             <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="{{ cfgId }}_stream_size_align" name="{{ cfgId }}_stream_size_align" aria-label="{{ cfgId }}_stream_size_align" value="0" disabled>
                             {% endif %}
                         </td>
                         <td style="width:45%">
@@ -1599,6 +1679,7 @@
                         </td>
                         <td style="width:20%" colspan="2">
                             <select name="{{ cfgId }}_format" id="{{ cfgId }}_format">
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.format == "XBGR8888" %}
                                 <option value="XBGR8888" selected>XBGR8888</option>
                                 {% else %}
@@ -1623,6 +1704,15 @@
                                 <option value="YUV420" selected>YUV420</option>
                                 {% else %}
                                 <option value="YUV420">YUV420</option>
+                                {% endif %}
+                                {% else %}
+                                {% for fmt in cfgrf %}
+                                {% if cfg.format == fmt %}
+                                <option value="{{ fmt }}" selected>{{ fmt }}</option>
+                                {% else %}
+                                <option value="{{ fmt }}">{{ fmt }}</option>
+                                {% endif %}
+                                {% endfor %}
                                 {% endif %}
                             </select>
                         </td>
@@ -1665,6 +1755,7 @@
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Submit">
                 <p style="margin-bottom: 0"></p>
             </form>
+            {% if sc.activeCameraIsUsb == False %}
             <h5>Controls included in Configuration</h5>
             <form method="post" action="{{ url_for('config.remVideoControls') }}">
                 <table class="w3-table-all">
@@ -1691,6 +1782,7 @@
             <form method="post" action="{{ url_for('config.addVideoControls') }}">
                 <input class="w3-button w3-black" style="width: 22ch" type="submit" value="Add Active Ctrls">
             </form>
+            {% endif %}
         </div>
     </div>
 

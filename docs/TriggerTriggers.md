@@ -13,17 +13,19 @@ Triggers are registered events occurring for the camera system or for GPIO input
 ## Creating a Trigger
 
 1. In field *Trigger Source*, select the source system for which the trigger is defined:    
+(*Camera* and *Motion Detector* will be available as option only when a camera is available)    
 ![Trigger1](./img/Trigger_Trigger2.jpg)
-2. This will open a list of devices defined for the chosen source system:    
+
+1. This will open a list of devices defined for the chosen source system:    
 ![Trigger1](./img/Trigger_Trigger3.jpg)    
 for the GPIO system, these are the **Input** devices configured on [Settings/Devices](./SettingsDevices.md)
-3. After a device has been selected, the system will show the device type with a link to related gpiozero documentation as well as the events which can be trapped for this device (this information is taken from the [fixed configuration for the device type](./SettingsDevices.md#device-type-configuration)):    
+1. After a device has been selected, the system will show the device type with a link to related gpiozero documentation as well as the events which can be trapped for this device (this information is taken from the [fixed configuration for the device type](./SettingsDevices.md#device-type-configuration)):    
 ![Trigger1](./img/Trigger_Trigger4.jpg)    
-4. When the event has been chosen, the sytem will display any parameters which may be required for this event:    
+1. When the event has been chosen, the sytem will display any parameters which may be required for this event:    
 ![Trigger1](./img/Trigger_Trigger5.jpg)    
 Now you need to specify values for these parameters, unless you leave the defaults, and enter a unique name for the trigger.    
 In this step, the *Submit* button will be activated.    
-5. Pressing the *Submit* button will create the trigger and show it in the *Trigger Overview*.
+1. Pressing the *Submit* button will create the trigger and show it in the *Trigger Overview*.
 
 ### Parameters
 

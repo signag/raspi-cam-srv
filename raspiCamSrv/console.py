@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 @login_required
 def console():
     cam = Camera().cam
-    props = cam.camera_properties
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -28,14 +27,13 @@ def console():
         if sc.vButtonCommand is None:
             sc.vButtonCommand = ""
     sc.curMenu = "console"
-    return render_template("console/console.html", props=props, sc=sc)
+    return render_template("console/console.html", sc=sc)
 
 @bp.route("/execute/<row>/<col>", methods=("GET", "POST"))
 @login_required
 def execute(row:None, col=None):
     logger.debug("In execute - row=%s, col=%s", row, col)
     cam = Camera().cam
-    props = cam.camera_properties
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -75,14 +73,13 @@ def execute(row:None, col=None):
         
         if msg != "":
             flash(msg)
-    return render_template("console/console.html", props=props, sc=sc)
+    return render_template("console/console.html", sc=sc)
 
 @bp.route("/execCommandline", methods=("GET", "POST"))
 @login_required
 def execCommandline():
     logger.debug("In execCommandline")
     cam = Camera().cam
-    props = cam.camera_properties
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -112,14 +109,13 @@ def execCommandline():
         
         if msg != "":
             flash(msg)
-    return render_template("console/console.html", props=props, sc=sc)
+    return render_template("console/console.html", sc=sc)
 
 @bp.route("/do_action/<row>/<col>", methods=("GET", "POST"))
 @login_required
 def do_action(row:None, col=None):
     logger.debug("In do_action - row=%s, col=%s", row, col)
     cam = Camera().cam
-    props = cam.camera_properties
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -147,4 +143,4 @@ def do_action(row:None, col=None):
         
         if msg != "":
             flash(msg)
-    return render_template("console/console.html", props=props, sc=sc)
+    return render_template("console/console.html", sc=sc)

@@ -14,7 +14,7 @@
         <button class="w3-bar-item w3-button cammenu" id="webcambtn"
             onclick="openCamTab('webcam', 'webcambtn')">Web Cam</button>
         {% endif %}
-        {% if sc.piCameras|length() > 1 %}
+        {% if sc.supportedCameras|length() > 1 %}
         {% if sc.lastCamTab == "multicam" %}
         <button class="w3-bar-item w3-button cammenu w3-light-green" id="multicambtn"
             onclick="openCamTab('multicam', 'multicambtn')">Multi-Cam</button>
@@ -88,12 +88,20 @@
             <tr>
                 <td>
                     {% if sc.isLiveStream %}
+                    {% if sc.activeCameraIsUsb == False %}
                     Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
-                {% endif %}
+                    {% else %}
+                    Using default Camera Configuration
+                    {% endif %}
+                    {% endif %}
                 </td>
                 <td>
                     {% if str2 != None %}
+                    {% if sc.secondCameraIsUsb == False %}
                     Using stored configuration with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+                    {% else %}
+                    Using default Camera Configuration
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>
@@ -148,14 +156,20 @@
             <tr>
                 <td>
                     {% if sc.isLiveStream %}
-                    Using Configuration <b>LIVE</b> 
-                    with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
+                    {% if sc.activeCameraIsUsb == False %}
+                    Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
+                    {% else %}
+                    Using default Camera Configuration
+                    {% endif %}
                     {% endif %}
                 </td>
                 <td>
                     {% if str2 != None %}
-                    Using stored Configuration
-                    with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+                    {% if sc.secondCameraIsUsb == False %}
+                    Using stored Configuration <b>{{ str2["liveconfig"].name }}</b> with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+                    {% else %}
+                    Using default Camera Configuration
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>
@@ -193,6 +207,7 @@
         <h2>Multi Cam</h2>
         <table>
             <tr>
+                {% if sc.supportedCameras|length <= 2 %}
                 <td style="width: 50%;">
                     {% if sc.isLiveStream %}
                     <h3 style="margin: 0px;">Active: {{ sc.activeCameraInfo}}</h3>
@@ -203,6 +218,50 @@
                     <h3 style="margin: 0px;">{{ str2["camerainfo"]}}</h3>
                     {% endif %}
                 </td>
+                {% else %}
+                <td style="width: 50%;">
+                    {% if sc.isLiveStream %}
+                    <form id="activecameraform" method="post" action="{{ url_for('webcam.change_active_camera') }}">
+                        <h3 style="margin: 0px;">Active: Camera&nbsp;
+                            <select name="activecamera" id="activecamera" onchange="doSubmit('activecameraform')">
+                            {% for cam in cs %}
+                                {% if cam.usbDev != "UNKNOWN" %}
+                                {% if sc.secondCamera != cam.num %}
+                                {% if sc.activeCamera == cam.num %}
+                                <option value="{{ cam.num }}" selected>{{ cam.num }} ({{ cam.model }})</option>
+                                {% else %}
+                                <option value="{{ cam.num }}">{{ cam.num }} ({{ cam.model }})</option>
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            </select>
+                        </h3>
+                    </form>
+                    {% endif %}
+                </td>
+                <td style="width: 50%;">
+                    {% if str2 != None %}
+                    <form id="secondcameraform" method="post" action="{{ url_for('webcam.change_second_camera') }}">
+                        <h3 style="margin: 0px;">Camera&nbsp;
+                            <select name="secondcamera" id="secondcamera" onchange="doSubmit('secondcameraform')">
+                            {% for cam in cs %}
+                                {% if cam.usbDev != "UNKNOWN" %}
+                                {% if sc.activeCamera != cam.num %}
+                                {% if sc.secondCamera == cam.num %}
+                                <option value="{{ cam.num }}" selected>{{ cam.num }} ({{ cam.model }})</option>
+                                {% else %}
+                                <option value="{{ cam.num }}">{{ cam.num }} ({{ cam.model }})</option>
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            </select>
+                        </h3>
+                    </form>
+                    {% endif %}
+                </td>
+                {% endif %}
             </tr>
             <tr>
                 <td>
@@ -224,7 +283,11 @@
                 <td>
                 <!-- Live stream 2 -->
                     {% if str2 != None %}
+                    {% if sc.isLiveStream2 %}
                     <img src="{{ url_for('home.video_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recordingvideo.jpg') }}" class="w3-image" style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Placeholder for video recording">
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>
@@ -269,6 +332,7 @@
                     {% endif %}
                 </td>
                 <td>
+                    {% if str2 != None %}
                     <!-- Photo button -->
                     <form style="display:inline-block" method="post" action="{{ url_for('webcam.take_photo2') }}">
                         <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo">
@@ -289,6 +353,7 @@
                         <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop">
                     </form>
                     {% endif %}
+                    {% endif %}
                 </td>
             </tr>
             <tr>
@@ -300,6 +365,7 @@
             </tr>
             <tr>
                 <td>
+                    {% if str2 != None %}
                     <form style="display:inline-block" method="post" action="{{ url_for('webcam.take_photo_both') }}">
                         <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Photo - Both">
                     </form>
@@ -317,6 +383,7 @@
                     <form style="display:inline-block" method="post" action="{{ url_for('webcam.cam_stop_recording_both') }}">
                         <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop - Both">
                     </form>
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>
@@ -361,9 +428,13 @@
             <tr>
                 <td>
                     {% if str2 != None and sc.isLiveStream == True %}
-                    <form method="post" action="{{ url_for('webcam.switch_cameras') }}">
+                    <form id="switchcameraform" method="post" action="{{ url_for('webcam.switch_cameras') }}">
                         <p style="margin-bottom: 0"></p>
+                        {% if cfg.streamingCfgInvalid == True %}
+                        <input class="w3-button w3-black" type="submit" onclick="confirmSwitchCamera('switchcameraform')" value="<<< Switch Cameras >>>">
+                        {% else %}
                         <input class="w3-button w3-black" type="submit" value="<<< Switch Cameras >>>">
+                        {% endif %}
                     </form>
                     {% endif %}
                 </td>
@@ -1136,6 +1207,14 @@
         }
         function dosubmitStereoParam(){
             document.getElementById("stereoconfigform").submit();
+        }
+        function confirmSwitchCamera(form) {
+            if (confirm("You have made changes to the active camera configuration\nThese will get lost when switching cameras, unless you Save Active Camera Settings.\n\nDo you want still switch cameras?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
         }
         function confirmReset(form) {
             if (confirm("Do you want to reset camara calibration?\nThis will remove all available calibration photos!")) {

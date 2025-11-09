@@ -2,14 +2,23 @@
 
 [![Up](img/goup.gif)](./Cam.md)
 
-**NOTE**: This dialog is only available for systems with two non-USB cameras connected (currently only Pi 5).
+**NOTE**: This dialog is only available for systems with two or more CSI or USB cameras connected (see [Info](./Information.md)).
+
+**raspiCamSrv** can simultaneously operate two cameras: the *Active Camera* and the *Second Camera*.   
+If more cameras are connected and available (usually USB cameras), *Active* and *Second* Camera must be selected out of these.
 
 While live streams for both cameras are shown, this dialog allows photo taking and video recording either individually with each of the two cameras or simultaneously with both.
 
 
-![Webcam](./img/CamMulticam.jpg)
+![Webcam](./img/CamMulticamUsb.jpg)
 
 The left side of the page always shows the active camera.
+
+The screenshot, above, shows a configuration with four available cameras.   
+If more than two cameras are available, the stream titles are dropdown lists from which you can select *Active* or *Second Camera*.    
+In every case, the other camera is not selectable because one camera cannot have two roles.
+
+If there are just two cameras available, the drop-down lists are replaced by normal text.
 
 When switching the cameras, either with the **Switch Cameras** button on this side or by changing the camera in the [Settings](./Settings.md#switching-the-active-camera), the streams will be exchanged.
 
@@ -50,6 +59,10 @@ If they are the same model, the button can be used to transfer the configuration
 #### <<< Switch Cameras >>>
 
 With this button, you can switch the cameras so that the one sown on the right side will become the active camera.
+
+In case you have made changes of [Configuration](./Configuration.md) or [Controls](./CameraControls.md) which have not yet been saved for Camera Switch, there will be a warning:
+![CamSwitchWarning](./img/CamMulticamSwitchConfirm.jpg)
+To make sure your configuration changes survive the camera switxh, push [Save Active Camera Settings for Camera Switch](#save-active-camera-settings-for-camera-switch)
 
 ## Process Status Indicators
 

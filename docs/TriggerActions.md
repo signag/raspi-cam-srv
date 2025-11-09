@@ -11,17 +11,18 @@ This screen is used to specify actions which can be started by **raspiCamSrv**, 
 ## Creating an Action
 
 1. In field *Action Source*, select the source system for which the action is defined:    
+(Camera will be available as option only if a camera is available)    
 ![Action2](./img/Trigger_Actions2.jpg)
-2. This will open a list of devices defined for the chosen source system:    
+1. This will open a list of devices defined for the chosen source system:    
 ![Action3](./img/Trigger_Actions3.jpg)    
 For the GPIO system, these are the **Output** devices configured on [Settings/Devices](./SettingsDevices.md)<br>**NOTE**: For SMTP, a device will only be shown if a mail account has been specified and verified in dialog [Notification](./TriggerNotification.md).<br>If this is the case, the configured *SMTP Server* will be shown as device.
-3. After a device has been selected, the system will show the device type with a link to related gpiozero documentation as well as the action methods which can be executed for this device (this information is taken from the [fixed configuration for the device type](./SettingsDevices.md#device-type-configuration)):    
+1. After a device has been selected, the system will show the device type with a link to related gpiozero documentation as well as the action methods which can be executed for this device (this information is taken from the [fixed configuration for the device type](./SettingsDevices.md#device-type-configuration)):    
 ![Action4](./img/Trigger_Actions4.jpg)    
-4. When the method has been chosen, the sytem will display any parameters which may be required for this method:    
+1. When the method has been chosen, the sytem will display any parameters which may be required for this method:    
 ![Action5](./img/Trigger_Actions5.jpg)    
 Now you need to specify values for these parameters, unless you leave the defaults, and enter a unique name for the action.    
 In this step, the *Submit* button will be activated.    
-5. Pressing the *Submit* button will create the action and show it in the *Action Overview*.
+1. Pressing the *Submit* button will create the action and show it in the *Action Overview*.
 
 ### Parameters
 

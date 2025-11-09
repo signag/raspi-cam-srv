@@ -29,6 +29,15 @@ which will be applied when videos are recorded
 Configuration changes may have an impact on the way how tasks and background processes are executed. If specific parameters, such as [Transform](#transform) are changed for a specific use case only, for example for *Video*, video recording will require that the Live Stream is stopped and paused while the video is being recorded.   
 For more details, see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md).
 
+#### USB Cameras
+
+The schema of configuration use cases, conceptually originating from Picamera2, is also retained for USB cameras. However, there are specific differences related to *Colour Space*, *Buffer Count*, *Queue* parameters. Also Controls cannot be included in the configuration as with Picamera2.
+
+A major difference is that USB cameras accessed through OpenCV, do not allow using different streams.   
+As a consequence, live stream in parallel to photo taking or video recording would only be possible with identical configurations.    
+Since this does not seam to make sense because of performance issues, **raspiCamSrv** always requests exclusive use of the camera when taking photos or recording videos.   
+[Motion Capturing](./TriggerMotion.md) works in the same way for USB and CSI cameras.
+
 ## Configuration Tab
 
 The *Config* submenu includes a tab *Tuning* which is described in [raspiCamSrv Camera Tuning](./Tuning.md) and not here.

@@ -623,7 +623,7 @@ class MotionDetector():
                     cam.startLiveStream()
                 try:
                     # Just to keep the live stream running
-                    frame = cam.get_frame()
+                    frame, frameRaw = cam.get_frame()
                     cur = cam.getLiveViewImageForMotionDetection()
                     # logger.debug("Thread %s: MotionDetector._motionThread - got live view buffer", get_ident())
                     if prv is not None:

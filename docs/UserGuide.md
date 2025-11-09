@@ -2,18 +2,25 @@
 
 [![Up](img/goup.gif)](../README.md)
 
-**NOTE**     
-For a full understanding of application details, users should familiarize with the official document [Raspberry Pi - The Picamera2 Library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).  
-The document version, on which this raspiCamSrv release is based, is also included in this documentation: [picamera2-manual.pdf](./picamera2-manual.pdf)
+The variant of the user interface, described on this page, refers to the case where **at least one camera** (CSI or USB) is available.   
+If this is not the case, refer to the [reduced user interface](./UserGuide_NoCam.md).
 
+#### Startup
 When the server on a Pi is running and the Pi is reacheable through the network (usually WiFi), you can connect with a browser using the Pi address ('raspi05' in the example below) with the Flask port number, usually 5000, e.g.:  
 ```http://raspi05:5000```
 
+#### Login
+
 The system will request an initial [registration and a login](./Authentication.md) and subsequently open the **Live** application screen.
 
-For error handling, see [raspiCamSrv Troubleshooting](./Troubelshooting.md)
-
+For error handling, see [raspiCamSrv Troubleshooting](./Troubelshooting.md)   
 For interoperability, **raspiCamSrv** provides an [API](./API.md) which allows access to selected functions through web services.
+
+#### CSI-/USB-Cameras
+
+In addition to CSI cameras (2 for Pi 5), you can connect as many USB cameras as physical USB ports are available.    
+However, at a time, **raspiCamSrv** will only operate two of them simultaneously.   
+Related to usability in the UI, you will almost see no difference between CSI and USB cameras. Where they are important, they are handled in the UI and described in their context.
 
 ## Application Screen
 ![Main Screen](img/Live_start.jpg)
@@ -25,7 +32,8 @@ On the right side, the title bar shows
 - the current server connection
 - the active camera as advertised by Picamera2
 - the active user
-- A special icon will indicate unsaved configuration changes:<br>![Changes](./img/UnsavedChangesIndicator.jpg)<br>It will vanish after changes have been saved with [Settings/Configuration/Store Configuration](./SettingsConfiguration.md) or after a stored configuration has been loaded.
+- A special icon will indicate unsaved configuration changes:<br>![Changes](./img/UnsavedChangesIndicator.jpg)<br>It will vanish after changes have been saved with [Settings/Configuration/Store Configuration](./SettingsConfiguration.md) or after a stored configuration has been loaded.   
+The icon can be pressed to save unsaved changes.
 
 On the left side, the title bar shows the application name (raspiCamSrv) and the current screen.
 
@@ -120,3 +128,8 @@ Streaming is automatically reactivated, if a streaming client connects, for exam
 Other clients, either connecting directly through the streaming URL or by using the **raspiCamSrv** web client, will also activate the streaming servers.
 
 Streaming of the active camera can be deactivated, if a **raspiCamSrv** task is executed which requires exclusive access to the camera because of a specific [Configuration](./Configuration.md) which is not compliant with the configuration required for streaming (for more details, see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)).
+
+**NOTE**     
+For a full understanding of application details, users should familiarize with the official document [Raspberry Pi - The Picamera2 Library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).  
+The document version, on which this raspiCamSrv release is based, is also included in this documentation: [picamera2-manual.pdf](./picamera2-manual.pdf)
+

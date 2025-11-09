@@ -390,9 +390,9 @@ def switch_cameras():
                 if "tuningconfig" in ncfg:
                     cfg.tuningConfig = ncfg["tuningconfig"]
                 else:
-                    cfg.tuningConfig = TuningConfig
+                    cfg.tuningConfig = TuningConfig()
             else:
-                cfg.tuningConfig = TuningConfig
+                cfg.tuningConfig = TuningConfig()
             Camera.switchCamera()
             if sc.isLiveStream2:
                 str2 = cfg.streamingCfg[str(Camera().camNum2)]

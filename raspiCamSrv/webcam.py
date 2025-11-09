@@ -1,4 +1,13 @@
-from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from werkzeug.exceptions import abort
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, TuningConfig, StereoConfig, ServerConfig
@@ -24,6 +33,7 @@ try:
 except ImportError:
     pass
 
+
 @bp.route("/webcam")
 @login_required
 def webcam():
@@ -32,6 +42,7 @@ def webcam():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     tmp = {}
     tmp["intent"] = str(ster.intentIdx)
     tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
@@ -47,9 +58,10 @@ def webcam():
         str2 = cfg.streamingCfg[str(Camera().camNum2)]
     sc.curMenu = "webcam"
     if sc.useStereo == False:
-        if sc.lastCamTab == "calibcam" \
-        or sc.lastCamTab == "stereocam":
+        if sc.lastCamTab == "calibcam" or sc.lastCamTab == "stereocam":
             sc.lastCamTab = "webcam"
+    if len(sc.supportedCameras) < 2:
+        sc.lastCamTab = "webcam"
 
     if sc.error:
         msg = "Error in " + sc.errorSource + ": " + sc.error
@@ -61,7 +73,9 @@ def webcam():
         flash(msg)
         if sc.errorc22:
             flash(sc.errorc22)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 @bp.route("/store_streaming_config", methods=("GET", "POST"))
 @login_required
@@ -73,6 +87,7 @@ def store_streaming_config():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -86,15 +101,21 @@ def store_streaming_config():
     sc.lastCamTab = "multicam"
     if request.method == "POST":
         scfg = cfg.streamingCfg[str(sc.activeCamera)]
-        scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
+        if sc.activeCameraIsUsb == False:
+            scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
         scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
         scfg["photoconfig"] = copy.deepcopy(cfg.photoConfig)
         scfg["rawconfig"] = copy.deepcopy(cfg.rawConfig)
         scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
         scfg["controls"] = copy.deepcopy(cfg.controls)
         sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Camera settings for {sc.activeCameraInfo} saved for camera switch and streaming")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+        sc.addChangeLogEntry(
+            f"Camera settings for {sc.activeCameraInfo} saved for camera switch and streaming"
+        )
+        cfg.streamingCfgInvalid = False
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/sync_settings", methods=("GET", "POST"))
@@ -107,6 +128,7 @@ def sync_settings():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -121,7 +143,8 @@ def sync_settings():
     if request.method == "POST":
         if sc.activeCameraInfo[8:] == str2["camerainfo"][8:]:
             scfg = cfg.streamingCfg[str(Camera().camNum2)]
-            scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
+            if sc.activeCameraIsUsb == False:
+                scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
             scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
             scfg["photoconfig"] = copy.deepcopy(cfg.photoConfig)
             scfg["rawconfig"] = copy.deepcopy(cfg.rawConfig)
@@ -129,10 +152,14 @@ def sync_settings():
             scfg["controls"] = copy.deepcopy(cfg.controls)
             Camera().restartLiveStream2()
             sc.unsavedChanges = True
-            sc.addChangeLogEntry(f"Camera settings for {sc.activeCameraInfo} synced with camera {str2['camerainfo']}")
+            sc.addChangeLogEntry(
+                f"Camera settings for {sc.activeCameraInfo} synced with camera {str2['camerainfo']}"
+            )
         else:
             flash("Camera settings can only be synced for the same camera model")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/switch_cameras", methods=("GET", "POST"))
@@ -143,6 +170,7 @@ def switch_cameras():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -156,16 +184,24 @@ def switch_cameras():
     sc.lastCamTab = "multicam"
     if request.method == "POST":
         msg = None
-        cs = cfg.cameras
         activeCam = sc.activeCamera
         newCam = activeCam
-        for cm in cs:
-            if cm.isUsb == False:
+        if sc.secondCamera is None:
+            for cm in cs:
                 if activeCam != cm.num:
                     newCam = cm.num
                     newCamInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
                     newCamModel = cm.model
+                    newCamIsUsb = cm.isUsb
+                    newCamUsbDev = cm.usbDev
                     break
+        else:
+            newCam = sc.secondCamera
+            newCamInfo = sc.secondCameraInfo
+            newCamModel = sc.secondCameraModel
+            newCamIsUsb = sc.secondCameraIsUsb
+            newCamUsbDev = sc.secondCameraUsbDev
+
         if newCam != sc.activeCamera:
             if sc.isTriggerRecording:
                 msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
@@ -174,13 +210,20 @@ def switch_cameras():
             if sc.isPhotoSeriesRecording:
                 msg = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
             if not msg:
+                sc.secondCamera = sc.activeCamera
+                sc.secondCameraInfo = sc.activeCameraInfo
+                sc.secondCameraModel = sc.activeCameraModel
+                sc.secondCameraIsUsb = sc.activeCameraIsUsb
+                sc.secondCameraUsbDev = sc.activeCameraUsbDev
+                sc.activeCamera = newCam
                 sc.activeCameraInfo = newCamInfo
                 sc.activeCameraModel = newCamModel
+                sc.activeCameraIsUsb = newCamIsUsb
+                sc.activeCameraUsbDev = newCamUsbDev
                 cfg.liveViewConfig.stream_size = None
                 cfg.photoConfig.stream_size = None
                 cfg.rawConfig.stream_size = None
                 cfg.videoConfig.stream_size = None
-                sc.activeCamera = newCam
                 strCfg = cfg.streamingCfg
                 newCamStr = str(newCam)
                 if newCamStr in strCfg:
@@ -188,32 +231,179 @@ def switch_cameras():
                     if "tuningconfig" in ncfg:
                         cfg.tuningConfig = ncfg["tuningconfig"]
                     else:
-                        cfg.tuningConfig = TuningConfig
+                        cfg.tuningConfig = TuningConfig()
                 else:
-                    cfg.tuningConfig = TuningConfig
+                    cfg.tuningConfig = TuningConfig()
                 Camera.switchCamera()
                 if sc.isLiveStream2:
                     str2 = cfg.streamingCfg[str(Camera().camNum2)]
-                logger.debug("switch_cameras - active camera set to %s", sc.activeCamera)
+                logger.debug(
+                    "switch_cameras - active camera set to %s", sc.activeCamera
+                )
                 sc.unsavedChanges = True
-                sc.addChangeLogEntry(f"Cameras switched: Active camera now: {sc.activeCameraInfo}")
+                sc.addChangeLogEntry(
+                    f"Cameras switched: Active camera now: {sc.activeCameraInfo}"
+                )
+                cfg.streamingCfgInvalid = False
         if msg:
             flash(msg)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+        return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs)
+    else:
+        return redirect(url_for("webcam.webcam"))
+
+
+@bp.route("/change_active_camera", methods=("GET", "POST"))
+@login_required
+def change_active_camera():
+    logger.debug("In change_active_camera")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    ster = cfg.stereoCfg
+    cs = cfg.cameras
+    camL, camR = getStereoCameras()
+    doInitCalibration(camL, camR)
+    tmp = {}
+    tmp["intent"] = str(ster.intentIdx)
+    tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
+    sc = cfg.serverConfig
+    str2 = None
+    if sc.isLiveStream2:
+        str2 = cfg.streamingCfg[str(Camera().camNum2)]
+    sc.curMenu = "webcam"
+    sc.lastCamTab = "multicam"
+    if request.method == "POST":
+        msg = None
+        newCam = int(request.form["activecamera"])
+        secondCamera = -1
+        if not sc.secondCamera is None:
+            secondCamera = sc.secondCamera
+        for cm in cs:
+            if newCam == cm.num:
+                newCamInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
+                newCamModel = cm.model
+                newCamIsUsb = cm.isUsb
+                newCamUsbDev = cm.usbDev
+                break
+
+        if newCam != sc.activeCamera:
+            if sc.isTriggerRecording:
+                msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
+            if sc.isVideoRecording == True:
+                msg = "Please stop video recording before changing the tuning configuration"
+            if sc.isPhotoSeriesRecording:
+                msg = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
+            if newCam == secondCamera:
+                msg = "Active camera must be different from second camera. Use 'Switch Cameras' to swap the cameras."
+            if not msg:
+                sc.activeCamera = newCam
+                sc.activeCameraInfo = newCamInfo
+                sc.activeCameraModel = newCamModel
+                sc.activeCameraIsUsb = newCamIsUsb
+                sc.activeCameraUsbDev = newCamUsbDev
+                cfg.liveViewConfig.stream_size = None
+                cfg.photoConfig.stream_size = None
+                cfg.rawConfig.stream_size = None
+                cfg.videoConfig.stream_size = None
+                strCfg = cfg.streamingCfg
+                newCamStr = str(newCam)
+                if newCamStr in strCfg:
+                    ncfg = strCfg[newCamStr]
+                    if "tuningconfig" in ncfg:
+                        cfg.tuningConfig = ncfg["tuningconfig"]
+                    else:
+                        cfg.tuningConfig = TuningConfig()
+                else:
+                    cfg.tuningConfig = TuningConfig()
+                Camera.switchCamera()
+                if sc.isLiveStream2:
+                    str2 = cfg.streamingCfg[str(Camera().camNum2)]
+                logger.debug(
+                    "switch_cameras - active camera set to %s", sc.activeCamera
+                )
+                sc.unsavedChanges = True
+                sc.addChangeLogEntry(f"Active camera changed to: {sc.activeCameraInfo}")
+                camL, camR = getStereoCameras()
+                doInitCalibration(camL, camR)
+        if msg:
+            flash(msg)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
+
+@bp.route("/change_second_camera", methods=("GET", "POST"))
+@login_required
+def change_second_camera():
+    logger.debug("In change_second_camera")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    ster = cfg.stereoCfg
+    cs = cfg.cameras
+    camL, camR = getStereoCameras()
+    doInitCalibration(camL, camR)
+    tmp = {}
+    tmp["intent"] = str(ster.intentIdx)
+    tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
+    sc = cfg.serverConfig
+    str2 = None
+    if sc.isLiveStream2:
+        str2 = cfg.streamingCfg[str(Camera().camNum2)]
+    sc.curMenu = "webcam"
+    sc.lastCamTab = "multicam"
+    if request.method == "POST":
+        msg = None
+        secondCam = int(request.form["secondcamera"])
+        activeCam = sc.activeCamera
+        newCam = secondCam
+        for cm in cs:
+            if newCam == cm.num:
+                newCamInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
+                newCamModel = cm.model
+                newCamIsUsb = cm.isUsb
+                newCamUsbDev = cm.usbDev
+                break
+
+        if newCam != sc.secondCamera:
+            if newCam == activeCam:
+                msg = "Second camera must be different from active camera. Use 'Switch Cameras' to swap the cameras."
+            if not msg:
+                sc.secondCamera = newCam
+                sc.secondCameraInfo = newCamInfo
+                sc.secondCameraModel = newCamModel
+                sc.secondCameraIsUsb = newCamIsUsb
+                sc.secondCameraUsbDev = newCamUsbDev
+                Camera.switchCamera()
+                if sc.isLiveStream2:
+                    str2 = cfg.streamingCfg[str(Camera().camNum2)]
+                logger.debug(
+                    "switch_cameras - second camera set to %s", sc.secondCamera
+                )
+                sc.unsavedChanges = True
+                sc.addChangeLogEntry(f"Second camera now: {sc.secondCameraInfo}")
+        if msg:
+            flash(msg)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
 
 @bp.route("/photo_feed")
 @login_for_streaming
 def photo_feed():
-    #logger.debug("Thread %s: In photo_feed", get_ident())
+    # logger.debug("Thread %s: In photo_feed", get_ident())
     Camera().startLiveStream()
-    return Response(Camera().get_photoFrame(), mimetype='image/jpeg')
+    return Response(Camera().get_photoFrame(), mimetype="image/jpeg")
+
 
 @bp.route("/photo_feed2")
 @login_for_streaming
 def photo_feed2():
-    #logger.debug("Thread %s: In photo_feed2", get_ident())
+    # logger.debug("Thread %s: In photo_feed2", get_ident())
     Camera().startLiveStream2()
-    return Response(Camera().get_photoFrame2(), mimetype='image/jpeg')
+    return Response(Camera().get_photoFrame2(), mimetype="image/jpeg")
+
 
 @bp.route("/cam_take_photo", methods=("GET", "POST"))
 @login_required
@@ -223,6 +413,7 @@ def cam_take_photo():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -242,7 +433,9 @@ def cam_take_photo():
         if not sc.error:
             logger.debug("take_photo - sc.displayContent: %s", sc.displayContent)
             if sc.displayContent == "hist":
-                logger.debug("take_photo - sc.displayHistogram: %s", sc.displayHistogram)
+                logger.debug(
+                    "take_photo - sc.displayHistogram: %s", sc.displayHistogram
+                )
                 if sc.displayHistogram is None:
                     logger.debug("take_photo - sc.displayPhoto: %s", sc.displayPhoto)
                     if sc.displayPhoto:
@@ -254,7 +447,10 @@ def cam_take_photo():
             flash(msg)
             if sc.error2:
                 flash(sc.error2)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
 
 @bp.route("/cam_take_raw_photo", methods=("GET", "POST"))
 @login_required
@@ -264,6 +460,7 @@ def cam_take_raw_photo():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -278,7 +475,10 @@ def cam_take_raw_photo():
     if request.method == "POST":
         timeImg = datetime.datetime.now()
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
-        filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        if sc.activeCameraIsUsb == False:
+            filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        else:
+            filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + ".tiff"
         logger.debug("Saving raw image %s", filenameRaw)
         fp = Camera().takeRawImage(filenameRaw, filename)
         if not sc.error:
@@ -293,7 +493,9 @@ def cam_take_raw_photo():
             flash(msg)
             if sc.error2:
                 flash(sc.error2)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/cam_record_video", methods=("GET", "POST"))
@@ -304,6 +506,7 @@ def cam_record_video():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -346,7 +549,9 @@ def cam_record_video():
             flash(msg)
             if sc.error2:
                 flash(sc.error2)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/cam_stop_recording", methods=("GET", "POST"))
@@ -357,6 +562,7 @@ def cam_stop_recording():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -377,7 +583,10 @@ def cam_stop_recording():
         time.sleep(2)
         msg = "Video recording stopped"
         flash(msg)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
 
 @bp.route("/take_photo2", methods=("GET", "POST"))
 @login_required
@@ -387,6 +596,7 @@ def take_photo2():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -412,7 +622,10 @@ def take_photo2():
             flash(msg)
             if sc.errorc22:
                 flash(sc.errorc22)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
 
 @bp.route("/cam_take_raw_photo2", methods=("GET", "POST"))
 @login_required
@@ -422,6 +635,7 @@ def cam_take_raw_photo2():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -436,7 +650,10 @@ def cam_take_raw_photo2():
     if request.method == "POST":
         timeImg = datetime.datetime.now()
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
-        filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        if sc.secondCameraIsUsb == False:
+            filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        else:
+            filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + ".tiff"
         logger.debug("Saving raw image %s", filenameRaw)
         fp = Camera().takeRawImage2(filenameRaw, filename)
         if not sc.errorc2:
@@ -447,7 +664,9 @@ def cam_take_raw_photo2():
             flash(msg)
             if sc.errorc22:
                 flash(sc.errorc22)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/cam_record_video2", methods=("GET", "POST"))
@@ -458,6 +677,7 @@ def cam_record_video2():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -493,7 +713,9 @@ def cam_record_video2():
             flash(msg)
             if sc.errorc22:
                 flash(sc.errorc22)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/cam_stop_recording2", methods=("GET", "POST"))
@@ -504,6 +726,7 @@ def cam_stop_recording2():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -523,7 +746,9 @@ def cam_stop_recording2():
         time.sleep(2)
         msg = "Video recording stopped"
         flash(msg)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/take_photo_both", methods=("GET", "POST"))
@@ -534,6 +759,7 @@ def take_photo_both():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -569,8 +795,9 @@ def take_photo_both():
             msg2 = "Error in " + sc.errorc2Source + ": " + sc.errorc2
         flash(msg1)
         flash(msg2)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
-
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 @bp.route("/cam_take_raw_photo_both", methods=("GET", "POST"))
 @login_required
@@ -580,6 +807,7 @@ def cam_take_raw_photo_both():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -593,11 +821,20 @@ def cam_take_raw_photo_both():
     sc.lastCamTab = "multicam"
     if request.method == "POST":
         timeImg = datetime.datetime.now()
-        filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
-        filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
-        logger.debug("Saving raw image %s", filenameRaw)
-        fp1 = Camera().takeRawImage(filenameRaw, filename)
-        fp2 = Camera().takeRawImage2(filenameRaw, filename)
+        file = timeImg.strftime("%Y%m%d_%H%M%S") + "."
+        filename1 = file + sc.photoType
+        if sc.activeCameraIsUsb == False:
+            filename1Raw = file + sc.rawPhotoType
+        else:
+            filename1Raw = file + "tiff"
+        filename2 = file + sc.photoType
+        if sc.secondCameraIsUsb == False:
+            filename2Raw = file + sc.rawPhotoType
+        else:
+            filename2Raw = file + "tiff"
+        logger.debug("Saving raw images as %s and %s", filename1Raw, filename2Raw)
+        fp1 = Camera().takeRawImage(filename1Raw, filename1)
+        fp2 = Camera().takeRawImage2(filename2Raw, filename2)
         msg1 = ""
         msg2 = ""
         if not sc.error:
@@ -616,7 +853,9 @@ def cam_take_raw_photo_both():
             msg2 = "Error in " + sc.errorc2Source + ": " + sc.errorc2
         flash(msg1)
         flash(msg2)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/cam_record_video_both", methods=("GET", "POST"))
@@ -627,6 +866,7 @@ def cam_record_video_both():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -681,7 +921,9 @@ def cam_record_video_both():
             msg2 = "Error in " + sc.errorc2Source + ": " + sc.errorc2
         flash(msg1)
         flash(msg2)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/cam_stop_recording_both", methods=("GET", "POST"))
@@ -692,6 +934,7 @@ def cam_stop_recording_both():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -723,10 +966,12 @@ def cam_stop_recording_both():
             sc.isVideoRecording2 = False
             mag2 = f"Stopped Video: {fp2}"
 
-        time.sleep(1)
+        time.sleep(2)
         flash(msg1)
         flash(msg2)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/start_stereo_cam", methods=("GET", "POST"))
@@ -737,6 +982,7 @@ def start_stereo_cam():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -761,7 +1007,9 @@ def start_stereo_cam():
         else:
             sc.isStereoCamActive = True
             logger.debug("In start_stereo_cam - StereoCam started")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/stop_stereo_cam", methods=("GET", "POST"))
@@ -772,6 +1020,7 @@ def stop_stereo_cam():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -792,42 +1041,50 @@ def stop_stereo_cam():
             scam.stopStereoCam()
             sc.isStereoCamActive = False
             logger.debug("In stop_stereo_cam - StereoCam stopped")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/stereo_cam_feed")
 # @login_required
 def stereo_cam_feed():
-    #logger.debug("Thread %s: In stereo_cam_feed", get_ident())
+    # logger.debug("Thread %s: In stereo_cam_feed", get_ident())
     Camera().startLiveStream()
     Camera().startLiveStream2()
     scam = StereoCam()
-    return Response(gen_stereoCamFrame(scam), 
-                mimetype="multipart/x-mixed-replace; boundary=frame")
+    return Response(
+        gen_stereoCamFrame(scam), mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
 
 
 def gen_stereoCamFrame(stereoCam):
     """Stereo camera streaming generator function."""
-    #logger.debug("Thread %s: In gen_stereoCamFrame", get_ident())
+    # logger.debug("Thread %s: In gen_stereoCamFrame", get_ident())
     yield b"--frame\r\n"
     while True:
         frame = stereoCam.get_stereoFrame()
         if frame:
-            #logger.debug("Thread %s: gen_stereoCamFrame - Got frame of length %s: %s", get_ident(), len(frame), frame)
-            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+            # logger.debug("Thread %s: gen_stereoCamFrame - Got frame of length %s: %s", get_ident(), len(frame), frame)
+            yield b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n--frame\r\n"
+
 
 @bp.route("/stereo_feed")
 @login_for_streaming
 def stereo_feed():
-    logger.debug("Thread %s: In stereo_feed - client IP: %s", get_ident(), request.remote_addr)
+    logger.debug(
+        "Thread %s: In stereo_feed - client IP: %s", get_ident(), request.remote_addr
+    )
     sc = CameraCfg().serverConfig
     sc.registerStreamingClient(request.remote_addr, "stereo_feed", get_ident())
     Camera().startLiveStream()
     Camera().startLiveStream2()
     StereoCam().startStereoCam()
     sc.isStereoCamActive = True
-    return Response(gen_stereoCamFrame(StereoCam()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        gen_stereoCamFrame(StereoCam()),
+        mimetype="multipart/x-mixed-replace; boundary=frame",
+    )
 
 
 @bp.route("/stereo_display", methods=("GET", "POST"))
@@ -838,6 +1095,7 @@ def stereo_display():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -854,8 +1112,14 @@ def stereo_display():
             ster.applyCalibRectify = True
         else:
             ster.applyCalibRectify = False
-        logger.debug("Thread %s: In stereo_display applyCalibRectify set to %s", get_ident(), ster.applyCalibRectify)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+        logger.debug(
+            "Thread %s: In stereo_display applyCalibRectify set to %s",
+            get_ident(),
+            ster.applyCalibRectify,
+        )
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/stereo_config", methods=("GET", "POST"))
@@ -866,6 +1130,7 @@ def stereo_config():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -891,7 +1156,9 @@ def stereo_config():
                 if int(intent) != ster.intentIdx:
                     ster.intentIdx = int(intent)
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Intent for Stereo Cam changed to {ster.intent}")
+                    sc.addChangeLogEntry(
+                        f"Intent for Stereo Cam changed to {ster.intent}"
+                    )
             else:
                 err = " "
         if err == "":
@@ -903,7 +1170,9 @@ def stereo_config():
                 if int(stereoAlgo) != ster.intentAlgoIdx:
                     ster.intentAlgoIdx = int(stereoAlgo)
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Algorithm for Stereo Cam changed to {ster.intentAlgo}")
+                    sc.addChangeLogEntry(
+                        f"Algorithm for Stereo Cam changed to {ster.intentAlgo}"
+                    )
             else:
                 err = " "
         if err == "":
@@ -912,7 +1181,9 @@ def stereo_config():
                     if not stereoAlgo is None:
                         if stereoAlgo == "0":
                             if not request.form.get("bmnumdisparitiesfactor") is None:
-                                bm_numDisparitiesFactor = request.form.get("bmnumdisparitiesfactor")
+                                bm_numDisparitiesFactor = request.form.get(
+                                    "bmnumdisparitiesfactor"
+                                )
                             else:
                                 err = " "
                             if not request.form.get("bmblocksize") is None:
@@ -921,7 +1192,9 @@ def stereo_config():
                                 err = " "
                             if err == "":
                                 try:
-                                    ster.bm_numDisparitiesFactor = int(bm_numDisparitiesFactor)
+                                    ster.bm_numDisparitiesFactor = int(
+                                        bm_numDisparitiesFactor
+                                    )
                                     ster.bm_blockSize = int(bm_blockSize)
                                     done = True
                                 except ValueError as e:
@@ -932,7 +1205,9 @@ def stereo_config():
                             else:
                                 err = " "
                             if not request.form.get("sgbmnumdisparitiesfactor") is None:
-                                sgbm_numDisparitiesFactor = request.form.get("sgbmnumdisparitiesfactor")
+                                sgbm_numDisparitiesFactor = request.form.get(
+                                    "sgbmnumdisparitiesfactor"
+                                )
                             else:
                                 err = " "
                             if not request.form.get("sgbmblocksize") is None:
@@ -948,7 +1223,9 @@ def stereo_config():
                             else:
                                 err = " "
                             if not request.form.get("sgbmdisp12maxdiff") is None:
-                                sgbm_disp12MaxDiff = request.form.get("sgbmdisp12maxdiff")
+                                sgbm_disp12MaxDiff = request.form.get(
+                                    "sgbmdisp12maxdiff"
+                                )
                             else:
                                 err = " "
                             if not request.form.get("sgbmprefiltercap") is None:
@@ -956,11 +1233,15 @@ def stereo_config():
                             else:
                                 err = " "
                             if not request.form.get("sgbmuniquenessratio") is None:
-                                sgbm_uniquenessRatio = request.form.get("sgbmuniquenessratio")
+                                sgbm_uniquenessRatio = request.form.get(
+                                    "sgbmuniquenessratio"
+                                )
                             else:
                                 err = " "
                             if not request.form.get("sgbmspecklewindowsize") is None:
-                                sgbm_speckleWindowSize = request.form.get("sgbmspecklewindowsize")
+                                sgbm_speckleWindowSize = request.form.get(
+                                    "sgbmspecklewindowsize"
+                                )
                             else:
                                 err = " "
                             if not request.form.get("sgbmspecklerange") is None:
@@ -974,17 +1255,23 @@ def stereo_config():
 
                             if err == "":
                                 try:
-                                    ster.sgbm_minDisparity         = int(sgbm_minDisparity)
-                                    ster.sgbm_numDisparitiesFactor = int(sgbm_numDisparitiesFactor)
-                                    ster.sgbm_blockSize            = int(sgbm_blockSize)
-                                    ster.sgbm_P1                   = int(sgbm_P1)
-                                    ster.sgbm_P2                   = int(sgbm_P2)
-                                    ster.sgbm_disp12MaxDiff        = int(sgbm_disp12MaxDiff)
-                                    ster.sgbm_preFilterCap         = int(sgbm_preFilterCap)
-                                    ster.sgbm_uniquenessRatio      = int(sgbm_uniquenessRatio)
-                                    ster.sgbm_speckleWindowSize    = int(sgbm_speckleWindowSize)
-                                    ster.sgbm_speckleRange         = int(sgbm_speckleRange)
-                                    ster.sgbm_mode                 = int(sgbm_mode)
+                                    ster.sgbm_minDisparity = int(sgbm_minDisparity)
+                                    ster.sgbm_numDisparitiesFactor = int(
+                                        sgbm_numDisparitiesFactor
+                                    )
+                                    ster.sgbm_blockSize = int(sgbm_blockSize)
+                                    ster.sgbm_P1 = int(sgbm_P1)
+                                    ster.sgbm_P2 = int(sgbm_P2)
+                                    ster.sgbm_disp12MaxDiff = int(sgbm_disp12MaxDiff)
+                                    ster.sgbm_preFilterCap = int(sgbm_preFilterCap)
+                                    ster.sgbm_uniquenessRatio = int(
+                                        sgbm_uniquenessRatio
+                                    )
+                                    ster.sgbm_speckleWindowSize = int(
+                                        sgbm_speckleWindowSize
+                                    )
+                                    ster.sgbm_speckleRange = int(sgbm_speckleRange)
+                                    ster.sgbm_mode = int(sgbm_mode)
                                     done = True
                                 except ValueError as e:
                                     err = e.args[0]
@@ -1006,6 +1293,7 @@ def first_calib_photo():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     sc.curMenu = "webcam"
     sc.lastCamTab = "calibcam"
     for cam in ster.calibPhotosIdx:
@@ -1021,6 +1309,7 @@ def prev_calib_photo():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     sc.curMenu = "webcam"
     sc.lastCamTab = "calibcam"
     for cam in ster.calibPhotosIdx:
@@ -1036,10 +1325,14 @@ def next_calib_photo():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     sc.curMenu = "webcam"
     sc.lastCamTab = "calibcam"
     for cam in ster.calibPhotosIdx:
-        if ster.calibPhotosIdx[cam] >= 0 and ster.calibPhotosIdx[cam] < ster.calibPhotosCount[cam] - 1:
+        if (
+            ster.calibPhotosIdx[cam] >= 0
+            and ster.calibPhotosIdx[cam] < ster.calibPhotosCount[cam] - 1
+        ):
             ster.calibPhotosIdx[cam] += 1
     return redirect(url_for("webcam.webcam"))
 
@@ -1051,16 +1344,16 @@ def last_calib_photo():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     sc.curMenu = "webcam"
     sc.lastCamTab = "calibcam"
     for cam in ster.calibPhotosIdx:
-        ster.calibPhotosIdx[cam] = ster.calibPhotosCount[cam] -1
+        ster.calibPhotosIdx[cam] = ster.calibPhotosCount[cam] - 1
     return redirect(url_for("webcam.webcam"))
 
 
 def doRemoveCalibPhoto(sc: ServerConfig, ster: StereoConfig, idx: int) -> bool:
-    """ Remove a calibration photo with the given index for all cameras
-    """
+    """Remove a calibration photo with the given index for all cameras"""
     logger.debug("Thread %s: In doRemoveCalibPhoto - idx = %s", get_ident(), idx)
     res = True
     for cam in ster.calibPhotosIdx:
@@ -1068,17 +1361,32 @@ def doRemoveCalibPhoto(sc: ServerConfig, ster: StereoConfig, idx: int) -> bool:
         spC = ster.calibPhotosCrn[cam][idx]
         fp = sc.photoRoot + "/" + sp
         fpC = sc.photoRoot + "/" + spC
-        logger.debug("Thread %s: In doRemoveCalibPhoto - Trying to remove %s", get_ident(), fp)
+        logger.debug(
+            "Thread %s: In doRemoveCalibPhoto - Trying to remove %s", get_ident(), fp
+        )
         if os.path.exists(fp):
             try:
                 os.remove(fp)
                 os.remove(fpC)
-                logger.debug("Thread %s: In doRemoveCalibPhoto - removed Photo %s", get_ident(), fp)
+                logger.debug(
+                    "Thread %s: In doRemoveCalibPhoto - removed Photo %s",
+                    get_ident(),
+                    fp,
+                )
             except Exception as e:
-                logger.error("Thread %s: Error removing calibration photo %s: %s", get_ident(), fp, e)
+                logger.error(
+                    "Thread %s: Error removing calibration photo %s: %s",
+                    get_ident(),
+                    fp,
+                    e,
+                )
                 res = False
         else:
-            logger.debug("Thread %s: In doRemoveCalibPhoto - Photo %s does not exist", get_ident(), fp)
+            logger.debug(
+                "Thread %s: In doRemoveCalibPhoto - Photo %s does not exist",
+                get_ident(),
+                fp,
+            )
         ster.calibPhotos[cam].pop(idx)
         ster.calibPhotosCrn[cam].pop(idx)
         ster.calibPhotosCount[cam] = len(ster.calibPhotos[cam])
@@ -1088,17 +1396,19 @@ def doRemoveCalibPhoto(sc: ServerConfig, ster: StereoConfig, idx: int) -> bool:
             ster.calibPhotosOK[cam] = False
     return res
 
+
 def getStereoCameras():
-    """ Get the two cameras to be involved in stereo processing
-    """
+    """Get the two cameras to be involved in stereo processing"""
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL = str(cfg.serverConfig.activeCamera)
     if Camera().camNum2 is not None:
         camR = str(Camera().camNum2)
     else:
         camR = None
     return camL, camR
+
 
 @bp.route("/remove_calib_photo", methods=("GET", "POST"))
 @login_required
@@ -1107,6 +1417,7 @@ def remove_calib_photo():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     sc.curMenu = "webcam"
     sc.lastCamTab = "calibcam"
     camL, camR = getStereoCameras()
@@ -1126,6 +1437,7 @@ def display_corners():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     sc.curMenu = "webcam"
     sc.lastCamTab = "calibcam"
     if not request.form.get("displaycorners") is None:
@@ -1143,6 +1455,7 @@ def calib_settings():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     tmp = {}
     tmp["intent"] = str(ster.intentIdx)
     tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
@@ -1159,11 +1472,15 @@ def calib_settings():
         if not request.form.get("calibpattern") is None:
             calibPatternIdx = int(request.form.get("calibpattern"))
         if calibPatternIdx != ster.calibPatternIdx:
-            logger.debug("Thread %s: In calib_settings - calibPatternIdx changed", get_ident())
+            logger.debug(
+                "Thread %s: In calib_settings - calibPatternIdx changed", get_ident()
+            )
             doResetCalibration(camL, camR)
             ster.calibPatternIdx = calibPatternIdx
             sc.unsavedChanges = True
-            sc.addChangeLogEntry(f"Calibration pattern changed to {ster.calibPattern[calibPatternIdx]}")
+            sc.addChangeLogEntry(
+                f"Calibration pattern changed to {ster.calibPattern[calibPatternIdx]}"
+            )
         else:
             (calibPatternSizeX, calibPatternSizeY) = ster.calibPatternSize
             if not request.form.get("calibpatternsize") is None:
@@ -1171,17 +1488,29 @@ def calib_settings():
             if not request.form.get("calibpatternsizey") is None:
                 calibPatternSizeY = int(request.form.get("calibpatternsizey"))
             if (calibPatternSizeX, calibPatternSizeY) != ster.calibPatternSize:
-                logger.debug("Thread %s: In calib_settings - calibPatternSize changed %s -> %s", get_ident(), ster.calibPatternSize, (calibPatternSizeX, calibPatternSizeY))
+                logger.debug(
+                    "Thread %s: In calib_settings - calibPatternSize changed %s -> %s",
+                    get_ident(),
+                    ster.calibPatternSize,
+                    (calibPatternSizeX, calibPatternSizeY),
+                )
                 doResetCalibration(camL, camR)
                 ster.calibPatternSize = (calibPatternSizeX, calibPatternSizeY)
                 sc.unsavedChanges = True
-                sc.addChangeLogEntry(f"Calibration pattern size changed to {ster.calibPatternSize}")
+                sc.addChangeLogEntry(
+                    f"Calibration pattern size changed to {ster.calibPatternSize}"
+                )
             else:
                 calibPhotosTarget = ster.calibPhotosTarget
                 if not request.form.get("calibphotostarget") is None:
                     calibPhotosTarget = int(request.form.get("calibphotostarget"))
                 if calibPhotosTarget != ster.calibPhotosTarget:
-                    logger.debug("Thread %s: In calib_settings - calibPhotosTarget changed from %s to %s", get_ident(), ster.calibPhotosTarget, calibPhotosTarget)
+                    logger.debug(
+                        "Thread %s: In calib_settings - calibPhotosTarget changed from %s to %s",
+                        get_ident(),
+                        ster.calibPhotosTarget,
+                        calibPhotosTarget,
+                    )
                     ster.calibPhotosTarget = calibPhotosTarget
                     if ster.calibPhotosTarget > len(ster.calibPhotos[camL]):
                         doResetCalibration(camL, camR, keepPhotos=True)
@@ -1193,12 +1522,19 @@ def calib_settings():
                         ster.calibPhotosOK[camL] = True
                         ster.calibPhotosOK[camR] = True
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Calibration photos target changed to {ster.calibPhotosTarget}")
+                    sc.addChangeLogEntry(
+                        f"Calibration photos target changed to {ster.calibPhotosTarget}"
+                    )
                 rectifyScale = ster.rectifyScale
                 if not request.form.get("rectifyscale") is None:
                     rectifyScale = int(request.form.get("rectifyscale"))
                 if rectifyScale != ster.rectifyScale:
-                    logger.debug("Thread %s: In calib_settings - rectifyScale changed from %s to %s", get_ident(), ster.rectifyScale, rectifyScale)
+                    logger.debug(
+                        "Thread %s: In calib_settings - rectifyScale changed from %s to %s",
+                        get_ident(),
+                        ster.rectifyScale,
+                        rectifyScale,
+                    )
                     ster.rectifyScale = rectifyScale
                     ster.calibCameraOK[camL] = False
                     if not camR is None:
@@ -1206,8 +1542,12 @@ def calib_settings():
                     ster.calibStereoOK = False
                     ster.stereoRectifyOK = False
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Rectify scale changed to {ster.rectifyScale}")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+                    sc.addChangeLogEntry(
+                        f"Rectify scale changed to {ster.rectifyScale}"
+                    )
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/reset_calib_photos", methods=("GET", "POST"))
@@ -1218,6 +1558,7 @@ def reset_calib_photos():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     tmp = {}
     tmp["intent"] = str(ster.intentIdx)
     tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
@@ -1232,7 +1573,9 @@ def reset_calib_photos():
         doResetCalibration(camL, camR)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Calibration was reset")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/start_take_calib_photos", methods=("GET", "POST"))
@@ -1243,6 +1586,7 @@ def start_take_calib_photos():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     tmp = {}
     tmp["intent"] = str(ster.intentIdx)
     tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
@@ -1268,7 +1612,7 @@ def start_take_calib_photos():
         if msg != "":
             flash(msg)
     return redirect(url_for("webcam.webcam"))
-    #return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    # return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs)
 
 
 @bp.route("/stop_take_calib_photos", methods=("GET", "POST"))
@@ -1279,6 +1623,7 @@ def stop_take_calib_photos():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     tmp = {}
     tmp["intent"] = str(ster.intentIdx)
     tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
@@ -1290,7 +1635,10 @@ def stop_take_calib_photos():
     sc.lastCamTab = "calibcam"
     if request.method == "POST":
         StereoCam().stoptakeCalibrationPhotos()
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
 
 def doResetCalibration(camL: str, camR: str, keepPhotos: bool = False):
     """Reset the  camera calibration."""
@@ -1298,6 +1646,7 @@ def doResetCalibration(camL: str, camR: str, keepPhotos: bool = False):
     cfg = CameraCfg()
     sc = cfg.serverConfig
     ster = cfg.stereoCfg
+    cs = cfg.cameras
 
     # Remove existing photos, if not excluded
     if not keepPhotos == True:
@@ -1326,9 +1675,9 @@ def doResetCalibration(camL: str, camR: str, keepPhotos: bool = False):
     sc.unsavedChanges = True
     sc.addChangeLogEntry(f"Calibration photos were reset")
 
+
 def doCleanup(sc: ServerConfig, ster: StereoConfig):
-    """Clean up the calibration photo path 
-    """
+    """Clean up the calibration photo path"""
     logger.debug("Thread %s: In doCleanup", get_ident())
 
     # Create list of existing files
@@ -1339,23 +1688,44 @@ def doCleanup(sc: ServerConfig, ster: StereoConfig):
     camDirs = [a.name for a in rootPath.iterdir() if a.is_dir()]
 
     for cam in camDirs:
-        logger.debug("Thread %s: In doCleanup  - Searching in cam: %s", get_ident(), cam)
+        logger.debug(
+            "Thread %s: In doCleanup  - Searching in cam: %s", get_ident(), cam
+        )
         if cam in ster.calibPhotos:
             camFiles = [f.name for f in (rootPath / cam).iterdir() if f.is_file()]
             for f in camFiles:
-                logger.debug("Thread %s: In doCleanup  - Found file: %s", get_ident(), f)
+                logger.debug(
+                    "Thread %s: In doCleanup  - Found file: %s", get_ident(), f
+                )
                 sp = ster.calibPhotosSubPath + cam + "/" + f
-                if not sp in ster.calibPhotos[cam] \
-                and not sp in ster.calibPhotosCrn[cam]:
+                if (
+                    not sp in ster.calibPhotos[cam]
+                    and not sp in ster.calibPhotosCrn[cam]
+                ):
                     try:
                         fp = sc.photoRoot + "/" + sp
-                        logger.debug("Thread %s: In doCleanup  - Removing file: %s", get_ident(), fp)
+                        logger.debug(
+                            "Thread %s: In doCleanup  - Removing file: %s",
+                            get_ident(),
+                            fp,
+                        )
                         os.remove(fp)
-                        logger.debug("Thread %s: In doRemoveCalibPhoto - removed Photo %s", get_ident(), fp)
+                        logger.debug(
+                            "Thread %s: In doRemoveCalibPhoto - removed Photo %s",
+                            get_ident(),
+                            fp,
+                        )
                     except Exception as e:
-                        logger.error("Thread %s: Error removing unused calibration photo %s: %s", get_ident(), fp, e)
+                        logger.error(
+                            "Thread %s: Error removing unused calibration photo %s: %s",
+                            get_ident(),
+                            fp,
+                            e,
+                        )
         else:
-            logger.debug("Thread %s: In doCleanup  - Ignoring subdirectory: %s", get_ident(), cam)
+            logger.debug(
+                "Thread %s: In doCleanup  - Ignoring subdirectory: %s", get_ident(), cam
+            )
 
 
 def doInitCalibration(camL: str, camR: str):
@@ -1421,6 +1791,7 @@ def calibrate_cameras():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     tmp = {}
     tmp["intent"] = str(ster.intentIdx)
     tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
@@ -1443,7 +1814,9 @@ def calibrate_cameras():
             msg = "Error calibrating cameras: {}".format(e)
         if msg != "":
             flash(msg)
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/start_record_stereo", methods=("GET", "POST"))
@@ -1454,6 +1827,7 @@ def start_record_stereo():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -1479,7 +1853,9 @@ def start_record_stereo():
             flash(msg)
         else:
             flash("Recording is already active.")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
 
 
 @bp.route("/stop_record_stereo", methods=("GET", "POST"))
@@ -1490,6 +1866,7 @@ def stop_record_stereo():
     g.version = version
     cfg = CameraCfg()
     ster = cfg.stereoCfg
+    cs = cfg.cameras
     camL, camR = getStereoCameras()
     doInitCalibration(camL, camR)
     tmp = {}
@@ -1507,4 +1884,6 @@ def stop_record_stereo():
             scam.stopRecordStereo()
         else:
             flash("Recording is not active.")
-    return render_template("webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp)
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )

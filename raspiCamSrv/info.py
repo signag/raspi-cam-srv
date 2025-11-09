@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 @bp.route("/info")
 @login_required
 def main():
+    logger.debug("In info")
     cam = Camera().cam
-    props = cam.camera_properties
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
@@ -24,6 +24,7 @@ def main():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sm = cfg.sensorModes
+    logger.debug("In info - len(sm): %s", len(sm))
     tcs = {}
     for c in cs:
         camnum = str(c.num)
@@ -33,11 +34,14 @@ def main():
             strc = cfg.streamingCfg
             if camnum in strc:
                 cstrc = strc[camnum]
-                tcs[camnum] = cstrc["tuningconfig"]
+                if "tuningconfig" in cstrc:
+                    tcs[camnum] = cstrc["tuningconfig"]
+                else:
+                    tcs[camnum] = []
             else:
                 tcs[camnum] = TuningConfig()
         c.status = Camera.cameraStatus(c.num)
     # Update streaming clients
     sc.updateStreamingClients()
     sc.curMenu = "info"
-    return render_template("info/info.html", props=props, sm=sm, sc=sc, tcs=tcs, cp=cp, cs=cs, cfg=cfg)
+    return render_template("info/info.html", sm=sm, sc=sc, tcs=tcs, cp=cp, cs=cs, cfg=cfg)

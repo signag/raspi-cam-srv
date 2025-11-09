@@ -284,10 +284,10 @@ class StereoCam():
                 cam.startLiveStream2()
             try:
                 # Just to keep the live stream running
-                frame = cam.get_frame()
+                frame, frameRaw = cam.get_frame()
                 left = cam.getLeftImageForStereo()
                 # logger.debug("Thread %s: StereoCam._stereoThread - got left live view buffer", get_ident())
-                frame2 = cam.get_frame2()
+                frame2, frame2Raw = cam.get_frame2()
                 right = cam.getRightImageForStereo()
                 # logger.debug("Thread %s: StereoCam._stereoThread - got right live view buffer", get_ident())
 
@@ -403,12 +403,12 @@ class StereoCam():
             try:
                 # Get the left and right images
                 # Call get_frame, Just to keep the live stream running
-                frame = cam.get_frame()
+                frame, frameRaw = cam.get_frame()
                 imgL = cam.getLeftImageForStereo()
                 # logger.debug("Thread %s: StereoCam._takeCalibPhotoThread - got left image", get_ident())
 
                 if self.camR is not None:
-                    frame2 = cam.get_frame2()
+                    frame2, frame2Raw = cam.get_frame2()
                     imgR = cam.getRightImageForStereo()
                     # logger.debug("Thread %s: StereoCam._takeCalibPhotoThread - got right image", get_ident())
 

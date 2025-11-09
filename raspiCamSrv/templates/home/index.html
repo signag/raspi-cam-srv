@@ -349,6 +349,9 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Zoom & Pan -->
                 <h4>Zoom and pan</h4>
+                {% if sc.activeCameraIsUsb == True %}
+                <p>Not yet available for USB cameras</p>
+                {% else %}
                 <div>
                     <form id="zoomform" method="post" action="{{ url_for('home.set_zoom') }}">
                         <table class="w3-table-all">
@@ -531,6 +534,7 @@ RaspiCamSrv's Live page
                         </tr>
                     </table>
                 </div>
+                {% endif %}
             </div>
             {% if sc.lastLiveTab == "autoexposure" %}
             <div id="autoexposure" class="w3-container controlgroup">
@@ -539,6 +543,9 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Control settings for auto-exposure -->
                 <h4>Auto Exposure</h4>
+                {% if sc.activeCameraIsUsb == True %}
+                <p>Not yet available for USB cameras</p>
+                {% else %}
                 <div>
                     <form method="post" action="{{ url_for('home.ae_control') }}">
                         <table class="w3-table-all">
@@ -786,6 +793,7 @@ RaspiCamSrv's Live page
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
+                {% endif %}
             </div>
             {% if sc.lastLiveTab == "exposure" %}
             <div id="exposure" class="w3-container controlgroup">
@@ -794,6 +802,9 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Control settings for manual exposure control -->
                 <h4>Exposure</h4>
+                {% if sc.activeCameraIsUsb == True %}
+                <p>Not yet available for USB cameras</p>
+                {% else %}
                 <div>
                     <form method="post" action="{{ url_for('home.exposure_control') }}">
                         <table class="w3-table-all">
@@ -1010,6 +1021,7 @@ RaspiCamSrv's Live page
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
+                {% endif %}
             </div>
             {% if sc.lastLiveTab == "image" %}
             <div id="image" class="w3-container controlgroup">
@@ -1018,6 +1030,9 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Control settings for other image parameters -->
                 <h4>Image</h4>
+                {% if sc.activeCameraIsUsb == True %}
+                <p>Not yet available for USB cameras</p>
+                {% else %}
                 <div>
                     <form method="post" action="{{ url_for('home.image_control') }}">
                         <table class="w3-table-all">
@@ -1276,6 +1291,7 @@ RaspiCamSrv's Live page
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>

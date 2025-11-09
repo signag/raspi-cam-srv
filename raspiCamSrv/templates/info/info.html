@@ -1,24 +1,59 @@
 {% extends 'base.html' %}
 
 {% block header %}
-    {% block title %}Camera Information{% endblock %}
+    {% block title %}Information{% endblock %}
 {% endblock %}
 
 {% block content %}
     <div class="w3-bar w3-green">
         <!-- Info menue -->
+        {% if sc.noCamera == False %}
         <button class="w3-bar-item w3-button infomenu w3-light-green" id="camerasbtn" onclick="openInfoTab('cameras', 'camerasbtn')">Installed Cameras</button>
         <button class="w3-bar-item w3-button infomenu" id="campropbtn" onclick="openInfoTab('camprops', 'campropbtn')">Camera Properties</button>
+        {% if sm|length <= 5 %}
+        {% set btnWidth = 100 // (sm|length) %}
         {% for mode in sm %}
         <button class="w3-bar-item w3-button infomenu" id="{{ mode.tabButtonId }}" onclick="openInfoTab('{{ mode.tabId }}', '{{ mode.tabButtonId }}')">{{ mode.tabTitle}}</button>
-        {% endfor%}
+        {% endfor %}
+        {% else %}
+        {% for mode in sm %}
+        {% if loop.index <= 4 %}
+        <button class="w3-bar-item w3-button infomenu" id="{{ mode.tabButtonId }}" onclick="openInfoTab('{{ mode.tabId }}', '{{ mode.tabButtonId }}')">{{ mode.tabTitle}}</button>
+        {% endif %}
+        {% endfor %}
+        <select class="w3-bar-item w3-button infomenu" name="sensormodemenu" id="sensormodemenu" 
+            onchange="openInfoTabSensorMode()" onclick="openInfoTabSensorMode()">
+            {% for mode in sm %}
+            {% if loop.index > 4 %}
+            {% if cfg.sensor_mode == mode.id %}
+            <option value="{{ mode.id }}" selected>Sensor Mode {{ mode.id }}</option>
+            {% else %}
+            <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
+            {% endif %}
+            {% endif %}
+            {% endfor%}
+            {% if cfg.sensor_mode == "custom" %}
+            <option value="custom" selected>Custom</option>
+            {% else %}
+            <option value="custom">Custom</option>
+            {% endif %}
+        </select>
+        {% endif %}
+        {% else %}
+        <button class="w3-bar-item w3-button infomenu w3-light-green" id="camerasbtn" onclick="openInfoTab('cameras', 'camerasbtn')">System (No Camera available)</button>
+        {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
             <div class="w3-tooltip">
                 <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
                     GitHub
                 </span>
+                {% if sc.NoCamera == True %}
+                {% set noCam = 1 %}
+                {% else %}
+                {% set noCam = 0 %}
+                {% endif %}
                 <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp" alt="Online help"
-                    style="height:34px; width:34px" onclick="onlineHelp()">
+                    style="height:34px; width:34px" onclick="onlineHelp({{ noCam }})">
             </div>
         </div>
     </div>
@@ -63,14 +98,26 @@
         </table>
         {% for cam in cs %}
         {% if cam.num == sc.activeCamera %}
-        <h4>Camera {{ cam.num }} (currently active)</h4>
-        {% else%}
         {% if cam.isUsb == true %}
-        <h4>Camera {{ cam.num }} (USB camera - Not supported)</h4>
-        {% else%}
+        {% if sc.noCamera == true %}
+        <h4>Camera {{ cam.num }} (Not in use) (USB Camera at {{ cam.usbDev }})</h4>
+        {% else %}
+        <h4>Camera {{ cam.num }} (currently active) (USB Camera at {{ cam.usbDev }})</h4>
+        {% endif %}
+        {% else %}
+        <h4>Camera {{ cam.num }} (currently active)</h4>
+        {% endif %}
+        {% else %}
+        {% if cam.isUsb == true %}
+        {% if sc.noCamera == true %}
+        <h4>Camera {{ cam.num }} (Not in use) (USB Camera at {{ cam.usbDev }})</h4>
+        {% else %}
+        <h4>Camera {{ cam.num }} (USB Camera at {{ cam.usbDev }})</h4>
+        {% endif %}
+        {% else %}
         <h4>Camera {{ cam.num }}</h4>
-        {% endif%}
-        {% endif%}
+        {% endif %}
+        {% endif %}
         {% set camnum = cam.num|string %}
         {% set tc = tcs[camnum] %}
         <table class="w3-table-all">
@@ -150,7 +197,8 @@
                 </td>
             </tr>
         </table>
-        {% endfor%}
+        {% endfor %}
+        {% if sc.noCamera == False %}
         <h4>Streaming Clients</h4>
         <table class="w3-table-all">
             <tr>
@@ -165,7 +213,7 @@
                 <td>{{ sc.streamingClientStreams(ip) }}</td>
                 <td></td>
             </tr>
-            {% endfor%}
+            {% endfor %}
             {% if sc.streamingClients|length == 0 %}
             <tr>
                 <td>None</td>
@@ -174,6 +222,7 @@
             </tr>
             {% endif %}
         </table>
+        {% endif %}
     </div>
     <div id="camprops" class="infogroup" style="display:none">
         <h4>Camera Properties</h4>
@@ -183,82 +232,141 @@
                 <th>Value</th>
                 <th>Description</th>
             </tr>
-            {% for prop in props %}
-                <tr>
-                    <td>{{ prop|string() }}</td>
-                    {% if prop == "ColourFilterArrangement" %}
-                    {% if props[prop] == 0 %}</td>
-                    <td>RGGB</td>
-                    {% elif props[prop] == 1 %}</td>
-                    <td>GRBG</td>
-                    {% elif props[prop] == 2 %}</td>
-                    <td>GBRG</td>
-                    {% elif props[prop] == 3 %}</td>
-                    <td>BGGR</td>
-                    {% elif props[prop] == 4 %}</td>
-                    <td>monochrome</td>
-                    {% else %}
-                    <td>{{ props[prop]|string() }}</td>
-                    {% endif %}
-                    {% else %}
-                    <td>{{ props[prop]|string() }}</td>
-                    {% endif %}
-                    {% if prop == "Model" %}
-                    <td>The name that the attached sensor advertises.</td>
-                    {% elif prop == "ColourFilterArrangement" %}
-                    <td>
-                        A number representing the native Bayer order of sensor 
-                        (before any rotation is taken into account).
-                    </td>
-                    {% elif prop == "Location" %}
-                    <td>
-                        An integer which specifies where on the device the camera is 
-                        situated (for example, front or back). For the Raspberry Pi, 
-                        the value has no meaning.
-                    </td>
-                    {% elif prop == "PixelArrayActiveAreas" %}
-                    <td>
-                        The active area of the sensor’s pixel array within the entire sensor pixel array. 
-                        Given as a tuple of (x_offset, y_offset, width, height) values.
-                    </td>
-                    {% elif prop == "PixelArraySize" %}
-                    <td>
-                        The size of the active pixel area as an (x, y) tuple. 
-                        This is the full available resolution of the sensor.
-                    </td>
-                    {% elif prop == "Rotation" %}
-                    <td>
-                        The rotation of the sensor relative to the camera board. 
-                        On many Raspberry Pi devices, the sensor is actually upside down 
-                        when the camera board is held with the connector at the bottom, 
-                        and these will return a value of 180° here.
-                    </td>
-                    {% elif prop == "ScalerCropMaximum" %}
-                    <td>
-                        This value is updated when a camera mode is configured. 
-                        It returns the rectangle as a (x_offset, y_offset, width, height) tuple 
-                        within the pixel area active area, that is read out by this camera mode.
-                    </td>
-                    {% elif prop == "SensorSensitivity" %}
-                    <td>
-                        This value is updated when a camera mode is configured. 
-                        It represents a relative sensitivity of this camera mode compared to 
-                        other camera modes. Usually, camera modes all have the same sensitivity 
-                        so that the same exposure time and gain yield an image of the same brightness. 
-                        Sometimes cameras have modes where this is not true, and to get the same 
-                        brightness you would have to adjust the total requested exposure by the ratio 
-                        of these sensitivities. For most sensors this will always return 1.0.
-                    </td>
-                    {% elif prop == "UnitCellSize" %}
-                    <td>
-                        The physical size of this sensor’s pixels, if known. 
-                        Given as an (x, y) tuple in units of nanometres.
-                    </td>
-                    {% else %}
-                    <td></td>
-                    {% endif %}
-                </tr>
-            {% endfor%}
+            <tr>
+                <td>
+                    Model
+                </td>
+                <td>
+                    {{ cp.model }}
+                </td>
+                <td>The name that the attached sensor advertises.</td>
+            </tr>
+            <tr>
+                <td>
+                    UnitCellSize
+                </td>
+                <td>
+                    {{ cp.unitCellSize }}
+                </td>
+                <td>
+                    The physical size of this sensor’s pixels, if known. 
+                    Given as an (x, y) tuple in units of nanometres.
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Location
+                </td>
+                <td>
+                    {{ cp.location }}
+                </td>
+                <td>
+                    An integer which specifies where on the device the camera is 
+                    situated (for example, front or back). For the Raspberry Pi, 
+                    the value has no meaning.
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Rotation
+                </td>
+                <td>
+                    {{ cp.rotation }}
+                </td>
+                <td>
+                    The rotation of the sensor relative to the camera board. 
+                    On many Raspberry Pi devices, the sensor is actually upside down 
+                    when the camera board is held with the connector at the bottom, 
+                    and these will return a value of 180° here.
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    ColorFilterArrangement
+                </td>
+                <td>
+                    {{ cp.colorFilterArrangement }}
+                </td>
+                <td>
+                    A number representing the native Bayer order of sensor 
+                    (before any rotation is taken into account).
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    ColorSpace
+                </td>
+                <td>
+                    {{ cp.colorSpace }}
+                </td>
+                <td>
+                    Color space of the sensor. (Only available for USB cameras)
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    PixelArraySize
+                </td>
+                <td>
+                    {{ cp.pixelArraySize }}
+                </td>
+                <td>
+                    The size of the active pixel area as an (x, y) tuple. 
+                    This is the full available resolution of the sensor.
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    PixelArrayActiveAreas
+                </td>
+                <td>
+                    {{ cp.pixelArrayActiveAreas }}
+                </td>
+                <td>
+                    The active area of the sensor’s pixel array within the entire sensor pixel array. 
+                    Given as a tuple of (x_offset, y_offset, width, height) values.
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    ScalerCropMaximum
+                </td>
+                <td>
+                    {{ cp.scalerCropMaximum }}
+                </td>
+                <td>
+                    This value is updated when a camera mode is configured. 
+                    It returns the rectangle as a (x_offset, y_offset, width, height) tuple 
+                    within the pixel area active area, that is read out by this camera mode.
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    SystemDevices
+                </td>
+                <td>
+                    {{ cp.systemDevices }}
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    SensorSensitivity
+                </td>
+                <td>
+                    {{ cp.sensorSensitivity }}
+                </td>
+                <td>
+                    This value is updated when a camera mode is configured. 
+                    It represents a relative sensitivity of this camera mode compared to 
+                    other camera modes. Usually, camera modes all have the same sensitivity 
+                    so that the same exposure time and gain yield an image of the same brightness. 
+                    Sometimes cameras have modes where this is not true, and to get the same 
+                    brightness you would have to adjust the total requested exposure by the ratio 
+                    of these sensitivities. For most sensors this will always return 1.0.
+                </td>
+            </tr>
         </table>
     </div>
     {% for mode in sm %}
@@ -354,7 +462,7 @@
             </tr>
         </table>
     </div>
-    {% endfor%}
+    {% endfor %}
     <script>
         function openInfoTab(infoTabName, infoTabButton) {
             var i;
@@ -370,8 +478,34 @@
             }
             document.getElementById(infoTabButton).classList = "w3-bar-item w3-button infomenu w3-light-green";
         }
-        function onlineHelp() {
-            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Information.md");
+
+        function openInfoTabSensorMode() {
+            var i;
+
+            var b = document.getElementById("sensormodemenu");
+            var sel = b.value;
+
+            var x = document.getElementsByClassName("infogroup");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            var infoTabName = "sensormode" + sel;
+            document.getElementById(infoTabName).style.display = "block";
+
+            var b = document.getElementsByClassName("infomenu");
+            for (i = 0; i < b.length; i++) {
+                b[i].classList = "w3-bar-item w3-button infomenu";
+            }
+            document.getElementById("sensormodemenu").classList = "w3-bar-item w3-button infomenu w3-light-green";
+
+        }
+
+        function onlineHelp(noCam) {
+            if (noCam == 0) {
+                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Information.md");
+            } else {
+                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Information_NoCam.md");
+            }
         }
     </script>
 {% endblock %}

@@ -26,12 +26,16 @@
                     <div class="w3-bar-item w3-right" style="padding-top:8px;padding-bottom:8px">
                         {{ g.user['username'] }}
                         | 
+                        {% if sc.noCamera == False %}
                         {{ sc.activeCameraInfo}}
+                        {% else %}
+                        No Camera available
+                        {% endif %}
                         |
                         {{ g.hostname }}
                     </div>
                 </div>
-                {% else%}
+                {% else %}
                 <div class="w3-bar-item w3-right">
                     {{ sc.activeCameraInfo}}
                     |
@@ -41,6 +45,7 @@
             </div>
             <div class="w3-bar w3-black">
                 {% if g.user %}
+                {% if sc.noCamera == False %}
                 {% if sc.curMenu == "live" %}
                 <a href="{{ url_for('home.index') }}" class="w3-bar-item w3-button menubtns w3-dark-grey" id='livebtn' onclick="openMenu('livebtn')">Live</a>
                 {% else %}
@@ -51,11 +56,13 @@
                 {% else %}
                 <a href="{{ url_for('config.main') }}" class="w3-bar-item w3-button" id='cfgbtn' onclick="openMenu('cfgbtn')">Config</a>
                 {% endif %}
+                {% endif %}
                 {% if sc.curMenu == "info" %}
                 <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='infobtn' onclick="openMenu('infobtn')">Info</a>
                 {% else %}
                 <a href="{{ url_for('info.main') }}" class="w3-bar-item w3-button" id='infobtn' onclick="openMenu('infobtn')">Info</a>
                 {% endif %}
+                {% if sc.noCamera == False %}
                 {% if sc.curMenu == "photos" %}
                 <a href="{{ url_for('images.main') }}" class="w3-bar-item w3-button w3-dark-grey" id='imagesbtn' onclick="openMenu('imagesbtn')">Photos</a>
                 {% else %}
@@ -66,15 +73,18 @@
                 {% else %}
                 <a href="{{ url_for('photoseries.main') }}" class="w3-bar-item w3-button" id='photoseriesbtn' onclick="openMenu('photoseriesbtn')">Photo Series</a>
                 {% endif %}
+                {% endif %}
                 {% if sc.curMenu == "trigger" %}
                 <a href="{{ url_for('trigger.trigger') }}" class="w3-bar-item w3-button w3-dark-grey" id='triggerbtn' onclick="openMenu('triggerbtn')">Trigger</a>
                 {% else %}
                 <a href="{{ url_for('trigger.trigger') }}" class="w3-bar-item w3-button" id='triggerbtn' onclick="openMenu('triggerbtn')">Trigger</a>
                 {% endif %}
+                {% if sc.noCamera == False %}
                 {% if sc.curMenu == "webcam" %}
                 <a href="{{ url_for('webcam.webcam') }}" class="w3-bar-item w3-button w3-dark-grey" id='cambtn' onclick="openMenu('cambtn')">Cam</a>
                 {% else %}
                 <a href="{{ url_for('webcam.webcam') }}" class="w3-bar-item w3-button" id='cambtn' onclick="openMenu('cambtn')">Cam</a>
+                {% endif %}
                 {% endif %}
                 {% if sc.curMenu == "console" %}
                 <a href="{{ url_for('console.console') }}" class="w3-bar-item w3-button w3-dark-grey" id='consolebtn' onclick="openMenu('consolebtn')">Console</a>
@@ -92,7 +102,8 @@
                 <a href="{{ url_for('auth.logout') }}" class="w3-bar-item w3-button" id='logoutbtn' onclick="openMenu('logoutbtn')">Log Out</a>
                 {% endif %}
                 <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
-                    {% if sc.piCameras|length() > 1 %}
+                    {% if sc.noCamera == False %}
+                    {% if sc.supportedCameras|length() > 1 %}
                     {% if sc.isVideoRecording2 %}
                     <img src="{{ url_for('static', filename='recording_video2_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
                     {% else %}
@@ -151,6 +162,17 @@
                     {% endif %}
                     {% else %}
                     <img src="{{ url_for('static', filename='recording_live_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px"> 
+                    {% endif %}
+                    {% else %}
+                    {% if sc.isEventhandling %}
+                    {% if sc.isEventsWaiting %}
+                    <img src="{{ url_for('static', filename='recording_events_wait.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_events_active.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
+                    {% else %}
+                    <img src="{{ url_for('static', filename='recording_events_inactive.png') }}" class="w3-image" id="recording_active" alt="Recording active" style="height:34px; width:34px">
+                    {% endif %}
                     {% endif %}
                 </div>
                 {% else %}

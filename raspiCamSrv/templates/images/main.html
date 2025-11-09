@@ -28,7 +28,7 @@
                 <td>
                     <select name="camera" id="camera" onchange="dosubmit('pvcontrol')">
                         {% for cam in cs %}
-                        {% if cam.isUsb == false %}
+                        {% if cam.isUsb == False or sc.useUsbCameras == True %}
                         {% if sc.pvCamera == cam.num %}
                         <option value="{{ cam.num }}" selected>{{ cam.num }}: {{ cam.model }}</option>
                         {% else %}

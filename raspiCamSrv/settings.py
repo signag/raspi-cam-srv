@@ -73,49 +73,75 @@ def serverconfig():
         if sc.isTriggerRecording:
             msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
         if not msg:
-            photoType = request.form["phototype"]
-            sc.photoType = photoType
-            rawPhotoType = request.form["rawphototype"]
-            sc.rawPhotoType = rawPhotoType
-            videoType = request.form["videotype"]
-            sc.videoType = videoType
-            activeCam = int(request.form["activecamera"])
-            # If active camera has changed reset stream size to force adaptation of sensor mode
-            if activeCam != sc.activeCamera:
-                cfg.liveViewConfig.stream_size = None
-                cfg.photoConfig.stream_size = None
-                cfg.rawConfig.stream_size = None
-                cfg.videoConfig.stream_size = None
-                sc.activeCamera = activeCam
-                for cm in cs:
-                    if activeCam == cm.num:
-                        sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
-                        sc.activeCameraModel = cm.model
-                        break
-                strCfg = cfg.streamingCfg
-                newCamStr = str(activeCam)
-                if newCamStr in strCfg:
-                    ncfg = strCfg[newCamStr]
-                    if "tuningconfig" in ncfg:
-                        cfg.tuningConfig = ncfg["tuningconfig"]
+            if sc.noCamera == False:
+                photoType = request.form["phototype"]
+                sc.photoType = photoType
+                rawPhotoType = request.form["rawphototype"]
+                sc.rawPhotoType = rawPhotoType
+                videoType = request.form["videotype"]
+                sc.videoType = videoType
+                activeCam = int(request.form["activecamera"])
+                # If active camera has changed reset stream size to force adaptation of sensor mode
+                if activeCam != sc.activeCamera:
+                    cfg.liveViewConfig.stream_size = None
+                    cfg.photoConfig.stream_size = None
+                    cfg.rawConfig.stream_size = None
+                    cfg.videoConfig.stream_size = None
+                    sc.activeCamera = activeCam
+                    for cm in cs:
+                        if activeCam == cm.num:
+                            sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
+                            sc.activeCameraModel = cm.model
+                            break
+                    strCfg = cfg.streamingCfg
+                    newCamStr = str(activeCam)
+                    if newCamStr in strCfg:
+                        ncfg = strCfg[newCamStr]
+                        if "tuningconfig" in ncfg:
+                            cfg.tuningConfig = ncfg["tuningconfig"]
+                        else:
+                            cfg.tuningConfig = TuningConfig()
                     else:
-                        cfg.tuningConfig = TuningConfig
-                else:
-                    cfg.tuningConfig = TuningConfig
-                Camera.switchCamera()
-                msg = "Camera switched to " + sc.activeCameraInfo
-                logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
-            recordAudio = not request.form.get("recordaudio") is None
-            sc.recordAudio = recordAudio        
-            audioSync = request.form["audiosync"]
-            sc.audioSync = audioSync
-            useStereo = not request.form.get("usestereo") is None
-            sc.useStereo = useStereo
-            useHist = not request.form.get("showhistograms") is None
-            if not useHist:
-                sc.displayContent = "meta"
-            sc.useHistograms = useHist
-            sc.requireAuthForStreaming = not request.form.get("requireAuthForStreaming") is None
+                        cfg.tuningConfig = TuningConfig()
+                    Camera.switchCamera()
+                    msg = "Camera switched to " + sc.activeCameraInfo
+                    logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
+                recordAudio = not request.form.get("recordaudio") is None
+                sc.recordAudio = recordAudio        
+                audioSync = request.form["audiosync"]
+                sc.audioSync = audioSync
+                useStereo = not request.form.get("usestereo") is None
+                sc.useStereo = useStereo
+                useHist = not request.form.get("showhistograms") is None
+                if not useHist:
+                    sc.displayContent = "meta"
+                sc.useHistograms = useHist
+                sc.requireAuthForStreaming = not request.form.get("requireAuthForStreaming") is None
+            useUsbCameras = not request.form.get("useusbcameras") is None
+
+            reloadCamInfoNeeded = False
+            if useUsbCameras != sc.useUsbCameras:
+                logger.debug("serverconfig - useUsbCameras changed to %s", useUsbCameras)
+                if len(sc.piCameras) == 0 and sc.useUsbCameras == True:
+                    if sc.isLiveStream == True \
+                    or sc.isLiveStream2 == True \
+                    or sc.isVideoRecording == True \
+                    or sc.isPhotoSeriesRecording == True \
+                    or sc.isTriggerRecording == True \
+                    or sc.isEventhandling == True:
+                        msg = "Please stop all active camera processes before changing the USB camera configuration"
+                if not msg:
+                    if len(sc.piCameras) == 0:
+                        reloadCamInfoNeeded = True
+                    else:
+                        if sc.activeCameraIsUsb == True:
+                            reloadCamInfoNeeded = True
+                        if not sc.secondCamera is None:
+                            if sc.secondCameraIsUsb == True:
+                                reloadCamInfoNeeded = True
+                    sc.useUsbCameras = useUsbCameras
+                    cfg.setSupportedCameras()
+
             useAPI = not request.form.get("useapi") is None
             sc.useAPI = useAPI
             sc.locLatitude = float(request.form["loclatitude"])
@@ -124,8 +150,92 @@ def serverconfig():
             sc.locTzKey = request.form["loctzkey"]
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Settings/General Parameters changed")
+            if reloadCamInfoNeeded:
+                reloadCameraSystem()
         if msg:
             flash(msg)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+
+def reloadCameraSystem():
+    """Reload the camera system in case of hot plug-in/-out
+    """
+    logger.debug("reloadCameraSystem")
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    Camera._instance = None
+    cfg.cameras = []
+    cfg.sensorModes = []
+    cfg.rawFormats = []
+    cfg.cameraProperties = CameraProperties()
+    sc.noCamera = False
+    sc.supportedCameras = []
+    sc.usbCamAvailable = False
+    sc.piCameras = []
+    sc.hasMicrophone = False
+    sc.defaultMic = ""
+    sc.isMicMuted = False
+    sc.recordAudio = False
+
+    cam = Camera()
+    cfg.setSupportedCameras()
+    cfg.setPiCameras()
+    logger.debug("reloadCameraSystem - done")
+
+@bp.route("/reloadCameras", methods=("GET", "POST"))
+@login_required
+def reloadCameras():
+    logger.debug("reloadCameras")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    sc.lastSettingsTab = "settingsconfig"
+    if request.method == "POST":
+        if sc.isVideoRecording:
+            Camera().stopVideoRecording()
+        if sc.isPhotoSeriesRecording == True:
+            tl = PhotoSeriesCfg()
+            sr = tl.curSeries
+            sr.nextStatus("pause")
+            sr.persist()
+            Camera().stopPhotoSeries()
+            logger.debug("In resetServer - photo series stopped")
+        if sc.isTriggerRecording == True:
+            MotionDetector().stopMotionDetection()
+            sc.isTriggerRecording = False
+            logger.debug("In resetServer - Motion detection stopped")
+        if sc.isEventhandling:
+            TriggerHandler().stop()
+            sc.isEventhandling = False
+        if sc.isLiveStream == True:
+            Camera().stopLiveStream()
+            logger.debug("In resetServer - Live stream stopped")
+        if sc.isLiveStream2 == True:
+            Camera().stopLiveStream2()
+            logger.debug("In resetServer - Live stream 2 stopped")
+        logger.debug("Stopping camera system")
+        time.sleep(3)
+        Camera().stopCameraSystem()
+        Camera.liveViewDeactivated = False
+        Camera.thread = None
+        Camera.thread2 = None
+        Camera.videoThread = None
+        Camera.photoSeriesThread = None
+        reloadCameraSystem()
+
+        sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Camera system reloaded")
+        los = getLoadConfigOnStart(cfgPath)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
 
 @bp.route("/resetServer", methods=("GET", "POST"))

@@ -81,6 +81,8 @@ def create_app(test_config=None):
     # logging.getLogger("raspiCamSrv.console").setLevel(logging.DEBUG)
     # logging.getLogger("raspiCamSrv.api").setLevel(logging.DEBUG)
     # logging.getLogger("raspiCamSrv.stereoCam").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.info").setLevel(logging.DEBUG)
+    # logging.getLogger("raspiCamSrv.config").setLevel(logging.DEBUG)
 
     # >>>>> Set log level for picamera2 (DEBUG, INFO, WARNING, ERROR)
     Picamera2.set_logging(logging.ERROR)
@@ -149,10 +151,14 @@ def create_app(test_config=None):
     stc.calibDataSubPath = "calib_data/"
     stc.calibDataFile = "calib_params.xml"
     cam = Camera()
+    cfg.setSupportedCameras()
     cfg.setPiCameras()
     # For testiing multi-camera features:
     # sc.piCameras.pop(1)
 
+    # Check display photo and buffer
+    sc.displayBufferCheck()
+    
     # Configure Triggered Capture
     tcActionPath = app.static_folder + "/events"
     os.makedirs(tcActionPath, exist_ok=True)

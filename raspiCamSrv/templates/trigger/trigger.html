@@ -35,6 +35,7 @@
         <button class="w3-bar-item w3-button triggermenu" id="trgTriggerActionsBtn"
             onclick="openTriggerTab('trgtriggeractions', 'trgTriggerActionsBtn')">Trigger-Actions</button>
         {% endif %}
+        {% if sc.noCamera == False %}
         {% if sc.lastTriggerTab == "trgmotion" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgmotionbtn"
             onclick="openTriggerTab('trgmotion', 'trgmotionbtn')">Motion</button>
@@ -48,6 +49,7 @@
         {% else %}
         <button class="w3-bar-item w3-button triggermenu" id="trgactionbtn"
             onclick="openTriggerTab('trgaction', 'trgactionbtn')">Camera</button>
+        {% endif %}
         {% endif %}
         {% if sc.lastTriggerTab == "trgnotify" %}
         <button class="w3-bar-item w3-button triggermenu w3-light-green" id="trgnotifybtn"
@@ -91,12 +93,18 @@
                     <th colspan="2">
                         Triggers
                     </th>
+                    {% if sc.noCamera == False %}
                     <th colspan="2">
                         Actions
                     </th>
+                    {% else %}
+                    <th>
+                    </th>
+                    {% endif %}
                     <th>
                     </th>
                 </tr>
+                {% if sc.noCamera == False %}
                 <tr>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -129,6 +137,7 @@
                     <td style="width: 50%;">
                     </td>
                 </tr>
+                {% endif %}
                 <tr>
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -144,6 +153,7 @@
                         <input type="checkbox" id="triggerbyevents" name="triggerbyevents" value="1">
                         {% endif %}
                     </td>
+                    {% if sc.noCamera == False %}
                     <td class="w3-tooltip" style="width:15%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                             Activate if you wish to capture images on a trigger event.<br>
@@ -158,9 +168,14 @@
                         <input type="checkbox" id="triggerphoto" name="triggerphoto" value="1">
                         {% endif %}
                     </td>
+                    {% else %}
+                    <td>
+                    </td>
+                    {% endif %}
                     <td style="width:50%;">
                     </td>
                 </tr>
+                {% if sc.noCamera == False %}
                 <tr>
                     <td style="width:15%">
                     </td>
@@ -183,6 +198,7 @@
                     <td style="width:50%;">
                     </td>
                 </tr>
+                {% endif %}
             </table>
             <p style="margin-bottom: 0"></p>
             <h4>Operation</h4>
@@ -261,6 +277,7 @@
                 <tr>
                     <td colspan="9" style="width: 100%;">&nbsp;</td>
                 </tr>
+                {% if sc.noCamera == False %}
                 <tr>
                     <td class="w3-tooltip" style="width:25%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -284,6 +301,8 @@
                         <input type="number" id="oppause" name="oppause" min="0" max="9999" step="1" value="{{ tc.detectionPauseSec }}">
                     </td>
                     <td colspan="6" style="width: 65%;"></td>
+                </tr>
+                {% endif %}
                 <tr>
                     <td class="w3-tooltip" style="width:25%">
                         <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -1522,6 +1541,7 @@
                             <input type="number" id="notifypause" name="notifypause" min="0" max="999999" step="1" value="{{ tc.notifyPause }}">
                         </td>
                     </tr>
+                    {% if sc.noCamera == False %}
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -1552,6 +1572,7 @@
                             {% endif %}
                         </td>
                     </tr>
+                    {% endif %}
                 </table>
                 <p style="margin-bottom: 0"></p>
                 <input class="w3-button w3-black" type="submit" value="Submit">

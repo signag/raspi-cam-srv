@@ -1,4 +1,14 @@
-from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for, current_app
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    current_app,
+)
 from flask import send_file
 from werkzeug.exceptions import abort
 from raspiCamSrv.camCfg import CameraCfg
@@ -15,6 +25,7 @@ import logging
 # Try to import platform, which does not exist in Bullseye Picamera2 distributions
 try:
     import picamera2.platform as Platform
+
     usePlatform = True
 except ImportError:
     usePlatform = False
@@ -23,6 +34,7 @@ except ImportError:
 bp = Blueprint("config", __name__)
 
 logger = logging.getLogger(__name__)
+
 
 @bp.route("/config")
 @login_required
@@ -43,25 +55,40 @@ def main():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
         if isTuningFile(fn, tc.tuningFolder) == True:
             tc.tuningFile = fn
     tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 def doSyncTransform(hflip: bool, vflip: bool, tgt: list) -> bool:
-    """ Synchronize the transform settings of target configurations with reference
-    
-        Parameters:
-        hflip:    horizontal flip
-        vflip:    vertical flip
-        tgt  :    list of configurations for which to adjust the aspect ratio
-        
-        Return:
-        True if transform settings for Live View was changed
+    """Synchronize the transform settings of target configurations with reference
+
+    Parameters:
+    hflip:    horizontal flip
+    vflip:    vertical flip
+    tgt  :    list of configurations for which to adjust the aspect ratio
+
+    Return:
+    True if transform settings for Live View was changed
     """
     logger.debug("In doSyncTransform")
     ret = False
@@ -69,11 +96,10 @@ def doSyncTransform(hflip: bool, vflip: bool, tgt: list) -> bool:
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     for conf in tgt:
         if conf == "Live View":
-            if cfglive.transform_hflip != hflip \
-            or cfglive.transform_vflip != vflip:
+            if cfglive.transform_hflip != hflip or cfglive.transform_vflip != vflip:
                 ret = True
             cfglive.transform_hflip = hflip
             cfglive.transform_vflip = vflip
@@ -89,15 +115,16 @@ def doSyncTransform(hflip: bool, vflip: bool, tgt: list) -> bool:
     logger.debug("doSyncTransform %s", ret)
     return ret
 
+
 def doSyncAspectRatio(ref: tuple, tgt: list) -> bool:
-    """ Synchronize the aspect ratio of target configurations with reference
-    
-        Parameters:
-        ref:    reference size (width, height)
-        tgt:    list of configurations for which to adjust the aspect ratio
-        
-        Return:
-        True if Stream Size for Live View was changed
+    """Synchronize the aspect ratio of target configurations with reference
+
+    Parameters:
+    ref:    reference size (width, height)
+    tgt:    list of configurations for which to adjust the aspect ratio
+
+    Return:
+    True if Stream Size for Live View was changed
     """
     logger.debug("In doSyncAspectRatio")
     ret = False
@@ -128,14 +155,13 @@ def doSyncAspectRatio(ref: tuple, tgt: list) -> bool:
                     if not (width % 2) == 0:
                         width += 1
                 size = (width, height)
-                
+
                 sm = "custom"
                 for mode in cfg.sensorModes:
-                    if mode.size[0] == width \
-                    and mode.size[1] == height:
+                    if mode.size[0] == width and mode.size[1] == height:
                         sm = str(mode.id)
                         break
-                    
+
                 logger.debug(log + str(size))
                 if conf == "Live View":
                     cfg.liveViewConfig.stream_size = size
@@ -155,6 +181,7 @@ def doSyncAspectRatio(ref: tuple, tgt: list) -> bool:
     logger.debug("doSyncAspectRatio %s", ret)
     return ret
 
+
 @bp.route("/syncAspectRatio", methods=("GET", "POST"))
 @login_required
 def syncAspectRatio():
@@ -171,7 +198,7 @@ def syncAspectRatio():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -210,7 +237,23 @@ def syncAspectRatio():
             Camera().restartLiveStream()
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Sync Aspect Ratio set to {sc.syncAspectRatio}")
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+        cfg.streamingCfgInvalid = True
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 def findTuningFile(tuning_file: str, dir=None) -> str:
     """Find the given tuning file and return its path
@@ -228,21 +271,28 @@ def findTuningFile(tuning_file: str, dir=None) -> str:
         dirs = [dir]
     else:
         if usePlatform:
-            platform_dir = "vc4" if Picamera2.platform == Platform.Platform.VC4 else "pisp"
-            dirs = [os.path.expanduser("~/libcamera/src/ipa/rpi/" + platform_dir + "/data"),
-                    "/usr/local/share/libcamera/ipa/rpi/" + platform_dir,
-                    "/usr/share/libcamera/ipa/rpi/" + platform_dir]
-        else: 
-             dirs = [os.path.expanduser("~/libcamera/src/ipa/rpi/vc4/data"),
-                    "/usr/local/share/libcamera/ipa/rpi/vc4",
-                    "/usr/share/libcamera/ipa/rpi/vc4"]                       
+            platform_dir = (
+                "vc4" if Picamera2.platform == Platform.Platform.VC4 else "pisp"
+            )
+            dirs = [
+                os.path.expanduser("~/libcamera/src/ipa/rpi/" + platform_dir + "/data"),
+                "/usr/local/share/libcamera/ipa/rpi/" + platform_dir,
+                "/usr/share/libcamera/ipa/rpi/" + platform_dir,
+            ]
+        else:
+            dirs = [
+                os.path.expanduser("~/libcamera/src/ipa/rpi/vc4/data"),
+                "/usr/local/share/libcamera/ipa/rpi/vc4",
+                "/usr/share/libcamera/ipa/rpi/vc4",
+            ]
     for directory in dirs:
         file = os.path.join(directory, tuning_file)
         if os.path.isfile(file):
             tfPath = file
     return tfPath
 
-def isTuningFile(file: str, folder:str) -> bool:
+
+def isTuningFile(file: str, folder: str) -> bool:
     logger.debug("In isTuningFile")
     logger.debug("isTuningFile - file=%s", file)
     logger.debug("isTuningFile - folder=%s", folder)
@@ -254,6 +304,7 @@ def isTuningFile(file: str, folder:str) -> bool:
         res = False
     logger.debug("isTuningFile - res=%s", res)
     return res
+
 
 def getTuningFiles(folder, defFile) -> list:
     """Create a list of all .json files in the given folder
@@ -280,6 +331,7 @@ def getTuningFiles(folder, defFile) -> list:
             tfl.append(defFile)
     return tfl
 
+
 @bp.route("/tuningCfg", methods=("GET", "POST"))
 @login_required
 def tuningCfg():
@@ -297,7 +349,7 @@ def tuningCfg():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -339,11 +391,27 @@ def tuningCfg():
                 tc.loadTuningFile = loadTuningFile
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Configuration for tuning changed")
+            cfg.streamingCfgInvalid = True
         if restart:
             Camera().restartLiveStream()
         if len(msg) > 0:
             flash(msg)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/customTuning", methods=("GET", "POST"))
 @login_required
@@ -362,7 +430,7 @@ def customTuning():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -408,12 +476,23 @@ def customTuning():
                                 if fpDefault is not None:
                                     try:
                                         shutil.copyfile(fpDefault, fpCustom)
-                                        msg = "Tuning file " + fn + " copied to custom directory."
+                                        msg = (
+                                            "Tuning file "
+                                            + fn
+                                            + " copied to custom directory."
+                                        )
                                         if tc.loadTuningFile == True:
                                             restart = True
                                     except Exception as e:
-                                        logger.debug("error while copying tuning file: %s", str(e))
-                                        msg = "Tuning file directory switched to custom directory, but tuning file " + fn + " could not be copied."
+                                        logger.debug(
+                                            "error while copying tuning file: %s",
+                                            str(e),
+                                        )
+                                        msg = (
+                                            "Tuning file directory switched to custom directory, but tuning file "
+                                            + fn
+                                            + " could not be copied."
+                                        )
                                         fn = ""
                                         if tc.loadTuningFile == True:
                                             restart = True
@@ -430,12 +509,28 @@ def customTuning():
                                     tc.loadTuningFile = False
                         sc.unsavedChanges = True
                         sc.addChangeLogEntry(f"Tuning folder set to custom folder")
+                        cfg.streamingCfgInvalid = True
         if restart:
             Camera().restartLiveStream()
         if len(msg) > 0:
             flash(msg)
     tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/defaultTuning", methods=("GET", "POST"))
 @login_required
@@ -454,7 +549,7 @@ def defaultTuning():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -501,12 +596,28 @@ def defaultTuning():
                                 restart = True
                 sc.unsavedChanges = True
                 sc.addChangeLogEntry(f"Tuning folder set to default folder")
+                cfg.streamingCfgInvalid = True
         if restart:
             Camera().restartLiveStream()
         if len(msg) > 0:
             flash(msg)
     tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/deleteTuningFile", methods=("GET", "POST"))
 @login_required
@@ -525,7 +636,7 @@ def deleteTuningFile():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -565,21 +676,44 @@ def deleteTuningFile():
             logger.debug("deleteTuningFile - No more tuning files in custom folder")
             fn = sc.activeCameraModel + ".json"
             tc.tuningFolder = None
-            logger.debug("deleteTuningFile - fn=%s tuningFolder=%s isTuningFile=%s", fn, tc.tuningFolder, isTuningFile(fn, tc.tuningFolder))
+            logger.debug(
+                "deleteTuningFile - fn=%s tuningFolder=%s isTuningFile=%s",
+                fn,
+                tc.tuningFolder,
+                isTuningFile(fn, tc.tuningFolder),
+            )
             if isTuningFile(fn, tc.tuningFolder) == True:
                 tc.tuningFile = fn
-                logger.debug("deleteTuningFile - tc.tuningFile set to %s", tc.tuningFile)
+                logger.debug(
+                    "deleteTuningFile - tc.tuningFile set to %s", tc.tuningFile
+                )
             else:
                 tc.loadTuningFile = False
         tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
         if not fp is None:
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Tuning file deleted: {fp}")
+            cfg.streamingCfgInvalid = True
         if restart:
             Camera().restartLiveStream()
         if msg != "":
             flash(msg)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/downloadTuningFile", methods=("GET", "POST"))
 @login_required
@@ -598,7 +732,7 @@ def downloadTuningFile():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -612,15 +746,26 @@ def downloadTuningFile():
         if fp is not None:
             msg = f"Downloading {fn}"
             flash(msg)
-            return send_file(
-                fp,
-                as_attachment=True,
-                download_name=fn
-            )
+            return send_file(fp, as_attachment=True, download_name=fn)
         else:
             msg = "Tuning file not found"
             flash(msg)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/uploadTuningFile", methods=("GET", "POST"))
 @login_required
@@ -639,7 +784,7 @@ def uploadTuningFile():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -662,7 +807,7 @@ def uploadTuningFile():
             else:
                 files = request.files.getlist("tuningfile")
                 countSel = len(files)
-                #tf = request.files["tuningfile"]
+                # tf = request.files["tuningfile"]
                 logger.debug("uploadTuningFile - %s files selected", countSel)
                 countUp = 0
                 for tf in files:
@@ -681,7 +826,22 @@ def uploadTuningFile():
         if msg != "":
             flash(msg)
         tfl = getTuningFiles(tc.tuningFolder, tc.tuningFile)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/liveViewCfg", methods=("GET", "POST"))
 @login_required
@@ -700,7 +860,7 @@ def liveViewCfg():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -714,7 +874,7 @@ def liveViewCfg():
             msg = err
         if not err:
             transform_hflip = not request.form.get("LIVE_transform_hflip") is None
-            cfglive.transform_hflip = transform_hflip        
+            cfglive.transform_hflip = transform_hflip
             transform_vflip = not request.form.get("LIVE_transform_vflip") is None
             cfglive.transform_vflip = transform_vflip
             colour_space = request.form["LIVE_colour_space"]
@@ -725,6 +885,8 @@ def liveViewCfg():
             cfglive.queue = queue
             stream = request.form["LIVE_stream"]
             sensor_mode = request.form["LIVE_sensor_mode"]
+            format = request.form["LIVE_format"]
+            cfglive.format = format
             if sensor_mode == "custom":
                 size_width = int(request.form["LIVE_stream_size_width"])
                 if not (size_width % 2) == 0:
@@ -734,63 +896,86 @@ def liveViewCfg():
                     err = "Stream Size (width, height) must be even"
                 if stream == "lores":
                     if cfgphoto.stream == "main":
-                        if size_width > cfgphoto.stream_size[0] \
-                        or size_height > cfgphoto.stream_size[1]:
+                        if (
+                            size_width > cfgphoto.stream_size[0]
+                            or size_height > cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Photo)"
-                    if not err \
-                    and cfgvideo.stream == "main":
-                        if size_width > cfgvideo.stream_size[0] \
-                        or size_height > cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "main":
+                        if (
+                            size_width > cfgvideo.stream_size[0]
+                            or size_height > cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Video)"
                 if stream == "main":
                     if cfgphoto.stream == "lores":
-                        if size_width < cfgphoto.stream_size[0] \
-                        or size_height < cfgphoto.stream_size[1]:
+                        if (
+                            size_width < cfgphoto.stream_size[0]
+                            or size_height < cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size (Photo) must not exceed main Stream Size"
-                    if not err \
-                    and cfgvideo.stream == "lores":
-                        if size_width < cfgvideo.stream_size[0] \
-                        or size_height < cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "lores":
+                        if (
+                            size_width < cfgvideo.stream_size[0]
+                            or size_height < cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size (Video) must not exceed main Stream Size"
                 if not err:
                     cfglive.stream = stream
                     cfglive.sensor_mode = sensor_mode
                     cfglive.stream_size = (size_width, size_height)
-                    cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
+                    cfglive.stream_size_align = (
+                        not request.form.get("LIVE_stream_size_align") is None
+                    )
             else:
                 mode = sm[int(sensor_mode)]
                 if stream == "lores":
                     if cfgphoto.stream == "main":
-                        if mode.size[0] > cfgphoto.stream_size[0] \
-                        or mode.size[1] > cfgphoto.stream_size[1]:
+                        if (
+                            mode.size[0] > cfgphoto.stream_size[0]
+                            or mode.size[1] > cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Photo)"
-                    if not err \
-                    and cfgvideo.stream == "main":
-                        if mode.size[0] > cfgvideo.stream_size[0] \
-                        or mode.size[1] > cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "main":
+                        if (
+                            mode.size[0] > cfgvideo.stream_size[0]
+                            or mode.size[1] > cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Video)"
                 if stream == "main":
                     if cfgphoto.stream == "lores":
-                        if mode.size[0] < cfgphoto.stream_size[0] \
-                        or mode.size[1] < cfgphoto.stream_size[1]:
+                        if (
+                            mode.size[0] < cfgphoto.stream_size[0]
+                            or mode.size[1] < cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size (Photo) must not exceed main Stream Size"
-                    if not err \
-                    and cfgvideo.stream == "lores":
-                        if mode.size[0] < cfgvideo.stream_size[0] \
-                        or mode.size[1] < cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "lores":
+                        if (
+                            mode.size[0] < cfgvideo.stream_size[0]
+                            or mode.size[1] < cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size (Video) must not exceed main Stream Size"
+                if sc.activeCameraIsUsb == True:
+                    format = mode.format
+                    cfglive.format = format
                 if not err:
                     cfglive.stream = stream
                     cfglive.sensor_mode = sensor_mode
                     cfglive.stream_size = mode.size
-                    cfglive.stream_size_align = not request.form.get("LIVE_stream_size_align") is None
-            format = request.form["LIVE_format"]
+                    cfglive.stream_size_align = (
+                        not request.form.get("LIVE_stream_size_align") is None
+                    )
             cfglive.display = None
-            cfglive.encode = cfglive.stream
+            if sc.activeCameraIsUsb == False:
+                cfglive.encode = cfglive.stream
+            else:
+                cfglive.encode = None
             if sc.syncAspectRatio == True:
                 doSyncAspectRatio(cfglive.stream_size, ["Photo", "Raw Photo", "Video"])
             Camera.resetScalerCropRequested = True
-            doSyncTransform(transform_hflip, transform_vflip, ["Photo", "Raw Photo", "Video"])
+            doSyncTransform(
+                transform_hflip, transform_vflip, ["Photo", "Raw Photo", "Video"]
+            )
             Camera().restartLiveStream()
 
             msg = ""
@@ -803,7 +988,10 @@ def liveViewCfg():
                     else:
                         if msg != "":
                             msg = msg + "\n"
-                        msg = msg + "For Raspberry Pi models < 5, the lowres stream format must be YUV"
+                        msg = (
+                            msg
+                            + "For Raspberry Pi models < 5, the lowres stream format must be YUV"
+                        )
                 else:
                     cfglive.format = format
             else:
@@ -812,12 +1000,32 @@ def liveViewCfg():
             if cfglive.stream != "lores":
                 if msg != "":
                     msg = msg + "\n"
-                msg = msg + "WARNING: If you do not set Stream to 'lores', the Live Stream cannot be shown parallel to other activities!"
+                if sc.activeCameraIsUsb == False:
+                    msg = (
+                        msg
+                        + "WARNING: If you do not set Stream to 'lores', the Live Stream cannot be shown parallel to other activities!"
+                    )
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Configuration for Live View changed")
+            cfg.streamingCfgInvalid = True
         if len(msg) > 0:
             flash(msg)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/addLiveViewControls", methods=("GET", "POST"))
 @login_required
@@ -837,7 +1045,7 @@ def addLiveViewControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -856,9 +1064,25 @@ def addLiveViewControls():
             Camera().restartLiveStream()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Controls added to Configuration for Live View")
+            cfg.streamingCfgInvalid = True
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/remLiveViewControls", methods=("GET", "POST"))
 @login_required
@@ -877,7 +1101,7 @@ def remLiveViewControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -894,7 +1118,9 @@ def remLiveViewControls():
                 logger.debug("Checking checkbox ID:" + "sel_LIVE_" + ctrl)
                 if request.form.get("sel_LIVE_" + ctrl) is not None:
                     cnt += 1
-            logger.debug("Nr controls: %s - selected: %s", len(cfg.liveViewConfig.controls), cnt)
+            logger.debug(
+                "Nr controls: %s - selected: %s", len(cfg.liveViewConfig.controls), cnt
+            )
             if cnt > 0:
                 if cnt < len(cfg.liveViewConfig.controls):
                     while cnt > 0:
@@ -906,16 +1132,32 @@ def remLiveViewControls():
                         cnt -= 1
                     Camera().restartLiveStream()
                 else:
-                    msg="At least one control must remain in the configuration"
+                    msg = "At least one control must remain in the configuration"
                     flash(msg)
             else:
-                msg="No controls were selected"
+                msg = "No controls were selected"
                 flash(msg)
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Controls removed from Configuration for Live View")
+            cfg.streamingCfgInvalid = True
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/photoCfg", methods=("GET", "POST"))
 @login_required
@@ -934,7 +1176,7 @@ def photoCfg():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -947,7 +1189,7 @@ def photoCfg():
             err = "Please go to 'Trigger' and stop the active process before changing the configuration"
         if not err:
             transform_hflip = not request.form.get("FOTO_transform_hflip") is None
-            cfgphoto.transform_hflip = transform_hflip        
+            cfgphoto.transform_hflip = transform_hflip
             transform_vflip = not request.form.get("FOTO_transform_vflip") is None
             cfgphoto.transform_vflip = transform_vflip
             colour_space = request.form["FOTO_colour_space"]
@@ -958,6 +1200,8 @@ def photoCfg():
             cfgphoto.queue = queue
             stream = request.form["FOTO_stream"]
             sensor_mode = request.form["FOTO_sensor_mode"]
+            format = request.form["FOTO_format"]
+            cfgphoto.format = format
             if sensor_mode == "custom":
                 size_width = int(request.form["FOTO_stream_size_width"])
                 if not (size_width % 2) == 0:
@@ -967,74 +1211,117 @@ def photoCfg():
                     err = "Stream Size (width, height) must be even"
                 if stream == "lores":
                     if cfglive.stream == "main":
-                        if size_width > cfglive.stream_size[0] \
-                        or size_height > cfglive.stream_size[1]:
+                        if (
+                            size_width > cfglive.stream_size[0]
+                            or size_height > cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Live View)"
-                    if not err \
-                    and cfgvideo.stream == "main":
-                        if size_width > cfgvideo.stream_size[0] \
-                        or size_height > cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "main":
+                        if (
+                            size_width > cfgvideo.stream_size[0]
+                            or size_height > cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Video)"
                 if stream == "main":
                     if cfglive.stream == "lores":
-                        if size_width < cfglive.stream_size[0] \
-                        or size_height < cfglive.stream_size[1]:
+                        if (
+                            size_width < cfglive.stream_size[0]
+                            or size_height < cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size (Live View) must not exceed main Stream Size"
-                    if not err \
-                    and cfgvideo.stream == "lores":
-                        if size_width < cfgvideo.stream_size[0] \
-                        or size_height < cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "lores":
+                        if (
+                            size_width < cfgvideo.stream_size[0]
+                            or size_height < cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size (Video) must not exceed main Stream Size"
                 if not err:
                     cfgphoto.stream = stream
                     cfgphoto.sensor_mode = sensor_mode
                     cfgphoto.stream_size = (size_width, size_height)
-                    cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
+                    cfgphoto.stream_size_align = (
+                        not request.form.get("FOTO_stream_size_align") is None
+                    )
             else:
                 mode = sm[int(sensor_mode)]
                 if stream == "lores":
                     if cfglive.stream == "main":
-                        if mode.size[0] > cfglive.stream_size[0] \
-                        or mode.size[1] > cfglive.stream_size[1]:
+                        if (
+                            mode.size[0] > cfglive.stream_size[0]
+                            or mode.size[1] > cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Live View)"
-                    if not err \
-                    and cfgvideo.stream == "main":
-                        if mode.size[0] > cfgvideo.stream_size[0] \
-                        or mode.size[1] > cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "main":
+                        if (
+                            mode.size[0] > cfgvideo.stream_size[0]
+                            or mode.size[1] > cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Video)"
                 if stream == "main":
                     if cfglive.stream == "lores":
-                        if mode.size[0] < cfglive.stream_size[0] \
-                        or mode.size[1] < cfglive.stream_size[1]:
+                        if (
+                            mode.size[0] < cfglive.stream_size[0]
+                            or mode.size[1] < cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size (Live View) must not exceed main Stream Size"
-                    if not err \
-                    and cfgvideo.stream == "lores":
-                        if mode.size[0] < cfgvideo.stream_size[0] \
-                        or mode.size[1] < cfgvideo.stream_size[1]:
+                    if not err and cfgvideo.stream == "lores":
+                        if (
+                            mode.size[0] < cfgvideo.stream_size[0]
+                            or mode.size[1] < cfgvideo.stream_size[1]
+                        ):
                             err = "lores Stream Size (Video) must not exceed main Stream Size"
+                if sc.activeCameraIsUsb == True:
+                    format = mode.format
+                    cfgphoto.format = format
                 if not err:
                     cfgphoto.stream = stream
                     cfgphoto.sensor_mode = sensor_mode
                     cfgphoto.stream_size = mode.size
-                    cfgphoto.stream_size_align = not request.form.get("FOTO_stream_size_align") is None
-            format = request.form["FOTO_format"]
-            cfgphoto.format = format
+                    cfgphoto.stream_size_align = (
+                        not request.form.get("FOTO_stream_size_align") is None
+                    )
             cfgphoto.display = None
-            cfgphoto.encode = "main"
-            cc, cr =  Camera().ctrl.requestConfig(cfgphoto, test=True)
+            if sc.activeCameraIsUsb == False:
+                cfgphoto.encode = "main"
+            else:
+                cfgphoto.encode = None
+            cc, cr = Camera().ctrl.requestConfig(cfgphoto, test=True)
             if cc:
-                msg = "This modification will cause the live stream to be interrupted when a photo is taken!\nReason: " + cr
+                msg = (
+                    "This modification will cause the live stream to be interrupted when a photo is taken!\nReason: "
+                    + cr
+                )
                 flash(msg)
             if sc.syncAspectRatio == True:
-                doSyncAspectRatio(cfgphoto.stream_size, ["Live View", "Raw Photo", "Video"])
+                doSyncAspectRatio(
+                    cfgphoto.stream_size, ["Live View", "Raw Photo", "Video"]
+                )
             Camera.resetScalerCropRequested = True
-            doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Raw Photo", "Video"])
+            doSyncTransform(
+                transform_hflip, transform_vflip, ["Live View", "Raw Photo", "Video"]
+            )
             Camera().restartLiveStream()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Configuration for Photo changed")
+            cfg.streamingCfgInvalid = True
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/addPhotoControls", methods=("GET", "POST"))
 @login_required
@@ -1054,7 +1341,7 @@ def addPhotoControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1072,9 +1359,25 @@ def addPhotoControls():
                         cfg.photoConfig.controls[key] = value[1]
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Controls added to Configuration for Photo")
+            cfg.streamingCfgInvalid = True
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/remPhotoControls", methods=("GET", "POST"))
 @login_required
@@ -1093,7 +1396,7 @@ def remPhotoControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1119,16 +1422,34 @@ def remPhotoControls():
                         del cfg.photoConfig.controls[ctrlDel]
                         cnt -= 1
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Controls removed from Configuration for Photo")
+                    sc.addChangeLogEntry(
+                        f"Controls removed from Configuration for Photo"
+                    )
+                    cfg.streamingCfgInvalid = True
                 else:
-                    msg="At least one control must remain in the configuration"
+                    msg = "At least one control must remain in the configuration"
                     flash(msg)
             else:
-                msg="No controls were selected"
+                msg = "No controls were selected"
                 flash(msg)
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/rawCfg", methods=("GET", "POST"))
 @login_required
@@ -1147,7 +1468,7 @@ def rawCfg():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg.rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1160,13 +1481,15 @@ def rawCfg():
             err = "Please go to 'Trigger' and stop the active process before changing the configuration"
         if not err:
             transform_hflip = not request.form.get("PRAW_transform_hflip") is None
-            cfgraw.transform_hflip = transform_hflip        
+            cfgraw.transform_hflip = transform_hflip
             transform_vflip = not request.form.get("PRAW_transform_vflip") is None
             cfgraw.transform_vflip = transform_vflip
             colour_space = request.form["PRAW_colour_space"]
             cfgraw.colour_space = colour_space
             queue = not request.form.get("PRAW_queue") is None
             cfgraw.queue = queue
+            format = request.form["PRAW_format"]
+            cfgraw.format = format
             sensor_mode = request.form["PRAW_sensor_mode"]
             if sensor_mode == "custom":
                 size_width = int(request.form["PRAW_stream_size_width"])
@@ -1178,28 +1501,50 @@ def rawCfg():
                 if not err:
                     cfgraw.sensor_mode = sensor_mode
                     cfgraw.stream_size = (size_width, size_height)
-                    cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
+                    cfgraw.stream_size_align = (
+                        not request.form.get("PRAW_stream_size_align") is None
+                    )
             else:
                 mode = sm[int(sensor_mode)]
                 if not err:
                     cfgraw.sensor_mode = sensor_mode
                     cfgraw.stream_size = mode.size
-                    cfgraw.stream_size_align = not request.form.get("PRAW_stream_size_align") is None
+                    cfgraw.stream_size_align = (
+                        not request.form.get("PRAW_stream_size_align") is None
+                    )
+            if sc.activeCameraIsUsb == True:
+                cfgraw.format = "tiff"
             cfgraw.sensor_mode = sensor_mode
-            format = request.form["PRAW_format"]
-            cfgraw.format = format
             cfgraw.display = None
             cfgraw.encode = None
             if sc.syncAspectRatio == True:
                 doSyncAspectRatio(cfgraw.stream_size, ["Live View", "Photo", "Video"])
             Camera.resetScalerCropRequested = True
-            doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Photo", "Video"])
+            doSyncTransform(
+                transform_hflip, transform_vflip, ["Live View", "Photo", "Video"]
+            )
             Camera().restartLiveStream()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Configuration for Raw Photo changed")
+            cfg.streamingCfgInvalid = True
         if err:
-            flash(err)            
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+            flash(err)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/addRawControls", methods=("GET", "POST"))
 @login_required
@@ -1219,7 +1564,7 @@ def addRawControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1237,9 +1582,25 @@ def addRawControls():
                         cfg.rawConfig.controls[key] = value[1]
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Controls added to Configuration for Raw Photo")
+            cfg.streamingCfgInvalid = True
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/remRawControls", methods=("GET", "POST"))
 @login_required
@@ -1258,7 +1619,7 @@ def remRawControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1284,16 +1645,34 @@ def remRawControls():
                         del cfg.rawConfig.controls[ctrlDel]
                         cnt -= 1
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Controls removed from Configuration for Raw Photo")
+                    sc.addChangeLogEntry(
+                        f"Controls removed from Configuration for Raw Photo"
+                    )
+                    cfg.streamingCfgInvalid = True
                 else:
-                    msg="At least one control must remain in the configuration"
+                    msg = "At least one control must remain in the configuration"
                     flash(msg)
             else:
-                msg="No controls were selected"
+                msg = "No controls were selected"
                 flash(msg)
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/videoCfg", methods=("GET", "POST"))
 @login_required
@@ -1312,7 +1691,7 @@ def videoCfg():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1325,7 +1704,7 @@ def videoCfg():
             err = "Please go to 'Trigger' and stop the active process before changing the configuration"
         if not err:
             transform_hflip = not request.form.get("VIDO_transform_hflip") is None
-            cfgvideo.transform_hflip = transform_hflip        
+            cfgvideo.transform_hflip = transform_hflip
             transform_vflip = not request.form.get("VIDO_transform_vflip") is None
             cfgvideo.transform_vflip = transform_vflip
             colour_space = request.form["VIDO_colour_space"]
@@ -1336,6 +1715,8 @@ def videoCfg():
             cfgvideo.queue = queue
             stream = request.form["VIDO_stream"]
             sensor_mode = request.form["VIDO_sensor_mode"]
+            format = request.form["VIDO_format"]
+            cfgvideo.format = format
             if sensor_mode == "custom":
                 size_width = int(request.form["VIDO_stream_size_width"])
                 if not (size_width % 2) == 0:
@@ -1345,70 +1726,110 @@ def videoCfg():
                     err = "Stream Size (width, height) must be even"
                 if stream == "lores":
                     if cfglive.stream == "main":
-                        if size_width > cfglive.stream_size[0] \
-                        or size_height > cfglive.stream_size[1]:
+                        if (
+                            size_width > cfglive.stream_size[0]
+                            or size_height > cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Live View)"
-                    if not err \
-                    and cfgphoto.stream == "main":
-                        if size_width > cfgphoto.stream_size[0] \
-                        or size_height > cfgphoto.stream_size[1]:
+                    if not err and cfgphoto.stream == "main":
+                        if (
+                            size_width > cfgphoto.stream_size[0]
+                            or size_height > cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Photo)"
                 if stream == "main":
                     if cfglive.stream == "lores":
-                        if size_width < cfglive.stream_size[0] \
-                        or size_height < cfglive.stream_size[1]:
+                        if (
+                            size_width < cfglive.stream_size[0]
+                            or size_height < cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size (Live View) must not exceed main Stream Size"
-                    if not err \
-                    and cfgphoto.stream == "lores":
-                        if size_width < cfgphoto.stream_size[0] \
-                        or size_height < cfgphoto.stream_size[1]:
+                    if not err and cfgphoto.stream == "lores":
+                        if (
+                            size_width < cfgphoto.stream_size[0]
+                            or size_height < cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size (Photo) must not exceed main Stream Size"
                 if not err:
                     cfgvideo.stream = stream
                     cfgvideo.sensor_mode = sensor_mode
                     cfgvideo.stream_size = (size_width, size_height)
-                    cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
+                    cfgvideo.stream_size_align = (
+                        not request.form.get("VIDO_stream_size_align") is None
+                    )
             else:
                 mode = sm[int(sensor_mode)]
                 if stream == "lores":
                     if cfglive.stream == "main":
-                        if mode.size[0] > cfglive.stream_size[0] \
-                        or mode.size[1] > cfglive.stream_size[1]:
+                        if (
+                            mode.size[0] > cfglive.stream_size[0]
+                            or mode.size[1] > cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Live View)"
-                    if not err \
-                    and cfgphoto.stream == "main":
-                        if mode.size[0] > cfgphoto.stream_size[0] \
-                        or mode.size[1] > cfgphoto.stream_size[1]:
+                    if not err and cfgphoto.stream == "main":
+                        if (
+                            mode.size[0] > cfgphoto.stream_size[0]
+                            or mode.size[1] > cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size must not exceed main Stream Size (Photo)"
                 if stream == "main":
                     if cfglive.stream == "lores":
-                        if mode.size[0] < cfglive.stream_size[0] \
-                        or mode.size[1] < cfglive.stream_size[1]:
+                        if (
+                            mode.size[0] < cfglive.stream_size[0]
+                            or mode.size[1] < cfglive.stream_size[1]
+                        ):
                             err = "lores Stream Size (Live View) must not exceed main Stream Size"
-                    if not err \
-                    and cfgphoto.stream == "lores":
-                        if mode.size[0] < cfgphoto.stream_size[0] \
-                        or mode.size[1] < cfgphoto.stream_size[1]:
+                    if not err and cfgphoto.stream == "lores":
+                        if (
+                            mode.size[0] < cfgphoto.stream_size[0]
+                            or mode.size[1] < cfgphoto.stream_size[1]
+                        ):
                             err = "lores Stream Size (Photo) must not exceed main Stream Size"
+                if sc.activeCameraIsUsb == True:
+                    format = mode.format
+                    cfgvideo.format = format
                 if not err:
                     cfgvideo.stream = stream
                     cfgvideo.sensor_mode = sensor_mode
                     cfgvideo.stream_size = mode.size
-                    cfgvideo.stream_size_align = not request.form.get("VIDO_stream_size_align") is None
-            format = request.form["VIDO_format"]
-            cfgvideo.format = format
+                    cfgvideo.stream_size_align = (
+                        not request.form.get("VIDO_stream_size_align") is None
+                    )
             cfgvideo.display = None
-            cfgvideo.encode = "main"
+            if sc.activeCameraIsUsb == False:
+                cfgvideo.encode = "main"
+            else:
+                cfgvideo.encode = None
             if sc.syncAspectRatio == True:
-                doSyncAspectRatio(cfgvideo.stream_size, ["Live View", "Photo", "Raw Photo"])
+                doSyncAspectRatio(
+                    cfgvideo.stream_size, ["Live View", "Photo", "Raw Photo"]
+                )
             Camera.resetScalerCropRequested = True
-            doSyncTransform(transform_hflip, transform_vflip, ["Live View", "Photo", "Raw Photo"])
+            doSyncTransform(
+                transform_hflip, transform_vflip, ["Live View", "Photo", "Raw Photo"]
+            )
             Camera().restartLiveStream()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Configuration for Video changed")
+            cfg.streamingCfgInvalid = True
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/addVideoControls", methods=("GET", "POST"))
 @login_required
@@ -1428,7 +1849,7 @@ def addVideoControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1446,9 +1867,25 @@ def addVideoControls():
                         cfg.videoConfig.controls[key] = value[1]
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Controls added to Configuration for Video")
+            cfg.streamingCfgInvalid = True
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )
+
 
 @bp.route("/remVideoControls", methods=("GET", "POST"))
 @login_required
@@ -1467,7 +1904,7 @@ def remVideoControls():
     cfglive = cfg.liveViewConfig
     cfgphoto = cfg.photoConfig
     cfgraw = cfg._rawConfig
-    cfgvideo =cfg.videoConfig
+    cfgvideo = cfg.videoConfig
     cfgrf = cfg.rawFormats
     if tc.tuningFile == "":
         fn = sc.activeCameraModel + ".json"
@@ -1493,13 +1930,30 @@ def remVideoControls():
                         del cfg.videoConfig.controls[ctrlDel]
                         cnt -= 1
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Controls removed from Configuration for Video")
+                    sc.addChangeLogEntry(
+                        f"Controls removed from Configuration for Video"
+                    )
+                    cfg.streamingCfgInvalid = True
                 else:
-                    msg="At least one control must remain in the configuration"
+                    msg = "At least one control must remain in the configuration"
                     flash(msg)
             else:
-                msg="No controls were selected"
+                msg = "No controls were selected"
                 flash(msg)
         if err:
             flash(err)
-    return render_template("config/main.html", sc=sc, tc=tc, cp=cp, sm=sm, rf=rf, cfglive=cfglive, cfgphoto=cfgphoto, cfgraw=cfgraw, cfgvideo=cfgvideo, cfgrf=cfgrf, cfgs=cfgs, tfl=tfl)
+    return render_template(
+        "config/main.html",
+        sc=sc,
+        tc=tc,
+        cp=cp,
+        sm=sm,
+        rf=rf,
+        cfglive=cfglive,
+        cfgphoto=cfgphoto,
+        cfgraw=cfgraw,
+        cfgvideo=cfgvideo,
+        cfgrf=cfgrf,
+        cfgs=cfgs,
+        tfl=tfl,
+    )

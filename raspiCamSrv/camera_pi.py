@@ -3,7 +3,13 @@ import time
 import datetime
 import threading
 from _thread import get_ident, allocate_lock
-from raspiCamSrv.camCfg import CameraInfo, CameraCfg, SensorMode, CameraConfig, TuningConfig
+from raspiCamSrv.camCfg import (
+    CameraInfo,
+    CameraCfg,
+    SensorMode,
+    CameraConfig,
+    TuningConfig,
+)
 from raspiCamSrv.photoseriesCfg import Series
 from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
 from libcamera import Transform, Size, ColorSpace, controls
@@ -16,321 +22,660 @@ import os
 from pathlib import Path
 import logging
 import gc
+
 # Try to import SensorConfiguration, which is missing in Bullseye Picamera2 distributions
 try:
     from picamera2.configuration import SensorConfiguration
+
     useSensorConfiguration = True
 except ImportError:
     useSensorConfiguration = False
+# Try to import cv2
+try:
+    import cv2
+    cv2Available = True
+except ImportError:
+    cv2Available = False
 
 logger = logging.getLogger(__name__)
 
 prgLogger = logging.getLogger("pc2_prg")
 
+
 class CameraStopError(RuntimeError):
+    pass
+
+class UsbCameraOpenError(RuntimeError):
+    """Exception raised when a USB camera is unexpectedly not open
+    
+       The reason why the USB camera is found to be not open after it had been opened
+       are currently not yet clear.
+    """
+    # TODO: Clarify under which conditions this exception is raised
+    pass
+
+class UsbCameraNoFrameReceivedError(RuntimeError):
+    """Exception raised when a USB camera does not deliver frames for 1 second after being opened
+    
+       The reason is currently not yet clear.
+    """
+    # TODO: Clarify under which conditions this exception is raised
     pass
 
 class StreamingOutput(io.BufferedIOBase):
     def __init__(self):
-        #logger.debug("Thread %s: StreamingOutput.__init__", get_ident())
+        # logger.debug("Thread %s: StreamingOutput.__init__", get_ident())
         self.frame = None
         self.lock = Lock()
         self.condition = Condition(self.lock)
 
     def write(self, buf):
-        #logger.debug("Thread %s: StreamingOutput.write", get_ident())
+        # logger.debug("Thread %s: StreamingOutput.write", get_ident())
         with self.condition:
             self.frame = buf
-            #logger.debug("Thread %s: StreamingOutput.write - got buffer of length %s", get_ident(), len(buf))
+            # logger.debug("Thread %s: StreamingOutput.write - got buffer of length %s", get_ident(), len(buf))
             self.condition.notify_all()
-            #logger.debug("Thread %s: StreamingOutput.write - notification done", get_ident())
-        #logger.debug("Thread %s: StreamingOutput.write - write done", get_ident())
+            # logger.debug("Thread %s: StreamingOutput.write - notification done", get_ident())
+        # logger.debug("Thread %s: StreamingOutput.write - write done", get_ident())
 
-class CameraController():
-    """ The class controls status change actions for the camera
-    """
-    def __init__(self):
-        logger.debug("Thread %s: CameraController.__init__", get_ident())
+
+class CameraController:
+    """The class controls status change actions for the camera"""
+
+    def __init__(self, isUsb: bool = False, usbDev: str = None):
+        logger.debug(
+            "Thread %s: CameraController.__init__ isUsb: %s", get_ident(), isUsb
+        )
         if not useSensorConfiguration:
-            logger.info("Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration")
-        self._activeCfg:CameraConfiguration = None
-        self._requestedCfg:CameraConfiguration = CameraConfiguration()
+            logger.info(
+                "Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration"
+            )
+        self._activeCfg: CameraConfiguration = None
+        self._requestedCfg: CameraConfiguration = CameraConfiguration()
         self._activeEncoders = {}
-        logger.debug("Thread %s: cfg: %s", get_ident(), self._requestedCfg)
+        self._isUsb = isUsb
+        self._usbDev = usbDev
+        logger.debug(
+            "Thread %s: CameraController.__init__ isUsb: requestedCfg: %s",
+            get_ident(),
+            self._requestedCfg,
+        )
 
     @property
     def configuration(self) -> CameraConfiguration:
         return self._requestedCfg
 
-    def requestCameraForConfig(self, cam:Picamera2, camNum, cfg:CameraConfig, cfgPhoto:CameraConfig=None, forLiveStream:bool=False, forActiveCamera=True):
-        """ Request camera start for a specific configuration
-        
-            Parameters:
-            cam      Camera
-            camNum   Camera number
-            cfg      Configuration for which camera is requested
-                     If None, request start for the active configuration
-            cfgPhoto Photo configuration. To be provided when cfg is a raw photo configuration
-            forLiveStream:  The request is for the Live Stream -> don't deactivete Live Stream
-            forActiveCamera: Whether the request is for the active camera
-        
-            Return:
-            True  if start is exclusive for the requested configuration
-            False if the active configuration is used
+    @property
+    def isUsb(self) -> bool:
+        return self._isUsb
+
+    @property
+    def usbDev(self) -> str:
+        return self._usbDev
+
+    def requestCameraForConfig(
+        self,
+        cam: Picamera2,
+        camNum,
+        cfg: CameraConfig,
+        cfgPhoto: CameraConfig = None,
+        forLiveStream: bool = False,
+        forActiveCamera=True,
+        forceExclusive: bool = False,
+    ):
+        """Request camera start for a specific configuration
+
+        Parameters:
+        cam      Camera
+        camNum   Camera number
+        isUsb    Whether the camera is a USB camera
+        cfg      Configuration for which camera is requested
+                 If None, request start for the active configuration
+        cfgPhoto Photo configuration. To be provided when cfg is a raw photo configuration
+        forLiveStream:  The request is for the Live Stream -> don't deactivate Live Stream
+        forActiveCamera: Whether the request is for the active camera
+        forceExclusive: Whether the request is for an exclusive camera start
+
+        Return:
+        True  if start is exclusive for the requested configuration
+        False if the active configuration is used
         """
         if cfg:
-            logger.debug("Thread %s: CameraController.requestCameraForConfig cfg:        %s", get_ident(), cfg.__dict__)
+            logger.debug(
+                "Thread %s: CameraController.requestCameraForConfig cfg:        %s",
+                get_ident(),
+                cfg.__dict__,
+            )
         else:
-            logger.debug("Thread %s: CameraController.requestCameraForConfig cfg:        %s", get_ident(), cfg)
+            logger.debug(
+                "Thread %s: CameraController.requestCameraForConfig cfg:        %s",
+                get_ident(),
+                cfg,
+            )
         if cfgPhoto:
-            logger.debug("Thread %s: CameraController.requestCameraForConfig - cfgPhoto: %s", get_ident(), cfgPhoto.__dict__)
+            logger.debug(
+                "Thread %s: CameraController.requestCameraForConfig - cfgPhoto: %s",
+                get_ident(),
+                cfgPhoto.__dict__,
+            )
         else:
-            logger.debug("Thread %s: CameraController.requestCameraForConfig - cfgPhoto: %s", get_ident(), cfgPhoto)
-        logger.debug("Thread %s: CameraController.requestCameraForConfig - forLiveStream: %s", get_ident(), forLiveStream)
-        logger.debug("Thread %s: CameraController.requestCameraForConfig - forActiveCamera: %s", get_ident(), forActiveCamera)
+            logger.debug(
+                "Thread %s: CameraController.requestCameraForConfig - cfgPhoto: %s",
+                get_ident(),
+                cfgPhoto,
+            )
+        logger.debug(
+            "Thread %s: CameraController.requestCameraForConfig - forLiveStream: %s",
+            get_ident(),
+            forLiveStream,
+        )
+        logger.debug(
+            "Thread %s: CameraController.requestCameraForConfig - forActiveCamera: %s",
+            get_ident(),
+            forActiveCamera,
+        )
+        logger.debug(
+            "Thread %s: CameraController.requestCameraForConfig - forceExclusive: %s",
+            get_ident(),
+            forceExclusive,
+        )
 
         exclusive = False
 
         if cfg:
             self.requestConfig(cfg, cfgPhoto=cfgPhoto)
-        cam, started = self.requestStart(cam, camNum, forActiveCamera)
-        if started:
-            logger.debug("Thread %s: CameraController.requestCameraForConfig - camera started", get_ident())
+        if forceExclusive == False:
+            cam, started = self.requestStart(
+                cam, camNum, self.isUsb, self.usbDev, forActiveCamera
+            )
         else:
-            logger.debug("Thread %s: CameraController.requestCameraForConfig: Camara stop required", get_ident())
+            started = False
+        if started:
+            logger.debug(
+                "Thread %s: CameraController.requestCameraForConfig - camera started",
+                get_ident(),
+            )
+        else:
+            logger.debug(
+                "Thread %s: CameraController.requestCameraForConfig: Camara stop required",
+                get_ident(),
+            )
             if not forLiveStream:
                 if forActiveCamera == True:
                     Camera.liveViewDeactivated = True
                 else:
                     Camera.liveView2Deactivated = True
-                logger.debug("Thread %s: CameraController.requestCameraForConfig - Live stream deactivated", get_ident())
+                logger.debug(
+                    "Thread %s: CameraController.requestCameraForConfig - Live stream deactivated",
+                    get_ident(),
+                )
             if forActiveCamera == True:
                 Camera.stopLiveStream()
             else:
                 Camera.stopLiveStream2()
-            logger.debug("Thread %s: CameraController.requestCameraForConfig: Live stream stopped", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.requestCameraForConfig: Live stream stopped",
+                get_ident(),
+            )
             cam, stopped = self.requestStop(cam)
             if stopped:
                 if forActiveCamera == True:
-                    cam, started = Camera.ctrl.requestStart(cam, camNum, forActiveCamera)
+                    cam, started = Camera.ctrl.requestStart(
+                        cam, camNum, self.isUsb, self.usbDev, forActiveCamera
+                    )
                 else:
-                    cam, started = Camera.ctrl2.requestStart(cam, camNum, forActiveCamera)
+                    cam, started = Camera.ctrl2.requestStart(
+                        cam, camNum, self.isUsb, self.usbDev, forActiveCamera
+                    )
                 if started:
-                    logger.debug("Thread %s: CameraController.requestCameraForConfig - camera started", get_ident())
+                    logger.debug(
+                        "Thread %s: CameraController.requestCameraForConfig - camera started",
+                        get_ident(),
+                    )
                 else:
-                    logger.error("Thread %s: CameraController.requestCameraForConfig - camera could not be started", get_ident())
-                    raise RuntimeError("CameraController.requestCameraForConfig - Camera could not be started")
+                    logger.error(
+                        "Thread %s: CameraController.requestCameraForConfig - camera could not be started",
+                        get_ident(),
+                    )
+                    raise RuntimeError(
+                        "CameraController.requestCameraForConfig - Camera could not be started"
+                    )
             else:
-                logger.error("Thread %s: CameraController.requestCameraForConfig - camera did not stop", get_ident())
-                raise RuntimeError("CameraController.requestCameraForConfig - Camera did not stop")
+                logger.error(
+                    "Thread %s: CameraController.requestCameraForConfig - camera did not stop",
+                    get_ident(),
+                )
+                raise RuntimeError(
+                    "CameraController.requestCameraForConfig - Camera did not stop"
+                )
             exclusive = True
         return cam, exclusive
 
     def restoreLivestream(self, cam, exclusive: bool):
-        """ Restart the live stream after exclusive camera use by other task
-        """
-        logger.debug("Thread %s: CameraController.restoreLivestream - exclusive: %s", get_ident(), exclusive)
+        """Restart the live stream after exclusive camera use by other task"""
+        logger.debug(
+            "Thread %s: CameraController.restoreLivestream - exclusive: %s",
+            get_ident(),
+            exclusive,
+        )
         if exclusive:
-            logger.debug("Thread %s: CameraController.restoreLivestream - Need to stop camera and restart live stream", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream - Need to stop camera and restart live stream",
+                get_ident(),
+            )
             cam, stopped = self.requestStop(cam)
             if not stopped:
-                logger.error("Thread %s: CameraController.restoreLivestream - camera did not stop", get_ident())
-                raise RuntimeError("CameraController.restoreLivestream - Camera did not stop")
+                logger.error(
+                    "Thread %s: CameraController.restoreLivestream - camera did not stop",
+                    get_ident(),
+                )
+                raise RuntimeError(
+                    "CameraController.restoreLivestream - Camera did not stop"
+                )
             Camera.liveViewDeactivated = False
-            logger.debug("Thread %s: CameraController.restoreLivestream - Live stream activated", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream - Live stream activated",
+                get_ident(),
+            )
             Camera.startLiveStream()
-            logger.debug("Thread %s: CameraController.restoreLivestream: Live stream started", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream: Live stream started",
+                get_ident(),
+            )
         else:
-            logger.debug("Thread %s: CameraController.restoreLivestream - Restart live stream not required", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream - Restart live stream not required",
+                get_ident(),
+            )
         return cam
 
     def restoreLivestream2(self, cam, exclusive: bool):
-        """ Restart the live stream 2 after exclusive camera use by other task
-        """
-        logger.debug("Thread %s: CameraController.restoreLivestream2 - exclusive: %s", get_ident(), exclusive)
+        """Restart the live stream 2 after exclusive camera use by other task"""
+        logger.debug(
+            "Thread %s: CameraController.restoreLivestream2 - exclusive: %s",
+            get_ident(),
+            exclusive,
+        )
         if exclusive:
-            logger.debug("Thread %s: CameraController.restoreLivestream2 - Need to stop camera and restart live stream", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream2 - Need to stop camera and restart live stream",
+                get_ident(),
+            )
             cam, stopped = self.requestStop(cam)
             if not stopped:
-                logger.error("Thread %s: CameraController.restoreLivestream2 - camera did not stop", get_ident())
-                raise RuntimeError("CameraController.restoreLivestream2 - Camera did not stop")
+                logger.error(
+                    "Thread %s: CameraController.restoreLivestream2 - camera did not stop",
+                    get_ident(),
+                )
+                raise RuntimeError(
+                    "CameraController.restoreLivestream2 - Camera did not stop"
+                )
             Camera.liveView2Deactivated = False
-            logger.debug("Thread %s: CameraController.restoreLivestream2 - Live stream activated", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream2 - Live stream activated",
+                get_ident(),
+            )
             Camera.startLiveStream2()
-            logger.debug("Thread %s: CameraController.restoreLivestream2: Live stream started", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream2: Live stream started",
+                get_ident(),
+            )
         else:
-            logger.debug("Thread %s: CameraController.restoreLivestream2 - Restart live stream not required", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.restoreLivestream2 - Restart live stream not required",
+                get_ident(),
+            )
         return cam
 
-    def requestStart(self, cam, camNum, forActiveCamera=True):
-        """ Request to start the camera
-        
-            If the camera is not yet started, it is configured and started
-            
-            forActiveCamera: Whether the request is for the active camera
-            Return:
-            - True  if the camera was started
-                    or if the camera had been started before with the same configuration
-            - False if the camera was already started or if an exception occurs during start
+    def requestStart(
+        self, cam, camNum, isUsb=False, camUsbDev=None, forActiveCamera=True
+    ):
+        """Request to start the camera
+
+        If the camera is not yet started, it is configured and started
+
+        forActiveCamera: Whether the request is for the active camera
+        Return:
+        - True  if the camera was started
+                or if the camera had been started before with the same configuration
+        - False if the camera was already started or if an exception occurs during start
         """
-        logger.debug("Thread %s: CameraController.requestStart - _cam.started: %s", get_ident(), cam.started)
+        logger.debug(
+            "Thread %s: CameraController.requestStart - camNum: %s isUsb: %s camUsbDev: %s",
+            get_ident(),
+            camNum,
+            isUsb,
+            camUsbDev,
+        )
         res = False
-        if cam.started == False:
-            try:
-                if cam.is_open == False:
-                    cfg = CameraCfg()
-                    if forActiveCamera == True:
-                        tc = cfg.tuningConfig
-                    else:
-                        strc = cfg.streamingCfg
-                        camNumStr = str(camNum)
-                        if camNumStr in strc:
-                            scfg = strc[camNumStr]
-                            if "tuningconfig" in scfg:
-                                tc = scfg["tuningconfig"]
+        if isUsb == False:
+            logger.debug(
+                "Thread %s: CameraController.requestStart - cam.started: %s",
+                get_ident(),
+                cam.started,
+            )
+            if cam.started == False:
+                try:
+                    if cam.is_open == False:
+                        cfg = CameraCfg()
+                        if forActiveCamera == True:
+                            tc = cfg.tuningConfig
+                        else:
+                            strc = cfg.streamingCfg
+                            camNumStr = str(camNum)
+                            if camNumStr in strc:
+                                scfg = strc[camNumStr]
+                                if "tuningconfig" in scfg:
+                                    tc = scfg["tuningconfig"]
+                                else:
+                                    tc = TuningConfig()
                             else:
                                 tc = TuningConfig()
+                        if tc.loadTuningFile == False:
+                            cam = Picamera2(camNum)
+                            prgLogger.debug("picam2 = Picamera2(%s)", camNum)
                         else:
-                            tc = TuningConfig()
-                    if tc.loadTuningFile == False:
-                        cam = Picamera2(camNum)
-                        prgLogger.debug("picam2 = Picamera2(%s)", camNum)
-                    else:
-                        tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
-                        logger.debug("Thread %s: CameraController.requestStart - Tuning file loaded: File=%s Folder=%s", get_ident(), tc.tuningFile, tc.tuningFolder)
-                        cam = Picamera2(camNum, tuning=tuning)
-                        logger.debug("Thread %s: CameraController.requestStart - Initialized camera %s with tuning", get_ident(), camNum)
-                        prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
-                        prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", camNum)
-                self._activeCfg = self.copyConfig(self._requestedCfg)
-                logger.debug("Thread %s: CameraController.requestStart - activeCfg b: %s", get_ident(), self._activeCfg)
-                wrkCfg = self.copyConfig(self._activeCfg)
-                cam.configure(wrkCfg)
-                logger.debug("Thread %s: CameraController.requestStart - activeCfg a: %s", get_ident(), self._activeCfg)
-                if prgLogger.level == logging.DEBUG:
-                    self.codeGenConfig(self._activeCfg)
-                    prgLogger.debug("picam2.configure(ccfg)")
-                logger.debug("Thread %s: CameraController.requestStart - Camera configured", get_ident())
-                cam.start(show_preview=False)
-                prgLogger.debug("picam2.start(show_preview=False)")
-                logger.debug("Thread %s: CameraController.requestStart - Camera started", get_ident())
-                res = True
-                # let camera warm up
-                time.sleep(1.5)
-                prgLogger.debug("time.sleep(1.5)")
-            except Exception as e:
-                logger.error("Thread %s: CameraController.requestStart - Error starting camera: %s", get_ident(), e)
-                cfg = CameraCfg()
-                sc = cfg.serverConfig
-                if not sc.error:
-                    sc.error = "Error while starting camera: " + str(e)
-                    sc.errorSource = "CameraController.requestStart"
+                            tuning = Picamera2.load_tuning_file(
+                                tc.tuningFile, tc.tuningFolder
+                            )
+                            logger.debug(
+                                "Thread %s: CameraController.requestStart - Tuning file loaded: File=%s Folder=%s",
+                                get_ident(),
+                                tc.tuningFile,
+                                tc.tuningFolder,
+                            )
+                            cam = Picamera2(camNum, tuning=tuning)
+                            logger.debug(
+                                "Thread %s: CameraController.requestStart - Initialized camera %s with tuning",
+                                get_ident(),
+                                camNum,
+                            )
+                            prgLogger.debug(
+                                "tuning = Picamera2.load_tuning_file(%s, %s)",
+                                tc.tuningFile,
+                                tc.tuningFolder,
+                            )
+                            prgLogger.debug(
+                                "picam2 = Picamera2(%s, tuning=tuning)", camNum
+                            )
+                    self._activeCfg = self.copyConfig(self._requestedCfg)
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - activeCfg b: %s",
+                        get_ident(),
+                        self._activeCfg,
+                    )
+                    wrkCfg = self.copyConfig(self._activeCfg)
+                    cam.configure(wrkCfg)
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - activeCfg a: %s",
+                        get_ident(),
+                        self._activeCfg,
+                    )
+                    if self.isUsb == False:
+                        if prgLogger.level == logging.DEBUG:
+                            self.codeGenConfig(self._activeCfg)
+                            prgLogger.debug("picam2.configure(ccfg)")
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - Camera configured",
+                        get_ident(),
+                    )
+                    cam.start(show_preview=False)
+                    prgLogger.debug("picam2.start(show_preview=False)")
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - Camera started",
+                        get_ident(),
+                    )
+                    res = True
+                    # let camera warm up
+                    time.sleep(1.5)
+                    prgLogger.debug("time.sleep(1.5)")
+                except Exception as e:
+                    logger.error(
+                        "Thread %s: CameraController.requestStart - Error starting camera: %s",
+                        get_ident(),
+                        e,
+                    )
+                    cfg = CameraCfg()
+                    sc = cfg.serverConfig
+                    if not sc.error:
+                        sc.error = "Error while starting camera: " + str(e)
+                        sc.errorSource = "CameraController.requestStart"
 
+            else:
+                isIdentical, dif = self.compareConfig(
+                    self._requestedCfg, self._activeCfg
+                )
+                if isIdentical:
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - Camera was already started with same configuration.",
+                        get_ident(),
+                    )
+                    res = True
+                else:
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - Camera was already started, but with different configuration. Difference is: %s",
+                        get_ident(),
+                        dif,
+                    )
         else:
-            isIdentical, dif = self.compareConfig(self._requestedCfg, self._activeCfg)
-            if isIdentical:
+            logger.debug(
+                "Thread %s: CameraController.requestStart - cam.isOpened: %s",
+                get_ident(),
+                cam.isOpened(),
+            )
+            # For USB cameras, just open the camera if not already opened
+            if cam.isOpened() == False:
+                cam = cv2.VideoCapture(camUsbDev, cv2.CAP_V4L2)
+                if not cam or not cam.isOpened():
+                    logger.error(
+                        "Thread %s: CameraController.requestStart - Error: USB camera not opened",
+                        get_ident(),
+                    )
+                    sc.error = "Error while initializing camera: USB camera not opened"
+                    sc.errorSource = "CV2"
+                else:
+                    res = True
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - USB camera started",
+                        get_ident(),
+                    )
+            else:
                 logger.debug(
-                    "Thread %s: CameraController.requestStart - Camera was already started with same configuration.",
+                    "Thread %s: CameraController.requestStart - USB Camera was already opened.",
                     get_ident(),
                 )
                 res = True
-            else:
+            if cam.isOpened() == True:
+                # Apply configuration
+                self._activeCfg = self.copyConfig(self._requestedCfg)
+                wrkCfg = self.copyConfig(self._activeCfg)
+                fmt = wrkCfg.main.format
+                width = wrkCfg.main.size[0]
+                height = wrkCfg.main.size[1]
+                cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*fmt))
+                cam.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+                cam.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
                 logger.debug(
-                    "Thread %s: CameraController.requestStart - Camera was already started, but with different configuration. Difference is: %s",
+                    "Thread %s: CameraController.requestStart - USB Cam started with format: %s, size: %s x %s",
                     get_ident(),
-                    dif,
+                    fmt,
+                    width,
+                    height,
                 )
 
         logger.debug("Thread %s: CameraController.requestStart: %s", get_ident(), res)
         return cam, res
 
     def requestStop(self, cam, close=False):
-        """ Request to stop the camera
-        
-            If the camera is started,
-            - stop the active encoders, if any
-            - stop the camera
-            - if close: close the camera
-            Return:
-            - True  if the camera was stopped / closed
-                    or if the camera was not started
-            - False if the camera could not be stopped
+        """Request to stop the camera
+
+        If the camera is started,
+        - stop the active encoders, if any
+        - stop the camera
+        - if close: close the camera
+        Return:
+        - True  if the camera was stopped / closed
+                or if the camera was not started
+        - False if the camera could not be stopped
         """
         logger.debug("Thread %s: CameraController.requestStop", get_ident())
         res = False
-        try:
-            if cam.started == True:
-                # First stop encoders
-                logger.debug("Thread %s: CameraController.requestStop - Stopping %s encoders", get_ident(), len(self._activeEncoders))
-                while len(self._activeEncoders) > 0:
-                    task, encoder = self._activeEncoders.popitem()
-                    cam.stop_encoder(encoder)
-                    encoder = None
-                    prgLogger.debug("picam2.stop_encoder(encoder)")
-                    logger.debug("Thread %s: CameraController.requestStop - Stopped Encoder for %s", get_ident(), task)
-                # Then stop the camera
-                logger.debug("Thread %s: CameraController.requestStop - Stopping camera", get_ident())
-                cam.stop()
-                prgLogger.debug("picam2.stop()")
-                cnt = 0
-                while cam.started == True:
-                    time.sleep(0.01)
-                    cnt += 1
-                    if cnt > 200:
-                        logger.error("Thread %s: CameraController.requestStop - Camera did not stop", get_ident())
-                        raise TimeoutError("CameraController.requestStop: Camera did not stop within 2 sec")
-                if cnt < 200:
-                    logger.debug("Thread %s: CameraController.requestStop - Camera stopped", get_ident())
-                    res = True
-            else:
-                res = True
-
-        except TimeoutError:
-            raise
-        except Exception as e:
-            logger.error("Thread %s: CameraController.requestStop - error: %s", get_ident(), e)
-            raise
-
-        if close == True:
+        if self.isUsb == False:
             try:
-                if cam.is_open == True:
-                    logger.debug("Thread %s: CameraController.requestStop - About to close camera", get_ident())
-                    prgLogger.debug("picam2.close()")
-                    cam.close()
-                    logger.debug("Thread %s: CameraController.requestStop - Camera closed", get_ident())
-            except Exception as e:
-                logger.debug("Thread %s: CameraController.requestStop - Ignoring error while closing camera: %s", get_ident(), e)
-            gc.collect()
-            prgLogger.debug("gc.collect()")
-            logger.debug("Thread %s: CameraController.requestStop - Garbage collection completed", get_ident())
+                if cam.started == True:
+                    # First stop encoders
+                    logger.debug(
+                        "Thread %s: CameraController.requestStop - Stopping %s encoders",
+                        get_ident(),
+                        len(self._activeEncoders),
+                    )
+                    while len(self._activeEncoders) > 0:
+                        task, encoder = self._activeEncoders.popitem()
+                        cam.stop_encoder(encoder)
+                        encoder = None
+                        prgLogger.debug("picam2.stop_encoder(encoder)")
+                        logger.debug(
+                            "Thread %s: CameraController.requestStop - Stopped Encoder for %s",
+                            get_ident(),
+                            task,
+                        )
+                    # Then stop the camera
+                    logger.debug(
+                        "Thread %s: CameraController.requestStop - Stopping camera",
+                        get_ident(),
+                    )
+                    cam.stop()
+                    prgLogger.debug("picam2.stop()")
+                    cnt = 0
+                    while cam.started == True:
+                        time.sleep(0.01)
+                        cnt += 1
+                        if cnt > 200:
+                            logger.error(
+                                "Thread %s: CameraController.requestStop - Camera did not stop",
+                                get_ident(),
+                            )
+                            raise TimeoutError(
+                                "CameraController.requestStop: Camera did not stop within 2 sec"
+                            )
+                    if cnt < 200:
+                        logger.debug(
+                            "Thread %s: CameraController.requestStop - Camera stopped",
+                            get_ident(),
+                        )
+                        res = True
+                else:
+                    res = True
 
+            except TimeoutError:
+                raise
+            except Exception as e:
+                logger.error(
+                    "Thread %s: CameraController.requestStop - error: %s",
+                    get_ident(),
+                    e,
+                )
+                raise
+
+            if close == True:
+                try:
+                    if cam.is_open == True:
+                        logger.debug(
+                            "Thread %s: CameraController.requestStop - About to close camera",
+                            get_ident(),
+                        )
+                        prgLogger.debug("picam2.close()")
+                        cam.close()
+                        logger.debug(
+                            "Thread %s: CameraController.requestStop - Camera closed",
+                            get_ident(),
+                        )
+                except Exception as e:
+                    logger.debug(
+                        "Thread %s: CameraController.requestStop - Ignoring error while closing camera: %s",
+                        get_ident(),
+                        e,
+                    )
+                gc.collect()
+                prgLogger.debug("gc.collect()")
+                logger.debug(
+                    "Thread %s: CameraController.requestStop - Garbage collection completed",
+                    get_ident(),
+                )
+        else:
+            # For USB cameras, just close the camera
+            try:
+                if cam.isOpened() == True:
+                    logger.debug(
+                        "Thread %s: CameraController.requestStop - About to close USB camera",
+                        get_ident(),
+                    )
+                    cam.release()
+                    logger.debug(
+                        "Thread %s: CameraController.requestStop - USB Camera closed",
+                        get_ident(),
+                    )
+                else:
+                    logger.debug(
+                        "Thread %s: CameraController.requestStop - USB Camera was not opened",
+                        get_ident(),
+                    )
+                res = True
+            except Exception as e:
+                logger.debug(
+                    "Thread %s: CameraController.requestStop - Ignoring error while closing USB camera: %s",
+                    get_ident(),
+                    e,
+                )
+            gc.collect()
+            logger.debug(
+                "Thread %s: CameraController.requestStop - Garbage collection completed",
+                get_ident(),
+            )
         logger.debug("Thread %s: CameraController.requestStop: %s", get_ident(), res)
         return cam, res
 
-    def requestConfig(self, cfg:CameraConfig, test:bool=False, cfgPhoto:CameraConfig=None):
-        """ Register a new configuration
-        
-            Parameters:
-            cfg:     configuration to register
-            test:    Run in test mode without modifying self._requestedCfg
-            cfgPhoto Configuration for Photo.
-                     Required only if cfg is a Raw Photo configuration.
-                     In this case, cfgPhoto is used to configure the main stream for placeholder jpg photos
-                     
-            Return:
-            configChange:       True/False if the requested configuration caused a change in configuration
-            configChangeReason: Reason for configuration change: list of discrepancies
-            
-            If there are no configuration conflicts,
-            the requested configuration is merged into the active configuration.
-            Otherwise, the active configuration is replaced by the requested configuration
-            and configChange is set to True and configChangeReason is filled with detected conflicts
+    def requestConfig(
+        self, cfg: CameraConfig, test: bool = False, cfgPhoto: CameraConfig = None
+    ):
+        """Register a new configuration
+
+        Parameters:
+        cfg:     configuration to register
+        test:    Run in test mode without modifying self._requestedCfg
+        cfgPhoto Configuration for Photo.
+                 Required only if cfg is a Raw Photo configuration.
+                 In this case, cfgPhoto is used to configure the main stream for placeholder jpg photos
+
+        Return:
+        configChange:       True/False if the requested configuration caused a change in configuration
+        configChangeReason: Reason for configuration change: list of discrepancies
+
+        If there are no configuration conflicts,
+        the requested configuration is merged into the active configuration.
+        Otherwise, the active configuration is replaced by the requested configuration
+        and configChange is set to True and configChangeReason is filled with detected conflicts
         """
-        logger.debug("Thread %s: CameraController.requestConfig - test: %s cfg     : %s", get_ident(), test, cfg.__dict__)
+        logger.debug(
+            "Thread %s: CameraController.requestConfig - test: %s cfg     : %s",
+            get_ident(),
+            test,
+            cfg.__dict__,
+        )
         if cfgPhoto:
-            logger.debug("Thread %s: CameraController.requestConfig - test: %s cfgPhoto: %s", get_ident(), test, cfgPhoto.__dict__)
+            logger.debug(
+                "Thread %s: CameraController.requestConfig - test: %s cfgPhoto: %s",
+                get_ident(),
+                test,
+                cfgPhoto.__dict__,
+            )
         else:
-            logger.debug("Thread %s: CameraController.requestConfig - test: %s cfgPhoto: %s", get_ident(), test, cfgPhoto)
+            logger.debug(
+                "Thread %s: CameraController.requestConfig - test: %s cfgPhoto: %s",
+                get_ident(),
+                test,
+                cfgPhoto,
+            )
 
         cfgRef = self._requestedCfg
 
@@ -346,13 +691,17 @@ class CameraController():
 
         # Transform of new config must be identical to existing
         if cfgRef.transform:
-            if cfgRef.transform.hflip != cfg.transform_hflip \
-            or cfgRef.transform.vflip != cfg.transform_vflip:
+            if (
+                cfgRef.transform.hflip != cfg.transform_hflip
+                or cfgRef.transform.vflip != cfg.transform_vflip
+            ):
                 configChange = True
                 configChangeReason += "transform,"
         else:
             if not test:
-                cfgRef.transform = Transform(vflip = cfg.transform_vflip, hflip = cfg.transform_hflip)
+                cfgRef.transform = Transform(
+                    vflip=cfg.transform_vflip, hflip=cfg.transform_hflip
+                )
 
         # For buffer_count, always choose the larger one
         if not test:
@@ -362,24 +711,25 @@ class CameraController():
             else:
                 cfgRef.buffer_count = cfg.buffer_count
 
-        # Colour space must be identical
-        cosp = cfg.colour_space
-        if cosp == "sYCC":
-            colourSpace = ColorSpace.Sycc()
-        elif cosp == "Smpte170m":
-            colourSpace = ColorSpace.Smpte170m()
-        elif cosp == "Rec709":
-            colourSpace = ColorSpace.Rec709()
-        else:
-            colourSpace = ColorSpace.Sycc()
+        if self.isUsb == False:
+            # Colour space must be identical
+            cosp = cfg.colour_space
+            if cosp == "sYCC":
+                colourSpace = ColorSpace.Sycc()
+            elif cosp == "Smpte170m":
+                colourSpace = ColorSpace.Smpte170m()
+            elif cosp == "Rec709":
+                colourSpace = ColorSpace.Rec709()
+            else:
+                colourSpace = ColorSpace.Sycc()
 
-        if cfgRef.colour_space:
-            if cfgRef.colour_space != colourSpace:
-                configChange = True
-                configChangeReason += "colourSpace,"
-        else:
-            if not test:
-                cfgRef.colour_space = colourSpace
+            if cfgRef.colour_space:
+                if cfgRef.colour_space != colourSpace:
+                    configChange = True
+                    configChangeReason += "colourSpace,"
+            else:
+                if not test:
+                    cfgRef.colour_space = colourSpace
 
         # queue must be identical
         if cfgRef.queue:
@@ -401,7 +751,7 @@ class CameraController():
 
         # encode is not used. Always set it to 'main'
         if not test:
-            cfgRef.encode = 'main'
+            cfgRef.encode = "main"
 
         # Sensor is not explicitely set in the configuration
         # It will be selected and updated by picamera2 automaticallx
@@ -505,18 +855,23 @@ class CameraController():
                 camCfg = CameraConfiguration()
 
                 camCfg.use_case = cfg.use_case
-                camCfg.transform = Transform(vflip=cfg.transform_vflip, hflip=cfg.transform_hflip)
+                camCfg.transform = Transform(
+                    vflip=cfg.transform_vflip, hflip=cfg.transform_hflip
+                )
                 camCfg.buffer_count = cfg.buffer_count
                 cosp = cfg.colour_space
-                if cosp == "sYCC":
-                    colourSpace = ColorSpace.Sycc()
-                elif cosp == "Smpte170m":
-                    colourSpace = ColorSpace.Smpte170m()
-                elif cosp == "Rec709":
-                    colourSpace = ColorSpace.Rec709()
+                if self.isUsb == False:
+                    if cosp == "sYCC":
+                        colourSpace = ColorSpace.Sycc()
+                    elif cosp == "Smpte170m":
+                        colourSpace = ColorSpace.Smpte170m()
+                    elif cosp == "Rec709":
+                        colourSpace = ColorSpace.Rec709()
+                    else:
+                        colourSpace = ColorSpace.Sycc()
+                    camCfg.colour_space = colourSpace
                 else:
-                    colourSpace = ColorSpace.Sycc()
-                camCfg.colour_space = colourSpace
+                    camCfg.colour_space = cfgRef.colour_space
                 camCfg.queue = cfg.queue
                 camCfg.display = cfg.display
                 camCfg.encode = cfg.encode
@@ -544,13 +899,15 @@ class CameraController():
                     camCfg.raw = stream
                 ctrls = copy.deepcopy(cfg.controls)
                 if len(ctrls) == 0:
-                    raise ValueError("controls in camera configuration must not be empty")
+                    raise ValueError(
+                        "controls in camera configuration must not be empty"
+                    )
                 else:
                     camCfg.controls = ctrls
                 cfgRef = camCfg
 
             # Automatically align the stream size, if selected
-            if cfg.stream_size_align and cfg.sensor_mode == "custom" :
+            if cfg.stream_size_align and cfg.sensor_mode == "custom":
                 cfgRef.align()
                 if cfg.stream == "main":
                     cfg.stream_size = cfgRef.main.size
@@ -558,30 +915,49 @@ class CameraController():
                     cfg.stream_size = cfgRef.lores.size
 
         self._requestedCfg = cfgRef
-        logger.debug("Thread %s: CameraController.requestConfig - configChange: %s", get_ident(), configChange)
-        logger.debug("Thread %s: CameraController.requestConfig - configChangeReason: %s", get_ident(), configChangeReason)
-        logger.debug("Thread %s: CameraController.requestConfig - cfg: %s", get_ident(), self._requestedCfg)
+        logger.debug(
+            "Thread %s: CameraController.requestConfig - configChange: %s",
+            get_ident(),
+            configChange,
+        )
+        logger.debug(
+            "Thread %s: CameraController.requestConfig - configChangeReason: %s",
+            get_ident(),
+            configChangeReason,
+        )
+        logger.debug(
+            "Thread %s: CameraController.requestConfig - cfg: %s",
+            get_ident(),
+            self._requestedCfg,
+        )
         return configChange, configChangeReason
 
-    def codeGenConfig(self, cfg:CameraConfiguration):
-        """ Generate code for the given configuration
-        """
-        logger.debug("Thread %s: CameraController.codeGenConfig cfg: %s", get_ident(), cfg.__dict__)
+    def codeGenConfig(self, cfg: CameraConfiguration):
+        """Generate code for the given configuration"""
+        logger.debug(
+            "Thread %s: CameraController.codeGenConfig cfg: %s",
+            get_ident(),
+            cfg.__dict__,
+        )
         prgLogger.debug("ccfg = CameraConfiguration()")
-        prgLogger.debug("ccfg.use_case = \"%s\"", cfg.use_case)
+        prgLogger.debug('ccfg.use_case = "%s"', cfg.use_case)
         if cfg.encode:
-            prgLogger.debug("ccfg.encode = \"%s\"", cfg.encode)
+            prgLogger.debug('ccfg.encode = "%s"', cfg.encode)
         else:
             prgLogger.debug("ccfg.encode = None")
         if cfg.display:
-            prgLogger.debug("ccfg.display = \"%s\"", cfg.display)
+            prgLogger.debug('ccfg.display = "%s"', cfg.display)
         else:
             prgLogger.debug("ccfg.display = None")
         prgLogger.debug("ccfg.buffer_count = %s", cfg.buffer_count)
         prgLogger.debug("ccfg.queue = %s", cfg.queue)
 
         if cfg.transform:
-            prgLogger.debug("ccfg.transform = Transform(vflip=%s, hflip=%s)", cfg.transform.vflip, cfg.transform.hflip)
+            prgLogger.debug(
+                "ccfg.transform = Transform(vflip=%s, hflip=%s)",
+                cfg.transform.vflip,
+                cfg.transform.hflip,
+            )
         else:
             prgLogger.debug("ccfg.transform = None")
 
@@ -608,7 +984,7 @@ class CameraController():
         if cfg.main:
             prgLogger.debug("ccfg.main = StreamConfiguration()")
             prgLogger.debug("ccfg.main.size = %s", cfg.main.size)
-            prgLogger.debug("ccfg.main.format = \"%s\"", cfg.main.format)
+            prgLogger.debug('ccfg.main.format = "%s"', cfg.main.format)
             prgLogger.debug("ccfg.main.stride = %s", cfg.main.stride)
             prgLogger.debug("ccfg.main.framesize = %s", cfg.main.framesize)
         else:
@@ -617,7 +993,7 @@ class CameraController():
         if cfg.lores:
             prgLogger.debug("ccfg.lores = StreamConfiguration()")
             prgLogger.debug("ccfg.lores.size = %s", cfg.lores.size)
-            prgLogger.debug("ccfg.lores.format = \"%s\"", cfg.lores.format)
+            prgLogger.debug('ccfg.lores.format = "%s"', cfg.lores.format)
             prgLogger.debug("ccfg.lores.stride = %s", cfg.lores.stride)
             prgLogger.debug("ccfg.lores.framesize = %s", cfg.lores.framesize)
         else:
@@ -626,16 +1002,19 @@ class CameraController():
         if cfg.raw:
             prgLogger.debug("ccfg.raw = StreamConfiguration()")
             prgLogger.debug("ccfg.raw.size = %s", cfg.raw.size)
-            prgLogger.debug("ccfg.raw.format = \"%s\"", cfg.raw.format)
+            prgLogger.debug('ccfg.raw.format = "%s"', cfg.raw.format)
             prgLogger.debug("ccfg.raw.stride = %s", cfg.raw.stride)
             prgLogger.debug("ccfg.raw.framesize = %s", cfg.raw.framesize)
         else:
             prgLogger.debug("ccfg.raw = None")
 
-    def copyConfig(self, cfg:CameraConfiguration) -> CameraConfiguration:
-        """ Return a copy of the given configuration
-        """
-        logger.debug("Thread %s: CameraController.copyConfig cfg(in) : %s", get_ident(), cfg.__dict__)
+    def copyConfig(self, cfg: CameraConfiguration) -> CameraConfiguration:
+        """Return a copy of the given configuration"""
+        logger.debug(
+            "Thread %s: CameraController.copyConfig cfg(in) : %s",
+            get_ident(),
+            cfg.__dict__,
+        )
         ccfg = CameraConfiguration()
         ccfg.use_case = cfg.use_case
         ccfg.encode = cfg.encode
@@ -644,7 +1023,9 @@ class CameraController():
         ccfg.queue = cfg.queue
 
         if cfg.transform:
-            ccfg.transform = Transform(vflip=cfg.transform.vflip, hflip=cfg.transform.hflip)
+            ccfg.transform = Transform(
+                vflip=cfg.transform.vflip, hflip=cfg.transform.hflip
+            )
         else:
             ccfg.transform = None
 
@@ -689,20 +1070,34 @@ class CameraController():
             ccfg.raw.framesize = cfg.raw.framesize
         else:
             ccfg.raw = None
-        logger.debug("Thread %s: CameraController.copyConfig cfg(out): %s", get_ident(), ccfg.__dict__)
+        logger.debug(
+            "Thread %s: CameraController.copyConfig cfg(out): %s",
+            get_ident(),
+            ccfg.__dict__,
+        )
         return ccfg
 
-    def compareConfig(self, cfg1:CameraConfiguration, cfg2:CameraConfiguration) -> bool:
-        """ Check equality of configurations
+    def compareConfig(
+        self, cfg1: CameraConfiguration, cfg2: CameraConfiguration
+    ) -> bool:
+        """Check equality of configurations
 
-            Return:
-            result (bool):
-                True  if configurations are identical
-                False if configuration differ
-            difference (str): List of differences
+        Return:
+        result (bool):
+            True  if configurations are identical
+            False if configuration differ
+        difference (str): List of differences
         """
-        logger.debug("Thread %s: CameraController.compareConfig cfg1: %s", get_ident(), cfg1.__dict__)
-        logger.debug("Thread %s: CameraController.compareConfig cfg2: %s", get_ident(), cfg2.__dict__)
+        logger.debug(
+            "Thread %s: CameraController.compareConfig cfg1: %s",
+            get_ident(),
+            cfg1.__dict__,
+        )
+        logger.debug(
+            "Thread %s: CameraController.compareConfig cfg2: %s",
+            get_ident(),
+            cfg2.__dict__,
+        )
         res = True
         dif = ""
         if cfg1.encode:
@@ -746,8 +1141,10 @@ class CameraController():
 
         if cfg1.transform:
             if cfg2.transform:
-                if cfg1.transform.hflip != cfg2.transform.hflip \
-                or cfg1.transform.vflip != cfg2.transform.vflip:
+                if (
+                    cfg1.transform.hflip != cfg2.transform.hflip
+                    or cfg1.transform.vflip != cfg2.transform.vflip
+                ):
                     res = False
                     dif += "transform,"
             else:
@@ -868,58 +1265,66 @@ class CameraController():
         if not resCtrls:
             res = False
             dif += "controls,"
-        logger.debug("Thread %s: CameraController.compareConfig res: %s, dif: %s", get_ident(), res, dif)
+        logger.debug(
+            "Thread %s: CameraController.compareConfig res: %s, dif: %s",
+            get_ident(),
+            res,
+            dif,
+        )
         return res, dif
 
     def clearConfig(self):
-        """ Clear the configuration
-        """
+        """Clear the configuration"""
         logger.debug("Thread %s: CameraController.clearConfig", get_ident())
         self._requestedCfg = CameraConfiguration()
 
-    def registerEncoder(self, task:str, encoder):
-        """ Register an encoder which needs to be stopped when stopping the camera
-        """
-        logger.debug("Thread %s: CameraController.registerEncoder: %s", get_ident(), encoder)
+    def registerEncoder(self, task: str, encoder):
+        """Register an encoder which needs to be stopped when stopping the camera"""
+        logger.debug(
+            "Thread %s: CameraController.registerEncoder: %s", get_ident(), encoder
+        )
         self._activeEncoders[task] = encoder
 
-    def stopEncoder(self, cam, task:str):
-        """ Stop an encoder for a specific task
-        """
+    def stopEncoder(self, cam, task: str):
+        """Stop an encoder for a specific task"""
         logger.debug("Thread %s: CameraController.stopEncoder: %s", get_ident(), task)
         if task in self._activeEncoders:
             encoder = self._activeEncoders[task]
             cam.stop_encoder(encoder)
             prgLogger.debug("picam2.stop_encoder(encoder)")
             del self._activeEncoders[task]
-            logger.debug("Thread %s: CameraController.stopEncoder - Encoder stopped", get_ident())
+            logger.debug(
+                "Thread %s: CameraController.stopEncoder - Encoder stopped", get_ident()
+            )
+
 
 class CameraEvent(object):
     """An Event-like class that signals all active clients when a new frame is
     available.
     """
+
     def __init__(self):
-        #logger.debug("Thread %s: CameraEvent.__init__", get_ident())
+        # logger.debug("Thread %s: CameraEvent.__init__", get_ident())
         self.events = {}
 
     def wait(self):
         """Invoked from each client's thread to wait for the next frame."""
-        #logger.debug("Thread %s: CameraEvent.wait", get_ident())
+        # logger.debug("Thread %s: CameraEvent.wait", get_ident())
         ident = get_ident()
         if ident not in self.events:
             # this is a new client
             # add an entry for it in the self.events dict
             # each entry has two elements, a threading.Event() and a timestamp
             self.events[ident] = [threading.Event(), time.time()]
-            #logger.debug("Thread %s: CameraEvent.wait - Event ident: %s added to events dict. time:%s", get_ident(), ident, self.events[ident][1])
-        #for ident, event in self.events.items():
-            #logger.debug("Thread %s: CameraEvent.wait - Event ident: %s Flag: %s Time: %s (Flag False -> blocking)", get_ident(), ident, self.events[ident][0].is_set(), event[1])
-            
+            # logger.debug("Thread %s: CameraEvent.wait - Event ident: %s added to events dict. time:%s", get_ident(), ident, self.events[ident][1])
+        # for ident, event in self.events.items():
+        # logger.debug("Thread %s: CameraEvent.wait - Event ident: %s Flag: %s Time: %s (Flag False -> blocking)", get_ident(), ident, self.events[ident][0].is_set(), event[1])
+
         return self.events[ident][0].wait()
 
     def set(self):
         """Invoked by the camera thread when a new frame is available."""
-        #logger.debug("Thread %s: CameraEvent.set", get_ident())
+        # logger.debug("Thread %s: CameraEvent.set", get_ident())
         now = time.time()
         remove = None
         for ident, event in self.events.items():
@@ -928,26 +1333,26 @@ class CameraEvent(object):
                 # also update the last set timestamp to now
                 event[0].set()
                 event[1] = now
-                #logger.debug("Thread %s: CameraEvent.set  - Event ident: %s Flag: False -> True (unblock/notify)", get_ident(), ident)
+                # logger.debug("Thread %s: CameraEvent.set  - Event ident: %s Flag: False -> True (unblock/notify)", get_ident(), ident)
             else:
                 # if the client's event is already set, it means the client
                 # did not process a previous frame
                 # if the event stays set for more than 5 seconds, then assume
                 # the client is gone and remove it
-                #logger.debug("Thread %s: CameraEvent.set  - Event ident: %s Flag: True (Last image not processed).", get_ident(), ident)
+                # logger.debug("Thread %s: CameraEvent.set  - Event ident: %s Flag: True (Last image not processed).", get_ident(), ident)
                 if now - event[1] > 5:
-                    #logger.debug("Thread %s: CameraEvent.set  - Event ident: %s  too old; marked for removal.", get_ident(), ident)
+                    # logger.debug("Thread %s: CameraEvent.set  - Event ident: %s  too old; marked for removal.", get_ident(), ident)
                     remove = ident
         if remove:
             del self.events[remove]
-            #logger.debug("Thread %s: CameraEvent.set  - Event ident: %s removed.", get_ident(), ident)
+            # logger.debug("Thread %s: CameraEvent.set  - Event ident: %s removed.", get_ident(), ident)
 
     def clear(self):
         """Invoked from each client's thread after a frame was processed."""
         ident = get_ident()
         if ident in self.events:
             self.events[get_ident()][0].clear()
-        #logger.debug("Thread %s: CameraEvent.clear - Flag set to False -> blocking.", get_ident())
+        # logger.debug("Thread %s: CameraEvent.clear - Flag set to False -> blocking.", get_ident())
 
     def toDict(self):
         """Convert the event to a dict representation."""
@@ -965,46 +1370,55 @@ class CameraEvent(object):
         }
 
 
-class Camera():
+class Camera:
     logger.debug("Thread %s: Camera - setting class variables", get_ident())
     _instance = None
     ENCODER_LIVESTREAM = "LIVESTREAM"
     ENCODER_VIDEO = "VIDEO"
     ENCODER_PHOTOSERIES = "PHOTOSERIES"
 
-    cam: Picamera2 = None
-    cam2: Picamera2 = None
+    cam = None
+    camIsUsb = False
+    camUsbDev = ""
     camNum = -1
+    cam2 = None
+    cam2IsUsb = False
+    cam2UsbDev = ""
     camNum2 = -1
-    ctrl:CameraController = None
-    ctrl2:CameraController = None
+    ctrl: CameraController = None
+    ctrl2: CameraController = None
     videoOutput = None
     videoOutput2 = None
     prgVideoOutput = None
     prgVideoOutput2 = None
-    photoSeries:Series = None
+    photoSeries: Series = None
 
-    thread = None                   # background thread that reads frames from camera
-    threadLock = allocate_lock()    # lock for stopping the camera thread
-    thread2 = None                  # background thread for second camera
-    thread2Lock = allocate_lock()   # lock for stopping the second camera thread
+    thread = None  # background thread that reads frames from camera
+    threadLock = allocate_lock()  # lock for stopping the camera thread
+    thread2 = None  # background thread for second camera
+    thread2Lock = allocate_lock()  # lock for stopping the second camera thread
+    threadUsbVideo = None  # background thread that records video from USB camera
+    threadUsbVideoLock = allocate_lock()  # lock for stopping the USB video thread
     liveViewDeactivated = False
     liveView2Deactivated = False
     videoThread = None
     videoThread2 = None
     photoSeriesThread = None
-    frame = None                    # current frame is stored here by background thread
-    frame2 = None                   # current frame for second camera
-    streamOutput = None             # output for MJPEG streaming for live stream
-    stream2Output = None            # output for MJPEG streaming for second camera
-    last_access = 0                 # time of last client access to the camera
-    last_access2 = 0                # time of last client access for second camera
-    stopRequested = False           # Request to stop the background thread
-    stopRequested2 = False          # Request to stop the background thread for second camera
-    stopVideoRequested = False      # Request to stop the video thread
-    stopVideoRequested2 = False     # Request to stop the video thread
-    videoDuration = 0               # Planned duration of video recording in sec
-    videoDuration2 = 0               # Planned duration of video recording in sec
+    frame = None  # current frame is stored here by background thread
+    frame2 = None  # current frame for second camera
+    frameRaw = None  # current raw frame is stored here by background thread
+    frame2Raw = None  # current raw frame for second camera
+    streamOutput = None  # output for MJPEG streaming for live stream
+    stream2Output = None  # output for MJPEG streaming for second camera
+    last_access = 0  # time of last client access to the camera
+    last_access2 = 0  # time of last client access for second camera
+    stopRequested = False  # Request to stop the background thread
+    stopRequested2 = False  # Request to stop the background thread for second camera
+    stopVideoRequested = False  # Request to stop the video thread
+    stopVideoRequested2 = False  # Request to stop the video thread
+    stopUsbVideoRequested = False  # Request to stop the video thread
+    videoDuration = 0  # Planned duration of video recording in sec
+    videoDuration2 = 0  # Planned duration of video recording in sec
     stopPhotoSeriesRequested = False  # Request to stop the photoseries thread
     resetScalerCropRequested = False
     event = CameraEvent()
@@ -1026,36 +1440,105 @@ class Camera():
     def __new__(cls):
         logger.debug("Thread %s: Camera.__new__", get_ident())
         if cls._instance is None:
-            logger.debug("Thread %s: Camera.__new__ - Instantiating Camera Class", get_ident())
+            logger.debug(
+                "Thread %s: Camera.__new__ - Instantiating Camera Class", get_ident()
+            )
             cls._instance = super(Camera, cls).__new__(cls)
+            cls.cam = None
+            cls.camIsUsb = False
+            cls.camUsbDev = ""
+            cls.camNum = -1
+            cls.cam2 = None
+            cls.cam2IsUsb = False
+            cls.cam2UsbDev = ""
+            cls.camNum2 = -1
+            cls.ctrl: CameraController = None
+            cls.ctrl2: CameraController = None
+            cls.videoOutput = None
+            cls.videoOutput2 = None
+            cls.prgVideoOutput = None
+            cls.prgVideoOutput2 = None
+            cls.photoSeries: Series = None
+            cls.thread = None
+            cls.threadLock = allocate_lock()
+            cls.thread2 = None
+            cls.thread2Lock = allocate_lock()
+            cls.threadUsbVideo = None
+            cls.threadUsbVideoLock = allocate_lock()
+            cls.liveViewDeactivated = False
+            cls.liveView2Deactivated = False
+            cls.videoThread = None
+            cls.videoThread2 = None
+            cls.photoSeriesThread = None
+            cls.frame = None
+            cls.frame2 = None
+            cls.frameRaw = None
+            cls.frame2Raw = None
+            cls.streamOutput = None
+            cls.stream2Output = None
+            cls.last_access = 0
+            cls.last_access2 = 0
+            cls.stopRequested = False
+            cls.stopRequested2 = False
+            cls.stopVideoRequested = False
+            cls.stopVideoRequested2 = False
+            cls.stopUsbVideoRequested = False
+            cls.videoDuration = 0
+            cls.videoDuration2 = 0
+            cls.stopPhotoSeriesRequested = False
+            cls.resetScalerCropRequested = False
+            cls.event = CameraEvent()
+            cls.event2 = None
+            cls.when_photo_taken = None
+            cls.when_photo_2_taken = None
+            cls.when_series_photo_taken = None
+            cls.when_recording_starts = None
+            cls.when_recording_stops = None
+            cls.when_recording_2_starts = None
+            cls.when_recording_2_stops = None
+            cls.when_streaming_1_starts = None
+            cls.when_streaming_1_stops = None
+            cls.when_streaming_2_starts = None
+            cls.when_streaming_2_stops = None
+
             cls.initCamera()
         else:
-            if cls.cam is None:
-                cls.initCamera()
-            else:
-                CameraCfg().serverConfig.error = None
+            if CameraCfg().serverConfig.noCamera == False:
+                if cls.cam is None:
+                    cls.initCamera()
+                else:
+                    CameraCfg().serverConfig.error = None
         return cls._instance
 
     @classmethod
     def isCamera2Available(cls) -> bool:
-        """ Check if the second camera is available
-            Returns True if the second camera is available, False otherwise
+        """Check if the second camera is available
+        Returns True if the second camera is available, False otherwise
         """
         logger.debug("Thread %s: Camera.isCamera2Available", get_ident())
         if cls.cam2 is not None:
             return True
-            logger.debug("Thread %s: Camera.isCamera2Available - Second camera is available", get_ident())
+            logger.debug(
+                "Thread %s: Camera.isCamera2Available - Second camera is available",
+                get_ident(),
+            )
         else:
-            logger.debug("Thread %s: Camera.isCamera2Available - Second camera not available", get_ident())
+            logger.debug(
+                "Thread %s: Camera.isCamera2Available - Second camera not available",
+                get_ident(),
+            )
             return False
 
     @classmethod
     def initCamera(cls):
-        """ Instantiate the camera
-        """
-        logger.debug("Thread %s: Camera.initCamera - Instantiating Camera Class", get_ident())
+        """Instantiate the camera"""
+        logger.debug(
+            "Thread %s: Camera.initCamera - Instantiating Camera Class", get_ident()
+        )
 
-        prgLogger.debug("from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls")
+        prgLogger.debug(
+            "from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls"
+        )
         prgLogger.debug("from libcamera import Transform, Size, ColorSpace, controls")
         prgLogger.debug("from picamera2.encoders import JpegEncoder, MJPEGEncoder")
         if useSensorConfiguration:
@@ -1074,113 +1557,383 @@ class Camera():
         sc = cfg.serverConfig
         sc.error = None
         # Before all, load the global camera info to get the installed cameras and the active cam
-        activeCam = cls.getActiveCamera()
+        activeCam, activeCamIsUsb, activeCamUsbDev = cls.getActiveCamera()
+        if sc.noCamera == True:
+            return
 
         if cls.cam is None:
-            logger.debug("Thread %s: Camera.initCamera: Instantiating camera %s", get_ident(), activeCam)
-            try:
-                tc = cfg.tuningConfig
-                if tc.loadTuningFile == False:
-                    cls.cam = Picamera2(activeCam)
-                    prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
-                else:
-                    tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
-                    cls.cam = Picamera2(activeCam, tuning=tuning)
-                    logger.debug("Thread %s: Camera.initCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
-                    prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
-                    prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
-                cls.camNum = activeCam
-                cls.ctrl = CameraController()
-            except RuntimeError as e:
-                logger.error("Thread %s: Camera.initCamera - Error %s", get_ident(), e)
-                if not sc.error:
-                    sc.error = "Error while initializing camera: " + str(e)
-                    sc.error2 = "Probably another process is using the camera."
-                    sc.errorSource = "Picamera2"
-        else:
-            if activeCam != Camera.camNum:
+            logger.debug(
+                "Thread %s: Camera.initCamera: Active camera is None - Needing initialization",
+                get_ident(),
+            )
+            if activeCamIsUsb == False:
+                logger.debug(
+                    "Thread %s: Camera.initCamera: Instantiating Pi camera %s",
+                    get_ident(),
+                    activeCam,
+                )
+                cls.camIsUsb = False
+                cls.camUsbDev = activeCamUsbDev
                 try:
-                    logger.debug("Thread %s: Camera.initCamera: About to switch camera from %s to %s", get_ident(), Camera.camNum, activeCam)
-                    cls.stopCameraSystem()
                     tc = cfg.tuningConfig
                     if tc.loadTuningFile == False:
                         cls.cam = Picamera2(activeCam)
                         prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
                     else:
-                        tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
+                        tuning = Picamera2.load_tuning_file(
+                            tc.tuningFile, tc.tuningFolder
+                        )
                         cls.cam = Picamera2(activeCam, tuning=tuning)
-                        logger.debug("Thread %s: Camera.initCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
-                        prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
-                        prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
+                        logger.debug(
+                            "Thread %s: Camera.initCamera - Initialized camera %s with tuning file %s",
+                            get_ident(),
+                            activeCam,
+                            tc.tuningFilePath,
+                        )
+                        prgLogger.debug(
+                            "tuning = Picamera2.load_tuning_file(%s, %s)",
+                            tc.tuningFile,
+                            tc.tuningFolder,
+                        )
+                        prgLogger.debug(
+                            "picam2 = Picamera2(%s, tuning=tuning)", activeCam
+                        )
                     cls.camNum = activeCam
-                    cls.ctrl = CameraController()
-                    logger.debug("Thread %s: Camera.initCamera: Switch camera to %s successful", get_ident(), activeCam)
-                    # Force refresh of camera properties
-                    cfg.cameraProperties.model=None
-                    cfg.sensorModes = []
-                    cfg.rawFormats = []
-                    logger.debug("Thread %s: Camera.initCamera: Camera-specific configs were reset", get_ident())
+                    cls.ctrl = CameraController(cls.camIsUsb, cls.camUsbDev)
                 except RuntimeError as e:
-                    logger.error("Thread %s: Camera.initCamera - Error %s", get_ident(), e)
+                    logger.error(
+                        "Thread %s: Camera.initCamera - Error %s", get_ident(), e
+                    )
                     if not sc.error:
                         sc.error = "Error while initializing camera: " + str(e)
                         sc.error2 = "Probably another process is using the camera."
                         sc.errorSource = "Picamera2"
+            else:
+                logger.debug(
+                    "Thread %s: Camera.initCamera: Instantiating USB camera %s",
+                    get_ident(),
+                    activeCam,
+                )
+                cls.camIsUsb = True
+                cls.camUsbDev = activeCamUsbDev
+                cls.cam = cv2.VideoCapture(cls.camUsbDev, cv2.CAP_V4L2)
+                if not cls.cam or not cls.cam.isOpened():
+                    logger.error(
+                        "Thread %s: Camera.initCamera - Error: USB camera not opened",
+                        get_ident(),
+                    )
+                    sc.error = "Error while initializing camera: USB camera not opened"
+                    sc.errorSource = "CV2"
+                else:
+                    logger.debug(
+                        "Thread %s: Camera.initCamera - Initialized USB camera %s",
+                        get_ident(),
+                        activeCam,
+                    )
+                    cls.camNum = activeCam
+                    cls.ctrl = CameraController(cls.camIsUsb, cls.camUsbDev)
+        else:
+            logger.debug(
+                "Thread %s: Camera.initCamera: Active camera is already set for %s. Checking if switch is needed",
+                get_ident(),
+                Camera.camNum,
+            )
+            if activeCam != Camera.camNum:
+                try:
+                    logger.debug(
+                        "Thread %s: Camera.initCamera: About to switch camera from %s to %s",
+                        get_ident(),
+                        Camera.camNum,
+                        activeCam,
+                    )
+                    cls.stopCameraSystem()
+                    if activeCamIsUsb == False:
+                        tc = cfg.tuningConfig
+                        if tc.loadTuningFile == False:
+                            cls.cam = Picamera2(activeCam)
+                            prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                        else:
+                            tuning = Picamera2.load_tuning_file(
+                                tc.tuningFile, tc.tuningFolder
+                            )
+                            cls.cam = Picamera2(activeCam, tuning=tuning)
+                            logger.debug(
+                                "Thread %s: Camera.initCamera - Initialized camera %s with tuning file %s",
+                                get_ident(),
+                                activeCam,
+                                tc.tuningFilePath,
+                            )
+                            prgLogger.debug(
+                                "tuning = Picamera2.load_tuning_file(%s, %s)",
+                                tc.tuningFile,
+                                tc.tuningFolder,
+                            )
+                            prgLogger.debug(
+                                "picam2 = Picamera2(%s, tuning=tuning)", activeCam
+                            )
+                        cls.camNum = activeCam
+                        cls.camIsUsb = False
+                        cls.camUsbDev = ""
+                        cls.ctrl = CameraController(cls.camIsUsb, cls.camUsbDev)
+                        logger.debug(
+                            "Thread %s: Camera.initCamera: Switch camera to %s successful",
+                            get_ident(),
+                            activeCam,
+                        )
+                        # Force refresh of camera properties
+                        cfg.cameraProperties.model = None
+                        cfg.sensorModes = []
+                        cfg.rawFormats = []
+                        logger.debug(
+                            "Thread %s: Camera.initCamera: Camera-specific configs were reset",
+                            get_ident(),
+                        )
+                    else:
+                        cls.cam = cv2.VideoCapture(activeCamUsbDev, cv2.CAP_V4L2)
+                        if not cls.cam or not cls.cam.isOpened():
+                            raise RuntimeError("USB camera not opened")
+                        cls.camNum = activeCam
+                        cls.camIsUsb = True
+                        cls.camUsbDev = activeCamUsbDev
+                        cls.ctrl = CameraController(cls.camIsUsb, cls.camUsbDev)
+                        logger.debug(
+                            "Thread %s: Camera.initCamera: Switch camera to %s successful",
+                            get_ident(),
+                            activeCam,
+                        )
+                        # Force refresh of camera properties
+                        cfg.cameraProperties.model = None
+                        cfg.sensorModes = []
+                        cfg.rawFormats = []
+                        logger.debug(
+                            "Thread %s: Camera.initCamera: Camera-specific configs were reset",
+                            get_ident(),
+                        )
+                except RuntimeError as e:
+                    logger.error(
+                        "Thread %s: Camera.initCamera - Error %s", get_ident(), e
+                    )
+                    if not sc.error:
+                        if activeCamIsUsb == False:
+                            sc.error = "Error while initializing camera: " + str(e)
+                            sc.error2 = "Probably another process is using the camera."
+                            sc.errorSource = "Picamera2"
+                        else:
+                            sc.error = (
+                                "Error while initializing camera: USB camera not opened"
+                            )
+                            sc.errorSource = "CV2"
                 except Exception as e:
-                    logger.error("Thread %s: Camera.initCamera - Error %s", get_ident(), e)
+                    logger.error(
+                        "Thread %s: Camera.initCamera - Error %s", get_ident(), e
+                    )
                     if not sc.error:
                         sc.error = "Error while initializing camera: " + str(e)
                         sc.errorSource = "Picamera2"
             else:
-                logger.debug("Thread %s: Camera.initCamera: Camera was already instantiated", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.initCamera: Camera was already instantiated",
+                    get_ident(),
+                )
         if not sc.error:
-            cls.loadCameraSpecifics()
+            if cls.camIsUsb == False:
+                cls.loadCameraSpecifics()
+            else:
+                if cls.loadUsbCameraSpecifics() == False:
+                    sc.error = "USB Camera not found. Apply Settings/Configuration/Reload Cameras"
+                    sc.errorSource = "V4L2"
+        if not sc.error:
             cls.setSecondCamera()
 
-        if sc.isPhotoSeriesRecording == False \
-        and sc.isVideoRecording == False \
-        and sc.isLiveStream == False:
+        if (
+            sc.isPhotoSeriesRecording == False
+            and sc.isVideoRecording == False
+            and sc.isLiveStream == False
+        ):
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
         if sc.isLiveStream2 == False:
             if Camera.cam2:
                 Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
 
+    @staticmethod
+    def getActiveCamera() -> tuple:
+        """Determine the active camera and return its number, whether it is USB, and USB device path
+
+        First load the global camera info, if not already done,
+        Which gives us the list of currently connected cameras.
+
+        Then check the active camera and return it.
+        If a stored configuration had an active camera, camera number (Num) and model are checked.
+
+        Returns:
+            tuple: (active camera number (int),
+                    is USB (bool),
+                    USB device path (str)
+                    )
+        """
+        logger.debug("Thread %s: Camera.getActiveCamera", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        if (len(cfg.cameras) == 0) and (sc.noCamera == False):
+            cfgCams = []
+            cams = Picamera2.global_camera_info()
+            if len(cams) == 0:
+                sc.noCamera = True
+                logger.debug(
+                    "Thread %s: Camera.getActiveCamera - no cameras found", get_ident()
+                )
+                return 0, False, ""
+            camNum = 0
+            for camera in cams:
+                cfgCam = CameraInfo()
+                if "Model" in camera:
+                    cfgCam.model = camera["Model"]
+                if "Location" in camera:
+                    cfgCam.location = camera["Location"]
+                if "Rotation" in camera:
+                    cfgCam.rotation = camera["Rotation"]
+                if "Id" in camera:
+                    cfgCam.id = camera["Id"]
+                    # Check for USB camera
+                    if cfgCam.id.find("/usb@") > 0:
+                        cfgCam.isUsb = True
+                        logger.debug(
+                            "Thread %s: Camera.getActiveCamera - USB camera found:  %s",
+                            get_ident(),
+                            cfgCam.id,
+                        )
+                    else:
+                        cfgCam.usbDev = ""
+                # On Bullseye systems, "Num" is not in the dict
+                if "Num" in camera:
+                    cfgCam.num = camera["Num"]
+                else:
+                    cfgCam.num = camNum
+                    camNum += 1
+                cfgCam.setUsbDev()
+                cfgCams.append(cfgCam)
+            cfg.cameras = cfgCams
+            logger.debug(
+                "Thread %s: Camera.getActiveCamera - %s cameras found",
+                get_ident(),
+                len(cfg.cameras),
+            )
+            # Set the list of supported cameras
+            cfg.setSupportedCameras()
+            # Set the list of Pi cameras
+            cfg.setPiCameras()
+
+        # Check that active camera is within the list of cameras
+        logger.debug(
+            "Thread %s: Camera.getActiveCamera - Checking active camera %s (model: %s, isUsb: %s, usbDev: %s) against %s found cameras",
+            get_ident(),
+            sc.activeCamera,
+            sc.activeCameraModel,
+            sc.activeCameraIsUsb,
+            sc.activeCameraUsbDev,
+            len(cfg.cameras),
+        )
+        activeCamOK = False
+        if sc.activeCameraModel != "":
+            for cfgCam in sc.supportedCameras:
+                if (
+                    cfgCam.num == sc.activeCamera
+                    and cfgCam.model == sc.activeCameraModel
+                    and cfgCam.isUsb == sc.activeCameraIsUsb
+                    and cfgCam.usbDev == sc.activeCameraUsbDev
+                ):
+                    activeCamOK = True
+                    break
+            logger.debug(
+                "Thread %s: Camera.getActiveCamera - Active camera:%s - activeCamOK:%s",
+                get_ident(),
+                sc.activeCamera,
+                activeCamOK,
+            )
+        # If config for active camera is not in the list,
+        # set it to the first camera
+        if activeCamOK == False:
+            logger.debug(
+                "Thread %s: Camera.getActiveCamera - Resetting active camera to first of %s supported cameras",
+                get_ident(),
+                len(sc.supportedCameras),
+            )
+            for cfgCam in sc.supportedCameras:
+                sc.activeCamera = cfgCam.num
+                sc.activeCameraInfo = (
+                    "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
+                )
+                sc.activeCameraModel = cfgCam.model
+                sc.activeCameraIsUsb = cfgCam.isUsb
+                sc.activeCameraUsbDev = cfgCam.usbDev
+                break
+            logger.debug(
+                "Thread %s: Camera.getActiveCamera - active camera reset to %s",
+                get_ident(),
+                sc.activeCamera,
+            )
+            # Reset the active camera configuration
+            cfg.resetActiveCameraSettings()
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(
+                f"Camera settings for {sc.activeCameraInfo} were reset due to camera model change"
+            )
+
+        # Make sure that folder for photos exists
+        sc.cameraPhotoSubPath = "photos/" + "camera_" + str(sc.activeCamera)
+        fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath
+        if not os.path.exists(fp):
+            os.makedirs(fp)
+            logger.debug(
+                "Thread %s: Camera.getActiveCamera - Photo directory created %s",
+                get_ident(),
+                fp,
+            )
+
+        logger.debug(
+            "Thread %s: Camera.getActiveCamera - activeCamera: %s - isUsb: %s - usbDev: %s",
+            get_ident(),
+            sc.activeCamera,
+            sc.activeCameraIsUsb,
+            sc.activeCameraUsbDev,
+        )
+        return sc.activeCamera, sc.activeCameraIsUsb, sc.activeCameraUsbDev
+
     @classmethod
     def switchCamera(cls):
-        """ Switch the camera
-        """
+        """Switch the camera"""
         logger.debug("Thread %s: Camera.switchCamera", get_ident())
 
-        logger.debug("Thread %s: Camera.switchCamera - stopping Live Stream", get_ident())
+        logger.debug(
+            "Thread %s: Camera.switchCamera - stopping Live Stream", get_ident()
+        )
         cls.stopLiveStream()
-        logger.debug("Thread %s: Camera.switchCamera - Live Stream stopped", get_ident())
+        logger.debug(
+            "Thread %s: Camera.switchCamera - Live Stream stopped", get_ident()
+        )
         if cls.cam2:
             cls.stopLiveStream2()
-            logger.debug("Thread %s: Camera.switchCamera - Live Stream2 stopped", get_ident())
+            logger.debug(
+                "Thread %s: Camera.switchCamera - Live Stream2 stopped", get_ident()
+            )
 
         time.sleep(1)
 
-        activeCam = Camera.getActiveCamera()
+        activeCam, activeCamIsUsb, activeCamUsbDev = Camera.getActiveCamera()
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        if sc.noCamera == True:
+            return
+
         if Camera.cam is None:
-            logger.debug("Thread %s: Camera.switchCamera: Camera instantiated: %s", get_ident(), activeCam)
-            cfg = CameraCfg()
-            tc = cfg.tuningConfig
-            if tc.loadTuningFile == False:
-                cls.cam = Picamera2(activeCam)
-                prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
-            else:
-                tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
-                cls.cam = Picamera2(activeCam, tuning=tuning)
-                logger.debug("Thread %s: Camera.switchCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
-                prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
-                prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
-            Camera.camNum = activeCam
-            Camera.ctrl = CameraController()
-        else:
-            if activeCam != Camera.camNum:
-                logger.debug("Thread %s: Camera.switchCamera: About to switch camera from %s to %s", get_ident(), Camera.camNum, activeCam)
-                Camera.stopCameraSystem()
-                cfg = CameraCfg()
+            if activeCamIsUsb == False:
+                logger.debug(
+                    "Thread %s: Camera.switchCamera: Instantiating Pi camera %s",
+                    get_ident(),
+                    activeCam,
+                )
+                cls.camIsUsb = False
+                cls.camUsbDev = ""
                 tc = cfg.tuningConfig
                 if tc.loadTuningFile == False:
                     cls.cam = Picamera2(activeCam)
@@ -1188,81 +1941,218 @@ class Camera():
                 else:
                     tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
                     cls.cam = Picamera2(activeCam, tuning=tuning)
-                    logger.debug("Thread %s: Camera.switchCamera - Initialized camera %s with tuning file %s", get_ident(), activeCam, tc.tuningFilePath)
-                    prgLogger.debug("tuning = Picamera2.load_tuning_file(%s, %s)", tc.tuningFile, tc.tuningFolder)
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera - Initialized camera %s with tuning file %s",
+                        get_ident(),
+                        activeCam,
+                        tc.tuningFilePath,
+                    )
+                    prgLogger.debug(
+                        "tuning = Picamera2.load_tuning_file(%s, %s)",
+                        tc.tuningFile,
+                        tc.tuningFolder,
+                    )
                     prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
-                Camera.camNum = activeCam
-                Camera.ctrl = CameraController()
-                logger.debug("Thread %s: Camera.switchCamera: Switch camera to %s successful", get_ident(), activeCam)
-                # Force refresh of camera properties
-                CameraCfg().cameraProperties.model=None
-                CameraCfg().sensorModes = []
-                CameraCfg().rawFormats = []
-                logger.debug("Thread %s: Camera.switchCamera: Camera-specific configs were reset", get_ident())
             else:
-                logger.debug("Thread %s: Camera.switchCamera: Camera was already instantiated", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.switchCamera: Instantiating USB camera %s",
+                    get_ident(),
+                    activeCam,
+                )
+                cls.camIsUsb = True
+                cls.camUsbDev = activeCamUsbDev
+                cls.cam = cv2.VideoCapture(cls.camUsbDev, cv2.CAP_V4L2)
+                if not cls.cam or not cls.cam.isOpened():
+                    logger.error(
+                        "Thread %s: Camera.initCamera - Error: USB camera not opened",
+                        get_ident(),
+                    )
+            Camera.camNum = activeCam
+            Camera.camIsUsb = activeCamIsUsb
+            Camera.camUsbDev = activeCamUsbDev
+            Camera.ctrl = CameraController(Camera.camIsUsb, Camera.camUsbDev)
+        else:
+            if activeCam != Camera.camNum:
+                logger.debug(
+                    "Thread %s: Camera.switchCamera: About to switch camera from %s to %s",
+                    get_ident(),
+                    Camera.camNum,
+                    activeCam,
+                )
+                Camera.stopCameraSystem()
+                if activeCamIsUsb == False:
+                    tc = cfg.tuningConfig
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera: tc.loadTuningFile=%s",
+                        get_ident(),
+                        tc.loadTuningFile,
+                    )
+                    if tc.loadTuningFile == False:
+                        cls.cam = Picamera2(activeCam)
+                        prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
+                    else:
+                        tuning = Picamera2.load_tuning_file(
+                            tc.tuningFile, tc.tuningFolder
+                        )
+                        cls.cam = Picamera2(activeCam, tuning=tuning)
+                        logger.debug(
+                            "Thread %s: Camera.switchCamera - Initialized camera %s with tuning file %s",
+                            get_ident(),
+                            activeCam,
+                            tc.tuningFilePath,
+                        )
+                        prgLogger.debug(
+                            "tuning = Picamera2.load_tuning_file(%s, %s)",
+                            tc.tuningFile,
+                            tc.tuningFolder,
+                        )
+                        prgLogger.debug(
+                            "picam2 = Picamera2(%s, tuning=tuning)", activeCam
+                        )
+                    Camera.camNum = activeCam
+                    Camera.camIsUsb = False
+                    Camera.camUsbDev = ""
+                    Camera.ctrl = CameraController(Camera.camIsUsb, Camera.camUsbDev)
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera: Switch camera to %s successful",
+                        get_ident(),
+                        activeCam,
+                    )
+                    # Force refresh of camera properties
+                    CameraCfg().cameraProperties.model = None
+                    CameraCfg().sensorModes = []
+                    CameraCfg().rawFormats = []
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera: Camera-specific configs were reset",
+                        get_ident(),
+                    )
+                else:
+                    cls.cam = cv2.VideoCapture(activeCamUsbDev, cv2.CAP_V4L2)
+                    if not cls.cam or not cls.cam.isOpened():
+                        logger.error(
+                            "Thread %s: Camera.switchCamera - Error: USB camera not opened",
+                            get_ident(),
+                        )
+                    Camera.camNum = activeCam
+                    Camera.camIsUsb = True
+                    Camera.camUsbDev = activeCamUsbDev
+                    Camera.ctrl = CameraController(Camera.camIsUsb, Camera.camUsbDev)
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera: Switch camera to %s successful",
+                        get_ident(),
+                        activeCam,
+                    )
+                    # Force refresh of camera properties
+                    CameraCfg().cameraProperties.model = None
+                    CameraCfg().sensorModes = []
+                    CameraCfg().rawFormats = []
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera: Camera-specific configs were reset",
+                        get_ident(),
+                    )
+            else:
+                logger.debug(
+                    "Thread %s: Camera.switchCamera: Camera was already instantiated",
+                    get_ident(),
+                )
 
         time.sleep(1)
 
-        cls.loadCameraSpecifics()
-        cls.setSecondCamera()
+        if cls.camIsUsb == False:
+            cls.loadCameraSpecifics()
+            cls.setSecondCamera()
+        else:
+            if cls.loadUsbCameraSpecifics() == False:
+                sc.error = "USB Camera not found. Apply Settings/Configuration/Reload Cameras"
+                sc.errorSource = "V4L2"
+            else:
+                cls.setSecondCamera()
 
         # Restore streaming config, if available
         if cls.cam2:
-            cls.restoreConfigFromStreamingConfig() 
+            cls.restoreConfigFromStreamingConfig()
 
-        logger.debug("Thread %s: Camera.switchCamera - starting Live Stream", get_ident())
+        logger.debug(
+            "Thread %s: Camera.switchCamera - starting Live Stream", get_ident()
+        )
         cls.startLiveStream()
-        logger.debug("Thread %s: Camera.switchCamera - Live Stream started", get_ident())
+        logger.debug(
+            "Thread %s: Camera.switchCamera - Live Stream started", get_ident()
+        )
 
         logger.debug("Thread %s: Camera.switchCamera - second camera set", get_ident())
         if cls.cam2:
             cls.startLiveStream2()
-            logger.debug("Thread %s: Camera.switchCamera - Live Stream 2 started", get_ident())
+            logger.debug(
+                "Thread %s: Camera.switchCamera - Live Stream 2 started", get_ident()
+            )
 
     @classmethod
     def startLiveStream(cls):
-        """ Start thread for live stream
-        """
+        """Start thread for live stream"""
         logger.debug("Thread %s: Camera.startLiveStream", get_ident())
-        if not CameraCfg().serverConfig.error:
+        if (not CameraCfg().serverConfig.error) and (not CameraCfg().serverConfig.noCamera):
             if Camera.liveViewDeactivated:
-                logger.debug("Thread %s: Not starting Live View thread. Live View deactivated", get_ident())
+                logger.debug(
+                    "Thread %s: Not starting Live View thread. Live View deactivated",
+                    get_ident(),
+                )
                 CameraCfg().serverConfig.isLiveStream = False
             else:
                 with Camera.threadLock:
                     Camera.last_access = time.time()
-                logger.debug("Thread %s: Camera.startLiveStream - last_access set", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.startLiveStream - last_access set", get_ident()
+                )
                 if Camera.thread is None:
-                    logger.debug("Thread %s: Camera.startLiveStream: Starting new thread", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.startLiveStream: Starting new thread",
+                        get_ident(),
+                    )
 
                     # start background frame thread
                     Camera.thread = threading.Thread(target=cls._thread)
                     Camera.thread.start()
-                    logger.debug("Thread %s: Camera.startLiveStream - Thread started", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.startLiveStream - Thread started",
+                        get_ident(),
+                    )
 
                     # wait until first frame is available
-                    logger.debug("Thread %s: Camera.startLiveStream - waiting for frame", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.startLiveStream - waiting for frame",
+                        get_ident(),
+                    )
                     Camera.event.wait()
                     if not CameraCfg().serverConfig.error:
                         CameraCfg().serverConfig.isLiveStream = True
                 else:
-                    logger.debug("Thread %s: Camera.startLiveStream - Thread exists", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.startLiveStream - Thread exists", get_ident()
+                    )
                     if not Camera.thread.is_alive:
-                        logger.debug("Thread %s: Camera.startLiveStream - Thread is not alive", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera.startLiveStream - Thread is not alive",
+                            get_ident(),
+                        )
                         Camera.thread = threading.Thread(target=cls._thread)
                         Camera.thread.start()
-                        logger.debug("Thread %s: Camera.startLiveStream - Thread started", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera.startLiveStream - Thread started",
+                            get_ident(),
+                        )
 
     @classmethod
     def startLiveStream2(cls):
-        """ Start thread for live stream
-        """
+        """Start thread for live stream"""
         logger.debug("Thread %s: Camera.startLiveStream2", get_ident())
         if not CameraCfg().serverConfig.errorc2:
             if cls.cam2:
                 if Camera.liveView2Deactivated:
-                    logger.debug("Thread %s: Not starting Live View 2 thread. Live View 2 deactivated", get_ident())
+                    logger.debug(
+                        "Thread %s: Not starting Live View 2 thread. Live View 2 deactivated",
+                        get_ident(),
+                    )
                     CameraCfg().serverConfig.isLiveStream2 = False
                 else:
                     # logger.debug("Thread %s: Camera.startLiveStream2 - About to acquire Lock: thread2Lock=%s.", get_ident(), Camera.thread2Lock.locked())
@@ -1270,33 +2160,64 @@ class Camera():
                         Camera.last_access2 = time.time()
                     # logger.debug("Thread %s: Camera.startLiveStream2 - last_access2 set", get_ident())
                     if Camera.thread2 is None:
-                        logger.debug("Thread %s: Camera.startLiveStream2: Starting new thread", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera.startLiveStream2: Starting new thread",
+                            get_ident(),
+                        )
 
                         # start background frame thread
                         Camera.thread2 = threading.Thread(target=cls._thread2)
                         Camera.thread2.start()
-                        logger.debug("Thread %s: Camera.startLiveStream2 - Thread started", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera.startLiveStream2 - Thread started",
+                            get_ident(),
+                        )
 
                         # wait until first frame is available
-                        logger.debug("Thread %s: Camera.startLiveStream2 - waiting for frame", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera.startLiveStream2 - waiting for frame",
+                            get_ident(),
+                        )
                         Camera.event2.wait()
                         if not CameraCfg().serverConfig.errorc2:
                             CameraCfg().serverConfig.isLiveStream2 = True
                     else:
-                        logger.debug("Thread %s: Camera.startLiveStream2 - Thread exists", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera.startLiveStream2 - Thread exists",
+                            get_ident(),
+                        )
                         if not Camera.thread2.is_alive:
-                            logger.debug("Thread %s: Camera.startLiveStream2 - Thread is not alive", get_ident())
+                            logger.debug(
+                                "Thread %s: Camera.startLiveStream2 - Thread is not alive",
+                                get_ident(),
+                            )
                             Camera.thread2 = threading.Thread(target=cls._thread2)
                             Camera.thread2.start()
-                            logger.debug("Thread %s: Camera.startLiveStream2 - Thread started", get_ident())
+                            logger.debug(
+                                "Thread %s: Camera.startLiveStream2 - Thread started",
+                                get_ident(),
+                            )
+            else:
+                logger.debug(
+                    "Thread %s: Camera.startLiveStream2 - Not starting Live View 2 thread. Second camera not available",
+                    get_ident(),
+                )
+        else:
+            logger.debug(
+                "Thread %s: Camera.startLiveStream2 - Not starting Live View 2 thread. Error present: %s",
+                get_ident(),
+                CameraCfg().serverConfig.errorc2,
+            )
 
     @classmethod
     def stopLiveStream(cls):
-        """ Stop thread for live stream
-        """
+        """Stop thread for live stream"""
         logger.debug("Thread %s: Camera.stopLiveStream", get_ident())
         if not Camera.thread is None:
-            logger.debug("Thread %s: Camera.stopLiveStream - stopping live stream thread", get_ident())
+            logger.debug(
+                "Thread %s: Camera.stopLiveStream - stopping live stream thread",
+                get_ident(),
+            )
             Camera.stopRequested = True
             cnt = 0
             while Camera.thread:
@@ -1305,25 +2226,34 @@ class Camera():
                 if cnt > 200:
                     # Assume thread dead
                     Camera.thread = None
-                    logger.debug("Thread %s: Camera.stopLiveStream: Thread assumed dead", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.stopLiveStream: Thread assumed dead",
+                        get_ident(),
+                    )
                     break
                     # raise TimeoutError("Background thread did not stop within 2 sec")
             if cnt < 200:
-                logger.debug("Thread %s: Camera.stopLiveStream: Thread has stopped", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopLiveStream: Thread has stopped", get_ident()
+                )
             Camera.ctrl.stopEncoder(Camera.cam, Camera.ENCODER_LIVESTREAM)
             CameraCfg().serverConfig.isLiveStream = False
         else:
-            logger.debug("Thread %s: Camera.stopLiveStream: Thread was not started", get_ident())
+            logger.debug(
+                "Thread %s: Camera.stopLiveStream: Thread was not started", get_ident()
+            )
             CameraCfg().serverConfig.isLiveStream = False
 
     @classmethod
     def stopLiveStream2(cls):
-        """ Stop thread for live stream 2
-        """
+        """Stop thread for live stream 2"""
         logger.debug("Thread %s: Camera.stopLiveStream2", get_ident())
         if Camera.cam2:
             if not Camera.thread2 is None:
-                logger.debug("Thread %s: Camera.stopLiveStream2 - stopping live stream thread", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopLiveStream2 - stopping live stream thread",
+                    get_ident(),
+                )
                 Camera.stopRequested2 = True
                 cnt = 0
                 while Camera.thread2:
@@ -1332,15 +2262,24 @@ class Camera():
                     if cnt > 200:
                         # Assume thread dead
                         Camera.thread2 = None
-                        logger.debug("Thread %s: Camera.stopLiveStream2: Thread assumed dead", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera.stopLiveStream2: Thread assumed dead",
+                            get_ident(),
+                        )
                         break
                         # raise TimeoutError("Background thread did not stop within 2 sec")
                 if cnt < 200:
-                    logger.debug("Thread %s: Camera.stopLiveStream2: Thread has stopped", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.stopLiveStream2: Thread has stopped",
+                        get_ident(),
+                    )
                 Camera.ctrl2.stopEncoder(Camera.cam2, Camera.ENCODER_LIVESTREAM)
                 CameraCfg().serverConfig.isLiveStream2 = False
             else:
-                logger.debug("Thread %s: Camera.stopLiveStream2: Thread was not started", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopLiveStream2: Thread was not started",
+                    get_ident(),
+                )
                 CameraCfg().serverConfig.isLiveStream2 = False
 
     @staticmethod
@@ -1349,7 +2288,9 @@ class Camera():
         Camera.liveViewDeactivated = True
         Camera.stopLiveStream()
         time.sleep(0.5)
-        logger.debug("Thread %s: Camera.restartLiveStream: Live stream stopped", get_ident())
+        logger.debug(
+            "Thread %s: Camera.restartLiveStream: Live stream stopped", get_ident()
+        )
         Camera.cam, done = Camera.ctrl.requestStop(Camera.cam)
         logger.debug("Thread %s: Camera.restartLiveStream: Camera stopped", get_ident())
         time.sleep(0.5)
@@ -1357,43 +2298,64 @@ class Camera():
         logger.debug("Thread %s: Camera.restartLiveStream: Config cleared", get_ident())
         Camera.liveViewDeactivated = False
         Camera.startLiveStream()
-        logger.debug("Thread %s: Camera.restartLiveStream: Live stream started", get_ident())
+        logger.debug(
+            "Thread %s: Camera.restartLiveStream: Live stream started", get_ident()
+        )
 
     @staticmethod
     def restartLiveStream2():
         logger.debug("Thread %s: Camera.restartLiveStream2", get_ident())
         Camera.liveView2Deactivated = True
         Camera.stopLiveStream2()
-        logger.debug("Thread %s: Camera.restartLiveStream2: Live stream stopped", get_ident())
+        logger.debug(
+            "Thread %s: Camera.restartLiveStream2: Live stream stopped", get_ident()
+        )
         Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2)
-        logger.debug("Thread %s: Camera.restartLiveStream2: Camera stopped", get_ident())
+        logger.debug(
+            "Thread %s: Camera.restartLiveStream2: Camera stopped", get_ident()
+        )
         Camera.ctrl2.clearConfig()
-        logger.debug("Thread %s: Camera.restartLiveStream2: Config cleared", get_ident())
+        logger.debug(
+            "Thread %s: Camera.restartLiveStream2: Config cleared", get_ident()
+        )
         Camera.liveView2Deactivated = False
         Camera.startLiveStream2()
-        logger.debug("Thread %s: Camera.restartLiveStream2: Live stream started", get_ident())
+        logger.debug(
+            "Thread %s: Camera.restartLiveStream2: Live stream started", get_ident()
+        )
 
     def getLiveViewImageForMotionDetection(self):
-        """ Capture and return a buffer
-        """
+        """Capture and return a buffer"""
         cfg = CameraCfg()
-        if cfg.triggerConfig.motionDetectAlgo == 1:
-            buf = Camera.cam.capture_buffer(cfg.liveViewConfig.stream)
-            (w, h) = cfg.liveViewConfig.stream_size
-            buf = buf[:w * h].reshape(h, w)
-            return buf
+        if Camera.camIsUsb == False:
+            if cfg.triggerConfig.motionDetectAlgo == 1:
+                buf = Camera.cam.capture_buffer(cfg.liveViewConfig.stream)
+                (w, h) = cfg.liveViewConfig.stream_size
+                buf = buf[: w * h].reshape(h, w)
+                return buf
+            else:
+                return Camera.cam.capture_array(cfg.liveViewConfig.stream)
         else:
-            return Camera.cam.capture_array(cfg.liveViewConfig.stream)
+            frame, frameRaw = self.get_frame()
+            return frameRaw
 
     def getLeftImageForStereo(self):
         """Capture and return a buffer"""
-        return Camera.cam.capture_array(CameraCfg().liveViewConfig.stream)
+        if Camera.camIsUsb == False:
+            return Camera.cam.capture_array(CameraCfg().liveViewConfig.stream)
+        else:
+            frame, frameRaw = self.get_frame()
+            return frameRaw
 
     def getRightImageForStereo(self):
         """Capture and return a buffer"""
-        return Camera.cam2.capture_array(
-            CameraCfg().streamingCfg[str(Camera.camNum2)]["liveconfig"].stream
-        )
+        if Camera.camIsUsb == False:
+            return Camera.cam2.capture_array(
+                CameraCfg().streamingCfg[str(Camera.camNum2)]["liveconfig"].stream
+            )
+        else:
+            frame, frameRaw = self.get_frame2()
+            return frameRaw
 
     def get_frame(self):
         """Return the current camera frame."""
@@ -1408,7 +2370,7 @@ class Camera():
         Camera.event.clear()
 
         # logger.debug("Thread %s: Returning frame", get_ident())
-        return Camera.frame
+        return Camera.frame, Camera.frameRaw
 
     def get_frame2(self):
         """Return the current camera 2 frame."""
@@ -1424,9 +2386,9 @@ class Camera():
             Camera.event2.clear()
 
             # logger.debug("Thread %s: Returning frame2", get_ident())
-            return Camera.frame2
+            return Camera.frame2, Camera.frame2Raw
         else:
-            return None
+            return None, None
 
     def get_photoFrame(self):
         """Return the current camera frame."""
@@ -1435,7 +2397,9 @@ class Camera():
             Camera.last_access = time.time()
 
         # wait for a signal from the camera thread
-        logger.debug("Thread %s: Camera.get_photoFrame - waiting for frame", get_ident())
+        logger.debug(
+            "Thread %s: Camera.get_photoFrame - waiting for frame", get_ident()
+        )
         Camera.event.wait()
         logger.debug("Thread %s: Camera.get_photoFrame - continue", get_ident())
         Camera.event.clear()
@@ -1451,99 +2415,23 @@ class Camera():
                 Camera.last_access2 = time.time()
 
             # wait for a signal from the camera thread
-            logger.debug("Thread %s: Camera.get_photoFrame2 - waiting for frame", get_ident())
+            logger.debug(
+                "Thread %s: Camera.get_photoFrame2 - waiting for frame", get_ident()
+            )
             Camera.event2.wait()
             logger.debug("Thread %s: Camera.get_photoFrame2 - continue", get_ident())
             Camera.event2.clear()
 
-            logger.debug("Thread %s: Camera.get_photoFrame2 - Returning frame", get_ident())
+            logger.debug(
+                "Thread %s: Camera.get_photoFrame2 - Returning frame", get_ident()
+            )
             return Camera.frame2
         else:
             return None
 
     @staticmethod
-    def getActiveCamera() -> int:
-        """ Load the global camera info, if not already done,
-            Which gives us the list of currently connected cameras.
-            
-            Then check the active camera and return it
-        """
-        logger.debug("Thread %s: Camera.getActiveCamera", get_ident())
-        cfg = CameraCfg()
-        if len(cfg.cameras) == 0:
-            cfgCams = []
-            cams = Picamera2.global_camera_info()
-            if len(cams) == 0:
-                raise SystemError("No cameras were found on the server's device")
-            camNum = 0
-            for camera in cams:
-                cfgCam = CameraInfo()
-                if "Model" in camera:
-                    cfgCam.model = camera["Model"]
-                if "Location" in camera:
-                    cfgCam.location = camera["Location"]
-                if "Rotation" in camera:
-                    cfgCam.rotation = camera["Rotation"]
-                if "Id" in camera:
-                    cfgCam.id = camera["Id"]
-                    # Check for USB camera
-                    if cfgCam.id.find("/usb@") > 0:
-                        cfgCam.isUsb = True
-                        logger.debug("Thread %s: Camera.getActiveCamera - USB camera found:  %s", get_ident(), cfgCam.id)
-                # On Bullseye systems, "Num" is not in the dict
-                if "Num" in camera:
-                    cfgCam.num = camera["Num"]
-                else:
-                    cfgCam.num = camNum
-                    camNum += 1
-                cfgCams.append(cfgCam)
-            cfg.cameras = cfgCams
-            logger.debug("Thread %s: Camera.getActiveCamera - %s cameras found", get_ident(), len(cfg.cameras))
-
-        # Check that active camera is within the list of cameras
-        sc = cfg.serverConfig
-        activeCamOK = False
-        activeCam = sc.activeCamera
-        for cfgCam in cfg.cameras:
-            if cfgCam.num == activeCam:
-                # Accept the active camera only if it is not a USB camera
-                if cfgCam.isUsb == False:
-                    sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
-                    sc.activeCameraModel = cfgCam.model
-                    # Check if model has changed
-                    if cfgCam.model != sc.activeCameraModel:
-                        logger.debug("Thread %s: Camera.getActiveCamera - Active camera model changed from %s to %s - Resetting configuration",
-                                     get_ident(), sc.activeCameraModel, cfgCam.model)
-                        # Reset active configuration
-                        cfg.resetActiveCameraSettings()
-                        sc.unsavedChanges = True
-                        sc.addChangeLogEntry(f"Camera settings for {sc.activeCameraInfo} were reset due to camera model change")
-                    activeCamOK = True
-                break
-        logger.debug("Thread %s: Camera.getActiveCamera - Active camera:%s - activeCamOK:%s", get_ident(), activeCam, activeCamOK)
-        # If config for active camera is not in the list, or if it is a USB cam,
-        # set it to the first non-USB camera
-        if activeCamOK == False:
-            for cfgCam in cfg.cameras:
-                if cfgCam.isUsb == False:
-                    sc.activeCamera = cfgCam.num
-                    sc.activeCameraInfo = "Camera " + str(cfgCam.num) + " (" + cfgCam.model + ")"
-                    sc.activeCameraModel = cfgCam.model
-                    break
-            logger.debug("Thread %s: Camera.getActiveCamera - active camera reset to %s", get_ident(), sc.activeCamera)
-        # Make sure that folder for photos exists
-        sc.cameraPhotoSubPath = "photos/" + "camera_" + str(sc.activeCamera)
-        fp = sc.photoRoot + "/" + sc.cameraPhotoSubPath
-        if not os.path.exists(fp):
-            os.makedirs(fp)
-            logger.debug("Thread %s: Camera.getActiveCamera - Photo directory created %s", get_ident(), fp)
-
-        return cfg.serverConfig.activeCamera
-
-    @staticmethod
     def loadCameraSpecifics():
-        """ Load camera specific parameters into configuration, if not already done
-        """
+        """Load camera specific parameters into configuration, if not already done"""
         logger.debug("Thread %s: Camera.loadCameraSpecifics", get_ident())
         cfg = CameraCfg()
         cfgProps = cfg.cameraProperties
@@ -1561,19 +2449,28 @@ class Camera():
             cfgProps.rotation = camPprops["Rotation"]
             cfgProps.pixelArraySize = camPprops["PixelArraySize"]
             cfgProps.pixelArrayActiveAreas = camPprops["PixelArrayActiveAreas"]
-            cfgProps.colorFilterArrangement= camPprops["ColorFilterArrangement"]
+            cfgProps.colorFilterArrangement = camPprops["ColorFilterArrangement"]
             cfgProps.scalerCropMaximum = camPprops["ScalerCropMaximum"]
             cfgProps.systemDevices = camPprops["SystemDevices"]
+            if "SensorSensitivity" in camPprops:
+                cfgProps.sensorSensitivity = camPprops["SensorSensitivity"]
 
             cfgProps.hasFocus = "AfMode" in Camera.cam.camera_controls
             cfgProps.hasFlicker = "AeFlickerMode" in Camera.cam.camera_controls
             cfgProps.hasHdr = "HdrMode" in Camera.cam.camera_controls
 
             if cfgCtrls.include_scalerCrop == False:
-                cfgCtrls.scalerCrop = (0, 0, camPprops["PixelArraySize"][0], camPprops["PixelArraySize"][1])
+                cfgCtrls.scalerCrop = (
+                    0,
+                    0,
+                    camPprops["PixelArraySize"][0],
+                    camPprops["PixelArraySize"][1],
+                )
                 # This must be updated after the camera has been started
                 Camera.resetScalerCropRequested = True
-            logger.debug("Thread %s: Camera.loadCameraSpecifics loaded to config", get_ident())
+            logger.debug(
+                "Thread %s: Camera.loadCameraSpecifics loaded to config", get_ident()
+            )
 
         # Load Sensor Modes
         if len(cfgSensorModes) == 0:
@@ -1597,8 +2494,16 @@ class Camera():
                 cfgMode.exposure_limits = mode["exposure_limits"]
                 cfgSensorModes.append(cfgMode)
                 ind = ind + 1
-            logger.debug("Thread %s: Camera.loadCameraSpecifics: %s sensor modes found", get_ident(), len(cfg.sensorModes))
-            logger.debug("Thread %s: Camera.loadCameraSpecifics: %s raw formats found", get_ident(), len(cfg.rawFormats))
+            logger.debug(
+                "Thread %s: Camera.loadCameraSpecifics: %s sensor modes found",
+                get_ident(),
+                len(cfg.sensorModes),
+            )
+            logger.debug(
+                "Thread %s: Camera.loadCameraSpecifics: %s raw formats found",
+                get_ident(),
+                len(cfg.rawFormats),
+            )
 
             # Set some Sensor Mode specific parameters for standard configurations
             maxModei = len(cfg.sensorModes) - 1
@@ -1608,13 +2513,17 @@ class Camera():
             # If stream_size is set, keep the settings. They have been loeaded from stored config
             if cfg.liveViewConfig.stream_size is None:
                 sizeWidth = 640
-                sizeHeight =  int(sizeWidth * cfgProps.pixelArraySize[1] / cfgProps.pixelArraySize[0])
+                sizeHeight = int(
+                    sizeWidth * cfgProps.pixelArraySize[1] / cfgProps.pixelArraySize[0]
+                )
                 if (sizeHeight % 2) != 0:
                     sizeHeight += 1
                 cfg.liveViewConfig.stream_size = (sizeWidth, sizeHeight)
                 cfg.liveViewConfig.stream_size_align = False
-                if cfgSensorModes[0].size[0] == sizeWidth \
-                and cfgSensorModes[0].size[1] == sizeHeight:
+                if (
+                    cfgSensorModes[0].size[0] == sizeWidth
+                    and cfgSensorModes[0].size[1] == sizeHeight
+                ):
                     cfg.liveViewConfig.sensor_mode = "0"
                 else:
                     cfg.liveViewConfig.sensor_mode = "custom"
@@ -1630,11 +2539,13 @@ class Camera():
             # For Video
             if cfg.videoConfig.stream_size is None:
                 # For Pi < 5 set video and photo resolution to lowest value
-                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
+                if (
+                    cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero")
+                    or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1")
+                    or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2")
+                    or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3")
+                    or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4")
+                ):
                     cfg.videoConfig.sensor_mode = 0
                     cfg.videoConfig.stream_size = cfgSensorModes[0].size
                     cfg.photoConfig.sensor_mode = 0
@@ -1643,10 +2554,116 @@ class Camera():
                     cfg.videoConfig.sensor_mode = maxMode
                     cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
 
+    @staticmethod
+    def loadUsbCameraSpecifics() -> bool:
+        """Load USB camera specific parameters into configuration, if not already done
+
+        Returns:
+            bool: True if USB camera specifics were loaded, False otherwise
+        """
+        logger.debug("Thread %s: Camera.loadUsbCameraSpecifics", get_ident())
+
+        cfg = CameraCfg()
+
+        # Load Camera Properties
+        if cfg.cameraProperties.model is None:
+            if cfg.setUsbCameraProperties() == False:
+                return False
+
+            if cfg.controls.include_scalerCrop == False:
+                cfg.controls.scalerCrop = cfg.cameraProperties.scalerCropMaximum
+                # This must be updated after the camera has been started
+                Camera.resetScalerCropRequested = True
+            logger.debug(
+                "Thread %s: Camera.loadUsbCameraSpecifics loaded to config", get_ident()
+            )
+
+        # Load Sensor Modes
+        if len(cfg.sensorModes) == 0:
+            if cfg.setUsbSensorModes() == False:
+                return False
+
+            logger.debug(
+                "Thread %s: Camera.loadUsbCameraSpecifics: %s sensor modes found",
+                get_ident(),
+                len(cfg.sensorModes),
+            )
+            logger.debug(
+                "Thread %s: Camera.loadUsbCameraSpecifics: %s raw formats found",
+                get_ident(),
+                len(cfg.rawFormats),
+            )
+
+            # Set some Sensor Mode specific parameters for standard configurations
+            maxModei = len(cfg.sensorModes) - 1
+            maxMode = str(maxModei)
+            # For Live View
+            # Initially set the stream size to (640, 480). Use Sensor Mode, if possible
+            # If stream_size is set, keep the settings. They have been loeaded from stored config
+            if cfg.liveViewConfig.stream_size is None:
+                sizeWidth = 640
+                sizeHeight = int(
+                    sizeWidth
+                    * cfg.cameraProperties.pixelArraySize[1]
+                    / cfg.cameraProperties.pixelArraySize[0]
+                )
+                if (sizeHeight % 2) != 0:
+                    sizeHeight += 1
+                cfg.liveViewConfig.stream_size_align = False
+                if cfg.sensorModes[0].size[0] == sizeWidth:
+                    cfg.liveViewConfig.sensor_mode = "0"
+                    sizeHeight = cfg.sensorModes[0].size[1]
+                else:
+                    cfg.liveViewConfig.sensor_mode = "custom"
+                cfg.liveViewConfig.stream_size = (sizeWidth, sizeHeight)
+            cfg.liveViewConfig.colour_space = cfg.cameraProperties.colorSpace
+            cfg.liveViewConfig.buffer_count = 1
+            cfg.liveViewConfig.queue = False
+            cfg.liveViewConfig.stream = "main"
+            cfg.liveViewConfig.stream_size_align = False
+            cfg.liveViewConfig.format = cfg.sensorModes[0].format
+            cfg.liveViewConfig.display = None
+            cfg.liveViewConfig.encode = None
+            # For photo
+            if cfg.photoConfig.stream_size is None:
+                cfg.photoConfig.sensor_mode = maxMode
+                cfg.photoConfig.stream_size = cfg.sensorModes[maxModei].size
+            cfg.photoConfig.colour_space = cfg.cameraProperties.colorSpace
+            cfg.photoConfig.buffer_count = 1
+            cfg.photoConfig.queue = False
+            cfg.photoConfig.stream = "main"
+            cfg.photoConfig.stream_size_align = False
+            cfg.photoConfig.format = cfg.sensorModes[maxModei].format
+            cfg.photoConfig.display = None
+            cfg.photoConfig.encode = None
+            # For raw photo
+            if cfg.rawConfig.stream_size is None:
+                cfg.rawConfig.sensor_mode = maxMode
+                cfg.rawConfig.stream_size = cfg.sensorModes[maxModei].size
+                cfg.rawConfig.format = "tiff"
+            cfg.rawConfig.colour_space = cfg.cameraProperties.colorSpace
+            cfg.rawConfig.buffer_count = 1
+            cfg.rawConfig.queue = False
+            cfg.rawConfig.stream = "main"
+            cfg.rawConfig.stream_size_align = False
+            # For Video
+            if cfg.videoConfig.stream_size is None:
+                cfg.videoConfig.sensor_mode = maxMode
+                cfg.videoConfig.stream_size = cfg.sensorModes[maxModei].size
+            cfg.videoConfig.colour_space = cfg.cameraProperties.colorSpace
+            cfg.videoConfig.buffer_count = 1
+            cfg.videoConfig.queue = False
+            cfg.videoConfig.stream = "main"
+            cfg.videoConfig.stream_size_align = False
+            cfg.videoConfig.format = cfg.sensorModes[maxModei].format
+            cfg.videoConfig.display = None
+            cfg.videoConfig.encode = None
+
+            return True
+
     @classmethod
     def setSecondCamera(cls):
-        """Set the second camera
-        """
+        """Set the second camera"""
         logger.debug("Thread %s: Camera.setSecondCamera", get_ident())
         cls.camNum2 = None
         cls.cam2 = None
@@ -1654,101 +2671,216 @@ class Camera():
         sc = cfg.serverConfig
         sc.errorc2 = None
         camNum2 = None
-        for cfgCam in cfg.cameras:
-            if cfgCam.isUsb == False:
-                if cfgCam.num != cls.camNum:
+        secondCamIsUsb = False
+        secondCamUsbDev = ""
+        secondCamModel = ""
+
+        # Check camera list for registered second camera
+        if not sc.secondCamera is None:
+            secondCam = None
+            for cfgCam in cfg.cameras:
+                if cfgCam.num == sc.secondCamera \
+                and cfgCam.model == sc.secondCameraModel:
+                    secondCam = cfgCam.num
                     camNum2 = cfgCam.num
+                    secondCamIsUsb = cfgCam.isUsb
+                    secondCamUsbDev = cfgCam.usbDev
+                    secondCamModel = cfgCam.model
                     break
-        logger.debug("Thread %s: Camera.setSecondCamera - found second camera: %s", get_ident(), camNum2)
+            if secondCam is None:
+                logger.debug(
+                    "Thread %s: Camera.setSecondCamera - Registered second camera %s not found",
+                    get_ident(),
+                    sc.secondCamera,
+                )
+                sc.unsavedChanges = True
+                sc.addChangeLogEntry(
+                    f"Second camera was reset Camera {sc.secondCamera}: {sc.secondCameraModel} - not found"
+                )
+                sc.secondCamera = None
+
+        # If no registered second camera, take the first available which is not the active camera
+        if sc.secondCamera is None:
+            for cfgCam in cfg.cameras:
+                if cfgCam.num != cls.camNum and camNum2 is None:
+                    # Take the first camera which is not the active camera if USB is OK
+                    if not cfgCam.isUsb or sc.supportsUsbCamera == True:
+                        camNum2 = cfgCam.num
+                        secondCamIsUsb = cfgCam.isUsb
+                        secondCamUsbDev = cfgCam.usbDev
+                        secondCamModel = cfgCam.model
+                        break
+        logger.debug(
+            "Thread %s: Camera.setSecondCamera - found second camera: %s model: %s",
+            get_ident(),
+            camNum2,
+            secondCamModel,
+        )
         if not camNum2 is None:
             try:
                 cls.camNum2 = camNum2
-                cfg = CameraCfg()
+                cls.cam2IsUsb = secondCamIsUsb
+                cls.cam2UsbDev = secondCamUsbDev
+                sc.secondCamera = camNum2
+                sc.secondCameraIsUsb = secondCamIsUsb
+                sc.secondCameraUsbDev = secondCamUsbDev
+                sc.secondCameraModel = secondCamModel
+                sc.secondCameraInfo = (
+                    "Camera " + str(camNum2) + " (" + secondCamModel + ")"
+                )
                 strc = cfg.streamingCfg
                 camNum2Str = str(camNum2)
-                if camNum2Str in strc:
-                    scfg = strc[camNum2Str]
-                    if "tuningconfig" in scfg:
-                        tc = scfg["tuningconfig"]
-                        if tc.loadTuningFile == False:
-                            cls.cam2 = Picamera2(cls.camNum2)
+                if secondCamIsUsb == False:
+                    if camNum2Str in strc:
+                        scfg = strc[camNum2Str]
+                        if "tuningconfig" in scfg:
+                            tc = scfg["tuningconfig"]
+                            if tc.loadTuningFile == False:
+                                cls.cam2 = Picamera2(cls.camNum2)
+                            else:
+                                tuning = Picamera2.load_tuning_file(
+                                    tc.tuningFile, tc.tuningFolder
+                                )
+                                cls.cam2 = Picamera2(cls.camNum2, tuning=tuning)
+                                logger.debug(
+                                    "Thread %s: Camera.setSecondCamera - Initialized camera %s with tuning file %s",
+                                    get_ident(),
+                                    cls.camNum2,
+                                    tc.tuningFilePath,
+                                )
                         else:
-                            tuning = Picamera2.load_tuning_file(tc.tuningFile, tc.tuningFolder)
-                            cls.cam2 = Picamera2(cls.camNum2, tuning=tuning)
-                            logger.debug("Thread %s: Camera.setSecondCamera - Initialized camera %s with tuning file %s", get_ident(), cls.camNum2, tc.tuningFilePath)
+                            cls.cam2 = Picamera2(cls.camNum2)
                     else:
                         cls.cam2 = Picamera2(cls.camNum2)
                 else:
-                    cls.cam2 = Picamera2(cls.camNum2)
-                cls.ctrl2 = CameraController()
+                    cls.cam2 = cv2.VideoCapture(cls.cam2UsbDev, cv2.CAP_V4L2)
+                    if not cls.cam2 or not cls.cam2.isOpened():
+                        raise RuntimeError("USB camera not opened")
+                cls.ctrl2 = CameraController(cls.cam2IsUsb, cls.cam2UsbDev)
                 cls.event2 = CameraEvent()
-                logger.debug("Thread %s: Camera.setSecondCamera - second camera initialized %s", get_ident(), cls.camNum2)
+                logger.debug(
+                    "Thread %s: Camera.setSecondCamera - second camera initialized %s",
+                    get_ident(),
+                    cls.camNum2,
+                )
                 cfg.serverConfig.isLiveStream2 = False
             except RuntimeError as e:
-                logger.error("Thread %s: Camera.setSecondCamera - Error %s", get_ident(), e)
+                logger.error(
+                    "Thread %s: Camera.setSecondCamera - Error %s", get_ident(), e
+                )
                 if not sc.errorc2:
                     sc.errorc2 = "Error while initializing camera: " + str(e)
                     sc.errorc22 = "Probably another process is using the camera."
-                    sc.errorc2Source = "Picamera2"
+                    if secondCamIsUsb == False:
+                        sc.errorc2Source = "Picamera2"
+                    else:
+                        sc.errorc2Source = "CV2"
             except Exception as e:
-                logger.error("Thread %s: Camera.setSecondCamera - Error %s", get_ident(), e)
+                logger.error(
+                    "Thread %s: Camera.setSecondCamera - Error %s", get_ident(), e
+                )
                 if not sc.errorc2:
                     sc.errorc2 = "Error while initializing camera: " + str(e)
-                    sc.errorc2Source = "Picamera2"
+                    if secondCamIsUsb == False:
+                        sc.errorc2Source = "Picamera2"
+                    else:
+                        sc.errorc2Source = "CV2"
 
         cls.setStreamingConfigs()
-        logger.debug("Thread %s: Camera.setSecondCamera - second camera set to %s", get_ident(), cls.camNum2)
+        logger.debug(
+            "Thread %s: Camera.setSecondCamera - second camera set to %s",
+            get_ident(),
+            cls.camNum2,
+        )
 
         cameraPhotoSubPath = "photos/" + "camera_" + str(camNum2)
         fp = sc.photoRoot + "/" + cameraPhotoSubPath
         if not os.path.exists(fp):
             os.makedirs(fp)
-            logger.debug("Thread %s: Camera.setSecondCamera - Photo directory created %s", get_ident(), fp)
+            logger.debug(
+                "Thread %s: Camera.setSecondCamera - Photo directory created %s",
+                get_ident(),
+                fp,
+            )
 
     @classmethod
     def setStreamingConfigs(cls):
-        """Set the configuration for streaming which will be used for the second camera
-        """
+        """Set the configuration for streaming which will be used for the second camera"""
         logger.debug("Thread %s: Camera.setStreamingConfigs", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
         strc = cfg.streamingCfg
-        logger.debug("Thread %s: Camera.setStreamingConfigs - current streamingCfg: %s", get_ident(), strc)
+        logger.debug(
+            "Thread %s: Camera.setStreamingConfigs - current streamingCfg: %s",
+            get_ident(),
+            strc,
+        )
 
         # For active camera
         cn = str(sc.activeCamera)
+        logger.debug(
+            "Thread %s: Camera.setStreamingConfigs - for active camera %s",
+            get_ident(),
+            cn,
+        )
         resetActive = False
         if cn in strc:
             scfg = strc[cn]
+            logger.debug(
+                "Thread %s: Camera.setStreamingConfigs - found in strc. scfg: %s",
+                get_ident(),
+                scfg,
+            )
             if "camerainfo" in scfg:
                 if scfg["camerainfo"] != sc.activeCameraInfo:
                     resetActive = True
-                    logger.debug("Thread %s: Camera.setStreamingConfigs - Resetting active camera config for camera %s", get_ident(), cn)
+                    logger.debug(
+                        "Thread %s: Camera.setStreamingConfigs - Resetting active camera config for camera %s",
+                        get_ident(),
+                        cn,
+                    )
                     sc.unsavedChanges = True
-                    sc.addChangeLogEntry(f"Streaming configuration for {sc.activeCameraInfo} was reset due to camera model change")
+                    sc.addChangeLogEntry(
+                        f"Streaming configuration for {sc.activeCameraInfo} was reset due to camera model change"
+                    )
             else:
+                logger.debug(
+                    "Thread %s: Camera.setStreamingConfigs - not found in strc.",
+                    get_ident(),
+                )
                 resetActive = True
         else:
-            restActive = True
+            resetActive = True
         if resetActive == True:
+            logger.debug(
+                "Thread %s: Camera.setStreamingConfigs - Active camera strc must be reset",
+                get_ident(),
+            )
             scfg = {}
             scfg["camnum"] = sc.activeCamera
             scfg["camerainfo"] = copy.copy(sc.activeCameraInfo)
             scfg["hasfocus"] = cfg.cameraProperties.hasFocus
-            scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
+            if cls.camIsUsb == False:
+                scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
             scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
             scfg["photoconfig"] = copy.deepcopy(cfg.photoConfig)
             scfg["rawconfig"] = copy.deepcopy(cfg.rawConfig)
             scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
             scfg["controls"] = copy.deepcopy(cfg.controls)
             strc[cn] = scfg
-            logger.debug("Thread %s: Camera.setStreamingConfigs - created  entry for active camera %s", get_ident(), cn)
+            logger.debug(
+                "Thread %s: Camera.setStreamingConfigs - created  entry for active camera %s",
+                get_ident(),
+                cn,
+            )
         else:
             if cn in strc:
                 scfg = strc[cn]
                 if not "camnum" in scfg:
                     scfg["camnum"] = sc.activeCamera
                     strc[cn] = scfg
+        # Reset streaming config invalidation flag
+        cfg.streamingCfgInvalid = False
 
         # For second camera
         if cls.cam2:
@@ -1765,86 +2897,20 @@ class Camera():
                     newCamInfo = "Camera " + str(cls.camNum2) + " (" + model + ")"
                     if scfg["camerainfo"] != newCamInfo:
                         resetSecond = True
-                        logger.debug("Thread %s: Camera.setStreamingConfigs - Resetting second camera config for camera %s", get_ident(), cn)
+                        logger.debug(
+                            "Thread %s: Camera.setStreamingConfigs - Resetting second camera config for camera %s",
+                            get_ident(),
+                            cn,
+                        )
                         sc.unsavedChanges = True
-                        sc.addChangeLogEntry(f"Streaming configuration for {newCamInfo} was reset due to camera model change")
+                        sc.addChangeLogEntry(
+                            f"Streaming configuration for {newCamInfo} was reset due to camera model change"
+                        )
                 else:
                     resetSecond = True
             else:
                 resetSecond = True
             if resetSecond == True:
-                camPprops = cls.cam2.camera_properties
-                hasFocus = "AfMode" in cls.cam2.camera_controls
-                pixelArraySize = copy.copy(camPprops["PixelArraySize"])
-                sensorModes = copy.copy(cls.cam2.sensor_modes)
-                maxMode = len(sensorModes) - 1
-                liveViewConfig = CameraConfig()
-                liveViewConfig.id = "LIVE"
-                liveViewConfig.use_case = "Live view"
-                liveViewConfig.stream = "lores"
-                liveViewConfig.buffer_count = 6
-                liveViewConfig.encode = "main"
-                liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
-                if liveViewConfig.stream_size is None:
-                    sizeWidth = 640
-                    sizeHeight =  int(sizeWidth * pixelArraySize[1] / pixelArraySize[0])
-                    if (sizeHeight % 2) != 0:
-                        sizeHeight += 1
-                    liveViewConfig.stream_size = (sizeWidth, sizeHeight)
-                    liveViewConfig.stream_size_align = False
-                    if sensorModes[0]["size"][0] == sizeWidth \
-                    and sensorModes[0]["size"][1] == sizeHeight:
-                        liveViewConfig.sensor_mode = "0"
-                    else:
-                        liveViewConfig.sensor_mode = "custom"
-
-                videoConfig = CameraConfig()
-                videoConfig.id = "VIDO"
-                videoConfig.use_case = "Video"
-                videoConfig.buffer_count = 6
-                videoConfig.encode = "main"
-                videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
-
-                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
-                    videoConfig.sensor_mode = 0
-                    videoConfig.stream_size = sensorModes[0]["size"]
-                    videoConfig.buffer_count = 2
-                    liveViewConfig.buffer_count = 2
-                else:
-                    videoConfig.sensor_mode = str(maxMode)
-                    videoConfig.stream_size = sensorModes[maxMode]["size"]
-
-                photoConfig = CameraConfig()
-                photoConfig.id = "FOTO"
-                photoConfig.use_case = "Photo"
-                photoConfig.buffer_count = 1
-                photoConfig.encode = "main"
-                photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
-
-                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4"):
-                    photoConfig.sensor_mode = 0
-                    photoConfig.stream_size = sensorModes[0]["size"]
-                else:
-                    photoConfig.sensor_mode = str(maxMode)
-                    photoConfig.stream_size = sensorModes[maxMode]["size"]
-
-                rawConfig = CameraConfig()
-                rawConfig.id = "PRAW"
-                rawConfig.use_case = "Raw Photo"
-                rawConfig.buffer_count = 1
-                rawConfig.encode = "raw"
-                rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
-                rawConfig.sensor_mode = str(maxMode)
-                rawConfig.stream_size = sensorModes[maxMode]["size"]
-
                 scfg = {}
                 model = ""
                 for cfgCam in cfg.cameras:
@@ -1853,15 +2919,172 @@ class Camera():
                         break
                 scfg["camnum"] = cls.camNum2
                 scfg["camerainfo"] = "Camera " + cn + " (" + model + ")"
-                scfg["hasfocus"] = hasFocus
-                scfg["tuningconfig"] = TuningConfig()
-                scfg["liveconfig"] = liveViewConfig
-                scfg["photoconfig"] = photoConfig
-                scfg["rawconfig"] = rawConfig
-                scfg["videoconfig"] = videoConfig
-                scfg["controls"] = copy.deepcopy(cfg.controls)
+
+                if cls.cam2IsUsb == False:
+                    camPprops = cls.cam2.camera_properties
+                    hasFocus = "AfMode" in cls.cam2.camera_controls
+                    pixelArraySize = copy.copy(camPprops["PixelArraySize"])
+                    sensorModes = copy.copy(cls.cam2.sensor_modes)
+                    maxMode = len(sensorModes) - 1
+                    liveViewConfig = CameraConfig()
+                    liveViewConfig.id = "LIVE"
+                    liveViewConfig.use_case = "Live view"
+                    liveViewConfig.stream = "lores"
+                    liveViewConfig.buffer_count = 6
+                    liveViewConfig.encode = "main"
+                    liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
+                    if liveViewConfig.stream_size is None:
+                        sizeWidth = 640
+                        sizeHeight = int(
+                            sizeWidth * pixelArraySize[1] / pixelArraySize[0]
+                        )
+                        if (sizeHeight % 2) != 0:
+                            sizeHeight += 1
+                        liveViewConfig.stream_size = (sizeWidth, sizeHeight)
+                        liveViewConfig.stream_size_align = False
+                        if (
+                            sensorModes[0]["size"][0] == sizeWidth
+                            and sensorModes[0]["size"][1] == sizeHeight
+                        ):
+                            liveViewConfig.sensor_mode = "0"
+                        else:
+                            liveViewConfig.sensor_mode = "custom"
+
+                    videoConfig = CameraConfig()
+                    videoConfig.id = "VIDO"
+                    videoConfig.use_case = "Video"
+                    videoConfig.buffer_count = 6
+                    videoConfig.encode = "main"
+                    videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
+
+                    if (
+                        cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4")
+                    ):
+                        videoConfig.sensor_mode = 0
+                        videoConfig.stream_size = sensorModes[0]["size"]
+                        videoConfig.buffer_count = 2
+                        liveViewConfig.buffer_count = 2
+                    else:
+                        videoConfig.sensor_mode = str(maxMode)
+                        videoConfig.stream_size = sensorModes[maxMode]["size"]
+
+                    photoConfig = CameraConfig()
+                    photoConfig.id = "FOTO"
+                    photoConfig.use_case = "Photo"
+                    photoConfig.buffer_count = 1
+                    photoConfig.encode = "main"
+                    photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+
+                    if (
+                        cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4")
+                    ):
+                        photoConfig.sensor_mode = 0
+                        photoConfig.stream_size = sensorModes[0]["size"]
+                    else:
+                        photoConfig.sensor_mode = str(maxMode)
+                        photoConfig.stream_size = sensorModes[maxMode]["size"]
+
+                    rawConfig = CameraConfig()
+                    rawConfig.id = "PRAW"
+                    rawConfig.use_case = "Raw Photo"
+                    rawConfig.buffer_count = 1
+                    rawConfig.encode = "raw"
+                    rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+                    rawConfig.sensor_mode = str(maxMode)
+                    rawConfig.stream_size = sensorModes[maxMode]["size"]
+
+                    scfg["hasfocus"] = hasFocus
+                    scfg["tuningconfig"] = TuningConfig()
+                    scfg["liveconfig"] = liveViewConfig
+                    scfg["photoconfig"] = photoConfig
+                    scfg["rawconfig"] = rawConfig
+                    scfg["videoconfig"] = videoConfig
+                    scfg["controls"] = copy.deepcopy(cfg.controls)
+                else:
+                    hasFocus = False
+                    pixelArraySize = None
+                    sensorModes = []
+                    maxMode = len(sensorModes) - 1
+
+                    liveViewConfig = CameraConfig()
+                    liveViewConfig.id = "LIVE"
+                    liveViewConfig.use_case = "Live view"
+                    liveViewConfig.stream = "main"
+                    liveViewConfig.colour_space = "sRGB"
+                    liveViewConfig.buffer_count = 1
+                    liveViewConfig.queue = False
+                    liveViewConfig.encode = "main"
+                    liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
+                    sizeWidth = 640
+                    sizeHeight = 480
+                    liveViewConfig.stream_size = (sizeWidth, sizeHeight)
+                    liveViewConfig.stream_size_align = False
+                    liveViewConfig.sensor_mode = "0"
+                    liveViewConfig.format = "YUYV"
+
+                    videoConfig = CameraConfig()
+                    videoConfig.id = "VIDO"
+                    videoConfig.use_case = "Video"
+                    videoConfig.colour_space = "sRGB"
+                    videoConfig.buffer_count = 1
+                    videoConfig.queue = False
+                    videoConfig.encode = "main"
+                    videoConfig.controls["FrameDurationLimits"] = (33333, 33333)
+                    videoConfig.stream = "main"
+                    videoConfig.sensor_mode = 0
+                    videoConfig.stream_size = (640, 480)
+                    videoConfig.stream_size_align = False
+                    videoConfig.format = "YUYV"
+
+                    photoConfig = CameraConfig()
+                    photoConfig.id = "FOTO"
+                    photoConfig.use_case = "Photo"
+                    photoConfig.colour_space = "sRGB"
+                    photoConfig.buffer_count = 1
+                    photoConfig.queue = False
+                    photoConfig.encode = "main"
+                    photoConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+                    photoConfig.stream = "main"
+                    photoConfig.sensor_mode = 0
+                    photoConfig.stream_size = (640, 480)
+                    photoConfig.stream_size_align = False
+                    photoConfig.format = "YUYV"
+
+                    rawConfig = CameraConfig()
+                    rawConfig.id = "PRAW"
+                    rawConfig.use_case = "Raw Photo"
+                    rawConfig.colour_space = "sRGB"
+                    rawConfig.buffer_count = 1
+                    rawConfig.queue = False
+                    rawConfig.encode = "raw"
+                    rawConfig.controls["FrameDurationLimits"] = (100, 1000000000)
+                    rawConfig.stream = "main"
+                    rawConfig.sensor_mode = 0
+                    rawConfig.stream_size = (640, 480)
+                    rawConfig.stream_size_align = False
+                    rawConfig.format = "tiff"
+
+                    scfg["hasfocus"] = hasFocus
+                    scfg["liveconfig"] = liveViewConfig
+                    scfg["photoconfig"] = photoConfig
+                    scfg["rawconfig"] = rawConfig
+                    scfg["videoconfig"] = videoConfig
+                    scfg["controls"] = copy.deepcopy(cfg.controls)
+
                 strc[cn] = scfg
-                logger.debug("Thread %s: Camera.setStreamingConfigs - created  entry for second camera %s", get_ident(), cn)
+                logger.debug(
+                    "Thread %s: Camera.setStreamingConfigs - created  entry for second camera %s",
+                    get_ident(),
+                    cn,
+                )
             else:
                 if cn in strc:
                     scfg = strc[cn]
@@ -1871,8 +3094,7 @@ class Camera():
 
     @classmethod
     def restoreConfigFromStreamingConfig(cls):
-        """Restore active configuration and controls from a previously saved streaming config
-        """
+        """Restore active configuration and controls from a previously saved streaming config"""
         logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
@@ -1884,36 +3106,70 @@ class Camera():
             scfg = strc[cn]
             if "liveconfig" in scfg:
                 cfg.liveViewConfig = copy.deepcopy(scfg["liveconfig"])
-                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored liveViewConfig from streaming config %s", get_ident(), cn)
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - restored liveViewConfig from streaming config %s",
+                    get_ident(),
+                    cn,
+                )
             if "photoconfig" in scfg:
                 cfg.photoConfig = copy.deepcopy(scfg["photoconfig"])
-                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored photoconfig from streaming config %s", get_ident(), cn)
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - restored photoconfig from streaming config %s",
+                    get_ident(),
+                    cn,
+                )
             if "rawconfig" in scfg:
                 cfg.rawConfig = copy.deepcopy(scfg["rawconfig"])
-                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored rawconfig from streaming config %s", get_ident(), cn)
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - restored rawconfig from streaming config %s",
+                    get_ident(),
+                    cn,
+                )
             if "videoconfig" in scfg:
                 cfg.videoConfig = copy.deepcopy(scfg["videoconfig"])
-                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored videoconfig from streaming config %s", get_ident(), cn)
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - restored videoconfig from streaming config %s",
+                    get_ident(),
+                    cn,
+                )
             if "controls" in scfg:
                 cfg.controls = copy.deepcopy(scfg["controls"])
-                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored controls from streaming config %s", get_ident(), cn)
-                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - cfgCtrls=%s", get_ident(), scfg["controls"].__dict__)
-                logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - cfg.controls=%s", get_ident(), cfg.controls.__dict__)
-            logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig - restored config and controls from streaming config %s", get_ident(), cn)
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - restored controls from streaming config %s",
+                    get_ident(),
+                    cn,
+                )
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - cfgCtrls=%s",
+                    get_ident(),
+                    scfg["controls"].__dict__,
+                )
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - cfg.controls=%s",
+                    get_ident(),
+                    cfg.controls.__dict__,
+                )
+            logger.debug(
+                "Thread %s: Camera.restoreConfigFromStreamingConfig - restored config and controls from streaming config %s",
+                get_ident(),
+                cn,
+            )
 
     @staticmethod
     def configure(cfg: CameraConfig, cfgPhoto: CameraConfig):
-        """ The function creates and configures a CameraConfiguration
-            based on given configuration settings cfg.
-            
-            The fully configured configuration is returned
+        """The function creates and configures a CameraConfiguration
+        based on given configuration settings cfg.
+
+        The fully configured configuration is returned
         """
         logger.debug("Thread %s: Camera.configure", get_ident())
         # We start configuration with a new blank CameraConfiguration object
         camCfg = CameraConfiguration()
 
         camCfg.use_case = cfg.use_case
-        camCfg.transform = Transform(vflip=cfg.transform_vflip, hflip=cfg.transform_hflip)
+        camCfg.transform = Transform(
+            vflip=cfg.transform_vflip, hflip=cfg.transform_hflip
+        )
         camCfg.buffer_count = cfg.buffer_count
         cosp = cfg.colour_space
         if cosp == "sYCC":
@@ -1955,22 +3211,35 @@ class Camera():
             raise ValueError("controls in camera configuration must not be empty")
         else:
             camCfg.controls = ctrls
-        logger.debug("Thread %s: Camera.configure: configuration completed", get_ident())
+        logger.debug(
+            "Thread %s: Camera.configure: configuration completed", get_ident()
+        )
 
         # Automatically align the stream size, if selected
-        if cfg.stream_size_align and cfg.sensor_mode == "custom" :
-            logger.debug("Thread %s: Camera.configure: Aligning camera configuration. Old size: %s", get_ident(), cfg.stream_size)
+        if cfg.stream_size_align and cfg.sensor_mode == "custom":
+            logger.debug(
+                "Thread %s: Camera.configure: Aligning camera configuration. Old size: %s",
+                get_ident(),
+                cfg.stream_size,
+            )
             camCfg.align()
-            logger.debug("Thread %s: Camera.configure: Alignment successful. Adjusting stream size", get_ident())
+            logger.debug(
+                "Thread %s: Camera.configure: Alignment successful. Adjusting stream size",
+                get_ident(),
+            )
             cfg.stream_size = camCfg.size
-            logger.debug("Thread %s: Camera.configure: Stream size adjusted to %s", get_ident(), cfg.stream_size)
+            logger.debug(
+                "Thread %s: Camera.configure: Stream size adjusted to %s",
+                get_ident(),
+                cfg.stream_size,
+            )
 
         return camCfg
 
     @staticmethod
     def requiresTimeForAutoAlgos() -> bool:
-        """ Check if the camera requires time for auto algorithms to settle
-            Returns True, if the camera is a Pi 4 or Pi 5
+        """Check if the camera requires time for auto algorithms to settle
+        Returns True, if the camera is a Pi 4 or Pi 5
         """
         logger.debug("Thread %s: Camera.requiresTimeForAutoAlgos", get_ident())
         cfgCtrls = CameraCfg().controls
@@ -1985,26 +3254,53 @@ class Camera():
         return res
 
     @staticmethod
-    def applyControls(camCfg: CameraConfig, exceptCtrl=None, exceptValue = None, toCam2 = None):
-        """ Apply the currently selected camera controls
-            camCfg      : Configuration from which controls shall be taken with priority
-            exceptCtrl  : Exception control. Optionally, one exceptional control can be specified
-                          If specified, the exceptValue will replace the value fom CameraCfg().controls
-                          Currently supported:
-                          - ExposureTime
-                          - AnalogueGain
-                          - FocalDistance -> LensPosition = 1 / FocalDistance
-            toCam2      : If true, controls are set for the second camera with control data from streamingCfg
+    def applyControlsToUsbCamera(
+        cam, ctrls: dict
+    ):
+        """Apply controls to a USB camera
+        cam         : The cv2.VideoCapture camera object
+        ctrls       : The controls to be applied
         """
-        logger.debug("Thread %s: Camera.applyControls - toCam2: %s", get_ident(), toCam2)
+        logger.debug(
+            "Thread %s: Camera.applyControlsToUsbCamera", get_ident()
+        )
+        logger.debug(
+            "Thread %s: Camera.applyControlsToUsbCamera - Not yet implemented", get_ident()
+        )
 
-        logger.debug("Thread %s: Camera.applyControls - camCfg.controls=%s", get_ident(), camCfg.controls)
+    @staticmethod
+    def applyControls(
+        camCfg: CameraConfig, exceptCtrl=None, exceptValue=None, toCam2=None
+    ):
+        """Apply the currently selected camera controls
+        camCfg      : Configuration from which controls shall be taken with priority
+        exceptCtrl  : Exception control. Optionally, one exceptional control can be specified
+                      If specified, the exceptValue will replace the value fom CameraCfg().controls
+                      Currently supported:
+                      - ExposureTime
+                      - AnalogueGain
+                      - FocalDistance -> LensPosition = 1 / FocalDistance
+        toCam2      : If true, controls are set for the second camera with control data from streamingCfg
+        """
+        logger.debug(
+            "Thread %s: Camera.applyControls - toCam2: %s", get_ident(), toCam2
+        )
+
+        logger.debug(
+            "Thread %s: Camera.applyControls - camCfg.controls=%s",
+            get_ident(),
+            camCfg.controls,
+        )
         cfg = CameraCfg()
         if toCam2 is None:
             cfgCtrls = cfg.controls
         else:
             cfgCtrls = cfg.streamingCfg[str(Camera.camNum2)]["controls"]
-        logger.debug("Thread %s: Camera.applyControls - cfgCtrls=%s", get_ident(), cfgCtrls.__dict__)
+        logger.debug(
+            "Thread %s: Camera.applyControls - cfgCtrls=%s",
+            get_ident(),
+            cfgCtrls.__dict__,
+        )
 
         # Initialize controls dict with controls included in configuration
         # ctrls = copy.deepcopy(camCfg.controls)
@@ -2023,13 +3319,19 @@ class Camera():
         if cfgCtrls.include_aeExposureMode and "AeExposureMode" not in camCfg.controls:
             ctrls["AeExposureMode"] = cfgCtrls.aeExposureMode
             cnt += 1
-        if cfgCtrls.include_aeConstraintMode and "AeConstraintMode" not in camCfg.controls:
+        if (
+            cfgCtrls.include_aeConstraintMode
+            and "AeConstraintMode" not in camCfg.controls
+        ):
             ctrls["AeConstraintMode"] = cfgCtrls.aeConstraintMode
             cnt += 1
         if cfgCtrls.include_aeFlickerMode and "AeFlickerMode" not in camCfg.controls:
             ctrls["AeFlickerMode"] = cfgCtrls.aeFlickerMode
             cnt += 1
-        if cfgCtrls.include_aeFlickerPeriod and "AeFlickerPeriod" not in camCfg.controls:
+        if (
+            cfgCtrls.include_aeFlickerPeriod
+            and "AeFlickerPeriod" not in camCfg.controls
+        ):
             ctrls["AeFlickerPeriod"] = cfgCtrls.aeFlickerPeriod
             cnt += 1
         # Exposure controls
@@ -2045,8 +3347,14 @@ class Camera():
         if cfgCtrls.include_colourGains and "ColourGains" not in camCfg.controls:
             ctrls["ColourGains"] = (cfgCtrls.colourGainRed, cfgCtrls.colourGainBlue)
             cnt += 1
-        if cfgCtrls.include_frameDurationLimits and "FrameDurationLimits" not in camCfg.controls:
-            ctrls["FrameDurationLimits"] = (cfgCtrls.frameDurationLimitMax, cfgCtrls.frameDurationLimitMin)
+        if (
+            cfgCtrls.include_frameDurationLimits
+            and "FrameDurationLimits" not in camCfg.controls
+        ):
+            ctrls["FrameDurationLimits"] = (
+                cfgCtrls.frameDurationLimitMax,
+                cfgCtrls.frameDurationLimitMin,
+            )
             cnt += 1
         if cfgCtrls.include_hdrMode and "HdrMode" not in camCfg.controls:
             ctrls["HdrMode"] = cfgCtrls.hdrMode
@@ -2058,7 +3366,10 @@ class Camera():
         if cfgCtrls.include_awbMode and "AwbMode" not in camCfg.controls:
             ctrls["AwbMode"] = cfgCtrls.awbMode
             cnt += 1
-        if cfgCtrls.include_noiseReductionMode and "NoiseReductionMode" not in camCfg.controls:
+        if (
+            cfgCtrls.include_noiseReductionMode
+            and "NoiseReductionMode" not in camCfg.controls
+        ):
             ctrls["NoiseReductionMode"] = cfgCtrls.noiseReductionMode
             cnt += 1
         if cfgCtrls.include_sharpness and "Sharpness" not in camCfg.controls:
@@ -2074,12 +3385,24 @@ class Camera():
             ctrls["Brightness"] = cfgCtrls.brightness
             cnt += 1
         # Scaler crop
-        logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
-        logger.debug("Thread %s: Camera.applyControls - include_scalerCrop=%s", get_ident(), cfgCtrls.include_scalerCrop)
+        logger.debug(
+            "Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s",
+            get_ident(),
+            cfg.liveViewConfig.controls,
+        )
+        logger.debug(
+            "Thread %s: Camera.applyControls - include_scalerCrop=%s",
+            get_ident(),
+            cfgCtrls.include_scalerCrop,
+        )
         if cfgCtrls.include_scalerCrop and "ScalerCrop" not in camCfg.controls:
             ctrls["ScalerCrop"] = cfgCtrls.scalerCrop
             cnt += 1
-        logger.debug("Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s", get_ident(), cfg.liveViewConfig.controls)
+        logger.debug(
+            "Thread %s: Camera.applyControls - cfg.liveViewConfig.controls=%s",
+            get_ident(),
+            cfg.liveViewConfig.controls,
+        )
         # Focus
         if toCam2 is None:
             hasFocus = cfg.cameraProperties.hasFocus
@@ -2127,24 +3450,48 @@ class Camera():
                 else:
                     ctrls[exceptCtrl] = exceptValue
 
-        logger.debug("Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt)
+        logger.debug(
+            "Thread %s: Camera.applyControls - Applying %s controls", get_ident(), cnt
+        )
         logger.debug("Thread %s: Camera.applyControls - ctrls=%s", get_ident(), ctrls)
         if toCam2 is None:
-            camCtrls = Controls(Camera.cam)
-            prgLogger.debug("camCtrls = Controls(picam2)")
-            prgLogger.debug("ctrls = %s", ctrls)
-            camCtrls.set_controls(ctrls)
-            prgLogger.debug("camCtrls.set_controls(ctrls)")
-            Camera.cam.controls = camCtrls
-            # Camera.cam.controls.set_controls(ctrls)
-            prgLogger.debug("picam2.controls = camCtrls")
-            logger.debug("Thread %s: Camera.applyControls - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s", get_ident(), id(Camera), id(Camera.cam), id(Camera.cam.controls))
-            logger.debug("Thread %s: Camera.applyControls - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
+            if Camera.camIsUsb == False:
+                camCtrls = Controls(Camera.cam)
+                prgLogger.debug("camCtrls = Controls(picam2)")
+                prgLogger.debug("ctrls = %s", ctrls)
+                camCtrls.set_controls(ctrls)
+                prgLogger.debug("camCtrls.set_controls(ctrls)")
+                Camera.cam.controls = camCtrls
+                # Camera.cam.controls.set_controls(ctrls)
+                prgLogger.debug("picam2.controls = camCtrls")
+                logger.debug(
+                    "Thread %s: Camera.applyControls - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s",
+                    get_ident(),
+                    id(Camera),
+                    id(Camera.cam),
+                    id(Camera.cam.controls),
+                )
+                logger.debug(
+                    "Thread %s: Camera.applyControls - Camera.cam.controls=%s",
+                    get_ident(),
+                    Camera.cam.controls,
+                )
+            else:
+                camCtrls = ctrls
+                Camera.applyControlsToUsbCamera(Camera.cam, ctrls)
         else:
-            camCtrls = Controls(Camera.cam2)
-            camCtrls.set_controls(ctrls)
-            Camera.cam2.controls = camCtrls
-            logger.debug("Thread %s: Camera.applyControls - Camera.cam2.controls=%s", get_ident(), Camera.cam2.controls)
+            if Camera.cam2IsUsb == False:
+                camCtrls = Controls(Camera.cam2)
+                camCtrls.set_controls(ctrls)
+                Camera.cam2.controls = camCtrls
+                logger.debug(
+                    "Thread %s: Camera.applyControls - Camera.cam2.controls=%s",
+                    get_ident(),
+                    Camera.cam2.controls,
+                )
+            else:
+                camCtrls = ctrls
+                Camera.applyControlsToUsbCamera(Camera.cam2, ctrls)
         return camCtrls
 
     @staticmethod
@@ -2180,7 +3527,11 @@ class Camera():
                 ctrls["AfWindows"] = cfgCtrls.afWindows
                 cnt += 1
 
-        logger.debug("Thread %s: Camera.applyControlsForAfCycle - Applying %s controls", get_ident(), cnt)
+        logger.debug(
+            "Thread %s: Camera.applyControlsForAfCycle - Applying %s controls",
+            get_ident(),
+            cnt,
+        )
         camCtrls = Controls(Camera.cam)
         prgLogger.debug("camCtrls = Controls(picam2)")
         prgLogger.debug("ctrls = %s", ctrls)
@@ -2188,23 +3539,31 @@ class Camera():
         prgLogger.debug("camCtrls.set_controls(ctrls)")
         Camera.cam.controls = camCtrls
         prgLogger.debug("picam2.controls = camCtrls")
-        logger.debug("Thread %s: Camera.applyControlsForAfCycle - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
+        logger.debug(
+            "Thread %s: Camera.applyControlsForAfCycle - Camera.cam.controls=%s",
+            get_ident(),
+            Camera.cam.controls,
+        )
 
     @staticmethod
-    def applyControlsForLivestream(wait:float=None):
-        """ Apply active controls if livestream is active
-        """
+    def applyControlsForLivestream(wait: float = None):
+        """Apply active controls if livestream is active"""
         logger.debug("Thread %s: Camera.applyControlsForLivestream", get_ident())
         if Camera.thread:
             if wait:
                 time.sleep(wait)
             Camera.applyControls(Camera.ctrl.configuration)
-            logger.debug("Thread %s: Camera.applyControlsForLivestream - Controlls applied", get_ident())
+            logger.debug(
+                "Thread %s: Camera.applyControlsForLivestream - Controlls applied",
+                get_ident(),
+            )
 
     @staticmethod
     def stopCameraSystem():
         logger.debug("Thread %s: Camera.stopCameraSystem", get_ident())
-        logger.debug("Thread %s: Camera.stopCameraSystem: Stopping Live view thread", get_ident())
+        logger.debug(
+            "Thread %s: Camera.stopCameraSystem: Stopping Live view thread", get_ident()
+        )
         Camera.stopRequested = True
         if Camera.thread:
             cnt = 0
@@ -2214,15 +3573,26 @@ class Camera():
                 if cnt > 200:
                     break
             if Camera.thread:
-                logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread did not stop within 2 sec", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopCameraSystem: Live view thread did not stop within 2 sec",
+                    get_ident(),
+                )
             else:
-                logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread successfully stopped", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopCameraSystem: Live view thread successfully stopped",
+                    get_ident(),
+                )
         else:
-            logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread was not active", get_ident())
+            logger.debug(
+                "Thread %s: Camera.stopCameraSystem: Live view thread was not active",
+                get_ident(),
+            )
         Camera.stopRequested = False
 
-        logger.debug("Thread %s: Camera.stopCameraSystem: Stopping Video thread", get_ident())
-        Camera.stopVideoRequested = True        
+        logger.debug(
+            "Thread %s: Camera.stopCameraSystem: Stopping Video thread", get_ident()
+        )
+        Camera.stopVideoRequested = True
         if Camera.videoThread:
             cnt = 0
             while Camera.videoThread:
@@ -2231,16 +3601,28 @@ class Camera():
                 if cnt > 200:
                     break
             if Camera.videoThread:
-                logger.debug("Thread %s: Camera.stopCameraSystem: Video thread did not stop within 2 sec", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopCameraSystem: Video thread did not stop within 2 sec",
+                    get_ident(),
+                )
             else:
-                logger.debug("Thread %s: Camera.stopCameraSystem: Video thread successfully stopped", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopCameraSystem: Video thread successfully stopped",
+                    get_ident(),
+                )
         else:
-            logger.debug("Thread %s: Camera.stopCameraSystem: Video thread was not active", get_ident())
+            logger.debug(
+                "Thread %s: Camera.stopCameraSystem: Video thread was not active",
+                get_ident(),
+            )
         Camera.stopVideoRequested = False
         Camera.videoDuration = 0
 
-        logger.debug("Thread %s: Camera.stopCameraSystem: Stopping Photoseries thread", get_ident())
-        Camera.stopPhotoSeriesRequested = True        
+        logger.debug(
+            "Thread %s: Camera.stopCameraSystem: Stopping Photoseries thread",
+            get_ident(),
+        )
+        Camera.stopPhotoSeriesRequested = True
         if Camera.photoSeriesThread:
             cnt = 0
             while Camera.photoSeriesThread:
@@ -2249,14 +3631,24 @@ class Camera():
                 if cnt > 500:
                     break
             if Camera.photoSeriesThread:
-                logger.debug("Thread %s: Camera.stopCameraSystem: Photoseries thread did not stop within 5 sec", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopCameraSystem: Photoseries thread did not stop within 5 sec",
+                    get_ident(),
+                )
             else:
-                logger.debug("Thread %s: Camera.stopCameraSystem: Photoseries thread successfully stopped", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopCameraSystem: Photoseries thread successfully stopped",
+                    get_ident(),
+                )
         else:
-            logger.debug("Thread %s: Camera.stopCameraSystem: Photoseries thread was not active", get_ident())
+            logger.debug(
+                "Thread %s: Camera.stopCameraSystem: Photoseries thread was not active",
+                get_ident(),
+            )
         Camera.stopPhotoSeriesRequested = False
 
-        Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
+        if Camera.ctrl:
+            Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
 
         if Camera.cam2:
             Camera.stopRequested2 = True
@@ -2268,13 +3660,23 @@ class Camera():
                     if cnt > 200:
                         break
                 if Camera.thread2:
-                    logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread 2 did not stop within 2 sec", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.stopCameraSystem: Live view thread 2 did not stop within 2 sec",
+                        get_ident(),
+                    )
                 else:
-                    logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread 2 successfully stopped", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera.stopCameraSystem: Live view thread 2 successfully stopped",
+                        get_ident(),
+                    )
             else:
-                logger.debug("Thread %s: Camera.stopCameraSystem: Live view thread 2 was not active", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.stopCameraSystem: Live view thread 2 was not active",
+                    get_ident(),
+                )
             Camera.stopRequested2 = False
-            Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
+            if Camera.ctrl2:
+                Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
 
     @classmethod
     def _thread(cls):
@@ -2286,10 +3688,16 @@ class Camera():
             Camera().when_streaming_1_starts()
 
         try:
-            frames_iterator = cls.frames()
-            logger.debug("Thread %s: Camera._thread - frames_iterator instantiated", get_ident())
-            for frame in frames_iterator:
+            if Camera.camIsUsb == False:
+                frames_iterator = cls.frames()
+            else:
+                frames_iterator = cls.framesUsb()
+            logger.debug(
+                "Thread %s: Camera._thread - frames_iterator instantiated", get_ident()
+            )
+            for frame, frameRaw in frames_iterator:
                 Camera.frame = frame
+                Camera.frameRaw = frameRaw
                 # logger.debug("Thread %s: Camera._thread - received frame from camera -> notifying clients", get_ident())
                 Camera.event.set()  # send signal to clients
                 time.sleep(0)
@@ -2302,7 +3710,10 @@ class Camera():
                     frames_iterator.close()
                     Camera.stopRequested = False
                     stop = True
-                    logger.debug("Thread %s: Camera._thread - Thread is requested to stop.", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera._thread - Thread is requested to stop.",
+                        get_ident(),
+                    )
                     break
 
                 # if there hasn't been any clients asking for frames in
@@ -2310,12 +3721,27 @@ class Camera():
                 if time.time() - Camera.last_access > 10:
                     frames_iterator.close()
                     stop = True
-                    logger.debug("Thread %s: Camera._thread - Stopping camera thread due to inactivity.", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera._thread - Stopping camera thread due to inactivity.",
+                        get_ident(),
+                    )
                     break
 
                 # Release lock if not stopping
                 if stop == False:
                     Camera.threadLock.release()
+        except UsbCameraNoFrameReceivedError as fe:
+            Camera.threadLock.acquire()
+            if frames_iterator:
+                frames_iterator.close()
+            Camera.event.set()
+            Camera.event.clear()
+        except UsbCameraOpenError as ue:
+            Camera.threadLock.acquire()
+            if frames_iterator:
+                frames_iterator.close()
+            Camera.event.set()
+            Camera.event.clear()
         except Exception as e:
             Camera.threadLock.acquire()
             logger.error("Thread %s: Camera._thread - Exception: %s", get_ident(), e)
@@ -2324,30 +3750,39 @@ class Camera():
             Camera.event.set()
             Camera.event.clear()
             CameraCfg().serverConfig.error = "Error in live view: " + str(e)
-            CameraCfg().serverConfig.error2 = "Probably, a different camera configuration can solve the problem."
+            CameraCfg().serverConfig.error2 = (
+                "Probably, a different camera configuration can solve the problem."
+            )
             CameraCfg().serverConfig.errorSource = "Camera._thread"
 
         sc = CameraCfg().serverConfig
 
         closeCam = True
-        if sc.isVideoRecording == True \
-        or cls.isVideoRecording() == True:
+        if sc.isVideoRecording == True or cls.isVideoRecording() == True:
             closeCam = False
-            logger.debug("Thread %s: Camera._thread - isVideoRecording -> Camera not closing", get_ident())
+            logger.debug(
+                "Thread %s: Camera._thread - isVideoRecording -> Camera not closing",
+                get_ident(),
+            )
         if sc.isPhotoSeriesRecording == True:
             ser = Camera.photoSeries
             if ser:
-                if ser.isExposureSeries == True \
-                or ser.isFocusStackingSeries == True:
+                if ser.isExposureSeries == True or ser.isFocusStackingSeries == True:
                     closeCam = False
-                    logger.debug("Thread %s: Camera._thread - Exposure- or PhotoStack series -> Camera not closing", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera._thread - Exposure- or PhotoStack series -> Camera not closing",
+                        get_ident(),
+                    )
                 else:
                     nextTime = ser.nextTime()
                     curTime = datetime.datetime.now()
                     timedif = nextTime - curTime
                     timedifSec = timedif.total_seconds()
                     if timedifSec < 60:
-                        logger.debug("Thread %s: Camera._thread - Photo series next shot within 60 sec -> Camera not closing", get_ident())
+                        logger.debug(
+                            "Thread %s: Camera._thread - Photo series next shot within 60 sec -> Camera not closing",
+                            get_ident(),
+                        )
                         closeCam = False
         if closeCam == True:
             logger.debug("Thread %s: Camera._thread - Closing camera", get_ident())
@@ -2361,6 +3796,7 @@ class Camera():
             Camera.threadLock.release()
 
         Camera.thread = None
+        logger.debug("Thread %s: Camera._thread - Terminated", get_ident())
 
     @classmethod
     def _thread2(cls):
@@ -2372,10 +3808,16 @@ class Camera():
             Camera().when_streaming_2_starts()
 
         try:
-            frames_iterator = cls.frames2()
-            logger.debug("Thread %s: Camera._thread2 - frames_iterator instantiated", get_ident())
-            for frame in frames_iterator:
+            if Camera.cam2IsUsb == False:
+                frames_iterator = cls.frames2()
+            else:
+                frames_iterator = cls.frames2Usb()
+            logger.debug(
+                "Thread %s: Camera._thread2 - frames_iterator instantiated", get_ident()
+            )
+            for frame, frameRaw in frames_iterator:
                 Camera.frame2 = frame
+                Camera.frame2Raw = frameRaw
                 # logger.debug("Thread %s: Camera._thread2 - received frame from camera -> notifying clients", get_ident())
                 Camera.event2.set()  # send signal to clients
                 time.sleep(0)
@@ -2390,7 +3832,10 @@ class Camera():
                     frames_iterator.close()
                     Camera.stopRequested2 = False
                     stop = True
-                    logger.debug("Thread %s: Camera._thread2 - Thread is requested to stop.", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera._thread2 - Thread is requested to stop.",
+                        get_ident(),
+                    )
                     break
 
                 # if there hasn't been any clients asking for frames in
@@ -2398,7 +3843,10 @@ class Camera():
                 if time.time() - Camera.last_access2 > 10:
                     frames_iterator.close()
                     stop = True
-                    logger.debug("Thread %s: Camera._thread2 - Stopping camera thread due to inactivity.", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera._thread2 - Stopping camera thread due to inactivity.",
+                        get_ident(),
+                    )
                     break
 
                 # Release lock if not stopping
@@ -2413,7 +3861,9 @@ class Camera():
             Camera.event2.set()
             Camera.event2.clear()
             CameraCfg().serverConfig.errorc2 = "Error in camera 2 stream: " + str(e)
-            CameraCfg().serverConfig.errorc22 = "Probably, a different camera configuration can solve the problem."
+            CameraCfg().serverConfig.errorc22 = (
+                "Probably, a different camera configuration can solve the problem."
+            )
             CameraCfg().serverConfig.errorc2Source = "Camera._thread2"
 
         Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
@@ -2424,11 +3874,107 @@ class Camera():
 
         if Camera.thread2Lock.locked():
             Camera.thread2Lock.release()
-            logger.debug("Thread %s: Camera._thread2 - Lock released: thread2Lock=%s.", get_ident(), Camera.thread2Lock.locked())
+            logger.debug(
+                "Thread %s: Camera._thread2 - Lock released: thread2Lock=%s.",
+                get_ident(),
+                Camera.thread2Lock.locked(),
+            )
 
         Camera.thread2 = None
 
         logger.debug("Thread %s: Camera._thread2 - Exit.", get_ident())
+
+    @staticmethod
+    def framesUsb():
+        logger.debug("Thread %s: Camera.framesUsb", get_ident())
+        srvCam = CameraCfg()
+
+        try:
+            cc, cr = Camera.ctrl.requestConfig(srvCam.photoConfig)
+            if cc:
+                # If the request for photoConfig caused a configuration change, restart with a new configuration
+                Camera.ctrl.clearConfig()
+                Camera.ctrl.requestConfig(srvCam.photoConfig)
+            Camera.ctrl.requestConfig(srvCam.rawConfig, cfgPhoto=srvCam.photoConfig)
+            Camera.ctrl.requestConfig(srvCam.liveViewConfig)
+            Camera.cam, started = Camera.ctrl.requestStart(
+                Camera.cam,
+                Camera.camNum,
+                Camera.camIsUsb,
+                Camera.camUsbDev,
+                forActiveCamera=True,
+            )
+            if not started:
+                Camera.cam, excl = Camera.ctrl.requestCameraForConfig(
+                    Camera.cam, Camera.camNum, cfg=None, forLiveStream=True
+                )
+            else:
+                if Camera.cam.isOpened():
+                    logger.debug(
+                        "Thread %s: Camera.framesUsb - camera started", get_ident()
+                    )
+                else:
+                    logger.error(
+                        "Thread %s: Camera.framesUsb - camera not opened", get_ident()
+                    )
+                    raise RuntimeError("USB camera could not be opened")
+
+            # if Camera.resetScalerCropRequested == True:
+            #    Camera.resetScalerCrop()
+
+            # Camera.applyControls(Camera.ctrl.configuration)
+            # logger.debug("Thread %s: Camera.framesUsb - controls applied", get_ident())
+            # time.sleep(0.5)
+        except Exception as e:
+            logger.error("Thread %s: Camera.framesUsb - Exception: %s", get_ident(), e)
+            raise
+
+        cfg = Camera.ctrl.configuration
+        hflip = cfg.transform.hflip
+        vflip = cfg.transform.vflip
+        logger.debug(
+            "Thread %s: Camera.framesUsb - hflip=%s vflip=%s",
+            get_ident(),
+            hflip,
+            vflip,
+        )
+        try:
+            cnt = 0
+            while True:
+                if Camera.cam.isOpened() == False:
+                    raise UsbCameraOpenError("USB camera not open during live view")
+                success, frame = Camera.cam.read()
+                if not success:
+                    time.sleep(0.01)
+                    cnt += 1
+                    if cnt > 100:
+                        raise UsbCameraNoFrameReceivedError("No frame received from USB camera for live view")
+                else:
+                    # logger.debug("Thread %s: Camera.framesUsb - Received frame from camera", get_ident())
+                    # Apply controls for each frame to allow dynamic changes
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    # Encode frame as JPEG
+                    ret, buffer = cv2.imencode(".jpg", frame)
+                    frameEncoded = buffer.tobytes()
+                    yield frameEncoded, frame
+        except UsbCameraNoFrameReceivedError as ue:
+            logger.debug(
+                "Thread %s: Camera.framesUsb - No frame received after 1 sec",
+                get_ident(),
+            )
+            raise
+        except UsbCameraOpenError as ue:
+            logger.debug(
+                        "Thread %s: Camera.framesUsb - camera not opened during streaming",
+                        get_ident(),
+                    )
+            raise
+        except Exception as e:
+            logger.error("Thread %s: Camera.framesUsb - Exception: %s", get_ident(), e)
+            raise
 
     @staticmethod
     def frames():
@@ -2442,9 +3988,17 @@ class Camera():
                 Camera.ctrl.requestConfig(srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.rawConfig, cfgPhoto=srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.liveViewConfig)
-            Camera.cam, started = Camera.ctrl.requestStart(Camera.cam, Camera.camNum, forActiveCamera=True)
+            Camera.cam, started = Camera.ctrl.requestStart(
+                Camera.cam,
+                Camera.camNum,
+                Camera.camIsUsb,
+                Camera.camUsbDev,
+                forActiveCamera=True,
+            )
             if not started:
-                Camera.cam, excl = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg=None, forLiveStream=True)
+                Camera.cam, excl = Camera.ctrl.requestCameraForConfig(
+                    Camera.cam, Camera.camNum, cfg=None, forLiveStream=True
+                )
             else:
                 logger.debug("Thread %s: Camera.frames - camera started", get_ident())
 
@@ -2464,9 +4018,14 @@ class Camera():
             encoder = MJPEGEncoder()
             prgLogger.debug("encoder = MJPEGEncoder()")
             Camera.cam.start_encoder(
-                encoder, FileOutput(Camera.streamOutput), name=srvCam.liveViewConfig.stream
+                encoder,
+                FileOutput(Camera.streamOutput),
+                name=srvCam.liveViewConfig.stream,
             )
-            prgLogger.debug("picam2.start_encoder(encoder, FileOutput(output), name=\"%s\")", srvCam.liveViewConfig.stream)
+            prgLogger.debug(
+                'picam2.start_encoder(encoder, FileOutput(output), name="%s")',
+                srvCam.liveViewConfig.stream,
+            )
             prgLogger.debug("time.sleep(videoDuration)")
             Camera.ctrl.registerEncoder(Camera.ENCODER_LIVESTREAM, encoder)
             logger.debug("Thread %s: Camera.frames - encoder started", get_ident())
@@ -2483,9 +4042,56 @@ class Camera():
                     frame = Camera.streamOutput.frame
                     l = len(frame)
                 # logger.debug("Thread %s: Camera.frames - got frame with length %s", get_ident(), l)
-                yield frame
+                yield frame, None
         except Exception as e:
             logger.error("Thread %s: Camera.frames - Exception: %s", get_ident(), e)
+            raise
+
+    @staticmethod
+    def frames2Usb():
+        logger.debug("Thread %s: Camera.frames2Usb", get_ident())
+        srvCam = CameraCfg()
+
+        Camera.ctrl2.requestConfig(
+            srvCam.streamingCfg[str(Camera.camNum2)]["videoconfig"]
+        )
+        Camera.ctrl2.requestConfig(
+            srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"]
+        )
+        Camera.cam2, started = Camera.ctrl2.requestStart(
+            Camera.cam2,
+            Camera.camNum2,
+            Camera.cam2IsUsb,
+            Camera.cam2UsbDev,
+            forActiveCamera=False,
+        )
+        if not started:
+            logger.error("Second camera did not start")
+            raise RuntimeError("Second camera did not start")
+        else:
+            logger.debug("Thread %s: Camera.frames2Usb - camera started", get_ident())
+
+        cfg = Camera.ctrl2.configuration
+        hflip = cfg.transform.hflip
+        vflip = cfg.transform.vflip
+        try:
+            while True:
+                # logger.debug("Thread %s: Camera.frames2Usb - Receiving camera stream", get_ident())
+                success, frame = Camera.cam2.read()
+                if not success:
+                    break
+                else:
+                    # Apply controls for each frame to allow dynamic changes
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    # Encode frame as JPEG
+                    ret, buffer = cv2.imencode(".jpg", frame)
+                    frameEncoded = buffer.tobytes()
+                yield frameEncoded, frame
+        except Exception as e:
+            logger.error("Thread %s: Camera.frames2Usb - Exception: %s", get_ident(), e)
             raise
 
     @staticmethod
@@ -2493,10 +4099,20 @@ class Camera():
         logger.debug("Thread %s: Camera.frames2", get_ident())
         srvCam = CameraCfg()
 
-        Camera.ctrl2.requestConfig(srvCam.streamingCfg[str(Camera.camNum2)]["videoconfig"])
-        Camera.ctrl2.requestConfig(srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"])
+        Camera.ctrl2.requestConfig(
+            srvCam.streamingCfg[str(Camera.camNum2)]["videoconfig"]
+        )
+        Camera.ctrl2.requestConfig(
+            srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"]
+        )
 
-        Camera.cam2, started = Camera.ctrl2.requestStart(Camera.cam2, Camera.camNum2, forActiveCamera=False)
+        Camera.cam2, started = Camera.ctrl2.requestStart(
+            Camera.cam2,
+            Camera.camNum2,
+            Camera.cam2IsUsb,
+            Camera.cam2UsbDev,
+            forActiveCamera=False,
+        )
         if not started:
             logger.error("Second camera did not start")
             raise RuntimeError("Second camera did not start")
@@ -2510,7 +4126,11 @@ class Camera():
         try:
             Camera.stream2Output = StreamingOutput()
             encoder = MJPEGEncoder()
-            Camera.cam2.start_encoder(encoder, FileOutput(Camera.stream2Output), name=srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"].stream)
+            Camera.cam2.start_encoder(
+                encoder,
+                FileOutput(Camera.stream2Output),
+                name=srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"].stream,
+            )
             Camera.ctrl2.registerEncoder(Camera.ENCODER_LIVESTREAM, encoder)
             logger.debug("Thread %s: Camera.frames2 - encoder started", get_ident())
 
@@ -2523,59 +4143,143 @@ class Camera():
                     frame = Camera.stream2Output.frame
                     l = len(frame)
                 # logger.debug("Thread %s: Camera.frames2 - got frame with length %s", get_ident(), l)
-                yield frame
+                yield frame, None
         except Exception as e:
             logger.error("Thread %s: Camera.frames2 - Exception: %s", get_ident(), e)
             raise
 
     @staticmethod
-    def takeImage(filename: str, keepExclusive:bool=False, noEvents:bool=False, alternatePath:str="") -> str:
-        """ Takes a photo with the specified file name and returns the path
+    def getUsbCamMetadata(cam) -> dict:
+        """Get metadata from USB camera using OpenCV"""
+        logger.debug("Thread %s: Camera.getUsbCamMetadata", get_ident())
 
-            filename:       file name for the photo
-            keepExclusive:  If True, keep the exclusive mode
-                            This can be used for example if a jpg photo shall be taken
-                            before a video is recorded
-            noEvents:       If True, no events are triggered
-            alternatePath:  If not empty, the file path of the photo, 
-                            otherwise the standard photo path is taken
-                            and the display buffer is not updated
+        metadata = {
+            "Width": cam.get(cv2.CAP_PROP_FRAME_WIDTH),
+            "Height": cam.get(cv2.CAP_PROP_FRAME_HEIGHT),
+            "FPS": cam.get(cv2.CAP_PROP_FPS),
+            "Format (FOURCC)": int(cam.get(cv2.CAP_PROP_FOURCC)),
+            "Format": "".join(
+                [chr((int(cam.get(cv2.CAP_PROP_FOURCC)) >> 8 * i) & 0xFF) for i in range(4)]
+            ),
+            "Brightness": cam.get(cv2.CAP_PROP_BRIGHTNESS),
+            "Contrast": cam.get(cv2.CAP_PROP_CONTRAST),
+            "Saturation": cam.get(cv2.CAP_PROP_SATURATION),
+            "Hue": cam.get(cv2.CAP_PROP_HUE),
+            "Gain": cam.get(cv2.CAP_PROP_GAIN),
+            "Exposure": cam.get(cv2.CAP_PROP_EXPOSURE),
+            "Exposure": cam.get(cv2.CAP_PROP_EXPOSURE),
+            "White Balance Temperature": cam.get(cv2.CAP_PROP_WB_TEMPERATURE),
+            "White Balance Auto WB": cam.get(cv2.CAP_PROP_AUTO_WB),
+            "Focus": cam.get(cv2.CAP_PROP_FOCUS),
+            "Autofocus": cam.get(cv2.CAP_PROP_AUTOFOCUS),
+}
+        return metadata
+
+    @staticmethod
+    def takeImage(
+        filename: str,
+        keepExclusive: bool = False,
+        noEvents: bool = False,
+        alternatePath: str = "",
+    ) -> str:
+        """Takes a photo with the specified file name and returns the path
+
+        filename:       file name for the photo
+        keepExclusive:  If True, keep the exclusive mode
+                        This can be used for example if a jpg photo shall be taken
+                        before a video is recorded
+        noEvents:       If True, no events are triggered
+        alternatePath:  If not empty, the file path of the photo,
+                        otherwise the standard photo path is taken
+                        and the display buffer is not updated
 
         """
-        logger.debug("Thread %s: Camera.takeImage - filename: %s keepExclusive: %s", get_ident(), filename, keepExclusive)
+        logger.debug(
+            "Thread %s: Camera.takeImage - filename: %s keepExclusive: %s",
+            get_ident(),
+            filename,
+            keepExclusive,
+        )
         fp = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
 
         if noEvents == False:
-            logger.debug("Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            logger.debug(
+                "Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s",
+                get_ident(),
+                Camera().when_photo_taken,
+            )
             if Camera().when_photo_taken:
                 Camera().when_photo_taken()
         try:
-            logger.debug("Thread %s: Camera.takeImage Requesting camera for photoConfig", get_ident())
-            Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.photoConfig)
-            logger.debug("Thread %s: Camera.takeImage Got camera for photoConfig exclusive: %s", get_ident(), exclusive)
+            forceExclusive = False
+            if Camera.camIsUsb == True:
+                forceExclusive = True
+            logger.debug(
+                "Thread %s: Camera.takeImage Requesting camera for photoConfig",
+                get_ident(),
+            )
+            Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+                Camera.cam, Camera.camNum, cfg.photoConfig, forceExclusive=forceExclusive
+            )
+            logger.debug(
+                "Thread %s: Camera.takeImage Got camera for photoConfig exclusive: %s",
+                get_ident(),
+                exclusive,
+            )
 
             Camera.applyControls(Camera.ctrl.configuration)
             logger.debug("Thread %s: Camera.takeImage - controls applied", get_ident())
 
-            logger.debug("Thread %s: Camera.takeImage - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
-            request = Camera.cam.capture_request()
-            prgLogger.debug("request = picam2.capture_request()")
-            logger.debug("Thread %s: Camera.takeImage: Request started", get_ident())
+            if Camera.camIsUsb == False:
+                logger.debug(
+                    "Thread %s: Camera.takeImage - Camera.cam.controls=%s",
+                    get_ident(),
+                    Camera.cam.controls,
+                )
+                request = Camera.cam.capture_request()
+                prgLogger.debug("request = picam2.capture_request()")
+                logger.debug("Thread %s: Camera.takeImage: Request started", get_ident())
             path = sc.photoRoot + "/" + sc.cameraPhotoSubPath
             if alternatePath != "":
                 path = alternatePath
             fp = path + "/" + filename
-            request.save(cfg.photoConfig.stream, fp)
-            prgLogger.debug("request.save(\"%s\", \"%s\")", cfg.photoConfig.stream, sc.prgOutputPath + "/" + filename)
-            logger.debug("Thread %s: Camera.takeImage: Image saved as %s", get_ident(), fp)
+            if Camera.camIsUsb == False:
+                request.save(cfg.photoConfig.stream, fp)
+                prgLogger.debug(
+                    'request.save("%s", "%s")',
+                    cfg.photoConfig.stream,
+                    sc.prgOutputPath + "/" + filename,
+                )
+            else:
+                # For USB cameras, save the image using OpenCV
+                if Camera.cam.isOpened() == False:
+                    raise RuntimeError("USB camera is not opened")
+                success, frame = Camera.cam.read()
+                if success:
+                    conf = Camera.ctrl.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    cv2.imwrite(fp, frame)
+                else:
+                    raise RuntimeError("Failed to capture image from USB camera")
+            logger.debug(
+                "Thread %s: Camera.takeImage: Image saved as %s", get_ident(), fp
+            )
             if alternatePath == "":
                 sc.displayFile = filename
                 sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
                 sc.isDisplayHidden = False
-                metadata = request.get_metadata()
-                prgLogger.debug("metadata = request.get_metadata()")
+                if Camera.camIsUsb == False:
+                    metadata = request.get_metadata()
+                    prgLogger.debug("metadata = request.get_metadata()")
+                else:
+                    metadata = Camera.getUsbCamMetadata(Camera.cam)
                 sc.displayMeta = {"Camera": sc.activeCameraInfo}
                 sc.displayMeta.update(metadata)
                 sc.displayMetaFirst = 0
@@ -2584,16 +4288,21 @@ class Camera():
                 else:
                     sc.displayMetaLast = 10
                 sc.displayHistogram = None
-            logger.debug("Thread %s: Camera.takeImage: Image metedata captured", get_ident())
-            request.release()
-            prgLogger.debug("request.release()")
-            logger.debug("Thread %s: Camera.takeImage: Request released", get_ident())
+            logger.debug(
+                "Thread %s: Camera.takeImage: Image metedata captured", get_ident()
+            )
+            if Camera.camIsUsb == False:
+                request.release()
+                prgLogger.debug("request.release()")
+                logger.debug("Thread %s: Camera.takeImage: Request released", get_ident())
 
             if not keepExclusive:
                 Camera.cam = Camera.ctrl.restoreLivestream(Camera.cam, exclusive)
-                if sc.isPhotoSeriesRecording == False \
-                and sc.isVideoRecording == False \
-                and sc.isLiveStream == False:
+                if (
+                    sc.isPhotoSeriesRecording == False
+                    and sc.isVideoRecording == False
+                    and sc.isLiveStream == False
+                ):
                     Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
         except Exception as e:
             logger.error("Thread %s: Camera.takeImage: Error %s", get_ident(), e)
@@ -2604,58 +4313,114 @@ class Camera():
         return fp
 
     @staticmethod
-    def takeImage2(filename: str, keepExclusive:bool=False, noEvents:bool=False, alternatePath:str="") -> str:
-        """ Takes a photo with second camera with the specified file name and returns the path
+    def takeImage2(
+        filename: str,
+        keepExclusive: bool = False,
+        noEvents: bool = False,
+        alternatePath: str = "",
+    ) -> str:
+        """Takes a photo with second camera with the specified file name and returns the path
 
-            filename:       file name for the photo
-            keepExclusive:  If True, keep the exclusive mode
-                            This can be used for example if a jpg photo shall be taken
-                            before a video is recorded
-            noEvents:       If True, no events are triggered
-            alternatePath:  If not empty, the file path of the photo, 
-                            otherwise the standard photo path is taken
-                            and the display buffer is not updated
+        filename:       file name for the photo
+        keepExclusive:  If True, keep the exclusive mode
+                        This can be used for example if a jpg photo shall be taken
+                        before a video is recorded
+        noEvents:       If True, no events are triggered
+        alternatePath:  If not empty, the file path of the photo,
+                        otherwise the standard photo path is taken
+                        and the display buffer is not updated
 
         """
-        logger.debug("Thread %s: Camera.takeImage2 - filename: %s keepExclusive: %s", get_ident(), filename, keepExclusive)
+        logger.debug(
+            "Thread %s: Camera.takeImage2 - filename: %s keepExclusive: %s",
+            get_ident(),
+            filename,
+            keepExclusive,
+        )
         fp = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
 
         if noEvents == False:
-            logger.debug("Thread %s: Camera.takeImage2 Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            logger.debug(
+                "Thread %s: Camera.takeImage2 Checking for callback: when_photo_taken=%s",
+                get_ident(),
+                Camera().when_photo_taken,
+            )
             if Camera().when_photo_2_taken:
                 Camera().when_photo_2_taken()
         try:
             photoConfig = cfg.streamingCfg[str(Camera.camNum2)]["photoconfig"]
-            logger.debug("Thread %s: Camera.takeImage2 Requesting camera for photoConfig", get_ident())
-            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(Camera.cam2, Camera.camNum2, photoConfig, forActiveCamera=False)
-            logger.debug("Thread %s: Camera.takeImage2 Got camera for photoConfig exclusive: %s", get_ident(), exclusive)
+            forceExclusive = False
+            if Camera.cam2IsUsb == True:
+                forceExclusive = True
+            logger.debug(
+                "Thread %s: Camera.takeImage2 Requesting camera for photoConfig",
+                get_ident(),
+            )
+            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+                Camera.cam2, Camera.camNum2, photoConfig, forActiveCamera=False, forceExclusive=forceExclusive
+            )
+            logger.debug(
+                "Thread %s: Camera.takeImage2 Got camera for photoConfig exclusive: %s",
+                get_ident(),
+                exclusive,
+            )
 
             Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
             logger.debug("Thread %s: Camera.takeImage2 - controls applied", get_ident())
 
-            logger.debug("Thread %s: Camera.takeImage2 - Camera.cam2.controls=%s", get_ident(), Camera.cam2.controls)
-            request = Camera.cam2.capture_request()
-            prgLogger.debug("request = picam2.capture_request()")
-            logger.debug("Thread %s: Camera.takeImage2: Request started", get_ident())
+            if Camera.cam2IsUsb == False:
+                logger.debug(
+                    "Thread %s: Camera.takeImage2 - Camera.cam2.controls=%s",
+                    get_ident(),
+                    Camera.cam2.controls,
+                )
+                request = Camera.cam2.capture_request()
+                prgLogger.debug("request = picam2.capture_request()")
+                logger.debug("Thread %s: Camera.takeImage2: Request started", get_ident())
             cameraPhotoSubPath = "photos/" + "camera_" + str(Camera.camNum2)
             path = sc.photoRoot + "/" + cameraPhotoSubPath
             if alternatePath != "":
                 path = alternatePath
             fp = path + "/" + filename
-            request.save(photoConfig.stream, fp)
-            prgLogger.debug("request.save(\"%s\", \"%s\")", photoConfig.stream, sc.prgOutputPath + "/" + filename)
-            logger.debug("Thread %s: Camera.takeImage2: Image saved as %s", get_ident(), fp)
-            request.release()
-            prgLogger.debug("request.release()")
-            logger.debug("Thread %s: Camera.takeImage2: Request released", get_ident())
+            if Camera.cam2IsUsb == False:
+                request.save(photoConfig.stream, fp)
+                prgLogger.debug(
+                    'request.save("%s", "%s")',
+                    photoConfig.stream,
+                    sc.prgOutputPath + "/" + filename,
+                )
+            else:
+                # For USB cameras, save the image using OpenCV
+                if Camera.cam2.isOpened() == False:
+                    raise RuntimeError("USB camera 2 is not opened")
+                success, frame = Camera.cam2.read()
+                if success:
+                    conf = Camera.ctrl2.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    cv2.imwrite(fp, frame)
+                else:
+                    raise RuntimeError("Failed to capture image from USB camera")
+            logger.debug(
+                "Thread %s: Camera.takeImage2: Image saved as %s", get_ident(), fp
+            )
+            if Camera.cam2IsUsb == False:
+                request.release()
+                prgLogger.debug("request.release()")
+                logger.debug("Thread %s: Camera.takeImage2: Request released", get_ident())
 
             if not keepExclusive:
                 Camera.cam2 = Camera.ctrl2.restoreLivestream2(Camera.cam2, exclusive)
-                if sc.isVideoRecording2 == False \
-                and sc.isLiveStream2 == False:
-                    Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
+                if sc.isVideoRecording2 == False and sc.isLiveStream2 == False:
+                    Camera.cam2, done = Camera.ctrl2.requestStop(
+                        Camera.cam2, close=True
+                    )
         except Exception as e:
             logger.error("Thread %s: Camera.takeImage2: Error %s", get_ident(), e)
             if not sc.errorc2:
@@ -2666,178 +4431,299 @@ class Camera():
 
     @staticmethod
     def quickPhoto(fp: str) -> tuple:
-        """ Take a photo assuming that the camera is started
-        """
+        """Take a photo assuming that the camera is started"""
         logger.debug("Thread %s: Camera.quickPhoto - filename: %s", get_ident(), fp)
         done = False
         err = ""
         cfg = CameraCfg()
-        if Camera.cam.started:
-            try:
-                request = Camera.cam.capture_request()
-                request.save(cfg.photoConfig.stream, fp)
-                request.release()
-                done = True
-            except Exception as e:
-                err = str(e)
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    request = Camera.cam.capture_request()
+                    request.save(cfg.photoConfig.stream, fp)
+                    request.release()
+                    done = True
+                except Exception as e:
+                    err = str(e)
+            else:
+                err = "Camera not started"
         else:
-            err = "Camera not started"
+            if Camera.cam.isOpened() == True:
+                frame, frameRaw = Camera().get_frame()
+                cv2.imwrite(fp, frameRaw)
+                done = True
+            else:
+                err = "USB Camera not started"
         return (done, err)
 
     @staticmethod
+    def quickUsbVideoThread(out):
+        """Record a video from a USB camera"""
+        logger.debug(
+            "Thread %s: Camera.quickUsbVideoThread - starting recording", get_ident()
+        )
+        done = False
+        if Camera.cam.isOpened() == False:
+            logger.error(
+                "Thread %s: Camera.quickUsbVideoThread - USB camera not opened", get_ident()
+            )
+            done = True
+        if out.isOpened() == False:
+            logger.error(
+                "Thread %s: Camera.quickUsbVideoThread - VideoWriter not opened", get_ident()
+            )
+            done = True
+        while not done:
+            logger.debug("Thread %s: Camera.quickUsbVideoThread - acquiring lock - locked: %s", get_ident(), Camera.threadUsbVideoLock.locked())
+            Camera.threadUsbVideoLock.acquire()
+            logger.debug("Thread %s: Camera.quickUsbVideoThread - getting frame", get_ident())
+            frame, frameRaw = Camera().get_frame()
+            logger.debug("Thread %s: Camera.quickUsbVideoThread - got frame", get_ident())
+            out.write(frameRaw)
+            logger.debug("Thread %s: Camera.quickUsbVideoThread - wrote frame", get_ident())
+            if Camera.stopUsbVideoRequested == True:
+                done = True
+            Camera.threadUsbVideoLock.release()
+        logger.debug(
+            "Thread %s: Camera.quickUsbVideoThread - stopping recording", get_ident()
+        )
+
+        if Camera.threadUsbVideoLock.locked():
+            Camera.threadUsbVideoLock.release()
+        Camera.threadUsbVideo = None
+
+    @staticmethod
     def quickVideoStart(fp: str) -> tuple:
-        """ Record a video assuming that the camera is started
-        """
-        logger.debug("Thread %s: Camera.quickVideoStart - filename: %s", get_ident(), fp)
+        """Record a video assuming that the camera is started"""
+        logger.debug(
+            "Thread %s: Camera.quickVideoStart - filename: %s", get_ident(), fp
+        )
         encoder = None
         done = False
         err = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
-        if Camera.cam.started:
-            try:
-                encoder = H264Encoder()
-                output = fp
-                if output.lower().endswith(".mp4"):
-                    if sc.recordAudio == False:
-                        encoder.output = FfmpegOutput(output, audio=False)
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    encoder = H264Encoder()
+                    output = fp
+                    if output.lower().endswith(".mp4"):
+                        if sc.recordAudio == False:
+                            encoder.output = FfmpegOutput(output, audio=False)
+                        else:
+                            encoder.output = FfmpegOutput(
+                                output, audio=True, audio_sync=sc.audioSync
+                            )
                     else:
-                        encoder.output = FfmpegOutput(output, audio=True, audio_sync=sc.audioSync)
-                else:
-                    encoder.output = FileOutput(output)
+                        encoder.output = FileOutput(output)
 
-                stream = cfg.videoConfig.stream
-                # For Pi Zero take video with liveView (lowres stream)
-                # The lower buffer size of these devices is too small for full size video
-                # and we do not want to switch mode
-                if cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2") \
-                or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1"):
-                    stream = cfg.liveViewConfig.stream
-                Camera.cam.start_encoder(encoder, name=stream)
-                done = True
-            except Exception as e:
-                logger.error("Thread %s: Camera.quickVideoStart - error when starting encoder: %s", get_ident(), e)
-                err = str(e)
+                    stream = cfg.videoConfig.stream
+                    # For Pi Zero take video with liveView (lowres stream)
+                    # The lower buffer size of these devices is too small for full size video
+                    # and we do not want to switch mode
+                    if (
+                        cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi Zero")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 4")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 3")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 2")
+                        or cfg.serverConfig.raspiModelFull.startswith("Raspberry Pi 1")
+                    ):
+                        stream = cfg.liveViewConfig.stream
+                    Camera.cam.start_encoder(encoder, name=stream)
+                    done = True
+                except Exception as e:
+                    logger.error(
+                        "Thread %s: Camera.quickVideoStart - error when starting encoder: %s",
+                        get_ident(),
+                        e,
+                    )
+                    err = str(e)
+            else:
+                err = "Camera not started"
         else:
-            err = "Camera not started"
+            if Camera.cam.isOpened() == True:
+                frameRate = 14.5
+                Camera.cam.set(cv2.CAP_PROP_FPS, frameRate)
+                fourcc = cv2.VideoWriter_fourcc(*"avc1")
+                width = int(Camera.cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+                height = int(Camera.cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                out = cv2.VideoWriter(fp, fourcc, frameRate, (width, height))
+                logger.debug(
+                    "Thread %s: Camera.quickVideoStart - starting quickUsbVideoThread", get_ident()
+                )
+                Camera.stopUsbVideoRequested = False
+                Camera.threadUsbVideo = threading.Thread(
+                    target=Camera.quickUsbVideoThread, args=(out,)
+                )
+                Camera.threadUsbVideo.start()
+                encoder = out
+                done = True
+            else:
+                err = "USB Camera not started"
         return (done, encoder, err)
 
     @staticmethod
     def quickVideoStop(encoder) -> tuple:
-        """ Stop a video recording that the camera is started
-        """
+        """Stop a video recording that the camera is started"""
         logger.debug("Thread %s: Camera.quickVideoStop", get_ident())
         done = False
         err = ""
-        if Camera.cam.started:
-            try:
-                Camera.cam.stop_encoder(encoder)
-                done = True
-            except Exception as e:
-                logger.error("Thread %s: Camera.quickVideoStop - error when stopping encoder: %s", get_ident(), e)
-                err = str(e)
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    Camera.cam.stop_encoder(encoder)
+                    done = True
+                except Exception as e:
+                    logger.error(
+                        "Thread %s: Camera.quickVideoStop - error when stopping encoder: %s",
+                        get_ident(),
+                        e,
+                    )
+                    err = str(e)
+            else:
+                err = "Camera not started"
         else:
-            err = "Camera not started"
+            if Camera.threadUsbVideo:
+                logger.debug(
+                    "Thread %s: Camera.quickVideoStop - stopping quickUsbVideoThread", get_ident()
+                )
+                with Camera.threadUsbVideoLock:
+                    Camera.stopUsbVideoRequested = True
+                while Camera.threadUsbVideo:
+                    time.sleep(0.1)
+                encoder.release()
+                logger.debug(
+                    "Thread %s: Camera.quickVideoStop - quickUsbVideoThread stopped",
+                    get_ident(),
+                )
+                Camera.stopUsbVideoRequested = False
+                done = True
+            else:
+                err = "USB video thread not running"
         return (done, err)
 
     @staticmethod
-    def startCircular(buffersizeSec = 5) -> tuple:
-        """ Start encoder for circular output
-        """
+    def startCircular(buffersizeSec=5) -> tuple:
+        """Start encoder for circular output"""
         logger.debug("Thread %s: Camera.startCircular", get_ident())
         encoder = None
         circ = None
         done = False
         err = ""
         cfg = CameraCfg()
-        if Camera.cam.started:
-            try:
-                encoder = H264Encoder()
-                sm = cfg.videoConfig.sensor_mode
-                if sm == "custom":
-                    buffersize = 150
-                else:
-                    buffersize = cfg.sensorModes[sm].fps * buffersizeSec
-                circ = CircularOutput(buffersize=buffersize)
-                encoder.output = [circ]
-                Camera.cam.encoders = encoder
-                Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
-                done = True
-            except Exception as e:
-                logger.error("Thread %s: Camera.startCircular - error when starting encoder: %s", get_ident(), e)
-                err = str(e)
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    encoder = H264Encoder()
+                    sm = cfg.videoConfig.sensor_mode
+                    if sm == "custom":
+                        buffersize = 150
+                    else:
+                        buffersize = cfg.sensorModes[sm].fps * buffersizeSec
+                    circ = CircularOutput(buffersize=buffersize)
+                    encoder.output = [circ]
+                    Camera.cam.encoders = encoder
+                    Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
+                    done = True
+                except Exception as e:
+                    logger.error(
+                        "Thread %s: Camera.startCircular - error when starting encoder: %s",
+                        get_ident(),
+                        e,
+                    )
+                    err = str(e)
+            else:
+                err = "Camera not started"
         else:
-            err = "Camera not started"
+            err = "USB camera does not support circular recording"
         return (done, circ, encoder, err)
 
     @staticmethod
     def stopCircular(encoder) -> tuple:
-        """ Stop encoder for circular output
-        """
+        """Stop encoder for circular output"""
         logger.debug("Thread %s: Camera.stopCircular", get_ident())
         done = False
         err = ""
-        if Camera.cam.started:
-            try:
-                Camera.cam.stop_encoder(encoder)
-                done = True
-            except Exception as e:
-                logger.error("Thread %s: Camera.stopCircular - error when stopping encoder: %s", get_ident(), e)
-                err = str(e)
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    Camera.cam.stop_encoder(encoder)
+                    done = True
+                except Exception as e:
+                    logger.error(
+                        "Thread %s: Camera.stopCircular - error when stopping encoder: %s",
+                        get_ident(),
+                        e,
+                    )
+                    err = str(e)
+            else:
+                err = "Camera not started"
         else:
-            err = "Camera not started"
+            err = "USB camera does not support circular recording"
         return (done, err)
 
     @staticmethod
-    def recordCircular(circ:CircularOutput, fp: str) -> tuple:
-        """ Start recording circular output
-        """
+    def recordCircular(circ: CircularOutput, fp: str) -> tuple:
+        """Start recording circular output"""
         logger.debug("Thread %s: Camera.recordCircular - file: %s", get_ident(), fp)
         done = False
         err = ""
-        if Camera.cam.started:
-            try:
-                circ.fileoutput = fp
-                circ.start()
-                done = True
-            except Exception as e:
-                logger.error("Thread %s: Camera.recordCircular - error when starting circular: %s", get_ident(), e)
-                err = str(e)
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    circ.fileoutput = fp
+                    circ.start()
+                    done = True
+                except Exception as e:
+                    logger.error(
+                        "Thread %s: Camera.recordCircular - error when starting circular: %s",
+                        get_ident(),
+                        e,
+                    )
+                    err = str(e)
+            else:
+                err = "Camera not started"
         else:
-            err = "Camera not started"
+            err = "USB camera does not support circular recording"
         return (done, err)
 
     @staticmethod
-    def stopRecordingCircular(circ:CircularOutput) -> tuple:
-        """ Start recording circular output
-        """
+    def stopRecordingCircular(circ: CircularOutput) -> tuple:
+        """Start recording circular output"""
         logger.debug("Thread %s: Camera.stopRecordingCircular", get_ident())
         done = False
         err = ""
-        if Camera.cam.started:
-            try:
-                circ.stop()
-                done = True
-            except Exception as e:
-                logger.error("Thread %s: Camera.stopRecordingCircular - error when stopping circular: %s", get_ident(), e)
-                err = str(e)
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    circ.stop()
+                    done = True
+                except Exception as e:
+                    logger.error(
+                        "Thread %s: Camera.stopRecordingCircular - error when stopping circular: %s",
+                        get_ident(),
+                        e,
+                    )
+                    err = str(e)
+            else:
+                err = "Camera not started"
         else:
-            err = "Camera not started"
+            err = "USB camera does not support circular recording"
         return (done, err)
 
     @staticmethod
-    def takeRawImage(filenameRaw: str, filename: str, noEvents:bool=False, alternatePath:str=""):
-        """ Takes a photo as well as a raw image with the specified file names 
-            and returns the path for the raw photo
-            filenameRaw: file name for the raw image
-            filename:    file name for the photo   
-            noEvents:       If True, no events are triggered
-            alternatePath:  If not empty, the file path of the photo, 
-                            otherwise the standard photo path is taken
-                            and the display buffer is not updated
+    def takeRawImage(
+        filenameRaw: str, filename: str, noEvents: bool = False, alternatePath: str = ""
+    ):
+        """Takes a photo as well as a raw image with the specified file names
+        and returns the path for the raw photo
+        filenameRaw: file name for the raw image
+        filename:    file name for the photo
+        noEvents:       If True, no events are triggered
+        alternatePath:  If not empty, the file path of the photo,
+                        otherwise the standard photo path is taken
+                        and the display buffer is not updated
         """
         logger.debug("Thread %s: Camera.takeRawImage", get_ident())
         fpr = ""
@@ -2845,37 +4731,83 @@ class Camera():
         sc = cfg.serverConfig
 
         if noEvents == False:
-            logger.debug("Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            logger.debug(
+                "Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s",
+                get_ident(),
+                Camera().when_photo_taken,
+            )
             if Camera().when_photo_taken:
                 Camera().when_photo_taken()
 
         try:
-            logger.debug("Thread %s: Camera.takeRawImage Requesting camera for rawConfig", get_ident())
-            Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.rawConfig, cfg.photoConfig)
-            logger.debug("Thread %s: Camera.takeRawImage Got camera for rawConfig exclusive: %s", get_ident(), exclusive)
+            forceExclusive = False
+            if Camera.camIsUsb == True:
+                forceExclusive = True
+            logger.debug(
+                "Thread %s: Camera.takeRawImage Requesting camera for rawConfig",
+                get_ident(),
+            )
+            Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+                Camera.cam, Camera.camNum, cfg.rawConfig, cfg.photoConfig, forceExclusive=forceExclusive
+            )
+            logger.debug(
+                "Thread %s: Camera.takeRawImage Got camera for rawConfig exclusive: %s",
+                get_ident(),
+                exclusive,
+            )
 
             Camera.applyControls(Camera.ctrl.configuration)
-            logger.debug("Thread %s: Camera.takeRawImage: controls applied", get_ident())
+            logger.debug(
+                "Thread %s: Camera.takeRawImage: controls applied", get_ident()
+            )
 
-            request = Camera.cam.capture_request()
-            prgLogger.debug("request = picam2.capture_request()")
-            logger.debug("Thread %s: Camera.takeRawImage: Request started", get_ident())
+            if Camera.camIsUsb == False:
+                request = Camera.cam.capture_request()
+                prgLogger.debug("request = picam2.capture_request()")
+                logger.debug("Thread %s: Camera.takeRawImage: Request started", get_ident())
             path = sc.photoRoot + "/" + sc.cameraPhotoSubPath
             if alternatePath != "":
                 path = alternatePath
             fp = path + "/" + filename
-            request.save("main", fp)
-            prgLogger.debug("request.save(\"main\", \"%s\")", sc.prgOutputPath + "/" + filename)
             fpr = path + "/" + filenameRaw
-            request.save_dng(fpr)
-            prgLogger.debug("request.save_dng(\"%s\")", fpr)
-            logger.debug("Thread %s: Camera.takeRawImage: Raw Image saved as %s", get_ident(), fpr)
+            if Camera.camIsUsb == False:
+                request.save("main", fp)
+                prgLogger.debug(
+                    'request.save("main", "%s")', sc.prgOutputPath + "/" + filename
+                )
+                request.save_dng(fpr)
+                prgLogger.debug('request.save_dng("%s")', fpr)
+            else:
+                # For USB cameras, save the image using OpenCV
+                if Camera.cam.isOpened() == False:
+                    raise RuntimeError("USB camera is not opened")
+                success, frame = Camera.cam.read()
+                if success:
+                    conf = Camera.ctrl.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    cv2.imwrite(fp, frame)
+                    cv2.imwrite(fpr, frame, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
+                else:
+                    raise RuntimeError("Failed to capture image from USB camera")
+            logger.debug(
+                "Thread %s: Camera.takeRawImage: Raw Image saved as %s",
+                get_ident(),
+                fpr,
+            )
             if alternatePath == "":
                 sc.displayFile = filenameRaw
                 sc.displayPhoto = sc.cameraPhotoSubPath + "/" + filename
                 sc.isDisplayHidden = False
-                metadata = request.get_metadata()
-                prgLogger.debug("metadata = request.get_metadata()")
+                if Camera.camIsUsb == False:
+                    metadata = request.get_metadata()
+                    prgLogger.debug("metadata = request.get_metadata()")
+                else:
+                    metadata = Camera.getUsbCamMetadata(Camera.cam)
                 sc.displayMeta = {"Camera": sc.activeCameraInfo}
                 sc.displayMeta.update(metadata)
                 sc.displayMetaFirst = 0
@@ -2884,15 +4816,23 @@ class Camera():
                 else:
                     sc.displayMetaLast = 10
                 sc.displayHistogram = None
-                logger.debug("Thread %s: Camera.takeRawImage: Raw Image metedata captured", get_ident())
-            request.release()
-            prgLogger.debug("request.release()")
-            logger.debug("Thread %s: Camera.takeRawImage: Request released", get_ident())
+                logger.debug(
+                    "Thread %s: Camera.takeRawImage: Raw Image metedata captured",
+                    get_ident(),
+                )
+            if Camera.camIsUsb == False:
+                request.release()
+                prgLogger.debug("request.release()")
+            logger.debug(
+                "Thread %s: Camera.takeRawImage: Request released", get_ident()
+            )
 
             Camera.cam = Camera.ctrl.restoreLivestream(Camera.cam, exclusive)
-            if sc.isPhotoSeriesRecording == False \
-            and sc.isVideoRecording == False \
-            and sc.isLiveStream == False:
+            if (
+                sc.isPhotoSeriesRecording == False
+                and sc.isVideoRecording == False
+                and sc.isLiveStream == False
+            ):
                 Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
         except Exception as e:
             logger.error("Thread %s: Camera.takeRawImage: Error %s", get_ident(), e)
@@ -2903,15 +4843,17 @@ class Camera():
         return fpr
 
     @staticmethod
-    def takeRawImage2(filenameRaw: str, filename: str, noEvents:bool=False, alternatePath:str=""):
-        """ Takes a photo as well as a raw image with the specified file names 
-            and returns the path for the raw photo
-            filenameRaw: file name for the raw image
-            filename:    file name for the photo   
-            noEvents:       If True, no events are triggered
-            alternatePath:  If not empty, the file path of the photo, 
-                            otherwise the standard photo path is taken
-                            and the display buffer is not updated
+    def takeRawImage2(
+        filenameRaw: str, filename: str, noEvents: bool = False, alternatePath: str = ""
+    ):
+        """Takes a photo as well as a raw image with the specified file names
+        and returns the path for the raw photo
+        filenameRaw: file name for the raw image
+        filename:    file name for the photo
+        noEvents:       If True, no events are triggered
+        alternatePath:  If not empty, the file path of the photo,
+                        otherwise the standard photo path is taken
+                        and the display buffer is not updated
         """
         logger.debug("Thread %s: Camera.takeRawImage2", get_ident())
         fpr = ""
@@ -2919,41 +4861,95 @@ class Camera():
         sc = cfg.serverConfig
 
         if noEvents == False:
-            logger.debug("Thread %s: Camera.takeImage Checking for callback: when_photo_taken=%s", get_ident(), Camera().when_photo_taken)
+            logger.debug(
+                "Thread %s: Camera.takeRawImage2 Checking for callback: when_photo_2_taken=%s",
+                get_ident(),
+                Camera().when_photo_2_taken,
+            )
             if Camera().when_photo_2_taken:
                 Camera().when_photo_2_taken()
 
         try:
+            forceExclusive = False
+            if Camera.cam2IsUsb == True:
+                forceExclusive = True
             rawConfig = cfg.streamingCfg[str(Camera.camNum2)]["rawconfig"]
             photoConfig = cfg.streamingCfg[str(Camera.camNum2)]["photoconfig"]
-            logger.debug("Thread %s: Camera.takeRawImage2 Requesting camera for rawConfig", get_ident())
-            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(Camera.cam2, Camera.camNum2, rawConfig, photoConfig, forActiveCamera=False)
-            logger.debug("Thread %s: Camera.takeRawImage2 Got camera for rawConfig exclusive: %s", get_ident(), exclusive)
+            logger.debug(
+                "Thread %s: Camera.takeRawImage2 Requesting camera for rawConfig",
+                get_ident(),
+            )
+            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+                Camera.cam2,
+                Camera.camNum2,
+                rawConfig,
+                photoConfig,
+                forActiveCamera=False,
+                forceExclusive=forceExclusive,
+            )
+            logger.debug(
+                "Thread %s: Camera.takeRawImage2 Got camera for rawConfig exclusive: %s",
+                get_ident(),
+                exclusive,
+            )
 
             Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
-            logger.debug("Thread %s: Camera.takeRawImage2: controls applied", get_ident())
+            logger.debug(
+                "Thread %s: Camera.takeRawImage2: controls applied", get_ident()
+            )
 
-            request = Camera.cam2.capture_request()
-            prgLogger.debug("request = picam2.capture_request()")
-            logger.debug("Thread %s: Camera.takeRawImage2: Request started", get_ident())
+            if Camera.cam2IsUsb == False:
+                request = Camera.cam2.capture_request()
+                prgLogger.debug("request = picam2.capture_request()")
+                logger.debug(
+                    "Thread %s: Camera.takeRawImage2: Request started", get_ident()
+                )
             cameraPhotoSubPath = "photos/" + "camera_" + str(Camera.camNum2)
             path = sc.photoRoot + "/" + cameraPhotoSubPath
             if alternatePath != "":
                 path = alternatePath
             fp = path + "/" + filename
-            request.save(photoConfig.stream, fp)
-            prgLogger.debug("request.save(\"%s\", \"%s\")", photoConfig.stream, sc.prgOutputPath + "/" + filename)
             fpr = path + "/" + filenameRaw
-            request.save_dng(fpr)
-            prgLogger.debug("request.save_dng(\"%s\")", fpr)
-            logger.debug("Thread %s: Camera.takeRawImage2: Raw Image saved as %s", get_ident(), fpr)
-            request.release()
-            prgLogger.debug("request.release()")
-            logger.debug("Thread %s: Camera.takeRawImage2: Request released", get_ident())
+            if Camera.cam2IsUsb == False:
+                request.save(photoConfig.stream, fp)
+                prgLogger.debug(
+                    'request.save("%s", "%s")',
+                    photoConfig.stream,
+                    sc.prgOutputPath + "/" + filename,
+                )
+                request.save_dng(fpr)
+                prgLogger.debug('request.save_dng("%s")', fpr)
+            else:
+                # For USB cameras, save the image using OpenCV
+                if Camera.cam2.isOpened() == False:
+                    raise RuntimeError("USB camera is not opened")
+                success, frame = Camera.cam2.read()
+                if success:
+                    conf = Camera.ctrl2.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    cv2.imwrite(fp, frame)
+                    cv2.imwrite(fpr, frame, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
+                else:
+                    raise RuntimeError("Failed to capture image from USB camera")
+            logger.debug(
+                "Thread %s: Camera.takeRawImage2: Raw Image saved as %s",
+                get_ident(),
+                fpr,
+            )
+            if Camera.cam2IsUsb == False:
+                request.release()
+                prgLogger.debug("request.release()")
+                logger.debug(
+                    "Thread %s: Camera.takeRawImage2: Request released", get_ident()
+                )
 
             Camera.cam2 = Camera.ctrl2.restoreLivestream2(Camera.cam2, exclusive)
-            if sc.isVideoRecording2 == False \
-            and sc.isLiveStream2 == False:
+            if sc.isVideoRecording2 == False and sc.isLiveStream2 == False:
                 Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
         except Exception as e:
             logger.error("Thread %s: Camera.takeRawImage2: Error %s", get_ident(), e)
@@ -2964,14 +4960,136 @@ class Camera():
         return fpr
 
     @staticmethod
+    def _videoThreadUsb():
+        logger.debug("Thread %s: Camera._videoThreadUsb", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+
+        logger.debug(
+            "Thread %s: Camera._videoThreadUsb - Requesting camera for videoConfig",
+            get_ident(),
+        )
+        Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+            Camera.cam, Camera.camNum, cfg.videoConfig, forceExclusive=True
+        )
+        logger.debug(
+            "Thread %s: Camera._videoThreadUsb - Got camera for videoConfig exclusive: %s",
+            get_ident(),
+            exclusive,
+        )
+
+        Camera.applyControls(Camera.ctrl.configuration)
+        logger.debug("Thread %s: Camera._videoThreadUsb - controls applied", get_ident())
+
+        # frameRate = Camera.cam.get(cv2.CAP_PROP_FPS)
+        frameRate = 14.5
+        Camera.cam.set(cv2.CAP_PROP_FPS, frameRate)
+        logger.debug("Thread %s: Camera._videoThreadUsb - frameRate is %s", get_ident(), frameRate)
+
+        # Codec for MP4 (most compatible)
+        fourcc = cv2.VideoWriter_fourcc(*"avc1")
+        width = int(Camera.cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(Camera.cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        logger.debug("Thread %s: Camera._videoThreadUsb - width:%s, height:%s", get_ident(), width, height)
+        logger.debug("Thread %s: Camera._videoThreadUsb - videoOutput:%s", get_ident(), Camera.videoOutput)
+
+        out = cv2.VideoWriter(Camera.videoOutput, fourcc, frameRate, (width, height))
+        logger.debug("Thread %s: Camera._videoThreadUsb - VideoWriter created", get_ident())
+
+        try:
+            videoStart = time.time()
+            duration = float(Camera.videoDuration)
+            logger.debug(
+                "Thread %s: Camera._videoThreadUsb - video started at %s, duration is %s",
+                get_ident(),
+                videoStart,
+                duration,
+            )
+
+            if duration > 0.0:
+                elapsed = time.time() - videoStart
+                while elapsed <= duration:
+                    ret, frame = Camera.cam.read()
+                    if not ret:
+                        break
+                    conf = Camera.ctrl.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    out.write(frame)
+                    if Camera.stopVideoRequested == True:
+                        logger.debug(
+                            "Thread %s: Camera._videoThreadUsb - stop video requested", get_ident()
+                        )
+                        break
+                    elapsed = time.time() - videoStart
+                sc.isVideoRecording = False
+                sc.isAudioRecording = False
+            else:
+                while Camera.stopVideoRequested == False:
+                    ret, frame = Camera.cam.read()
+                    if not ret:
+                        break
+                    conf = Camera.ctrl.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    out.write(frame)
+                    if Camera.stopVideoRequested == True:
+                        logger.debug(
+                            "Thread %s: Camera._videoThreadUsb - stop video requested", get_ident()
+                        )
+                        break
+            out.release()
+            Camera.stopVideoRequested = False
+            Camera.videoDuration = 0
+        except Exception as e:
+            logger.error(
+                "Thread %s: Camera._videoThreadUsb - Exception: %s", get_ident(), e
+            )
+            Camera.liveViewDeactivated = False
+            if not sc.error:
+                sc.error = "Error in video recording: " + str(e)
+                sc.errorSource = "Camera._videoThreadUsb"
+
+        Camera.videoThread = None
+        logger.debug(
+            "Thread %s: Camera._videoThread - _videoThreadUsb terminated", get_ident()
+        )
+
+        Camera.cam = Camera.ctrl.restoreLivestream(Camera.cam, exclusive)
+        logger.debug(
+            "Thread %s: Camera._videoThreadUsb - sc.error: %s)", get_ident(), sc.error
+        )
+
+        if sc.isPhotoSeriesRecording == False and sc.isLiveStream == False:
+            Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
+
+    @staticmethod
     def _videoThread():
         logger.debug("Thread %s: Camera._videoThread", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
 
-        logger.debug("Thread %s: Camera._videoThread - Requesting camera for videoConfig", get_ident())
-        Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.videoConfig)
-        logger.debug("Thread %s: Camera._videoThread - Got camera for videoConfig exclusive: %s", get_ident(), exclusive)
+        logger.debug(
+            "Thread %s: Camera._videoThread - Requesting camera for videoConfig",
+            get_ident(),
+        )
+        Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+            Camera.cam, Camera.camNum, cfg.videoConfig
+        )
+        logger.debug(
+            "Thread %s: Camera._videoThread - Got camera for videoConfig exclusive: %s",
+            get_ident(),
+            exclusive,
+        )
 
         Camera.applyControls(Camera.ctrl.configuration)
         logger.debug("Thread %s: Camera._videoThread - controls applied", get_ident())
@@ -2981,28 +5099,50 @@ class Camera():
         encoder = H264Encoder()
         prgLogger.debug("encoder = H264Encoder()")
         output = Camera.videoOutput
-        prgLogger.debug("output=\"%s\"", Camera.prgVideoOutput)
+        prgLogger.debug('output="%s"', Camera.prgVideoOutput)
         if output.lower().endswith(".mp4"):
             if sc.recordAudio == False:
                 encoder.output = FfmpegOutput(output, audio=False)
                 prgLogger.debug("encoder.output = FfmpegOutput(output, audio=False)")
             else:
-                encoder.output = FfmpegOutput(output, audio=True, audio_sync=sc.audioSync)
-                prgLogger.debug("encoder.output = FfmpegOutput(output, audio=True, audio_sync=%s)", sc.audioSync)
-            logger.debug("Thread %s: Camera._videoThread - mp4 Video output to %s", get_ident(), output)
+                encoder.output = FfmpegOutput(
+                    output, audio=True, audio_sync=sc.audioSync
+                )
+                prgLogger.debug(
+                    "encoder.output = FfmpegOutput(output, audio=True, audio_sync=%s)",
+                    sc.audioSync,
+                )
+            logger.debug(
+                "Thread %s: Camera._videoThread - mp4 Video output to %s",
+                get_ident(),
+                output,
+            )
         else:
             encoder.output = FileOutput(output)
             prgLogger.debug("encoder.output = FileOutput(output)")
-            logger.debug("Thread %s: Camera._videoThread - h264 Video output to %s", get_ident(), output)
+            logger.debug(
+                "Thread %s: Camera._videoThread - h264 Video output to %s",
+                get_ident(),
+                output,
+            )
         try:
             videoStart = time.time()
             duration = float(Camera.videoDuration)
-            logger.debug("Thread %s: Camera._videoThread - video started at %s, duration is %s", get_ident(), videoStart, duration)
+            logger.debug(
+                "Thread %s: Camera._videoThread - video started at %s, duration is %s",
+                get_ident(),
+                videoStart,
+                duration,
+            )
             Camera.cam.start_encoder(encoder, name=cfg.videoConfig.stream)
-            prgLogger.debug("picam2.start_encoder(encoder, name=\"%s\")", cfg.videoConfig.stream)
+            prgLogger.debug(
+                'picam2.start_encoder(encoder, name="%s")', cfg.videoConfig.stream
+            )
             prgLogger.debug("time.sleep(videoDuration)")
             Camera.ctrl.registerEncoder(Camera.ENCODER_VIDEO, encoder)
-            logger.debug("Thread %s: Camera._videoThread - Encoder started", get_ident())
+            logger.debug(
+                "Thread %s: Camera._videoThread - Encoder started", get_ident()
+            )
             if duration > 0.0:
                 elapsed = time.time() - videoStart
                 while elapsed <= duration:
@@ -3015,9 +5155,13 @@ class Camera():
             else:
                 while Camera.stopVideoRequested == False:
                     time.sleep(0.1)
-            logger.debug("Thread %s: Camera._videoThread - stop video requested", get_ident())
+            logger.debug(
+                "Thread %s: Camera._videoThread - stop video requested", get_ident()
+            )
             Camera.ctrl.stopEncoder(Camera.cam, Camera.ENCODER_VIDEO)
-            logger.debug("Thread %s: Camera._videoThread - encoder stopped", get_ident())
+            logger.debug(
+                "Thread %s: Camera._videoThread - encoder stopped", get_ident()
+            )
             Camera.stopVideoRequested = False
             Camera.videoDuration = 0
         except ProcessLookupError as e:
@@ -3034,23 +5178,151 @@ class Camera():
                 sc.error = "Error in encoder: " + str(e)
                 sc.error2 = "Probably, there is not sufficient memory for the requested resolution."
                 sc.errorSource = "Camera._videoThread"
-            logger.debug("Thread %s: Camera._videoThread - sc.error: %s)", get_ident(), sc.error)
+            logger.debug(
+                "Thread %s: Camera._videoThread - sc.error: %s)", get_ident(), sc.error
+            )
         except Exception as e:
-            logger.error("Thread %s: Camera._videoThread - Exception: %s", get_ident(), e)
+            logger.error(
+                "Thread %s: Camera._videoThread - Exception: %s", get_ident(), e
+            )
             Camera.liveViewDeactivated = False
             if not sc.error:
                 sc.error = "Error in video recording: " + str(e)
                 sc.errorSource = "Camera._videoThread"
 
         Camera.videoThread = None
-        logger.debug("Thread %s: Camera._videoThread - videoThread terminated", get_ident())
+        logger.debug(
+            "Thread %s: Camera._videoThread - videoThread terminated", get_ident()
+        )
 
         Camera.cam = Camera.ctrl.restoreLivestream(Camera.cam, exclusive)
-        logger.debug("Thread %s: Camera._videoThread - sc.error: %s)", get_ident(), sc.error)
+        logger.debug(
+            "Thread %s: Camera._videoThread - sc.error: %s)", get_ident(), sc.error
+        )
 
-        if sc.isPhotoSeriesRecording == False \
-        and sc.isLiveStream == False:
+        if sc.isPhotoSeriesRecording == False and sc.isLiveStream == False:
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
+
+    @staticmethod
+    def _videoThread2Usb():
+        logger.debug("Thread %s: Camera._videoThread2Usb", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+
+        logger.debug(
+            "Thread %s: Camera._videoThread2Usb - Requesting camera for videoConfig",
+            get_ident(),
+        )
+        videoConfig = cfg.streamingCfg[str(Camera.camNum2)]["videoconfig"]
+        Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+            Camera.cam2, Camera.camNum2, videoConfig, forActiveCamera=False, forceExclusive=True
+        )
+        logger.debug(
+            "Thread %s: Camera._videoThread2Usb - Got camera for videoConfig exclusive: %s",
+            get_ident(),
+            exclusive,
+        )
+
+        Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
+        logger.debug(
+            "Thread %s: Camera._videoThread2Usb - controls applied", get_ident()
+        )
+
+        # frameRate = Camera.cam.get(cv2.CAP_PROP_FPS)
+        frameRate = 14.5
+        Camera.cam2.set(cv2.CAP_PROP_FPS, frameRate)
+        logger.debug("Thread %s: Camera._videoThread2Usb - frameRate is %s", get_ident(), frameRate)
+
+        # Codec for MP4 (most compatible)
+        fourcc = cv2.VideoWriter_fourcc(*"avc1")
+        width = int(Camera.cam2.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(Camera.cam2.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        logger.debug("Thread %s: Camera._videoThread2Usb - width:%s, height:%s", get_ident(), width, height)
+        logger.debug("Thread %s: Camera._videoThread2Usb - videoOutput2:%s", get_ident(), Camera.videoOutput2)
+
+        out = cv2.VideoWriter(Camera.videoOutput2, fourcc, frameRate, (width, height))
+        logger.debug(
+            "Thread %s: Camera._videoThread2Usb - VideoWriter created", get_ident()
+        )
+
+        try:
+            videoStart = time.time()
+            duration = float(Camera.videoDuration2)
+            logger.debug(
+                "Thread %s: Camera._videoThread2Usb - video started at %s, duration is %s",
+                get_ident(),
+                videoStart,
+                duration,
+            )
+
+            if duration > 0.0:
+                elapsed = time.time() - videoStart
+                while elapsed <= duration:
+                    ret, frame = Camera.cam2.read()
+                    if not ret:
+                        break
+                    conf = Camera.ctrl2.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    out.write(frame)
+                    if Camera.stopVideoRequested2 == True:
+                        logger.debug(
+                            "Thread %s: Camera._videoThread2Usb - stop video requested",
+                            get_ident(),
+                        )
+                        break
+                    elapsed = time.time() - videoStart
+                sc.isVideoRecording2 = False
+                sc.isAudioRecording = False
+            else:
+                while Camera.stopVideoRequested2 == False:
+                    ret, frame = Camera.cam2.read()
+                    if not ret:
+                        break
+                    conf = Camera.ctrl2.configuration
+                    hflip = conf.transform.hflip
+                    vflip = conf.transform.vflip
+                    if hflip == True:
+                        frame = cv2.flip(frame, 1)
+                    if vflip == True:
+                        frame = cv2.flip(frame, 0)
+                    out.write(frame)
+                    if Camera.stopVideoRequested2 == True:
+                        logger.debug(
+                            "Thread %s: Camera._videoThread2Usb - stop video requested",
+                            get_ident(),
+                        )
+                        break
+            out.release()
+            Camera.stopVideoRequested2 = False
+            Camera.videoDuration2 = 0
+        except Exception as e:
+            logger.error(
+                "Thread %s: Camera._videoThread2Usb - Exception: %s", get_ident(), e
+            )
+            Camera.liveView2Deactivated = False
+            if not sc.errorc2:
+                sc.errorc2 = "Error in video recording: " + str(e)
+                sc.errorc2Source = "Camera._videoThread2Usb"
+
+        Camera.videoThread2 = None
+        logger.debug(
+            "Thread %s: Camera._videoThread2Usb - _videoThread2Usb terminated",
+            get_ident(),
+        )
+
+        Camera.cam2 = Camera.ctrl2.restoreLivestream2(Camera.cam2, exclusive)
+        logger.debug(
+            "Thread %s: Camera._videoThread2Usb - sc.errorc2: %s)", get_ident(), sc.errorc2
+        )
+
+        if sc.isLiveStream2 == False:
+            Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
 
     @staticmethod
     def _videoThread2():
@@ -3058,10 +5330,19 @@ class Camera():
         cfg = CameraCfg()
         sc = cfg.serverConfig
 
-        logger.debug("Thread %s: Camera._videoThread2 - Requesting camera for videoConfig", get_ident())
+        logger.debug(
+            "Thread %s: Camera._videoThread2 - Requesting camera for videoConfig",
+            get_ident(),
+        )
         videoConfig = cfg.streamingCfg[str(Camera.camNum2)]["videoconfig"]
-        Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(Camera.cam2, Camera.camNum2, videoConfig)
-        logger.debug("Thread %s: Camera._videoThread2 - Got camera for videoConfig exclusive: %s", get_ident(), exclusive)
+        Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+            Camera.cam2, Camera.camNum2, videoConfig
+        )
+        logger.debug(
+            "Thread %s: Camera._videoThread2 - Got camera for videoConfig exclusive: %s",
+            get_ident(),
+            exclusive,
+        )
 
         Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
         logger.debug("Thread %s: Camera._videoThread2 - controls applied", get_ident())
@@ -3070,24 +5351,41 @@ class Camera():
         encoder = H264Encoder()
         prgLogger.debug("encoder = H264Encoder()")
         output = Camera.videoOutput2
-        prgLogger.debug("output=\"%s\"", Camera.prgVideoOutput)
+        prgLogger.debug('output="%s"', Camera.prgVideoOutput)
         if output.lower().endswith(".mp4"):
             encoder.output = FfmpegOutput(output, audio=False)
             prgLogger.debug("encoder.output = FfmpegOutput(output, audio=False)")
-            logger.debug("Thread %s: Camera._videoThread2 - mp4 Video output to %s", get_ident(), output)
+            logger.debug(
+                "Thread %s: Camera._videoThread2 - mp4 Video output to %s",
+                get_ident(),
+                output,
+            )
         else:
             encoder.output = FileOutput(output)
             prgLogger.debug("encoder.output = FileOutput(output)")
-            logger.debug("Thread %s: Camera._videoThread2 - h264 Video output to %s", get_ident(), output)
+            logger.debug(
+                "Thread %s: Camera._videoThread2 - h264 Video output to %s",
+                get_ident(),
+                output,
+            )
         try:
             videoStart = time.time()
             duration = float(Camera.videoDuration2)
-            logger.debug("Thread %s: Camera._videoThread2 - video started at %s, duration is %s", get_ident(), videoStart, duration)
+            logger.debug(
+                "Thread %s: Camera._videoThread2 - video started at %s, duration is %s",
+                get_ident(),
+                videoStart,
+                duration,
+            )
             Camera.cam2.start_encoder(encoder, name=videoConfig.stream)
-            prgLogger.debug("picam2.start_encoder(encoder, name=\"%s\")", videoConfig.stream)
+            prgLogger.debug(
+                'picam2.start_encoder(encoder, name="%s")', videoConfig.stream
+            )
             prgLogger.debug("time.sleep(videoDuration)")
             Camera.ctrl2.registerEncoder(Camera.ENCODER_VIDEO, encoder)
-            logger.debug("Thread %s: Camera._videoThread2 - Encoder started", get_ident())
+            logger.debug(
+                "Thread %s: Camera._videoThread2 - Encoder started", get_ident()
+            )
             if duration > 0.0:
                 elapsed = time.time() - videoStart
                 while elapsed <= duration:
@@ -3099,9 +5397,13 @@ class Camera():
             else:
                 while Camera.stopVideoRequested2 == False:
                     time.sleep(0.1)
-            logger.debug("Thread %s: Camera._videoThread2 - stop video requested", get_ident())
+            logger.debug(
+                "Thread %s: Camera._videoThread2 - stop video requested", get_ident()
+            )
             Camera.ctrl2.stopEncoder(Camera.cam2, Camera.ENCODER_VIDEO)
-            logger.debug("Thread %s: Camera._videoThread2 - encoder stopped", get_ident())
+            logger.debug(
+                "Thread %s: Camera._videoThread2 - encoder stopped", get_ident()
+            )
             Camera.stopVideoRequested2 = False
             Camera.videoDuration2 = 0
         except ProcessLookupError as e:
@@ -3118,26 +5420,42 @@ class Camera():
                 sc.errorc2 = "Error in encoder: " + str(e)
                 sc.errorc22 = "Probably, there is not sufficient memory for the requested resolution."
                 sc.errorc2Source = "Camera._videoThread2"
-            logger.debug("Thread %s: Camera._videoThread2 - sc.errorc2: %s)", get_ident(), sc.errorc2)
+            logger.debug(
+                "Thread %s: Camera._videoThread2 - sc.errorc2: %s)",
+                get_ident(),
+                sc.errorc2,
+            )
         except Exception as e:
-            logger.error("Thread %s: Camera._videoThread2 - Exception: %s", get_ident(), e)
+            logger.error(
+                "Thread %s: Camera._videoThread2 - Exception: %s", get_ident(), e
+            )
             Camera.liveView2Deactivated = False
             if not sc.errorc2:
                 sc.errorc2 = "Error in video recording: " + str(e)
                 sc.errorc2Source = "Camera._videoThread2"
 
         Camera.videoThread2 = None
-        logger.debug("Thread %s: Camera._videoThread2 - videoThread2 terminated", get_ident())
+        logger.debug(
+            "Thread %s: Camera._videoThread2 - videoThread2 terminated", get_ident()
+        )
 
         Camera.cam2 = Camera.ctrl2.restoreLivestream2(Camera.cam2, exclusive)
-        logger.debug("Thread %s: Camera._videoThread2 - sc.errorc2: %s)", get_ident(), sc.errorc2)
+        logger.debug(
+            "Thread %s: Camera._videoThread2 - sc.errorc2: %s)", get_ident(), sc.errorc2
+        )
 
         if sc.isLiveStream2 == False:
             Camera.cam2, done = Camera.ctrl2.requestStop(Camera.cam2, close=True)
 
     @staticmethod
-    def recordVideo(filenameVid: str, filename: str, duration: int = 0, noEvents:bool=False, alternatePath:str=""):
-        """ Start recrding video in an own thread
+    def recordVideo(
+        filenameVid: str,
+        filename: str,
+        duration: int = 0,
+        noEvents: bool = False,
+        alternatePath: str = "",
+    ):
+        """Start recrding video in an own thread
 
         Args:
             filenameVid (str): File name for video
@@ -3145,16 +5463,23 @@ class Camera():
                             If empty, no placeholder image is created
             duration (int, optional): Video duration. Defaults to 0.
             noEvents (bool, optional): Dont fire events. Defaults to False.
-            alternatePath (str, optional): Alternate path. 
+            alternatePath (str, optional): Alternate path.
                         If set, display buffer will not be upfated
                         Defaults to "".
         """
-        logger.debug("Thread %s: Camera.recordVideo. filename=%s, duration=%s", get_ident(), filename, duration)
+        logger.debug(
+            "Thread %s: Camera.recordVideo. filename=%s, duration=%s",
+            get_ident(),
+            filename,
+            duration,
+        )
         cfg = CameraCfg()
         sc = cfg.serverConfig
         # First take a normal photo as placeholder
         if filename != "":
-            Camera.takeImage(filename, keepExclusive=True, noEvents=True, alternatePath=alternatePath)
+            Camera.takeImage(
+                filename, keepExclusive=True, noEvents=True, alternatePath=alternatePath
+            )
             if alternatePath == "":
                 sc.displayFile = filenameVid
 
@@ -3169,10 +5494,21 @@ class Camera():
             Camera.videoOutput = output
             Camera.prgVideoOutput = prgoutput
             Camera.videoDuration = duration
-            logger.debug("Thread %s: Camera.recordVideo - Starting new videoThread", get_ident())
-            Camera.videoThread = threading.Thread(target=Camera._videoThread, daemon=True)
+            logger.debug(
+                "Thread %s: Camera.recordVideo - Starting new videoThread", get_ident()
+            )
+            if Camera.camIsUsb == False:
+                Camera.videoThread = threading.Thread(
+                    target=Camera._videoThread, daemon=True
+                )
+            else:
+                Camera.videoThread = threading.Thread(
+                    target=Camera._videoThreadUsb, daemon=True
+                )
             Camera.videoThread.start()
-            logger.debug("Thread %s: Camera.recordVideo - videoThread started", get_ident())
+            logger.debug(
+                "Thread %s: Camera.recordVideo - videoThread started", get_ident()
+            )
 
             if noEvents == False:
                 if Camera().when_recording_starts:
@@ -3180,8 +5516,14 @@ class Camera():
         return output
 
     @staticmethod
-    def recordVideo2(filenameVid: str, filename: str, duration: int = 0, noEvents:bool=False, alternatePath:str=""):
-        """ Start recording video with second camera in an own thread
+    def recordVideo2(
+        filenameVid: str,
+        filename: str,
+        duration: int = 0,
+        noEvents: bool = False,
+        alternatePath: str = "",
+    ):
+        """Start recording video with second camera in an own thread
 
         Args:
             filenameVid (str): File name for video
@@ -3189,16 +5531,23 @@ class Camera():
                             If empty, no placeholder image is created
             duration (int, optional): Video duration. Defaults to 0.
             noEvents (bool, optional): Dont fire events. Defaults to False.
-            alternatePath (str, optional): Alternate path. 
+            alternatePath (str, optional): Alternate path.
                         If set, display buffer will not be upfated
                         Defaults to "".
         """
-        logger.debug("Thread %s: Camera.recordVideo2. filename=%s, duration=%s", get_ident(), filename, duration)
+        logger.debug(
+            "Thread %s: Camera.recordVideo2. filename=%s, duration=%s",
+            get_ident(),
+            filename,
+            duration,
+        )
         cfg = CameraCfg()
         sc = cfg.serverConfig
         # First take a normal photo as placeholder
         if filename != "":
-            Camera.takeImage2(filename, keepExclusive=True, noEvents=True, alternatePath=alternatePath)
+            Camera.takeImage2(
+                filename, keepExclusive=True, noEvents=True, alternatePath=alternatePath
+            )
 
         # Configure output for video file
         cameraPhotoSubPath = "photos/" + "camera_" + str(Camera.camNum2)
@@ -3212,10 +5561,23 @@ class Camera():
             Camera.videoOutput2 = output
             Camera.prgVideoOutput2 = prgoutput
             Camera.videoDuration2 = duration
-            logger.debug("Thread %s: Camera.recordVideo2 - Starting new videoThread with output=%s", get_ident(), Camera.prgVideoOutput2)
-            Camera.videoThread2 = threading.Thread(target=Camera._videoThread2, daemon=True)
+            logger.debug(
+                "Thread %s: Camera.recordVideo2 - Starting new videoThread with output=%s",
+                get_ident(),
+                Camera.prgVideoOutput2,
+            )
+            if Camera.cam2IsUsb == False:
+                Camera.videoThread2 = threading.Thread(
+                    target=Camera._videoThread2, daemon=True
+                )
+            else:
+                Camera.videoThread2 = threading.Thread(
+                    target=Camera._videoThread2Usb, daemon=True
+                )
             Camera.videoThread2.start()
-            logger.debug("Thread %s: Camera.recordVideo2 - videoThread2 started", get_ident())
+            logger.debug(
+                "Thread %s: Camera.recordVideo2 - videoThread2 started", get_ident()
+            )
 
             if noEvents == False:
                 if Camera().when_recording_2_starts:
@@ -3223,7 +5585,7 @@ class Camera():
         return output
 
     @staticmethod
-    def stopVideoRecording(noEvents:bool=False):
+    def stopVideoRecording(noEvents: bool = False):
         """stops the video recording"""
         logger.debug("Thread %s: Camera.stopVideoRecording", get_ident())
         Camera.stopVideoRequested = True
@@ -3234,15 +5596,19 @@ class Camera():
             cnt += 1
             if cnt > 500:
                 raise TimeoutError("Video thread did not stop within 5 sec")
-        logger.debug("Thread %s: Camera.stopVideoRecording: Thread has stopped", get_ident())
+        logger.debug(
+            "Thread %s: Camera.stopVideoRecording: Thread has stopped", get_ident()
+        )
 
         if noEvents == False:
             if Camera().when_recording_stops:
                 Camera().when_recording_stops()
         Camera.liveViewDeactivated = False
+        time.sleep(0.1)
+        Camera.startLiveStream()
 
     @staticmethod
-    def stopVideoRecording2(noEvents:bool=False):
+    def stopVideoRecording2(noEvents: bool = False):
         """stops the video recording for second camera"""
         logger.debug("Thread %s: Camera.stopVideoRecording2", get_ident())
         Camera.stopVideoRequested2 = True
@@ -3253,7 +5619,9 @@ class Camera():
             cnt += 1
             if cnt > 500:
                 raise TimeoutError("Video thread 2 did not stop within 5 sec")
-        logger.debug("Thread %s: Camera.stopVideoRecording2: Thread has stopped", get_ident())
+        logger.debug(
+            "Thread %s: Camera.stopVideoRecording2: Thread has stopped", get_ident()
+        )
 
         if noEvents == False:
             if Camera().when_recording_2_stops:
@@ -3287,16 +5655,34 @@ class Camera():
         cfg = CameraCfg()
         sc = cfg.serverConfig
 
-        logger.debug("Thread %s: Camera._photoSeriesThread Requesting camera for photo series of type %s", get_ident(), ser.type)
+        logger.debug(
+            "Thread %s: Camera._photoSeriesThread Requesting camera for photo series of type %s",
+            get_ident(),
+            ser.type,
+        )
         exclusive = False
         try:
-            if ser.type == "jpg":
-                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.photoConfig)
+            if Camera.camIsUsb == False:
+                forceExclusive = False
             else:
-                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.rawConfig, cfg.photoConfig)
-            logger.debug("Thread %s: Camera._photoSeriesThread Got camera for photo series exclusive: %s", get_ident(), exclusive)
+                forceExclusive = True
+            if ser.type == "jpg":
+                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+                    Camera.cam, Camera.camNum, cfg.photoConfig, forceExclusive=forceExclusive
+                )
+            else:
+                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+                    Camera.cam, Camera.camNum, cfg.rawConfig, cfg.photoConfig, forceExclusive=forceExclusive
+                )
+            logger.debug(
+                "Thread %s: Camera._photoSeriesThread Got camera for photo series exclusive: %s",
+                get_ident(),
+                exclusive,
+            )
         except Exception as e:
-            logger.error("Thread %s: Camera._photoSeriesThread error: %s", get_ident(), e)
+            logger.error(
+                "Thread %s: Camera._photoSeriesThread error: %s", get_ident(), e
+            )
             if not sc.error:
                 sc.error = "Error while requesting camera: " + str(e)
                 sc.errorSource = "Camera._photoSeriesThread"
@@ -3310,7 +5696,6 @@ class Camera():
             # Special handling for exposure series
             if ser.isExposureSeries:
                 if sc.useHistograms:
-                    import cv2
                     import numpy as np
                     from matplotlib import pyplot as plt
                 if ser.isExpGainFix:
@@ -3341,8 +5726,19 @@ class Camera():
                         while n < ser.curShots:
                             n += 1
                             exceptValue = exceptValue * expFact
-                        logger.debug("Thread %s: Camera._photoSeriesThread - Exposure Series for %s: Restart after %s shots", get_ident(), exceptCtrl, ser.curShots)                    
-                logger.debug("Thread %s: Camera._photoSeriesThread - Exposure Series for %s: %s Factor: %s", get_ident(), exceptCtrl, exceptValue, expFact)
+                        logger.debug(
+                            "Thread %s: Camera._photoSeriesThread - Exposure Series for %s: Restart after %s shots",
+                            get_ident(),
+                            exceptCtrl,
+                            ser.curShots,
+                        )
+                logger.debug(
+                    "Thread %s: Camera._photoSeriesThread - Exposure Series for %s: %s Factor: %s",
+                    get_ident(),
+                    exceptCtrl,
+                    exceptValue,
+                    expFact,
+                )
 
             # Special handling for focus series
             if ser.isFocusStackingSeries:
@@ -3351,36 +5747,72 @@ class Camera():
                 exceptValue = 1.0 / exceptValueRaw
                 if ser.curShots:
                     if ser.curShots > 1:
-                        exceptValueRaw = ser.focalDistStart + (ser.curShots - 1) * ser.focalDistStep
+                        exceptValueRaw = (
+                            ser.focalDistStart + (ser.curShots - 1) * ser.focalDistStep
+                        )
                         exceptValue = 1.0 / exceptValueRaw
-                        logger.debug("Thread %s: Camera._photoSeriesThread - Focus Series: Restart after %s shots", get_ident(), ser.curShots)                    
-                logger.debug("Thread %s: Camera._photoSeriesThread - Focus Series for %s: %s (focal dist: %s, interval: %s)", get_ident(), exceptCtrl, exceptValue, exceptValueRaw, ser.focalDistStep)
+                        logger.debug(
+                            "Thread %s: Camera._photoSeriesThread - Focus Series: Restart after %s shots",
+                            get_ident(),
+                            ser.curShots,
+                        )
+                logger.debug(
+                    "Thread %s: Camera._photoSeriesThread - Focus Series for %s: %s (focal dist: %s, interval: %s)",
+                    get_ident(),
+                    exceptCtrl,
+                    exceptValue,
+                    exceptValueRaw,
+                    ser.focalDistStep,
+                )
 
-            photoseriesCtrls = Camera.applyControls(Camera.ctrl.configuration, exceptCtrl, exceptValue)
-            logger.debug("Thread %s: Camera._photoSeriesThread - selected controls applied", get_ident())
+            photoseriesCtrls = Camera.applyControls(
+                Camera.ctrl.configuration, exceptCtrl, exceptValue
+            )
+            logger.debug(
+                "Thread %s: Camera._photoSeriesThread - selected controls applied",
+                get_ident(),
+            )
 
             lastTime = None
             stop = False
             while not stop:
                 nextTime = ser.nextTime(lastTime)
                 curShots, nextPhoto = ser.nextPhoto()
-                logger.debug("Thread %s: Camera._photoSeriesThread - nextPhoto: %s nextTime %s", get_ident(), nextPhoto, str(nextTime))
+                logger.debug(
+                    "Thread %s: Camera._photoSeriesThread - nextPhoto: %s nextTime %s",
+                    get_ident(),
+                    nextPhoto,
+                    str(nextTime),
+                )
                 if nextPhoto == "" or nextTime is None or ser.status == "FINISHED":
-                    logger.debug("Thread %s: Camera._photoSeriesThread - Series done: nextPhoto=%s, nextTime=%s, status=%s", get_ident(), nextPhoto, str(nextTime), ser.status)
+                    logger.debug(
+                        "Thread %s: Camera._photoSeriesThread - Series done: nextPhoto=%s, nextTime=%s, status=%s",
+                        get_ident(),
+                        nextPhoto,
+                        str(nextTime),
+                        ser.status,
+                    )
                     stop = True
                 else:
                     curTime = datetime.datetime.now()
                     timedif = nextTime - curTime
                     timedifSec = timedif.total_seconds()
-                    logger.debug("Thread %s: Camera._photoSeriesThread - Seconds to wait: %s", get_ident(), timedifSec)
+                    logger.debug(
+                        "Thread %s: Camera._photoSeriesThread - Seconds to wait: %s",
+                        get_ident(),
+                        timedifSec,
+                    )
 
                     camClosed = False
-                    if ser.isFocusStackingSeries == False \
-                    and ser.isExposureSeries == False:
-                        if sc.isVideoRecording == False \
-                        and sc.isLiveStream == False:
+                    if (
+                        ser.isFocusStackingSeries == False
+                        and ser.isExposureSeries == False
+                    ):
+                        if sc.isVideoRecording == False and sc.isLiveStream == False:
                             if timedifSec > 60:
-                                Camera.cam, camClosed = Camera.ctrl.requestStop(Camera.cam, close=True)
+                                Camera.cam, camClosed = Camera.ctrl.requestStop(
+                                    Camera.cam, close=True
+                                )
 
                     while timedifSec > 2.0:
                         time.sleep(2.0)
@@ -3396,24 +5828,58 @@ class Camera():
                     if stop == False and timedifSec > 0.0:
                         time.sleep(timedifSec)
                 if Camera.stopPhotoSeriesRequested:
-                    logger.debug("Thread %s: Camera._photoSeriesThread - Stop requested", get_ident())
+                    logger.debug(
+                        "Thread %s: Camera._photoSeriesThread - Stop requested",
+                        get_ident(),
+                    )
                     stop = True
                 if not stop:
                     try:
+                        logger.debug(
+                            "Thread %s: Camera._photoSeriesThread - Starting next shot",
+                            get_ident(),
+                        )
                         if Camera.cam is None:
                             camClosed = True
                         else:
-                            if Camera.cam.started == False:
-                                camClosed = True
-                        if camClosed:
-                            logger.debug("Thread %s: Camera._photoSeriesThread - Preparing closed camera", get_ident())
-                            if ser.type == "jpg":
-                                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.photoConfig)
+                            if Camera.camIsUsb == False:
+                                if Camera.cam.started == False:
+                                    camClosed = True
                             else:
-                                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(Camera.cam, Camera.camNum, cfg.rawConfig, cfg.photoConfig)
-                            logger.debug("Thread %s: Camera._photoSeriesThread Got camera for photo series exclusive: %s", get_ident(), exclusive)
-                            photoseriesCtrls = Camera.applyControls(Camera.ctrl.configuration, exceptCtrl, exceptValue)
-                            logger.debug("Thread %s: Camera._photoSeriesThread - selected controls applied", get_ident())
+                                camClosed = Camera.cam.isOpened() == False
+                        if camClosed:
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - Preparing closed camera",
+                                get_ident(),
+                            )
+                            if ser.type == "jpg":
+                                Camera.cam, exclusive = (
+                                    Camera.ctrl.requestCameraForConfig(
+                                        Camera.cam, Camera.camNum, cfg.photoConfig, forceExclusive=forceExclusive
+                                    )
+                                )
+                            else:
+                                Camera.cam, exclusive = (
+                                    Camera.ctrl.requestCameraForConfig(
+                                        Camera.cam,
+                                        Camera.camNum,
+                                        cfg.rawConfig,
+                                        cfg.photoConfig,
+                                        forceExclusive=forceExclusive
+                                    )
+                                )
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread Got camera for photo series exclusive: %s",
+                                get_ident(),
+                                exclusive,
+                            )
+                            photoseriesCtrls = Camera.applyControls(
+                                Camera.ctrl.configuration, exceptCtrl, exceptValue
+                            )
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - selected controls applied",
+                                get_ident(),
+                            )
                             time.sleep(1.5)
                             curTime = datetime.datetime.now()
                             timedif = nextTime - curTime
@@ -3421,82 +5887,188 @@ class Camera():
                             if timedifSec > 0:
                                 time.sleep(timedifSec)
 
-                        logger.debug("Thread %s: Camera._photoSeriesThread - Preparing request", get_ident())
-                        logger.debug("Thread %s: Camera._photoSeriesThread - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s", get_ident(), id(Camera), id(Camera.cam), id(Camera.cam.controls))
-                        logger.debug("Thread %s: Camera._photoSeriesThread - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
                         lastTime = datetime.datetime.now()
-                        request = Camera.cam.capture_request()
-                        logger.debug("Thread %s: Camera._photoSeriesThread - capture_request completed", get_ident())
-                        logger.debug("Thread %s: Camera._photoSeriesThread - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s", get_ident(), id(Camera), id(Camera.cam), id(Camera.cam.controls))
-                        logger.debug("Thread %s: Camera._photoSeriesThread - Camera.cam.controls=%s", get_ident(), Camera.cam.controls)
-                        prgLogger.debug("request = picam2.capture_request()")
-                        fpjpg = ser.path + "/" + nextPhoto + ".jpg"
-                        fpraw = ser.path + "/" + nextPhoto + ".dng"
-                        request.save("main", fpjpg)
-                        prgLogger.debug("request.save(\"main\", \"%s\")", sc.prgOutputPath + "/" + nextPhoto + ".jpg")
-                        if ser.type == "raw+jpg":
-                            request.save_dng(fpraw)
-                            prgLogger.debug("request.save_dng(\"%s\")", sc.prgOutputPath + "/" + nextPhoto + ".dng")
-                        metadata = request.get_metadata()
-                        prgLogger.debug("metadata = request.get_metadata()")
-                        request.release()
-                        prgLogger.debug("request.release()")
-                        logger.debug("Thread %s: Camera._photoSeriesThread - Request released", get_ident())
+                        if Camera.camIsUsb == False:
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - Preparing request",
+                                get_ident(),
+                            )
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s",
+                                get_ident(),
+                                id(Camera),
+                                id(Camera.cam),
+                                id(Camera.cam.controls),
+                            )
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - Camera.cam.controls=%s",
+                                get_ident(),
+                                Camera.cam.controls,
+                            )
+                            request = Camera.cam.capture_request()
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - capture_request completed",
+                                get_ident(),
+                            )
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - id(Camera)=%s id(Camera.cam)=%s id(Camera.cam.controls)=%s",
+                                get_ident(),
+                                id(Camera),
+                                id(Camera.cam),
+                                id(Camera.cam.controls),
+                            )
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - Camera.cam.controls=%s",
+                                get_ident(),
+                                Camera.cam.controls,
+                            )
+                            prgLogger.debug("request = picam2.capture_request()")
+                            fpjpg = ser.path + "/" + nextPhoto + ".jpg"
+                            fpraw = ser.path + "/" + nextPhoto + ".dng"
+                            request.save("main", fpjpg)
+                            prgLogger.debug(
+                                'request.save("main", "%s")',
+                                sc.prgOutputPath + "/" + nextPhoto + ".jpg",
+                            )
+                            if ser.type == "raw+jpg":
+                                request.save_dng(fpraw)
+                                prgLogger.debug(
+                                    'request.save_dng("%s")',
+                                    sc.prgOutputPath + "/" + nextPhoto + ".dng",
+                                )
+                            metadata = request.get_metadata()
+                            prgLogger.debug("metadata = request.get_metadata()")
+                            request.release()
+                            prgLogger.debug("request.release()")
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - Request released",
+                                get_ident(),
+                            )
+                        else:
+                            # For USB cameras, save the image using OpenCV
+                            fpjpg = ser.path + "/" + nextPhoto + ".jpg"
+                            fpraw = ser.path + "/" + nextPhoto + ".tiff"
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - USB camera capture image %s",
+                                get_ident(),
+                                fpjpg,
+                            )
+                            if Camera.cam.isOpened() == False:
+                                raise RuntimeError("USB camera is not opened")
+                            success, frame = Camera.cam.read()
+                            if success:
+                                metadata = Camera.getUsbCamMetadata(Camera.cam)
+                                conf = Camera.ctrl.configuration
+                                hflip = conf.transform.hflip
+                                vflip = conf.transform.vflip
+                                if hflip == True:
+                                    frame = cv2.flip(frame, 1)
+                                if vflip == True:
+                                    frame = cv2.flip(frame, 0)
+                                cv2.imwrite(fpjpg, frame)
+                                if ser.type == "raw+jpg":
+                                    cv2.imwrite(fpraw, frame, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
+                                logger.debug(
+                                    "Thread %s: Camera._photoSeriesThread - USB camera capture done",
+                                    get_ident()
+                                )
+                            else:
+                                raise RuntimeError("Failed to capture image from USB camera")
                         ser.curShots = curShots
                         ser.logPhoto(nextPhoto, lastTime, metadata)
-                        if ser.isFocusStackingSeries == False \
-                        and ser.isExposureSeries == False:
+                        if (
+                            ser.isFocusStackingSeries == False
+                            and ser.isExposureSeries == False
+                        ):
                             if Camera().when_series_photo_taken:
                                 Camera().when_series_photo_taken()
                     except Exception as e:
                         ser.nextStatus("pause")
                         stop = True
-                        logger.error("Thread %s: Camera._photoSeriesThread - Error: %s", get_ident(), e)
+                        logger.error(
+                            "Thread %s: Camera._photoSeriesThread - Error: %s",
+                            get_ident(),
+                            e,
+                        )
                         ser.error = "Error in photoseries: " + str(e)
                         ser.errorSource = "Camera._photoSeriesThread"
 
                     if not sc.error and not ser.error:
                         # Draw histogram
-                        if ser.isExposureSeries \
-                        and sc.useHistograms:
+                        if ser.isExposureSeries and sc.useHistograms:
                             dest = ser.histogramPath + "/" + nextPhoto + ".jpg"
-                            plt.figure()    
+                            plt.figure()
                             img = cv2.imread(fpjpg)
-                            color = ('b','g','r')
-                            for i,col in enumerate(color):
-                                histr = cv2.calcHist([img],[i],None,[256],[0,256])
-                                plt.plot(histr,color = col)
-                                plt.xlim([0,256])
+                            color = ("b", "g", "r")
+                            for i, col in enumerate(color):
+                                histr = cv2.calcHist([img], [i], None, [256], [0, 256])
+                                plt.plot(histr, color=col)
+                                plt.xlim([0, 256])
                             plt.savefig(dest)
-                            logger.debug("Thread %s: Camera._photoSeriesThread - histogram created: %s", get_ident(), dest)
+                            logger.debug(
+                                "Thread %s: Camera._photoSeriesThread - histogram created: %s",
+                                get_ident(),
+                                dest,
+                            )
 
                         # For exposure series apply controls
                         if ser.isExposureSeries:
-                            ser.logCamCfgCtrl(nextPhoto, Camera.ctrl.configuration.make_dict(), photoseriesCtrls.make_dict())
+                            ser.logCamCfgCtrl(
+                                nextPhoto,
+                                Camera.ctrl.configuration.make_dict(),
+                                photoseriesCtrls.make_dict(),
+                            )
                             if not stop:
                                 exceptValue = expFact * exceptValue
-                                logger.debug("Thread %s: Camera._photoSeriesThread - Exposure Series for %s: %s", get_ident(), exceptCtrl, exceptValue)
-                                photoseriesCtrls = Camera.applyControls(Camera.ctrl.configuration, exceptCtrl, exceptValue)
-                                logger.debug("Thread %s: Camera._photoSeriesThread - selected controls applied", get_ident())
+                                logger.debug(
+                                    "Thread %s: Camera._photoSeriesThread - Exposure Series for %s: %s",
+                                    get_ident(),
+                                    exceptCtrl,
+                                    exceptValue,
+                                )
+                                photoseriesCtrls = Camera.applyControls(
+                                    Camera.ctrl.configuration, exceptCtrl, exceptValue
+                                )
+                                logger.debug(
+                                    "Thread %s: Camera._photoSeriesThread - selected controls applied",
+                                    get_ident(),
+                                )
 
                         # For focus series apply controls
                         if ser.isFocusStackingSeries:
-                            ser.logCamCfgCtrl(nextPhoto, Camera.ctrl.configuration.make_dict(), photoseriesCtrls.make_dict())
+                            ser.logCamCfgCtrl(
+                                nextPhoto,
+                                Camera.ctrl.configuration.make_dict(),
+                                photoseriesCtrls.make_dict(),
+                            )
                             if not stop:
                                 exceptValueRaw = exceptValueRaw + ser.focalDistStep
                                 exceptValue = 1.0 / exceptValueRaw
-                                logger.debug("Thread %s: Camera._photoSeriesThread - Focus Series for %s: %s (focal dist: %s)", get_ident(), exceptCtrl, exceptValue, exceptValueRaw)
-                                photoseriesCtrls = Camera.applyControls(Camera.ctrl.configuration, exceptCtrl, exceptValue)
-                                logger.debug("Thread %s: Camera._photoSeriesThread - selected controls applied", get_ident())
+                                logger.debug(
+                                    "Thread %s: Camera._photoSeriesThread - Focus Series for %s: %s (focal dist: %s)",
+                                    get_ident(),
+                                    exceptCtrl,
+                                    exceptValue,
+                                    exceptValueRaw,
+                                )
+                                photoseriesCtrls = Camera.applyControls(
+                                    Camera.ctrl.configuration, exceptCtrl, exceptValue
+                                )
+                                logger.debug(
+                                    "Thread %s: Camera._photoSeriesThread - selected controls applied",
+                                    get_ident(),
+                                )
 
         Camera.photoSeriesThread = None
         Camera.stopPhotoSeriesRequested = False
         sc.isPhotoSeriesRecording = False
         Camera.cam = Camera.ctrl.restoreLivestream(Camera.cam, exclusive)
-        if sc.isVideoRecording == False \
-        and sc.isLiveStream == False:
+        if sc.isVideoRecording == False and sc.isLiveStream == False:
             Camera.cam, done = Camera.ctrl.requestStop(Camera.cam, close=True)
-        logger.debug("Thread %s: Camera._photoSeriesThread - photoSeriesThread terminated", get_ident())
+        logger.debug(
+            "Thread %s: Camera._photoSeriesThread - photoSeriesThread terminated",
+            get_ident(),
+        )
 
     @staticmethod
     def startPhotoSeries(ser: Series):
@@ -3504,11 +6076,18 @@ class Camera():
         logger.debug("Thread %s: startPhotoSeries - series=%s", get_ident(), ser.name)
 
         if Camera.photoSeriesThread is None:
-            logger.debug("Thread %s: startPhotoSeries - Starting new photoSeriesThread", get_ident())
+            logger.debug(
+                "Thread %s: startPhotoSeries - Starting new photoSeriesThread",
+                get_ident(),
+            )
             Camera.photoSeries = ser
-            Camera.photoSeriesThread = threading.Thread(target=Camera._photoSeriesThread, daemon=True)
+            Camera.photoSeriesThread = threading.Thread(
+                target=Camera._photoSeriesThread, daemon=True
+            )
             Camera.photoSeriesThread.start()
-            logger.debug("Thread %s: startPhotoSeries - photoSeriesThread started", get_ident())
+            logger.debug(
+                "Thread %s: startPhotoSeries - photoSeriesThread started", get_ident()
+            )
 
     @staticmethod
     def stopPhotoSeries():
@@ -3523,7 +6102,9 @@ class Camera():
                 Camera.photoSeriesThread = None
                 CameraCfg().serverConfig.isPhotoSeriesRecording = False
                 # raise TimeoutError("Photoseries thread did not stop within 5 sec")
-                logger.debug("Thread %s: stopPhotoSeries: Thread seams to be dead", get_ident())
+                logger.debug(
+                    "Thread %s: stopPhotoSeries: Thread seams to be dead", get_ident()
+                )
                 break
         logger.debug("Thread %s: stopPhotoSeries: Thread has stopped", get_ident())
         Camera.stopPhotoSeriesRequested = False
@@ -3531,32 +6112,55 @@ class Camera():
     @classmethod
     def cameraStatus(cls, camNum) -> str:
         status = ""
+        sc = CameraCfg().serverConfig
         if camNum == cls.camNum:
-            if cls.cam.is_open == True:
-                status = "open"
-                if cls.cam.started == True:
-                    status = status + " - started"
-                    mode = "unknown"
-                    if useSensorConfiguration:
-                        sc = cls.cam.camera_config["sensor"]
-                        for sm in CameraCfg().sensorModes:
-                            if sc["output_size"] == sm.size \
-                            and sc["bit_depth"] == sm.bit_depth:
-                                mode = str(sm.id)
-                    status = status + " - current Sensor Mode: " + mode
+            if cls.camIsUsb == False:
+                if cls.cam.is_open == True:
+                    status = "open"
+                    if cls.cam.started == True:
+                        status = status + " - started"
+                        mode = "unknown"
+                        if useSensorConfiguration:
+                            sc = cls.cam.camera_config["sensor"]
+                            for sm in CameraCfg().sensorModes:
+                                if (
+                                    sc["output_size"] == sm.size
+                                    and sc["bit_depth"] == sm.bit_depth
+                                ):
+                                    mode = str(sm.id)
+                        status = status + " - current Sensor Mode: " + mode
+                    else:
+                        status = status + " - stopped"
                 else:
-                    status = status + " - stopped"
+                    status = "closed"
             else:
-                status = "closed"
-        if camNum == cls.camNum2:
-            if cls.cam2.is_open == True:
-                status = "open"
-                if cls.cam2.started == True:
-                    status = status + " - started"
+                if cls.cam.isOpened() == True:
+                    status = "open"
                 else:
-                    status = status + " - stopped"
+                    status = "closed"
+        elif camNum == cls.camNum2:
+            if cls.cam2IsUsb == False:
+                if cls.cam2.is_open == True:
+                    status = "open"
+                    if cls.cam2.started == True:
+                        status = status + " - started"
+                    else:
+                        status = status + " - stopped"
+                else:
+                    status = "closed"
             else:
-                status = "closed"
+                if cls.cam2.isOpened() == True:
+                    status = "open"
+                else:
+                    status = "closed"
+        else:
+            if sc.supportsUsbCamera == True:
+                if sc.useUsbCameras == True:
+                    status = "inactive"
+                else:
+                    status = "excluded"
+            else:
+                status = "not supported (OpenCV missing)"
         return status
 
     @classmethod

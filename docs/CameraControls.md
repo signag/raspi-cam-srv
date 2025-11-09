@@ -2,6 +2,8 @@
 
 [![Up](img/goup.gif)](./LiveScreen.md)
 
+**NOTE**: This functionality is currently not available for USB cameras.
+
 Picamera2 allows for a set of 36 camera control parameters which can be adjusted while the camera is active.   
 From these, 8 parameters are just part of the image metadata and cannot be applied to the camera.
 

@@ -35,8 +35,12 @@ def trigger():
     if tc.calStart == None:
         tc.calStart = datetime.now()
     sc.curMenu = "trigger"
+    if sc.noCamera == True:
+        if sc.lastTriggerTab == "trgmotion" \
+        or sc.lastTriggerTab == "trgaction":
+            sc.lastTriggerTab = "trgcontrol"
     tmp = {}
-    #logger.debug("event list: %s", tc.eventList)
+    # logger.debug("event list: %s", tc.eventList)
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/trgcontrol", methods=("GET", "POST"))
@@ -89,23 +93,26 @@ def trgcontrol():
             tc.operationAutoStart = False
         else:
             tc.operationAutoStart = True
-        detectDelay = int(request.form["opdelay"])
-        tc.detectionDelaySec = detectDelay
-        detectPause = int(request.form["oppause"])
-        tc.detectionPauseSec = detectPause
+        if sc.noCamera == False:
+            detectDelay = int(request.form["opdelay"])
+            tc.detectionDelaySec = detectDelay
+            detectPause = int(request.form["oppause"])
+            tc.detectionPauseSec = detectPause
         retPeriod = int(request.form["retentionperiod"])
         tc.retentionPeriod = retPeriod
-        
-        if tc.triggeredByEvents == True \
-        and tc.triggeredByMotion == False:
-            tc.actionVideo = False
-            tc.actionPhoto = False
-            tc.actionNotify = False
-            err = "Actions have been deactivated because they are currently supported only in combination with Motion Detection"
+
+        if sc.noCamera == False:
+            if tc.triggeredByEvents == True \
+            and tc.triggeredByMotion == False:
+                tc.actionVideo = False
+                tc.actionPhoto = False
+                tc.actionNotify = False
+                err = "Actions have been deactivated because they are currently supported only in combination with Motion Detection"
         if err:
             flash(err)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Trigger Control changed")
+        logger.debug("In trgcontrol - done")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/motion", methods=("GET", "POST"))

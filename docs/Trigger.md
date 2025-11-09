@@ -4,22 +4,30 @@
 
 **raspiCamSrv** can capture events from camera and GPIO input devices and let these process actions by the camera and GPIO output devices.
 
-Currently supported triggers are
+##### Supported Triggers
 - [Triggers](./TriggerTriggers.md) from GPIO-connected sensors
+
+
+##### Additional Triggers when a Camera is available
 - [Triggers](./TriggerTriggers.md) from camera events such as start and stop of video recording or streaming or [detection of motion](./TriggerMotion.md).
 - [Motion Capturing](./TriggerMotion.md) through image analysis
 - [Active Motion Capture](./TriggerActive.md)
 
-Supported actions are:
+##### Supported Actions
 - [Actions](./TriggerActions.md) with GPIO-connected devices, such as LEDs, motors, servos or sound devices.
-- Camera [actions](./TriggerActions.md), such as taking photos, starting or stopping video recording or recording a video with a given length.
 - SMTP [actions](./TriggerActions.md) for sending an eMail to the [configured recipient](./TriggerNotification.md).
 - [Trigger-Actions](./TriggerTriggerActions.md) define which trigger will execute which action(s).
-- [Camera Actions](./TriggerCameraActions.md) specify the camera actions in case of [motion detection through the camera](./TriggerMotion.md).
 - Under [Notification](./TriggerNotification.md), you configure the general mail recipient as well as specifics for notification on [motion detection through the camera](./TriggerMotion.md). 
 
-Registered events can be inspected in the
-- [Event Viewer](./TriggerEventViewer.md)
+##### Additional Actions when a Camera is available
+- Camera [actions](./TriggerActions.md), such as taking photos, starting or stopping video recording or recording a video with a given length.
+- [Camera Actions](./TriggerCameraActions.md) specify the camera actions in case of [motion detection through the camera](./TriggerMotion.md).
+- Under [Notification](./TriggerNotification.md), you configure whether mail notification shall include photos or videos from [motion detection through the camera](./TriggerMotion.md). 
+
+##### Event Dashboard
+
+- [Event Viewer](./TriggerEventViewer.md#events)
+- [Calendar](./TriggerEventViewer.md)
 
 
 ## Event Handling Infrastructure

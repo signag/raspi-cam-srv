@@ -38,6 +38,24 @@ In case that the server did not start correctly or if you see an unexpected beha
 - Then repeat step 4, above
 
 
+## V4.0.0
+
+### New Features
+
+- Seamless integration of **USB cameras** with CSI cameras (see [Info](./Information.md) and [Multi Cam](./CamMulticam.md))<br>USB cameras are accessed through OpenCV which must have been installed (see [Installation](../README.md#raspicamsrv-installation) Step 10.).<br>The use of USB cameras can be activated or deactivated in the [Settings](./Settings.md).<br>USB cameras are handled in exactly the same way as CSI cameras and they can be used in all operational functions, except [Focus Stacks](./PhotoSeriesFocus.md) and [Exposure Series](./PhotoSeriesExp.md).<br>**NOTE**: Currently [Controls](./CameraControls.md) (Focus, Zooming, Ecposure and Image control) cannot be used with USB cameras. However, images can be flipped and resolution can be adjusted with [Configuration](./Configuration.md).
+- Hot-Plug of USB cameras is supported. See button **Reload Cameras** in [Settings / Configuration](./SettingsConfiguration.md).
+- **No-Camera** Mode is supported.<br>Before, when no cameras were installed, **raspiCamSrv** could not be started.<br>Now, it is possible to use **raspiCamSrv** also without cameras, for example in order to control [GPIO Devices](./SettingsDevices.md) through the [Action Buttons](./ConsoleActionButtons.md) or through the [Event Handling Infrastructure](./Trigger.md) or in order to use the [Versatile Buttons](./ConsoleVButtons.md) Console to issue freely configurable OS commands and see their output.
+- [Switching Cameras](./CamMulticam.md#-switch-cameras-) in the [Multi Cam](./CamMulticam.md) dialog now requires confirmation when Camera [Confoguration](./Configuration.md) and/or [Controls](./CameraControls.md) were changed and not yet saved for camera switch. This shall avoid unintended loss of configuration work when switching the cameras.
+- [Installation Procedure](./../README.md#raspicamsrv-installation) has been updated for use with **Debian-Trixie**, the successor of **Bullseye**.<br>Tests have so far only be made with a Raspberry Pi Zero 2 system with connected CSI and USB camera.<br>Please report any issues, you may run into, in other configurations.
+
+### Bugfixes
+
+- Made [Photo Display](./Phototaking.md#photo-display) robust against [deletion of photos](./PhotoViewer.md).   
+Before, when a photo was deleted, the entire display buffer was cleared.   
+Now, only the deleted photos are removed from the display buffer.   
+Also, when the server is started with stored configuration, it is checked whether to stored buffer information is still consistent with the existing photos or videos.
+
+
 ## V3.7.1
 
 ### Bugfixes

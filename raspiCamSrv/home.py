@@ -1,4 +1,14 @@
-from flask import current_app, Blueprint, Response, flash, g, redirect, render_template, request, url_for
+from flask import (
+    current_app,
+    Blueprint,
+    Response,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from werkzeug.exceptions import abort
 from raspiCamSrv.auth import login_required, login_for_streaming
 from raspiCamSrv.camera_pi import Camera
@@ -16,6 +26,7 @@ bp = Blueprint("home", __name__)
 
 logger = logging.getLogger(__name__)
 
+
 @bp.route("/")
 @login_required
 def index():
@@ -29,64 +40,84 @@ def index():
     sc.error = None
     Camera().startLiveStream()
     logger.debug("Thread %s: Camera instantiated", get_ident())
-    sc.curMenu = "live"
+    if sc.noCamera == False:
+        sc.curMenu = "live"
+    else:
+        sc.curMenu = "info"
     logger.debug("Thread %s: cp.hasFocus is %s", get_ident(), cp.hasFocus)
+
+    sc.displayBufferCheck()
+
     if sc.error:
         msg = "Error in " + sc.errorSource + ": " + sc.error
         flash(msg)
         if sc.error2:
             flash(sc.error2)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+    if sc.noCamera == False:
+        return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+    else:
+        return redirect(url_for("info.main"))
+
 
 def gen(camera):
     """Video streaming generator function."""
-    #logger.debug("Thread %s: In gen", get_ident())
-    yield b'--frame\r\n'
+    # logger.debug("Thread %s: In gen", get_ident())
+    yield b"--frame\r\n"
     while True:
-        frame = camera.get_frame()
+        frame, frameRaw = camera.get_frame()
         if frame:
-            #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), len(frame))
-            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+            # logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), len(frame))
+            yield b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n--frame\r\n"
+
 
 def gen2(camera):
     """Video streaming generator function."""
-    #logger.debug("Thread %s: In gen", get_ident())
-    yield b'--frame\r\n'
+    # logger.debug("Thread %s: In gen", get_ident())
+    yield b"--frame\r\n"
     while True:
-        frame = camera.get_frame2()
+        frame, frameRaw = camera.get_frame2()
         if frame:
-            #logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), len(frame))
-            yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+            # logger.debug("Thread %s: gen - Got frame of length %s", get_ident(), len(frame))
+            yield b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n--frame\r\n"
+
 
 @bp.route("/live_view_feed")
 @login_required
 def live_view_feed():
-    logger.debug("Thread %s: In live_view_feed - client IP: %s", get_ident(), request.remote_addr)
+    logger.debug(
+        "Thread %s: In live_view_feed - client IP: %s", get_ident(), request.remote_addr
+    )
     sc = CameraCfg().serverConfig
     sc.registerStreamingClient(request.remote_addr, "live_view", get_ident())
     Camera().startLiveStream()
-    return Response(gen(Camera()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen(Camera()), mimetype="multipart/x-mixed-replace; boundary=frame")
+
 
 @bp.route("/video_feed")
 @login_for_streaming
 def video_feed():
-    logger.debug("Thread %s: In video_feed - client IP: %s", get_ident(), request.remote_addr)
+    logger.debug(
+        "Thread %s: In video_feed - client IP: %s", get_ident(), request.remote_addr
+    )
     sc = CameraCfg().serverConfig
     sc.registerStreamingClient(request.remote_addr, "video_feed", get_ident())
     Camera().startLiveStream()
-    return Response(gen(Camera()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen(Camera()), mimetype="multipart/x-mixed-replace; boundary=frame")
+
 
 @bp.route("/video_feed2")
 @login_for_streaming
 def video_feed2():
-    logger.debug("Thread %s: In video_feed2 - client IP: %s", get_ident(), request.remote_addr)
+    logger.debug(
+        "Thread %s: In video_feed2 - client IP: %s", get_ident(), request.remote_addr
+    )
     sc = CameraCfg().serverConfig
     sc.registerStreamingClient(request.remote_addr, "video_feed2", get_ident())
     Camera().startLiveStream2()
-    return Response(gen2(Camera()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        gen2(Camera()), mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
+
 
 @bp.route("/photos/<photo>")
 @login_required
@@ -96,7 +127,8 @@ def displayImage(photo: str):
     logger.debug("current_app.root_path=%s", current_app.root_path)
     fp = current_app.root_path + "/photos/" + photo
     logger.debug("fp = %s", fp)
-    return Response(fp, mimetype='image/jpg')
+    return Response(fp, mimetype="image/jpg")
+
 
 @bp.route("/focus_control", methods=("GET", "POST"))
 @login_required
@@ -176,8 +208,10 @@ def focus_control():
 
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Focus handling changed for {sc.activeCameraInfo}")
+            cfg.streamingCfgInvalid = True
             Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/trigger_autofocus", methods=("GET", "POST"))
 @login_required
@@ -197,22 +231,26 @@ def trigger_autofocus():
                 success = Camera().cam.autofocus_cycle()
                 if success:
                     lp = Camera().getLensPosition()
-                    #lp = int(100 * lp) / 100
+                    # lp = int(100 * lp) / 100
                     if lp > 0:
                         cc.lensPosition = lp
                         cc.include_lensPosition = True
                         cc.afMode = 0
                         msg = "Autofocus successful. See Focal Distance. Autofocus Mode set to 'Manual'."
                         sc.unsavedChanges = True
-                        sc.addChangeLogEntry(f"Autofocus triggered for {sc.activeCameraInfo}")
+                        sc.addChangeLogEntry(
+                            f"Autofocus triggered for {sc.activeCameraInfo}"
+                        )
+                        cfg.streamingCfgInvalid = True
                     else:
                         msg = "Camera returned LensPosition 0. Ignored"
                 else:
                     msg = "Autofocus not successful"
             else:
-                msg="ERROR: Autofocus Mode must be set to 'Auto'!"
+                msg = "ERROR: Autofocus Mode must be set to 'Auto'!"
             flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/set_zoom", methods=("GET", "POST"))
 @login_required
@@ -229,7 +267,7 @@ def set_zoom():
         step = int(request.form["zoomfactorstep"])
         sc.zoomFactorStep = step
         logger.debug("sc.zoomFactorStep set to %s", step)
-        if  sc.isZoomModeDraw == True:
+        if sc.isZoomModeDraw == True:
             sc.isZoomModeDraw = False
             scalerCropStr = request.form["scalercrop"]
             logger.debug("Form scalerCrop: %s", scalerCropStr)
@@ -242,13 +280,17 @@ def set_zoom():
             time.sleep(0.5)
             metadata = Camera().getMetaData()
             sc.scalerCropLiveView = metadata["ScalerCrop"]
-            zoomFactor = sc.zoomFactorStep * math.floor((100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep)
+            zoomFactor = sc.zoomFactorStep * math.floor(
+                (100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep
+            )
             if zoomFactor <= 0:
                 zoomFactor = sc.zoomFactorStep
             sc.zoomFactor = zoomFactor
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
+            cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/zoom_in", methods=("GET", "POST"))
 @login_required
@@ -257,15 +299,15 @@ def zoom_in():
     g.hostname = request.host
     g.version = version
     cfg = CameraCfg()
-    logger.debug("cfg.liveViewConfig.controls=%s",cfg.liveViewConfig.controls)
+    logger.debug("cfg.liveViewConfig.controls=%s", cfg.liveViewConfig.controls)
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
         logger.debug("ScalerCrop old: %s", cc.scalerCrop)
-        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2]/2)
-        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3]/2)
+        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2] / 2)
+        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3] / 2)
         zfNext = sc.zoomFactor - sc.zoomFactorStep
         msg = []
         if zfNext < sc.zoomFactorStep:
@@ -286,8 +328,8 @@ def zoom_in():
         if len(msg) > 0:
             for m in msg:
                 flash(m)
-            
-        sccrop = (int(xCenter - width/2), int(yCenter - height/2), width, height)
+
+        sccrop = (int(xCenter - width / 2), int(yCenter - height / 2), width, height)
         sc.zoomFactor = zfNext
         cc.scalerCrop = sccrop
         cc.include_scalerCrop = True
@@ -302,15 +344,17 @@ def zoom_in():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 def checkScalerCrop(crop: tuple, range: tuple) -> tuple:
     """Check given cropping rectangle with respect to maximum rectangle
-    
+
     Params:
         crop:   cropping rectangle to be tested (xOffset, yOffset, width, height)
         range:  allowed range (xOffset, yOffset, width, height)
-        
+
     Return:
         crop: cropping rectangle with initial dimensions but eventually adjusted offset
         msg:  Message list with modifications made
@@ -335,6 +379,7 @@ def checkScalerCrop(crop: tuple, range: tuple) -> tuple:
         y0 = range[1] + range[3] - height
     return ((x0, y0, crop[2], crop[3]), msg)
 
+
 @bp.route("/zoom_out", methods=("GET", "POST"))
 @login_required
 def zoom_out():
@@ -347,8 +392,8 @@ def zoom_out():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2]/2)
-        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3]/2)
+        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2] / 2)
+        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3] / 2)
         zfNext = sc.zoomFactor + sc.zoomFactorStep
         msg0 = ""
         if zfNext >= 100:
@@ -359,7 +404,7 @@ def zoom_out():
         else:
             width = int(sc.scalerCropDef[2] * zfNext / 100)
             height = int(sc.scalerCropDef[3] * zfNext / 100)
-            
+
         ll = (xCenter - int(width / 2), yCenter - int(height / 2))
         sccrop = (ll[0], ll[1], width, height)
         (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
@@ -381,7 +426,9 @@ def zoom_out():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/zoom_full", methods=("GET", "POST"))
 @login_required
@@ -399,8 +446,8 @@ def zoom_full():
         sc.zoomFactor = 100
         width = sc.scalerCropDef[2]
         height = sc.scalerCropDef[3]
-        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2]/2)
-        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3]/2)
+        xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2] / 2)
+        yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3] / 2)
         xOffset = int(xCenter - width / 2)
         yOffset = int(yCenter - height / 2)
         sccrop = (xOffset, yOffset, width, height)
@@ -420,7 +467,9 @@ def zoom_full():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/pan_up", methods=("GET", "POST"))
 @login_required
@@ -434,7 +483,7 @@ def pan_up():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         yOffset = cc.scalerCrop[1] - step
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
@@ -453,7 +502,9 @@ def pan_up():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/pan_left", methods=("GET", "POST"))
 @login_required
@@ -467,7 +518,7 @@ def pan_left():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         xOffset = cc.scalerCrop[0] - step
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
         logger.debug("pan_left - scalarCropDef   : %s", sc.scalerCropDef)
@@ -492,7 +543,9 @@ def pan_left():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/pan_center", methods=("GET", "POST"))
 @login_required
@@ -508,8 +561,12 @@ def pan_center():
     if request.method == "POST":
         logger.debug("pan_center scalerCropDef: %s", sc.scalerCropDef)
         logger.debug("pan_center scalerCrop   : %s", cc.scalerCrop)
-        xOffset = int(sc.scalerCropDef[0] + sc.scalerCropDef[2]/2 - cc.scalerCrop[2]/2)
-        yOffset = int(sc.scalerCropDef[1] + sc.scalerCropDef[3]/2 - cc.scalerCrop[3]/2)
+        xOffset = int(
+            sc.scalerCropDef[0] + sc.scalerCropDef[2] / 2 - cc.scalerCrop[2] / 2
+        )
+        yOffset = int(
+            sc.scalerCropDef[1] + sc.scalerCropDef[3] / 2 - cc.scalerCrop[3] / 2
+        )
         logger.debug("pan_center xOffset: %s, yOffset: %s", xOffset, yOffset)
         sccrop = (xOffset, yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         logger.debug("pan_center - sccrop initial: %s", sccrop)
@@ -530,7 +587,9 @@ def pan_center():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/pan_right", methods=("GET", "POST"))
 @login_required
@@ -544,7 +603,7 @@ def pan_right():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         xOffset = cc.scalerCrop[0] + step
         sccrop = (xOffset, cc.scalerCrop[1], cc.scalerCrop[2], cc.scalerCrop[3])
         (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
@@ -563,7 +622,9 @@ def pan_right():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/pan_down", methods=("GET", "POST"))
 @login_required
@@ -577,7 +638,7 @@ def pan_down():
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
-        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep)/100)
+        step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         yOffset = cc.scalerCrop[1] + step
         sccrop = (cc.scalerCrop[0], yOffset, cc.scalerCrop[2], cc.scalerCrop[3])
         (sccrop, msg) = checkScalerCrop(sccrop, sc.scalerCropMax)
@@ -596,7 +657,9 @@ def pan_down():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/zoom_default", methods=("GET", "POST"))
 @login_required
@@ -622,7 +685,9 @@ def zoom_default():
         sc.scalerCropLiveView = metadata["ScalerCrop"]
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Image section set to default for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/zoom_draw", methods=("GET", "POST"))
 @login_required
@@ -637,6 +702,7 @@ def zoom_draw():
     if request.method == "POST":
         sc.isZoomModeDraw = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/ae_control", methods=("GET", "POST"))
 @login_required
@@ -656,7 +722,7 @@ def ae_control():
             cc.include_aeConstraintMode = True
             aeConstraintMode = int(request.form["aeconstraintmode"])
             cc.aeConstraintMode = aeConstraintMode
-            
+
         if request.form.get("include_aeenable") is None:
             cc.include_aeEnable = False
         else:
@@ -694,9 +760,13 @@ def ae_control():
                 cc.aeFlickerPeriod = aeFlickerPeriod
 
         sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Auto-Exposure settings changed for {sc.activeCameraInfo}")
+        sc.addChangeLogEntry(
+            f"Auto-Exposure settings changed for {sc.activeCameraInfo}"
+        )
+        cfg.streamingCfgInvalid = True
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/exposure_control", methods=("GET", "POST"))
 @login_required
@@ -716,7 +786,7 @@ def exposure_control():
             cc.include_analogueGain = True
             analogueGain = float(request.form["analoguegain"])
             cc.analogueGain = analogueGain
-        
+
         if request.form.get("include_colourgains") is None:
             cc.include_colourGains = False
         else:
@@ -725,7 +795,7 @@ def exposure_control():
             colourGainBlue = float(request.form["colourgainblue"])
             colourGains = (colourGainRed, colourGainBlue)
             cc.colourGains = colourGains
-        
+
         if request.form.get("include_exposuretime") is None:
             cc.include_exposureTime = False
         else:
@@ -733,7 +803,7 @@ def exposure_control():
             exposureTimeSec = float(request.form["exposuretimesec"])
             cc.exposureTimeSec = exposureTimeSec
             exposureTime = cc.exposureTime
-        
+
         if request.form.get("include_exposurevalue") is None:
             cc.include_exposureValue = False
         else:
@@ -760,8 +830,10 @@ def exposure_control():
 
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Exposure settings changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/image_control", methods=("GET", "POST"))
 @login_required
@@ -781,35 +853,35 @@ def image_control():
             cc.include_noiseReductionMode = True
             noiseReductionMode = int(request.form["noisereductionmode"])
             cc.noiseReductionMode = noiseReductionMode
-        
+
         if request.form.get("include_saturation") is None:
             cc.include_saturation = False
         else:
             cc.include_saturation = True
             saturation = float(request.form["saturation"])
             cc.saturation = saturation
-        
+
         if request.form.get("include_sharpness") is None:
             cc.include_sharpness = False
         else:
             cc.include_sharpness = True
             sharpness = float(request.form["sharpness"])
             cc.sharpness = sharpness
-            
+
         if request.form.get("include_awbenable") is None:
             cc.include_awbEnable = False
         else:
             cc.include_awbEnable = True
             awbEnable = not request.form.get("awbenable") is None
             cc.awbEnable = awbEnable
-        
+
         if request.form.get("include_awbmode") is None:
             cc.include_awbMode = False
         else:
             cc.include_awbMode = True
             awbMode = int(request.form["awbmode"])
             cc.awbMode = awbMode
-        
+
         if request.form.get("include_contrast") is None:
             cc.include_contrast = False
         else:
@@ -826,8 +898,10 @@ def image_control():
 
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Image settings changed for {sc.activeCameraInfo}")
+        cfg.streamingCfgInvalid = True
         Camera().applyControlsForLivestream()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/meta_clear", methods=("GET", "POST"))
 @login_required
@@ -847,6 +921,7 @@ def meta_clear():
         sc.displayMetaLast = 999
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
+
 @bp.route("/meta_prev", methods=("GET", "POST"))
 @login_required
 def meta_prev():
@@ -865,6 +940,7 @@ def meta_prev():
         if sc.displayMetaLast > len(sc.displayMeta):
             sc.displayMetaLast = 999
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/meta_next", methods=("GET", "POST"))
 @login_required
@@ -902,7 +978,8 @@ def photoBuffer_add():
             if sc.displayHistogram is None:
                 if sc.displayPhoto:
                     generateHistogram(sc)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/photoBuffer_remove", methods=("GET", "POST"))
 @login_required
@@ -919,7 +996,8 @@ def photoBuffer_remove():
             if sc.displayHistogram is None:
                 if sc.displayPhoto:
                     generateHistogram(sc)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/photoBuffer_prev", methods=("GET", "POST"))
 @login_required
@@ -937,7 +1015,8 @@ def photoBuffer_prev():
             if sc.displayHistogram is None:
                 if sc.displayPhoto:
                     generateHistogram(sc)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/photoBuffer_next", methods=("GET", "POST"))
 @login_required
@@ -955,7 +1034,8 @@ def photoBuffer_next():
             if sc.displayHistogram is None:
                 if sc.displayPhoto:
                     generateHistogram(sc)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/show_photo", methods=("GET", "POST"))
 @login_required
@@ -969,7 +1049,8 @@ def show_photo():
     cp = cfg.cameraProperties
     if request.method == "POST":
         sc.isDisplayHidden = False
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/hide_photo", methods=("GET", "POST"))
 @login_required
@@ -983,7 +1064,8 @@ def hide_photo():
     cp = cfg.cameraProperties
     if request.method == "POST":
         sc.isDisplayHidden = True
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/clear_buffer", methods=("GET", "POST"))
 @login_required
@@ -996,8 +1078,9 @@ def clear_buffer():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     if request.method == "POST":
-        sc.displayBufferClear()        
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+        sc.displayBufferClear()
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/take_photo", methods=("GET", "POST"))
 @login_required
@@ -1018,19 +1101,22 @@ def take_photo():
             logger.debug("take_photo - success")
             logger.debug("take_photo - sc.displayContent: %s", sc.displayContent)
             if sc.displayContent == "hist":
-                logger.debug("take_photo - sc.displayHistogram: %s", sc.displayHistogram)
+                logger.debug(
+                    "take_photo - sc.displayHistogram: %s", sc.displayHistogram
+                )
                 if sc.displayHistogram is None:
                     logger.debug("take_photo - sc.displayPhoto: %s", sc.displayPhoto)
                     if sc.displayPhoto:
                         generateHistogram(sc)
-            msg="Image saved as " + fp
+            msg = "Image saved as " + fp
             flash(msg)
         else:
             msg = "Error in " + sc.errorSource + ": " + sc.error
             flash(msg)
             if sc.error2:
                 flash(sc.error2)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/take_raw_photo", methods=("GET", "POST"))
 @login_required
@@ -1045,7 +1131,10 @@ def take_raw_photo():
     if request.method == "POST":
         timeImg = datetime.datetime.now()
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
-        filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        if sc.activeCameraIsUsb == False:
+            filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.rawPhotoType
+        else:
+            filenameRaw = timeImg.strftime("%Y%m%d_%H%M%S") + ".tiff"
         logger.debug("Saving raw image %s", filenameRaw)
         fp = Camera().takeRawImage(filenameRaw, filename)
         if not sc.error:
@@ -1053,14 +1142,15 @@ def take_raw_photo():
                 if sc.displayHistogram is None:
                     if sc.displayPhoto:
                         generateHistogram(sc)
-            msg="Image saved as " + fp
+            msg = "Image saved as " + fp
             flash(msg)
         else:
             msg = "Error in " + sc.errorSource + ": " + sc.error
             flash(msg)
             if sc.error2:
                 flash(sc.error2)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/record_video", methods=("GET", "POST"))
 @login_required
@@ -1078,7 +1168,7 @@ def record_video():
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
         logger.debug("Recording a video %s", filenameVid)
         fp = Camera().recordVideo(filenameVid, filename)
-        #TODO: Check sleep time. This might lead to errors when stopping video within that time
+        # TODO: Check sleep time. This might lead to errors when stopping video within that time
         time.sleep(4)
         if not sc.error:
             if sc.displayContent == "hist":
@@ -1091,20 +1181,21 @@ def record_video():
                 sc.isVideoRecording = True
                 if sc.recordAudio:
                     sc.isAudioRecording = True
-                msg="Video saved as " + fp
+                msg = "Video saved as " + fp
                 flash(msg)
             else:
                 logger.debug("Video recording did not start")
                 sc.isVideoRecording = False
                 sc.isAudioRecording = False
-                msg="Video recording failed. Requested resolution too high "
+                msg = "Video recording failed. Requested resolution too high "
                 flash(msg)
         else:
             msg = "Error in " + sc.errorSource + ": " + sc.error
             flash(msg)
             if sc.error2:
                 flash(sc.error2)
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/stop_recording", methods=("GET", "POST"))
 @login_required
@@ -1121,20 +1212,21 @@ def stop_recording():
         Camera().stopVideoRecording()
         sc.isVideoRecording = False
         sc.isAudioRecording = False
-        #sleep a little bit to avoid race condition with restoreLiveStream in video thread
+        # sleep a little bit to avoid race condition with restoreLiveStream in video thread
         time.sleep(2)
-        msg="Video recording stopped"
+        msg = "Video recording stopped"
         flash(msg)
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
-def generateHistogram(sc:ServerConfig):
-    """ Generate a histogram for the specified image
-    """
+
+def generateHistogram(sc: ServerConfig):
+    """Generate a histogram for the specified image"""
     logger.debug("In generateHistogram ")
     import cv2
     import numpy as np
     from matplotlib import pyplot as plt
     import matplotlib
+
     matplotlib.use("agg")
 
     source = sc.photoRoot + "/" + sc.displayPhoto
@@ -1144,22 +1236,26 @@ def generateHistogram(sc:ServerConfig):
         logger.debug("generateHistogram - Created directory %s", destPath)
     file = sc.displayFile
     if not file.endswith(".jpg"):
-        file = file[:len(file)-4] + ".jpg"
+
+        file = file[: file.find(".")] + ".jpg"
     dest = destPath + "/" + file
     try:
-        plt.figure()    
+        plt.figure()
         img = cv2.imread(source)
-        color = ('b','g','r')
-        for i,col in enumerate(color):
-            histr = cv2.calcHist([img],[i],None,[256],[0,256],accumulate = False)
-            plt.plot(histr,color = col)
-            plt.xlim([0,256])
+        color = ("b", "g", "r")
+        for i, col in enumerate(color):
+            histr = cv2.calcHist([img], [i], None, [256], [0, 256], accumulate=False)
+            plt.plot(histr, color=col)
+            plt.xlim([0, 256])
         plt.savefig(dest)
         sc.displayHistogram = sc.cameraHistogramSubPath + "/" + file
-        logger.debug("In generateHistogram - Histogram success: %s", sc.displayHistogram)
+        logger.debug(
+            "In generateHistogram - Histogram success: %s", sc.displayHistogram
+        )
     except Exception as e:
         sc.displayHistogram = "histogramfailed.jpg"
         logger.error("Histogram generation error: %s", e)
+
 
 @bp.route("/show_histogram", methods=("GET", "POST"))
 @login_required
@@ -1177,7 +1273,8 @@ def show_histogram():
                 if sc.displayPhoto:
                     generateHistogram(sc)
             sc.displayContent = "hist"
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
 
 @bp.route("/show_metadata", methods=("GET", "POST"))
 @login_required
@@ -1191,4 +1288,4 @@ def show_metadata():
     cp = cfg.cameraProperties
     if request.method == "POST":
         sc.displayContent = "meta"
-    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)        
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
