@@ -2,7 +2,7 @@
 
 [![Up](img/goup.gif)](./Settings.md)
 
-On this Settings screen you can configure devices connected to the Raspberry Pi through GPIO.
+On this Settings screen you can configure devices connected to the Raspberry Pi through GPIO of the [40-pin header](#40-pin-gpio-header).
 
 ![Devices](./img/Settings_Devices.jpg)
 
@@ -180,3 +180,7 @@ The different elements are used for different purposes:
 - *eventSettings*<br>is a list of parameter assignments which will be set **before** callbacks are assigned to the event parameters.<br>An example is the ```threshold_distance``` which is required for ```DistanceSensor``` to distinguish between *in_range* and *out_of_range*.
 - *actionTargets*<br>occur in Output devices and identify methods which can be used in [Actions](./TriggerActions.md).<br>Whereas the sub-element "method" identifies the method name (which can be a method or a property which **raspiCamSrv** determines through inspection), the "params" element specifies the parameters which can be configured for the method call or the property assignment.<br>These parameters serve also as 'templates' for type checks which are done during [Action](./TriggerActions.md) configuration.
 - *control* elements<br>which can occur as sub-elements of "actionTarget" for Output devices as well as for Input devices, are not part of the class interface but are used to control specific behavior in **raspiCamSrv**.<br>For input devices it can, for example specify the ```bounce_time``` for software controlled bouncing suppression beyond that what might already be provided by *gpiozero*.<br>For Output devices and a specific action target, it can, for example specify a duration for which the action shall last, for example how long an LED shall be enlighted.
+
+## 40-Pin GPIO Header
+
+![GPIO Header](./img/GPIO_Pins.jpg)

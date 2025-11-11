@@ -29,7 +29,7 @@ If this option is shown, **raspiCamSrv** has identified at least one USB camera,
 
 If you enable use of USB cameras, the system will select one of the USB cameras as *Active Camera* and another one, if present, as *Second Camera*
 
-The UI will then automatically swithch to the mode with cameras ([Information](./Information.md))
+The UI will then automatically switch to the mode with cameras ([Information](./Information.md))
 
 ## API Access
 
