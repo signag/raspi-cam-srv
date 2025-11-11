@@ -37,6 +37,14 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V4.0.1
+
+### Bugfixes
+- Fixed error "Error \<class 'ValueError'\> : Class Camera has no element when_motion_detected"   
+Cause of the error was a wrong configuration for [Triggers](./TriggerTriggers.md) with *Source* 'Camera', which had included an event 'when_motion_detected'. This event is only available for *Source* 'MotionDetector'.    
+The wrong configuration is now corrected.    
+If you have configured a Trigger for event 'when_motion_detected' with *Source* 'Camera', you need to delete it and replace it with a trigger with *Source* 'MotionDetector'    
+This covers part of [raspi-cam-srv Discussion #77](https://github.com/signag/raspi-cam-srv/discussions/77).
 
 ## V4.0.0
 

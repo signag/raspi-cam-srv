@@ -1475,7 +1475,6 @@ class TriggerConfig():
                     "when_recording_stops",
                     "when_streaming_1_starts",
                     "when_streaming_1_stops",
-                    "when_motion_detected",
                 ]
                 control = {
                     "event_log": False
