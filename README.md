@@ -151,7 +151,7 @@ In case of problems during installation and usage, see [Troubleshooting](./docs/
 |4.  | Check that git is installed (which is usually the case in current Bullseye, Bookworm or Trixie distributions)<br>```git --version```<br>If git is not installed, install it with<br>```sudo apt install git```
 |5.  | Clone the raspi-cam-srv repository:<br>```git clone https://github.com/signag/raspi-cam-srv```
 |6.  | Create a virtual environment ('.venv') on the 'raspi-cam-srv' folder:<br>```cd raspi-cam-srv```<br>```python -m venv --system-site-packages .venv```<br>For the reasoning to include system site packages, see the [picamera2-manual.pdf](./docs/picamera2-manual.pdf), chapter 9.5.
-|7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt. (Use ```deactivate``` to leave the virtual environment)
+|7.  | Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt.<br>(If you need to leave the virtual environment at some time, use ```deactivate```)
 |8.  | **Trixie**: Skip this step!<br>Make sure that picamera2 is available on the system:<br>```python```<br>```>>>import picamera2```<br>```>>>quit()```<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
 |9.  | Install Flask 3.x **with the virtual environment activated (Step 7)**.<br>Raspberry Pi OS distributions come with Flask preinstalled, however we need to run Flask from the virtual environment in order to see other packages which will be located there.<br>```pip install --ignore-installed "Flask>=3,<4"```<br><br>Make sure that Flask is really installed in the virtual environment:<br>```which flask``` should output<br>```/home/<user>/prg/raspi-cam-srv/.venv/bin/flask```
 |10.  | **Optional** installations:<br>The following installations are only required if you need to visualize histograms for some of the [Photo Series](docs/PhotoSeries.md)<br>or if you are interested in using [Extended Motion Capturing Algorithms](./docs/TriggerMotion.md) or [Stereo Vision](./docs/CamStereo.md).<br>For use of USB cameras, OpenCV is required.<br><br>All installations must be done with the virtual environment activated (Step 7)<br><br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): <br>```sudo apt-get install python3-opencv```<br><br>Install [numpy](https://numpy.org/): <br>```pip install --ignore-installed numpy```<br>(There may be errors, which normally can be ignored)<br><br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): <br>**Trixie**:```pip install --ignore-installed matplotlib```<br>(There may be errors, which normally can be ignored) <br>**Bookworm**: ```pip install --ignore-installed "matplotlib<3.8"```<br>(The version restriction assures compatibility with numpy 1.x which is [required for Picamera2](https://github.com/raspberrypi/picamera2/issues/1211))<br><br>The following installation is required for enabling the [raspiCamSrv API](./docs/API.md)<br>Install [flask-jwt-extended](https://flask-jwt-extended.readthedocs.io/en/stable/): <br>```pip install --ignore-installed flask-jwt-extended```<br>(There may be errors, which normally can be ignored)
@@ -198,7 +198,7 @@ Instead of installing the service as a system unit, it needs to be installed as 
 
 #### Trixie and Bookworm Systems
 
-If your system is a bookworm system (```lsb_release -a```) follow these steps:
+If your system is a trixie or a bookworm system (```lsb_release -a```) follow these steps:
 
 |Step|Action
 |----|-----------------------------------------------
@@ -208,7 +208,7 @@ If your system is a bookworm system (```lsb_release -a```) follow these steps:
 |4.  | Create the directory for systemd user units<br>```mkdir -p ~/.config/systemd/user```
 |5.  | Stage the service configuration file to systemd for user units:<br>```cp ~/raspiCamSrv.service ~/.config/systemd/user```
 |6.  | Start the service:<br>```systemctl --user start raspiCamSrv.service```
-|7.  | Check that the Flask server has started as service:<br>```journalctl --user -ef```
+|7.  | Check that the Flask server has started as service:<br>```journalctl --user -ef```<br>If you get ```No journal files were found.```, try<br>```sudo journalctl -ef```
 |8.  | Enable the service so that it automatically starts with a session for the active user:<br>```systemctl --user enable raspiCamSrv.service```
 |9.  | Enable lingering in order to start the unit right after boot and keep it running independently from a user session<br>```loginctl enable-linger```
 |10.  | Reboot the system to test automatic server start:<br>```sudo reboot```

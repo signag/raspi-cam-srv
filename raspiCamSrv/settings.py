@@ -70,8 +70,16 @@ def serverconfig():
     sc.lastSettingsTab = "settingsparams"
     if request.method == "POST":
         msg = None
+        activeCam = int(request.form["activecamera"])
         if sc.isTriggerRecording:
             msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
+        if sc.isVideoRecording == True:
+            msg = "Please stop video recording before changing the tuning configuration"
+        if sc.isPhotoSeriesRecording:
+            msg = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
+        if not sc.secondCamera is None:
+            if activeCam == sc.secondCamera:
+                msg = "Active camera must be different from second camera. Use 'Switch Cameras in Cam/Multi-Cam' to swap the cameras."
         if not msg:
             if sc.noCamera == False:
                 photoType = request.form["phototype"]
@@ -80,18 +88,30 @@ def serverconfig():
                 sc.rawPhotoType = rawPhotoType
                 videoType = request.form["videotype"]
                 sc.videoType = videoType
-                activeCam = int(request.form["activecamera"])
+                recordAudio = not request.form.get("recordaudio") is None
+                sc.recordAudio = recordAudio        
+                audioSync = request.form["audiosync"]
+                sc.audioSync = audioSync
+                useStereo = not request.form.get("usestereo") is None
+                sc.useStereo = useStereo
+                useHist = not request.form.get("showhistograms") is None
+                if not useHist:
+                    sc.displayContent = "meta"
+                sc.useHistograms = useHist
+                sc.requireAuthForStreaming = not request.form.get("requireAuthForStreaming") is None
                 # If active camera has changed reset stream size to force adaptation of sensor mode
                 if activeCam != sc.activeCamera:
+                    sc.activeCamera = activeCam
                     cfg.liveViewConfig.stream_size = None
                     cfg.photoConfig.stream_size = None
                     cfg.rawConfig.stream_size = None
                     cfg.videoConfig.stream_size = None
-                    sc.activeCamera = activeCam
                     for cm in cs:
                         if activeCam == cm.num:
                             sc.activeCameraInfo = "Camera " + str(cm.num) + " (" + cm.model + ")"
                             sc.activeCameraModel = cm.model
+                            sc.activeCameraIsUsb = cm.isUsb
+                            sc.activeCameraUsbDev = cm.usbDev
                             break
                     strCfg = cfg.streamingCfg
                     newCamStr = str(activeCam)
@@ -106,17 +126,6 @@ def serverconfig():
                     Camera.switchCamera()
                     msg = "Camera switched to " + sc.activeCameraInfo
                     logger.debug("serverconfig - active camera set to %s", sc.activeCamera)
-                recordAudio = not request.form.get("recordaudio") is None
-                sc.recordAudio = recordAudio        
-                audioSync = request.form["audiosync"]
-                sc.audioSync = audioSync
-                useStereo = not request.form.get("usestereo") is None
-                sc.useStereo = useStereo
-                useHist = not request.form.get("showhistograms") is None
-                if not useHist:
-                    sc.displayContent = "meta"
-                sc.useHistograms = useHist
-                sc.requireAuthForStreaming = not request.form.get("requireAuthForStreaming") is None
             useUsbCameras = not request.form.get("useusbcameras") is None
 
             reloadCamInfoNeeded = False

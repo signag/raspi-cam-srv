@@ -290,9 +290,9 @@ def change_active_camera():
             if sc.isTriggerRecording:
                 msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
             if sc.isVideoRecording == True:
-                msg = "Please stop video recording before changing the tuning configuration"
+                msg = "Please stop video recording before changing the camera"
             if sc.isPhotoSeriesRecording:
-                msg = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
+                msg = "Please go to 'Photo Series' and stop the active process before changing the camera"
             if newCam == secondCamera:
                 msg = "Active camera must be different from second camera. Use 'Switch Cameras' to swap the cameras."
             if not msg:

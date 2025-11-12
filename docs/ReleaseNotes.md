@@ -10,6 +10,8 @@ Before updating, make sure that
 - [triggered capture](./Trigger.md) (motion tracking) is stopped
 - server will not [start with stored configuration](./SettingsConfiguration.md)
 
+It is recommended configuring [Versatile Buttons](./ConsoleVButtons.md) for the commands described in the following, so that update and server restart can be initiated directly from the Web UI.
+
 For update, proceed as follows:    
 (If running a Docker container see [Update Procedure for Docker Container](./SetupDocker.md#update-procedure))
 
@@ -36,6 +38,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - Check whether a file ```_loadConfigOnStart.txt``` exists in this folder.
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
+
+## V4.0.2
+
+### Bugfixes
+
+- Fixed error which occurred when changing the *Active Camera* in [Settings](./Settings.md) to a USB camera
 
 ## V4.0.1
 
