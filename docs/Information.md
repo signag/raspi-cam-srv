@@ -33,6 +33,8 @@ The time shown here is the system time at the moment when the check for time syn
 raspiCamSrv analyzes the output of command ```timedatectl``` to check the system clock synchronization status.    
 If this check fails or times out (60 sec), raspiCamSrv will start nevertheless. In this case, the information "System time not synced at raspiCamSrv start" will be shown here.
 
+*Software Stack* shows information on installed packages with Verion (*Ver*) and the path from which the packages were loaded (*Loc*).
+
 ### Camera x
 
 The tab lists all cameras currently connected to the system.

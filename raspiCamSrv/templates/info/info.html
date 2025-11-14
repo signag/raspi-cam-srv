@@ -95,6 +95,46 @@
                 <td>{{sc.serverStartTimeStr}}</td>
                 <td></td>
             </tr>
+            <tr>
+                <td>Software Stack:</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Python</td>
+                <td>{{sc.pythonInfo}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Flask</td>
+                <td>{{sc.flaskInfo}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Picamera2</td>
+                <td>{{sc.picamera2Info}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>OpenCV</td>
+                <td>{{sc.openCvInfo}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>numpy</td>
+                <td>{{sc.numpyInfo}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>matplotlib</td>
+                <td>{{sc.matplotlibInfo}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>flask_jwt_extended</td>
+                <td>{{sc.flask_jwt_extended}}</td>
+                <td></td>
+            </tr>
         </table>
         {% for cam in cs %}
         {% if cam.num == sc.activeCamera %}

@@ -39,6 +39,12 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V4.0.3
+
+### Extension
+
+- In the [Info](./Information.md) dialog, the section [Raspberry Pi](./Information.md#installed-cameras) was extended with information on the software stack, which can be helpful analyzing errors which could occur with specific versions or installation details.
+
 ## V4.0.2
 
 ### Bugfixes

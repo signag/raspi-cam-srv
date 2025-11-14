@@ -19,6 +19,7 @@ import zoneinfo
 from secrets import token_urlsafe
 import threading
 from time import sleep
+import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -5224,6 +5225,141 @@ class ServerConfig():
                             if pin in pins:
                                 pins.remove(pin)
         return pins
+        
+    @property
+    def pythonInfo(self) -> str:
+        """Get Python version and location
+        """
+        info = ""
+        try:
+            import sys
+            version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            ex = sys.executable
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except Exception as e:
+            info = f"Error: {e}"
+        return info
+
+    @property
+    def flaskInfo(self) -> str:
+        """Get version and location of Flask module
+        """
+        info = ""
+        try:
+            import flask
+            version = importlib.metadata.version("flask")
+            ex = os.path.dirname(flask.__file__)
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
+
+    @property
+    def picamera2Info(self) -> str:
+        """Get version and location of picamera2 module
+        """
+        info = ""
+        try:
+            import picamera2
+            version = importlib.metadata.version("picamera2")
+            ex = os.path.dirname(picamera2.__file__)
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
+
+    @property
+    def openCvInfo(self) -> str:
+        """Get version and location of openCV module
+        """
+        info = ""
+        try:
+            import cv2
+            version = cv2.__version__
+            path = os.path.dirname(cv2.__file__)
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
+
+    @property
+    def numpyInfo(self) -> str:
+        """Get version and location of numpy module
+        """
+        info = ""
+        try:
+            import numpy
+            version = importlib.metadata.version("numpy")
+            ex = os.path.dirname(numpy.__file__)
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
+
+    @property
+    def matplotlibInfo(self) -> str:
+        """Get version and location of matplotlib module
+        """
+        info = ""
+        try:
+            import matplotlib
+            version = importlib.metadata.version("matplotlib")
+            ex = os.path.dirname(matplotlib.__file__)
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
+
+    @property
+    def flask_jwt_extended(self) -> str:
+        """Get version and location of flask_jwt_extended module
+        """
+        info = ""
+        try:
+            import flask_jwt_extended
+            version = importlib.metadata.version("flask_jwt_extended")
+            ex = os.path.dirname(flask_jwt_extended.__file__)
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
 
     def _checkModule(self, moduleName: str):
         logger.debug("_checkModule for module: %s", moduleName)
