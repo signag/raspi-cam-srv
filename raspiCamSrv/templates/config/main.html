@@ -73,10 +73,18 @@
                             <label for="syncaspectratio">Sync Aspect Ratio:</label>
                         </td>
                         <td >
+                            {% if sc.activeCameraIsUsb == False %}
                             {% if sc.syncAspectRatio == true %}
                             <input type="checkbox" id="syncaspectratio" name="syncaspectratio" aria-label="SyncAspectRatio" onchange="syncAspectRatio('syncaspectratiofrm')" value="1" checked>
                             {% else %}
                             <input type="checkbox" id="syncaspectratio" name="syncaspectratio" aria-label="SyncAspectRatio" onchange="syncAspectRatio('syncaspectratiofrm')" value="0">
+                            {% endif %}
+                            {% else %}
+                            {% if sc.syncAspectRatio == true %}
+                            <input type="checkbox" id="syncaspectratio" name="syncaspectratio" aria-label="SyncAspectRatio" onchange="syncAspectRatio('syncaspectratiofrm')" value="1" checked disabled>
+                            {% else %}
+                            <input type="checkbox" id="syncaspectratio" name="syncaspectratio" aria-label="SyncAspectRatio" onchange="syncAspectRatio('syncaspectratiofrm')" value="0" disabled>
+                            {% endif %}
                             {% endif %}
                         </td>
                     </tr>
@@ -394,10 +402,12 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.sensor_mode == "custom" %}
                                 <option value="custom" selected>Custom</option>
                                 {% else %}
                                 <option value="custom">Custom</option>
+                                {% endif %}
                                 {% endif %}
                             </select>
                         </td>
@@ -792,10 +802,12 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.sensor_mode == "custom" %}
                                 <option value="custom" selected>Custom</option>
                                 {% else %}
                                 <option value="custom">Custom</option>
+                                {% endif %}
                                 {% endif %}
                             </select>
                         </td>
@@ -1076,7 +1088,7 @@
                             {% if cfg.transform_hflip == true %}
                             <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip" value="1" checked>
                             {% else %}
-                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip value="0">
+                            <input type="checkbox" id="{{ cfgId }}_transform_hflip" name="{{ cfgId }}_transform_hflip" aria-label="{{ cfgId }}_transform_hflip" value="0">
                             {% endif %}
                         </td>
                         <td style="width:10%">
@@ -1190,10 +1202,12 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.sensor_mode == "custom" %}
                                 <option value="custom" selected>Custom</option>
                                 {% else %}
                                 <option value="custom">Custom</option>
+                                {% endif %}
                                 {% endif %}
                             </select>
                         </td>
@@ -1561,10 +1575,12 @@
                                 <option value="{{ mode.id }}">Sensor Mode {{ mode.id }}</option>
                                 {% endif %}
                                 {% endfor%}
+                                {% if sc.activeCameraIsUsb == False %}
                                 {% if cfg.sensor_mode == "custom" %}
                                 <option value="custom" selected>Custom</option>
                                 {% else %}
                                 <option value="custom">Custom</option>
+                                {% endif %}
                                 {% endif %}
                             </select>
                         </td>

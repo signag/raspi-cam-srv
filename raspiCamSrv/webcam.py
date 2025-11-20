@@ -101,6 +101,7 @@ def store_streaming_config():
     sc.lastCamTab = "multicam"
     if request.method == "POST":
         scfg = cfg.streamingCfg[str(sc.activeCamera)]
+        scfg["cameraproperties"] = copy.deepcopy(cfg.cameraProperties)
         if sc.activeCameraIsUsb == False:
             scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
         scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
@@ -143,6 +144,7 @@ def sync_settings():
     if request.method == "POST":
         if sc.activeCameraInfo[8:] == str2["camerainfo"][8:]:
             scfg = cfg.streamingCfg[str(Camera().camNum2)]
+            scfg["cameraproperties"] = copy.deepcopy(cfg.cameraProperties)
             if sc.activeCameraIsUsb == False:
                 scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
             scfg["liveconfig"] = copy.deepcopy(cfg.liveViewConfig)
@@ -368,6 +370,12 @@ def change_second_camera():
         if newCam != sc.secondCamera:
             if newCam == activeCam:
                 msg = "Second camera must be different from active camera. Use 'Switch Cameras' to swap the cameras."
+            # if not msg:
+                #if newCamIsUsb == True:
+                #    # Switching the second camera to a USB camera requires existance of a streaming config
+                #    newCamStr = str(newCam)
+                #    if newCamStr not in cfg.streamingCfg:
+                #        msg = f"This selected USB camera {newCamInfo} is not yet properly configured. Please open it as active camera first."
             if not msg:
                 sc.secondCamera = newCam
                 sc.secondCameraInfo = newCamInfo

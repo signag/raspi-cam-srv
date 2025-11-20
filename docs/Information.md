@@ -155,7 +155,7 @@ For each camera, the information provided by Picamera2 includes
 
  In **raspiCamSrv**, USB cameras are accessed through [OpenCV](https://opencv.org/) rather than through Picamera2, which provides only very limited support for USB cameras.
 
- However, with OpenCV, a camera cannot by accessed through the Picamera2 camera number (```Num```).    
+ However, with OpenCV, a camera cannot be accessed through the Picamera2 camera number (```Num```).    
  Instead, the ```/dev/videoX``` of the Linux kernel must be used.
 
  For mapping of the Picamera2 camera number (```Num```) to the device number, **raspiCamSrv** uses the following algorithm:
@@ -369,3 +369,51 @@ ioctl: VIDIOC_ENUM_FMT
 From this output the list of sensor modes is generated with information on Size and Format.
 
 The FPS, stored for each sensor mode is the maximum value of fps found for each format.
+
+## Determining supported Controls
+
+Every USB Camera advertises a list of controls which can be used to adjust focus or image appearance.
+
+Supported controls are determined with the v4l2 through (e.g.):
+
+```v4l2-ctl --device=/dev/video12 --list-ctrls```
+
+giving:
+
+```
+User Controls
+
+                     brightness 0x00980900 (int)    : min=0 max=255 step=1 default=128 value=128
+                       contrast 0x00980901 (int)    : min=0 max=255 step=1 default=128 value=128
+                     saturation 0x00980902 (int)    : min=0 max=255 step=1 default=128 value=128
+        white_balance_automatic 0x0098090c (bool)   : default=1 value=0
+                           gain 0x00980913 (int)    : min=0 max=255 step=1 default=0 value=0
+           power_line_frequency 0x00980918 (menu)   : min=0 max=2 default=2 value=2 (60 Hz)
+      white_balance_temperature 0x0098091a (int)    : min=2000 max=7500 step=10 default=4000 value=3000
+                      sharpness 0x0098091b (int)    : min=0 max=255 step=1 default=128 value=128
+         backlight_compensation 0x0098091c (int)    : min=0 max=1 step=1 default=1 value=1
+
+Camera Controls
+
+                  auto_exposure 0x009a0901 (menu)   : min=0 max=3 default=3 value=3 (Aperture Priority Mode)
+         exposure_time_absolute 0x009a0902 (int)    : min=3 max=2047 step=1 default=250 value=312 flags=inactive
+     exposure_dynamic_framerate 0x009a0903 (bool)   : default=0 value=0
+                   pan_absolute 0x009a0908 (int)    : min=-36000 max=36000 step=3600 default=0 value=0
+                  tilt_absolute 0x009a0909 (int)    : min=-36000 max=36000 step=3600 default=0 value=0
+                 focus_absolute 0x009a090a (int)    : min=0 max=255 step=5 default=0 value=10 flags=inactive
+     focus_automatic_continuous 0x009a090c (bool)   : default=1 value=1
+                  zoom_absolute 0x009a090d (int)    : min=100 max=500 step=1 default=100 value=100
+```
+
+**raspiCamSrv** analyzes this list with respect to a limited set of controls and registers
+- control name
+- value data type
+- minimum value
+- maximum value
+- default value
+
+For the active camera, this information is appended to the Camera Controls data structure (see [Server Configuration Storage](./SettingsConfiguration.md#server-configuration-storage)), which will also be transferred to the Streaming Configuration in case of multiple cameras.
+
+In order to establish this data structure, USB cameras need to be activated once as *Active Camera*.
+
+The controls information is cused to customize the [Camera Controls](./CameraControls.md#camera-controls-for-usb-cameras) screens when a USB camera is the *Active Camera*.

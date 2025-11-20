@@ -223,7 +223,11 @@
                     {% if sc.isLiveStream %}
                     <form id="activecameraform" method="post" action="{{ url_for('webcam.change_active_camera') }}">
                         <h3 style="margin: 0px;">Active: Camera&nbsp;
+                            {% if cfg.streamingCfgInvalid == True %}
+                            <select name="activecamera" id="activecamera" onchange="confirmSwitchCamera('activecameraform')">
+                            {% else %}
                             <select name="activecamera" id="activecamera" onchange="doSubmit('activecameraform')">
+                            {% endif %}
                             {% for cam in cs %}
                                 {% if cam.usbDev != "UNKNOWN" %}
                                 {% if sc.secondCamera != cam.num %}

@@ -39,6 +39,19 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V4.1.0
+
+### New Features
+
+- [Zoom and Pan](./ZoomPan.md) are now also available for USB Cameras.
+- [Focus handling and Image Controls](./CameraControls.md#camera-controls-for-usb-cameras) are now available for USB Cameras.    
+**NOTE** These features have currently been tested with different Logitech cameras. Please notify if other cameras show unexpected behavior.
+
+### Changes
+
+- For USB cameras, it is no longer possible to choose *Sensor Mode* "Custom" for the different [Configuration](./Configuration.md) scenarios. Practical experience with web cams has shown that these do not support other image sizes as those defined in the discrete formats (sensor modes). The camera would always use the smallest standard format which entirely contains the specified area. Therefore, it does not make sense allowing the specification of a custom format, if the camera will not use it.
+- For USB cameras, the aspect ratio for *Stream Size* of different [Configuration](./Configuration.md) use cases is not synchronized. For these cameras, the checkbox [Sync Aspect Ratio](./Configuration.md#configuration-tab) is unchecked and disabled.
+
 ## V4.0.3
 
 ### Extension

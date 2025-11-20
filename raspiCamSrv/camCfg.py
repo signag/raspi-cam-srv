@@ -1849,6 +1849,7 @@ class CameraControls():
         self.include_scalerCrop = False
         self._sharpness = 1.0
         self.include_sharpness = False
+        self.usbCamControls = {}
 
     def dict(self) -> dict:
         dict={}
@@ -2003,11 +2004,8 @@ class CameraControls():
     
     @lensPosition.setter
     def lensPosition(self, value: float):
-        if value >= 0.0 \
-        and value <= 32.0:
-            self._lensPosition = value
-        else:
-            raise ValueError("Invalid value for lens position. Allowed range is (0,32)")
+        self._lensPosition = value
+
     @lensPosition.deleter
     def lensPosition(self):
         del self._lensPosition
@@ -2020,6 +2018,7 @@ class CameraControls():
             fd = 1.0 / self._lensPosition
             fd = int(1000 * fd)/1000
             return fd
+
     @focalDistance.setter
     def focalDistance(self, value: float):
         if value > 0:
@@ -2221,11 +2220,7 @@ class CameraControls():
 
     @brightness.setter
     def brightness(self, value: float):
-        if value >= -1.0 \
-        and value <= 1.0:
-            self._brightness = value
-        else:
-            raise ValueError("Invalid value for brightness. Allowed range is [-1;1]")
+        self._brightness = value
 
     @brightness.deleter
     def brightness(self):
@@ -2266,11 +2261,7 @@ class CameraControls():
 
     @contrast.setter
     def contrast(self, value: float):
-        if value >= 0.0 \
-        and value <= 32.0:
-            self._contrast = value
-        else:
-            raise ValueError("Invalid value for contrast. Must be in range [0.0, 32.0]")
+        self._contrast = value
 
     @contrast.deleter
     def contrast(self):
@@ -2384,11 +2375,7 @@ class CameraControls():
 
     @saturation.setter
     def saturation(self, value: float):
-        if value >= 0.0 \
-        and value <= 32.0:
-            self._saturation = value
-        else:
-            raise ValueError("Invalid value for saturation. Must be in range [0.0;32.0]")
+        self._saturation = value
 
     @saturation.deleter
     def saturation(self):
@@ -2400,16 +2387,24 @@ class CameraControls():
 
     @sharpness.setter
     def sharpness(self, value: float):
-        if value >= 0.0 \
-        and value <= 16.0:
-            self._sharpness = value
-        else:
-            raise ValueError("Invalid value for sharpness. Must be in range [0.0;16.0]")
+        self._sharpness = value
 
     @sharpness.deleter
     def sharpness(self):
         del self._sharpness
     
+    @property
+    def usbCamControls(self) -> dict:
+        return self._usbCamControls
+
+    @usbCamControls.setter
+    def usbCamControls(self, value: dict):
+        self._usbCamControls = value
+
+    @usbCamControls.deleter
+    def usbCamControls(self):
+        del self._usbCamControls
+
     @staticmethod    
     def _parseWindows(wins: str) -> list:
         """  Parses the tuple-string of one or multiple rectangles
@@ -2468,6 +2463,8 @@ class CameraControls():
                         afw = (tuple(el),)
                         afws += afw
                     setattr(cc, key, afws)
+                elif key == "_usbCamControls":
+                    setattr(cc, key, value)
                 else:
                     setattr(cc, key, value)
         return cc
@@ -2993,6 +2990,27 @@ class CameraProperties():
     @colorSpace.deleter
     def colorSpace(self):
         del self._colorSpace
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        cp = CameraProperties()
+        for key, value in dict.items():
+            if value is None:
+                setattr(cp, key, value)
+            else:
+                if key == "_pixelArraySize":
+                    setattr(cp, key, tuple(value))
+                elif key == "_scalerCropMaximum":
+                    setattr(cp, key, tuple(value))
+                elif key == "_pixelArrayActiveAreas":
+                    paas = ()
+                    for el in value:
+                        paa = (tuple(el),)
+                        paas += paa
+                    setattr(cp, key, paas)
+                else:
+                    setattr(cp, key, value)
+        return cp
 
 class vButton():
     """ Versatile button
@@ -6681,6 +6699,8 @@ class CameraCfg():
                         scfg["controls"] = CameraControls.initFromDict(value)
                     elif key == "tuningconfig":
                         scfg["tuningconfig"] = TuningConfig.initFromDict(value)
+                    elif key == "cameraproperties":
+                        scfg["cameraproperties"] = CameraProperties.initFromDict(value)
                     else:
                         scfg[key] = value
                 sc[camKey] = scfg
@@ -6759,7 +6779,7 @@ class CameraCfg():
         usbDev = self.serverConfig.activeCameraUsbDev
 
         cfgProps = CameraProperties()
-        cfgProps.hasFocus = False  # Assume no focus control for USB cameras
+        #cfgProps.hasFocus = False  # Assume no focus control for USB cameras
         cfgProps.hasFlicker = False  # Assume no flicker control for USB cameras
         cfgProps.hasHdr = False  # Assume no HDR control for USB cameras
         cfgProps.unitCellSize = None
@@ -6927,3 +6947,162 @@ class CameraCfg():
         self.rawFormats = cfgRawFormats
         logger.debug("CameraCfg.setUsbSensorModes - sensor modes found")
         return True
+
+    def setUsbCamControls(self):
+        """Set the controls of the active USB camera from v4l2-ctl output
+        """
+        logger.debug("CameraCfg.setUsbCamControls")
+
+        try:
+            usbDev = self.serverConfig.activeCameraUsbDev
+            # Run v4l2-ctl
+            result = subprocess.run(
+                ["v4l2-ctl", "-d", usbDev, "--list-ctrls"],
+                capture_output=True, text=True
+            )
+
+            lines = result.stdout.strip().split("\n")
+            controls = {}
+
+            # Regex for the format:
+            # name HEX (type) : min=... max=... step=... default=...
+            regex = re.compile(
+                r"^(?P<name>[\w\-]+)\s+"
+                r"(?P<hex>0x[0-9a-fA-F]+)\s+"
+                r"\((?P<type>\w+)\)\s*:\s*"
+                r"(?:min=(?P<min>-?\d+))?\s*"
+                r"(?:max=(?P<max>-?\d+))?\s*"
+                r"(?:step=(?P<step>-?\d+))?\s*"
+                r"(?:default=(?P<default>-?\d+))?",
+                re.IGNORECASE
+            )
+
+            for line in lines:
+                line = line.strip()
+                match = regex.search(line)
+                if match:
+                    info = match.groupdict()
+
+                    # Convert numeric fields
+                    for key in ("min", "max", "step", "default"):
+                        if info[key] is not None:
+                            info[key] = int(info[key])
+
+                    name = info["name"]
+                    info.pop("name")
+                    info.pop("hex")
+                    controls[name] = info
+
+            logger.debug("CameraCfg.setUsbCamControls - %s USB camera controls found", len(controls))
+
+        except CalledProcessError as e:
+            logger.error("CameraCfg.setUsbCamControls - CalledProcessError: %s", e)
+            pass
+        except Exception as e:
+            logger.error("CameraCfg.setUsbCamControls - Exception: %s", e)
+            pass
+
+        # Map USB camera controls to standard controls
+        ctrl = self.controls
+        usbCC = ctrl.usbCamControls
+        if "focus_automatic_continuous" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "focus_automatic_continuous"
+            usbCtrl["type"] = controls["focus_automatic_continuous"]["type"]
+            mapping = {}
+            mapping["0"] = 0 # Manual focus
+            mapping["1"] = 1 # Auto focus
+            mapping["2"] = 1 # Continuous auto focus
+            usbCtrl["mapping"] = mapping
+            usbCC["AfMode"] = usbCtrl
+            ctrl.afMode = 2  # Default to auto focus
+            logger.debug("CameraCfg.setUsbCamControls - Camera has focus control include_afMode = %s", ctrl.include_afMode)
+            self.cameraProperties.hasFocus = True
+        if "focus_absolute" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "focus_absolute"
+            usbCtrl["type"] = controls["focus_absolute"]["type"]
+            usbCtrl["min"] = controls["focus_absolute"]["min"]
+            usbCtrl["max"] = controls["focus_absolute"]["max"]
+            usbCtrl["step"] = controls["focus_absolute"]["step"]
+            usbCtrl["default"] = controls["focus_absolute"]["default"]
+            if usbCtrl["default"] < usbCtrl["min"] or usbCtrl["default"] > usbCtrl["max"]:
+                usbCtrl["default"] = int((usbCtrl["min"] + usbCtrl["max"]) / 2)
+            usbCC["LensPosition"] = usbCtrl
+            if usbCtrl["default"] != 0:
+                ctrl.lensPosition = 1.0 / usbCtrl["default"]
+            else:
+                ctrl.lensPosition = 9999.0  # Set to max
+        if "white_balance_automatic" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "white_balance_automatic"
+            usbCtrl["type"] = controls["white_balance_automatic"]["type"]
+            mapping = {}
+            mapping["0"] = 0  # Manual WB
+            mapping["1"] = 1  # Auto WB
+            usbCtrl["mapping"] = mapping
+            usbCC["AwbEnable"] = usbCtrl
+            ctrl.awbEnable = 1  # Default to auto WB
+        if "white_balance_temperature" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "white_balance_temperature"
+            usbCtrl["type"] = controls["white_balance_temperature"]["type"]
+            mapping = {}
+            mapping["0"] = 2000  # Tungsten
+            mapping["2"] = 3000  # Tungsern
+            mapping["3"] = 4000  # Fluorescent
+            mapping["4"] = 3200  # Indoor
+            mapping["5"] = 5300  # Daylight
+            mapping["6"] = 6200  # Cloudy
+            mapping["7"] = 6500  # Cloudy
+            usbCtrl["mapping"] = mapping
+            usbCC["AwbMode"] = usbCtrl
+            ctrl.awbMode = 5  # Default to daylight
+        if "brightness" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "brightness"
+            usbCtrl["type"] = controls["brightness"]["type"]
+            usbCtrl["min"] = controls["brightness"]["min"]
+            usbCtrl["max"] = controls["brightness"]["max"]
+            usbCtrl["step"] = controls["brightness"]["step"]
+            usbCtrl["default"] = controls["brightness"]["default"]
+            if usbCtrl["default"] < usbCtrl["min"] or usbCtrl["default"] > usbCtrl["max"]:
+                usbCtrl["default"] = int((usbCtrl["min"] + usbCtrl["max"]) / 2)
+            usbCC["Brightness"] = usbCtrl
+            ctrl.brightness = usbCtrl["default"]
+        if "contrast" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "contrast"
+            usbCtrl["type"] = controls["contrast"]["type"]
+            usbCtrl["min"] = controls["contrast"]["min"]
+            usbCtrl["max"] = controls["contrast"]["max"]
+            usbCtrl["step"] = controls["contrast"]["step"]
+            usbCtrl["default"] = controls["contrast"]["default"]
+            if usbCtrl["default"] < usbCtrl["min"] or usbCtrl["default"] > usbCtrl["max"]:
+                usbCtrl["default"] = int((usbCtrl["min"] + usbCtrl["max"]) / 2)
+            usbCC["Contrast"] = usbCtrl
+            ctrl.contrast = usbCtrl["default"]
+        if "saturation" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "saturation"
+            usbCtrl["type"] = controls["saturation"]["type"]
+            usbCtrl["min"] = controls["saturation"]["min"]
+            usbCtrl["max"] = controls["saturation"]["max"]
+            usbCtrl["step"] = controls["saturation"]["step"]
+            usbCtrl["default"] = controls["saturation"]["default"]
+            if usbCtrl["default"] < usbCtrl["min"] or usbCtrl["default"] > usbCtrl["max"]:
+                usbCtrl["default"] = int((usbCtrl["min"] + usbCtrl["max"]) / 2)
+            usbCC["Saturation"] = usbCtrl
+            ctrl.saturation = usbCtrl["default"]
+        if "sharpness" in controls:
+            usbCtrl = {}
+            usbCtrl["ctrlName"] = "sharpness"
+            usbCtrl["type"] = controls["sharpness"]["type"]
+            usbCtrl["min"] = controls["sharpness"]["min"]
+            usbCtrl["max"] = controls["sharpness"]["max"]
+            usbCtrl["step"] = controls["sharpness"]["step"]
+            usbCtrl["default"] = controls["sharpness"]["default"]
+            if usbCtrl["default"] < usbCtrl["min"] or usbCtrl["default"] > usbCtrl["max"]:
+                usbCtrl["default"] = int((usbCtrl["min"] + usbCtrl["max"]) / 2)
+            usbCC["Sharpness"] = usbCtrl
+            ctrl.sharpness = usbCtrl["default"]

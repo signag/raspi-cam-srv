@@ -78,6 +78,7 @@ RaspiCamSrv's Live page
                 <div>
                     <form method="post" id="formfocuscontrol" action="{{ url_for('home.focus_control') }}">
                         <table class="w3-table-all">
+                            {% if sc.activeCameraIsUsb == False or "AfMode" in cc.usbCamControls %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afMode == True %}
@@ -118,6 +119,18 @@ RaspiCamSrv's Live page
                                     </select>
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False or "LensPosition" in cc.usbCamControls %}
+                            {% if sc.activeCameraIsUsb == False %}
+                            {% set min = "0.001" %}
+                            {% set max = "999" %}
+                            {% set step = "0.001" %}
+                            {% else %}
+                            {% set min = cc.usbCamControls["LensPosition"]["min"] %}
+                            {% set max = cc.usbCamControls["LensPosition"]["max"] %}
+                            {% set step = cc.usbCamControls["LensPosition"]["step"] %}
+                            {% set default = cc.usbCamControls["LensPosition"]["default"] %}
+                            {% endif %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_lensPosition == True %}
@@ -130,18 +143,31 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                        The focal distance in m. <br>(pressing Enter will automatially submit)
+                                        {% if sc.activeCameraIsUsb == False %}
+                                        The focal distance in m. <br>(pressing Enter will automatically submit)
+                                        {% else %}
+                                        The focal distance for the USB camera. <br>
+                                        Range: {{ min }} ... {{ max }}. <br>
+                                        Default: {{ default }} <br>
+                                        (pressing Enter will automatically submit)
+                                        {% endif %}
                                     </span>
+                                    {% if sc.activeCameraIsUsb == False %}
                                     <label for="fdist">Focal Distance [m]:</label>
+                                    {% else %}
+                                    <label for="fdist">Focus:</label>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if cc.include_lensPosition == True %}
-                                    <input type="number" id="fdist" name="fdist" min="0.001" max="999" step="0.001" value="{{ cc.focalDistance }}">
+                                    <input type="number" id="fdist" name="fdist" min="{{ min }}" max="{{ max }}" step="{{ step }}" value="{{ cc.focalDistance }}">
                                     {% else %}
-                                    <input type="number" id="fdist" name="fdist" min="0.001" max="999" step="0.001" value="{{ cc.focalDistance }}" disabled>
+                                    <input type="number" id="fdist" name="fdist" min="{{ min }}" max="{{ max }}" step="{{ step }}" value="{{ cc.focalDistance }}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afMetering == True %}
@@ -177,6 +203,8 @@ RaspiCamSrv's Live page
                                     </select>
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afPause == True %}
@@ -217,6 +245,8 @@ RaspiCamSrv's Live page
                                     </select>
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afRange == True %}
@@ -257,6 +287,8 @@ RaspiCamSrv's Live page
                                     </select>
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afSpeed == True %}
@@ -292,6 +324,8 @@ RaspiCamSrv's Live page
                                     </select>
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_afWindows == True %}
@@ -323,6 +357,7 @@ RaspiCamSrv's Live page
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% endif %}
                         </table>
                     </form>
                     <p style="margin-bottom: 0; margin-top: 5px"></p>
@@ -330,11 +365,16 @@ RaspiCamSrv's Live page
                         <tr>
                             <td style="width: 50%">
                                 <input class="w3-button w3-black" onclick="enableAfWindows()" form="formfocuscontrol" type="submit" value="Submit">
+                            </td>
+                            {% if sc.activeCameraIsUsb == False %}
                             <td style="width: 50%">
                                 <form method="post" action="{{ url_for('home.trigger_autofocus') }}">
                                     <input class="w3-button w3-black" type="submit" value="Trigger Autofocus">
                                 </form>
                             </td>
+                            {% else %}
+                            <td></td>
+                            {% endif %}
                         </tr>
                     </table>
                 </div>
@@ -349,9 +389,6 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Zoom & Pan -->
                 <h4>Zoom and pan</h4>
-                {% if sc.activeCameraIsUsb == True %}
-                <p>Not yet available for USB cameras</p>
-                {% else %}
                 <div>
                     <form id="zoomform" method="post" action="{{ url_for('home.set_zoom') }}">
                         <table class="w3-table-all">
@@ -534,7 +571,6 @@ RaspiCamSrv's Live page
                         </tr>
                     </table>
                 </div>
-                {% endif %}
             </div>
             {% if sc.lastLiveTab == "autoexposure" %}
             <div id="autoexposure" class="w3-container controlgroup">
@@ -544,7 +580,7 @@ RaspiCamSrv's Live page
                 <!-- Control settings for auto-exposure -->
                 <h4>Auto Exposure</h4>
                 {% if sc.activeCameraIsUsb == True %}
-                <p>Not yet available for USB cameras</p>
+                <p>Not available for this camera</p>
                 {% else %}
                 <div>
                     <form method="post" action="{{ url_for('home.ae_control') }}">
@@ -803,7 +839,7 @@ RaspiCamSrv's Live page
                 <!-- Control settings for manual exposure control -->
                 <h4>Exposure</h4>
                 {% if sc.activeCameraIsUsb == True %}
-                <p>Not yet available for USB cameras</p>
+                <p>Not available for this camera</p>
                 {% else %}
                 <div>
                     <form method="post" action="{{ url_for('home.exposure_control') }}">
@@ -1030,12 +1066,10 @@ RaspiCamSrv's Live page
             {% endif %}
                 <!-- Control settings for other image parameters -->
                 <h4>Image</h4>
-                {% if sc.activeCameraIsUsb == True %}
-                <p>Not yet available for USB cameras</p>
-                {% else %}
                 <div>
                     <form method="post" action="{{ url_for('home.image_control') }}">
                         <table class="w3-table-all">
+                            {% if sc.activeCameraIsUsb == False or "AwbEnable" in cc.usbCamControls %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_awbEnable == True %}
@@ -1070,6 +1104,8 @@ RaspiCamSrv's Live page
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False or "AwbMode" in cc.usbCamControls %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_awbMode == True %}
@@ -1130,6 +1166,8 @@ RaspiCamSrv's Live page
                                         </select>
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_noiseReductionMode == True %}
@@ -1176,6 +1214,18 @@ RaspiCamSrv's Live page
                                         </select>
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False or "Sharpness" in cc.usbCamControls %}
+                            {% if sc.activeCameraIsUsb == False %}
+                            {% set min = "0.0" %}
+                            {% set max = "16.0" %}
+                            {% set step = "0.1" %}
+                            {% else %}
+                            {% set min = cc.usbCamControls["Sharpness"]["min"] %}
+                            {% set max = cc.usbCamControls["Sharpness"]["max"] %}
+                            {% set step = cc.usbCamControls["Sharpness"]["step"] %}
+                            {% set default = cc.usbCamControls["Sharpness"]["default"] %}
+                            {% endif %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_sharpness == True %}
@@ -1188,24 +1238,42 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        {% if sc.activeCameraIsUsb == False %}
                                         Sets the image sharpness, where zero implies
                                         no additional sharpening is performed, 1.0 is
                                         the default "normal" level of sharpening, and
                                         larger values apply proportionately stronger
                                         sharpening.
+                                        {% else %}
+                                        Sets the image sharpness for the USB camera.<br> 
+                                        Range: ({{ min }}, {{ max }}).<br>
+                                        Default: {{ default }}.
+                                        {% endif %}
                                     </span>
                                     <label for="sharpness">Sharpness:</label>
                                 </td>
                                 <td>
                                     {% if cc.include_sharpness == True %}
-                                    <input type="number" id="sharpness" name="sharpness" min="0.0" max="16.0" step="0.1"
+                                    <input type="number" id="sharpness" name="sharpness" min={{ min }} max={{ max }} step={{ step }}
                                         value="{{ cc.sharpness }}">
                                     {% else %}
-                                    <input type="number" id="sharpness" name="sharpness" min="0.0" max="16.0" step="0.1"
+                                    <input type="number" id="sharpness" name="sharpness" min={{ min }} max={{ max }} step={{ step }}
                                         value="{{ cc.sharpness}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False or "Contrast" in cc.usbCamControls %}
+                            {% if sc.activeCameraIsUsb == False %}
+                            {% set min = "0.0" %}
+                            {% set max = "32.0" %}
+                            {% set step = "0.1" %}
+                            {% else %}
+                            {% set min = cc.usbCamControls["Contrast"]["min"] %}
+                            {% set max = cc.usbCamControls["Contrast"]["max"] %}
+                            {% set step = cc.usbCamControls["Contrast"]["step"] %}
+                            {% set default = cc.usbCamControls["Contrast"]["default"] %}
+                            {% endif %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_contrast == True %}
@@ -1218,21 +1286,39 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        {% if sc.activeCameraIsUsb == False %}
                                         Sets the contrast of the image, where zero
                                         means "no contrast", 1.0 is the default "normal"
                                         contrast, and larger values increase the
                                         contrast proportionately.
+                                        {% else %}
+                                        Sets the image contrast for the USB camera.<br> 
+                                        Range: ({{ min }}, {{ max }}).<br>
+                                        Default: {{ default }}.
+                                        {% endif %}
                                     </span>
                                     <label for="contrast">Contrast:</label>
                                 </td>
                                 <td>
                                     {% if cc.include_contrast == True %}
-                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value="{{ cc.contrast }}">
+                                    <input type="number" id="contrast" name="contrast" min={{ min }} max={{ max }} step={{ step }} value="{{ cc.contrast }}">
                                     {% else %}
-                                    <input type="number" id="contrast" name="contrast" min="0.0" max="32.0" step="0.1" value="{{ cc.contrast}}" disabled>
+                                    <input type="number" id="contrast" name="contrast" min={{ min }} max={{ max }} step={{ step }} value="{{ cc.contrast}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False or "Saturation" in cc.usbCamControls %}
+                            {% if sc.activeCameraIsUsb == False %}
+                            {% set min = "0.0" %}
+                            {% set max = "32.0" %}
+                            {% set step = "0.1" %}
+                            {% else %}
+                            {% set min = cc.usbCamControls["Saturation"]["min"] %}
+                            {% set max = cc.usbCamControls["Saturation"]["max"] %}
+                            {% set step = cc.usbCamControls["Saturation"]["step"] %}
+                            {% set default = cc.usbCamControls["Saturation"]["default"] %}
+                            {% endif %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_saturation == True %}
@@ -1245,21 +1331,39 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        {% if sc.activeCameraIsUsb == False %}
                                         Amount of colour saturation, where zero
                                         produces greyscale images, 1.0 represents
                                         default "normal" saturation, and higher values
                                         produce more saturated colours.
+                                        {% else %}
+                                        Sets the image saturation for the USB camera.<br> 
+                                        Range: ({{ min }}, {{ max }}).<br>
+                                        Default: {{ default }}.
+                                        {% endif %}
                                     </span>
                                     <label for="saturation">Saturation:</label>
                                 </td>
                                 <td>
                                     {% if cc.include_saturation == True %}
-                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value="{{ cc.saturation }}">
+                                    <input type="number" id="saturation" name="saturation" min={{ min }} max={{ max }} step={{ step }} value="{{ cc.saturation }}">
                                     {% else %}
-                                    <input type="number" id="saturation" name="saturation" min="0.0" max="32.0" step="0.1" value="{{ cc.saturation}}" disabled>
+                                    <input type="number" id="saturation" name="saturation" min={{ min }} max={{ max }} step={{ step }} value="{{ cc.saturation}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% endif %}
+                            {% if sc.activeCameraIsUsb == False or "Brightness" in cc.usbCamControls %}
+                            {% if sc.activeCameraIsUsb == False %}
+                            {% set min = "-1.0" %}
+                            {% set max = "1.0" %}
+                            {% set step = "0.1" %}
+                            {% else %}
+                            {% set min = cc.usbCamControls["Brightness"]["min"] %}
+                            {% set max = cc.usbCamControls["Brightness"]["max"] %}
+                            {% set step = cc.usbCamControls["Brightness"]["step"] %}
+                            {% set default = cc.usbCamControls["Brightness"]["default"] %}
+                            {% endif %}
                             <tr>
                                 <td style="width:5%">
                                     {% if cc.include_brightness == True %}
@@ -1272,26 +1376,32 @@ RaspiCamSrv's Live page
                                 </td>
                                 <td class="w3-tooltip">
                                     <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                        {% if sc.activeCameraIsUsb == False %}
                                         Adjusts the image brightness where -1.0 is
                                         very dark, 1.0 is very bright, and 0.0 is the
                                         default "normal" brightness.
+                                        {% else %}
+                                        Sets the image brightness for the USB camera.<br> 
+                                        Range: ({{ min }}, {{ max }}).<br>
+                                        Default: {{ default }}.
+                                        {% endif %}
                                     </span>
                                     <label for="brightness">Brightness:</label>
                                 </td>
                                 <td>
                                     {% if cc.include_brightness == True %}
-                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value="{{ cc.brightness }}">
+                                    <input type="number" id="brightness" name="brightness" min={{ min }} max={{ max }} step={{ step }} value="{{ cc.brightness }}">
                                     {% else %}
-                                    <input type="number" id="brightness" name="brightness" min="-1.0" max="1.0" step="0.1" value="{{ cc.brightness}}" disabled>
+                                    <input type="number" id="brightness" name="brightness" min={{ min }} max={{ max }} step={{ step }} value="{{ cc.brightness}}" disabled>
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% endif %}
                         </table>
                         <p style="margin-bottom: 0; margin-top: 5px"></p>
                         <input class="w3-button w3-black" type="submit" value="Submit">
                     </form>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>

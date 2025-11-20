@@ -278,7 +278,7 @@ def set_zoom():
             cc.include_scalerCrop = True
             Camera().applyControlsForLivestream()
             time.sleep(0.5)
-            metadata = Camera().getMetaData()
+            metadata = Camera.getMetaData()
             sc.scalerCropLiveView = metadata["ScalerCrop"]
             zoomFactor = sc.zoomFactorStep * math.floor(
                 (100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep

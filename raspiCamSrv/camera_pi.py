@@ -22,6 +22,10 @@ import os
 from pathlib import Path
 import logging
 import gc
+import math
+import subprocess
+from subprocess import CalledProcessError
+
 
 # Try to import SensorConfiguration, which is missing in Bullseye Picamera2 distributions
 try:
@@ -471,6 +475,7 @@ class CameraController:
                         "Thread %s: CameraController.requestStart - Error: USB camera not opened",
                         get_ident(),
                     )
+                    sc = cfg.serverConfig
                     sc.error = "Error while initializing camera: USB camera not opened"
                     sc.errorSource = "CV2"
                 else:
@@ -1399,6 +1404,8 @@ class Camera:
     thread2Lock = allocate_lock()  # lock for stopping the second camera thread
     threadUsbVideo = None  # background thread that records video from USB camera
     threadUsbVideoLock = allocate_lock()  # lock for stopping the USB video thread
+    logUsbFrameApplyControls = False
+    logUsbFrame2ApplyControls = False
     liveViewDeactivated = False
     liveView2Deactivated = False
     videoThread = None
@@ -2022,6 +2029,7 @@ class Camera:
                     CameraCfg().cameraProperties.model = None
                     CameraCfg().sensorModes = []
                     CameraCfg().rawFormats = []
+                    CameraCfg().resetActiveCameraSettings() 
                     logger.debug(
                         "Thread %s: Camera.switchCamera: Camera-specific configs were reset",
                         get_ident(),
@@ -2046,6 +2054,7 @@ class Camera:
                     CameraCfg().cameraProperties.model = None
                     CameraCfg().sensorModes = []
                     CameraCfg().rawFormats = []
+                    CameraCfg().resetActiveCameraSettings() 
                     logger.debug(
                         "Thread %s: Camera.switchCamera: Camera-specific configs were reset",
                         get_ident(),
@@ -2069,8 +2078,7 @@ class Camera:
                 cls.setSecondCamera()
 
         # Restore streaming config, if available
-        if cls.cam2:
-            cls.restoreConfigFromStreamingConfig()
+        cls.restoreConfigFromStreamingConfig()
 
         logger.debug(
             "Thread %s: Camera.switchCamera - starting Live Stream", get_ident()
@@ -2554,6 +2562,9 @@ class Camera:
                     cfg.videoConfig.sensor_mode = maxMode
                     cfg.videoConfig.stream_size = cfgSensorModes[maxModei].size
 
+            # Sync aspect ratio for CSI cameras
+            cfg.serverConfig.syncAspectRatio = True
+
     @staticmethod
     def loadUsbCameraSpecifics() -> bool:
         """Load USB camera specific parameters into configuration, if not already done
@@ -2598,23 +2609,11 @@ class Camera:
             maxModei = len(cfg.sensorModes) - 1
             maxMode = str(maxModei)
             # For Live View
-            # Initially set the stream size to (640, 480). Use Sensor Mode, if possible
-            # If stream_size is set, keep the settings. They have been loeaded from stored config
+            # Initially set the stream size to the size of the first Sensor Mode
             if cfg.liveViewConfig.stream_size is None:
-                sizeWidth = 640
-                sizeHeight = int(
-                    sizeWidth
-                    * cfg.cameraProperties.pixelArraySize[1]
-                    / cfg.cameraProperties.pixelArraySize[0]
-                )
-                if (sizeHeight % 2) != 0:
-                    sizeHeight += 1
-                cfg.liveViewConfig.stream_size_align = False
-                if cfg.sensorModes[0].size[0] == sizeWidth:
-                    cfg.liveViewConfig.sensor_mode = "0"
-                    sizeHeight = cfg.sensorModes[0].size[1]
-                else:
-                    cfg.liveViewConfig.sensor_mode = "custom"
+                cfg.liveViewConfig.sensor_mode = "0"
+                sizeWidth = cfg.sensorModes[0].size[0]
+                sizeHeight = cfg.sensorModes[0].size[1]
                 cfg.liveViewConfig.stream_size = (sizeWidth, sizeHeight)
             cfg.liveViewConfig.colour_space = cfg.cameraProperties.colorSpace
             cfg.liveViewConfig.buffer_count = 1
@@ -2659,7 +2658,15 @@ class Camera:
             cfg.videoConfig.display = None
             cfg.videoConfig.encode = None
 
-            return True
+            # Do not sync aspect ratio for USB cameras
+            cfg.serverConfig.syncAspectRatio = False
+
+        # Load USB Camera Controls
+        if len(cfg.controls.usbCamControls) == 0:
+            cfg.setUsbCamControls()
+            cfg.cameraProperties.hasFocus = "AfMode" in cfg.controls.usbCamControls
+
+        return True
 
     @classmethod
     def setSecondCamera(cls):
@@ -2805,7 +2812,7 @@ class Camera:
 
     @classmethod
     def setStreamingConfigs(cls):
-        """Set the configuration for streaming which will be used for the second camera"""
+        """Set the configuration for streaming which will be used when cameras are switched"""
         logger.debug("Thread %s: Camera.setStreamingConfigs", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
@@ -2843,6 +2850,47 @@ class Camera:
                     sc.addChangeLogEntry(
                         f"Streaming configuration for {sc.activeCameraInfo} was reset due to camera model change"
                     )
+                else:
+                    # Check whether camera properties are available
+                    if not "cameraproperties" in scfg:
+                        logger.debug(
+                            "Thread %s: Camera.setStreamingConfigs - StreamingConfig for active camera %s does not have camera properties",
+                            get_ident(),
+                            cn,
+                        )
+                        scfg["cameraproperties"] = copy.deepcopy(cfg.cameraProperties)
+                        sc.unsavedChanges = True
+                        sc.addChangeLogEntry(
+                            f"Streaming configuration for {sc.activeCameraInfo} was extended with camera properties"
+                        )
+                # For USB cameras, check the status
+                # The streaming config needs to be reset if it was initially created for the second camera
+                # And has never been updated for the active camera
+                if cls.camIsUsb == True:
+                    if "is_ok" in scfg:
+                        isOK = scfg["is_ok"]
+                        if isOK == False:
+                            resetActive = True
+                            logger.debug(
+                                "Thread %s: Camera.setStreamingConfigs - Resetting active camera config for camera %s due to is_OK=False",
+                                get_ident(),
+                                cn,
+                            )
+                            sc.unsavedChanges = True
+                            sc.addChangeLogEntry(
+                                f"Streaming configuration for {sc.activeCameraInfo} was reset due to camera status change"
+                            )
+                    else:
+                        resetActive = True
+                        logger.debug(
+                            "Thread %s: Camera.setStreamingConfigs - Resetting active camera config for camera %s due to missing is_OK",
+                            get_ident(),
+                            cn,
+                        )
+                        sc.unsavedChanges = True
+                        sc.addChangeLogEntry(
+                            f"Streaming configuration for {sc.activeCameraInfo} was reset due to camera status change"
+                        )
             else:
                 logger.debug(
                     "Thread %s: Camera.setStreamingConfigs - not found in strc.",
@@ -2858,7 +2906,9 @@ class Camera:
             )
             scfg = {}
             scfg["camnum"] = sc.activeCamera
+            scfg["is_ok"] = True
             scfg["camerainfo"] = copy.copy(sc.activeCameraInfo)
+            scfg["cameraproperties"] = copy.deepcopy(cfg.cameraProperties)
             scfg["hasfocus"] = cfg.cameraProperties.hasFocus
             if cls.camIsUsb == False:
                 scfg["tuningconfig"] = copy.deepcopy(cfg.tuningConfig)
@@ -2921,6 +2971,7 @@ class Camera:
                 scfg["camerainfo"] = "Camera " + cn + " (" + model + ")"
 
                 if cls.cam2IsUsb == False:
+                    scfg["is_ok"] = True
                     camPprops = cls.cam2.camera_properties
                     hasFocus = "AfMode" in cls.cam2.camera_controls
                     pixelArraySize = copy.copy(camPprops["PixelArraySize"])
@@ -3009,6 +3060,7 @@ class Camera:
                     scfg["videoconfig"] = videoConfig
                     scfg["controls"] = copy.deepcopy(cfg.controls)
                 else:
+                    scfg["is_ok"] = False
                     hasFocus = False
                     pixelArraySize = None
                     sensorModes = []
@@ -3023,8 +3075,8 @@ class Camera:
                     liveViewConfig.queue = False
                     liveViewConfig.encode = "main"
                     liveViewConfig.controls["FrameDurationLimits"] = (33333, 33333)
-                    sizeWidth = 640
-                    sizeHeight = 480
+                    sizeWidth = cfg.sensorModes[0].size[0]
+                    sizeHeight = cfg.sensorModes[0].size[1]
                     liveViewConfig.stream_size = (sizeWidth, sizeHeight)
                     liveViewConfig.stream_size_align = False
                     liveViewConfig.sensor_mode = "0"
@@ -3095,15 +3147,25 @@ class Camera:
     @classmethod
     def restoreConfigFromStreamingConfig(cls):
         """Restore active configuration and controls from a previously saved streaming config"""
-        logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
         strc = cfg.streamingCfg
+        logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig for camera %s", get_ident(), sc.activeCamera)
 
         # For active camera
         cn = str(sc.activeCamera)
         if cn in strc:
             scfg = strc[cn]
+            if sc.activeCameraIsUsb:
+                if "is_ok" in scfg:
+                    isOK = scfg["is_ok"]
+                    if isOK == False:
+                        logger.debug(
+                            "Thread %s: Camera.restoreConfigFromStreamingConfig - Streaming config for active camera %s is not OK, skipping restore",
+                            get_ident(),
+                            cn,
+                        )
+                        return
             if "liveconfig" in scfg:
                 cfg.liveViewConfig = copy.deepcopy(scfg["liveconfig"])
                 logger.debug(
@@ -3134,6 +3196,7 @@ class Camera:
                 )
             if "controls" in scfg:
                 cfg.controls = copy.deepcopy(scfg["controls"])
+                # Camera.resetScalerCropRequested = False
                 logger.debug(
                     "Thread %s: Camera.restoreConfigFromStreamingConfig - restored controls from streaming config %s",
                     get_ident(),
@@ -3254,19 +3317,279 @@ class Camera:
         return res
 
     @staticmethod
-    def applyControlsToUsbCamera(
-        cam, ctrls: dict
+    def applyMappedControlToUsbCamera(
+        ctrl: str,
+        ctrls: dict,
+        isBool: bool,
+        usbCc: dict,
+        camDev: str,
     ):
-        """Apply controls to a USB camera
-        cam         : The cv2.VideoCapture camera object
+        """Apply a mapped control to a USB camera
+
+        Values of the raspiCamSrv Control are mapped to USB camera control values.
+
+        ctrl        : The control to be applied
         ctrls       : The controls to be applied
+        isBool      : Indicates if the control value is boolean
+        usbCc       : The USB camera controls mapping
+        camDev      : The camera device identifier  
         """
         logger.debug(
-            "Thread %s: Camera.applyControlsToUsbCamera", get_ident()
+            "Thread %s: Camera.applyMappedControlToUsbCamera - ctrl: %s", get_ident(), ctrl
         )
+        if ctrl in ctrls and ctrls[ctrl] is not None:
+            logger.debug("Thread %s: Camera.applyMappedControlToUsbCamera - applying: %s ", get_ident(), ctrl)
+            if isBool == True:
+                if ctrls[ctrl] == True:
+                    cfgVal = "1"
+                else:
+                    cfgVal = "0"
+            else:
+                cfgVal = str(ctrls[ctrl])
+            if "mapping" in usbCc[ctrl]:
+                mapping = usbCc[ctrl]["mapping"]
+                if cfgVal in mapping:
+                    camVal = mapping[cfgVal]
+                    ctrlName = usbCc[ctrl]["ctrlName"]
+                    try:
+                        subprocess.run(["v4l2-ctl", "-d", camDev, f"--set-ctrl={ctrlName}={camVal}"])
+                        logger.debug(
+                            "Thread %s: Camera.applyMappedControlToUsbCamera - camDev: %s set ctrl %s to %s",
+                            get_ident(),
+                            camDev,
+                            ctrlName,
+                            camVal,
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "Camera.applyMappedControlToUsbCamera - camDev: %s Error setting %s to %s: %s",
+                            camDev,
+                            ctrlName,
+                            camVal,
+                            e,
+                        )
+        else:
+            logger.debug(
+                "Thread %s: Camera.applyMappedControlToUsbCamera - ctrl: %s not applied (not in ctrls)",
+                get_ident(),
+                ctrl,
+            )
+
+    @staticmethod
+    def applyDirectControlToUsbCamera(
+        ctrl: str,
+        ctrls: dict,
+        usbCc: dict,
+        camDev: str,
+    ):
+        """Apply a control directly to a USB camera
+
+        Values of the raspiCamSrv Control are scaled to USB camera control values.
+
+        ctrl        : The control to be applied
+        ctrls       : The controls to be applied
+        usbCc       : The USB camera controls mapping
+        camDev      : The camera device identifier  
+        """
         logger.debug(
-            "Thread %s: Camera.applyControlsToUsbCamera - Not yet implemented", get_ident()
+            "Thread %s: Camera.applyDirectControlToUsbCamera - ctrl: %s", get_ident(), ctrl
         )
+        if ctrl in ctrls and ctrls[ctrl] is not None:
+            logger.debug("Thread %s: Camera.applyDirectControlToUsbCamera - applying: %s ", get_ident(), ctrl)
+            camVal = ctrls[ctrl]
+            if ctrl == "LensPosition":
+                camVal = 1.0 / camVal
+            if usbCc[ctrl]["type"] == "int":
+                camVal = int(camVal)
+            ctrlName = usbCc[ctrl]["ctrlName"]
+            try:
+                subprocess.run(["v4l2-ctl", "-d", camDev, f"--set-ctrl={ctrlName}={camVal}"])
+                logger.debug(
+                    "Thread %s: Camera.applyScaledControlToUsbCamera - camDev: %s set ctrl %s to %s",
+                    get_ident(),
+                    camDev,
+                    ctrlName,
+                    camVal,
+                )
+            except Exception as e:
+                logger.error(
+                    "Camera.applyScaledControlToUsbCamera - camDev: %s Error setting %s to %s: %s",
+                    camDev,
+                    ctrlName,
+                    camVal,
+                    e,
+                )
+        else:
+            logger.debug(
+                "Thread %s: Camera.applyScaledControlToUsbCamera - ctrl: %s not applied (not in ctrls)",
+                get_ident(),
+                ctrl,
+            )
+
+    @staticmethod
+    def applyControlsToUsbCamera(
+        ctrls: dict,
+        toCam2: bool = False
+    ):
+        """Apply controls to a USB camera
+
+        This method is called before images are captured from a USB camera.
+        It can be used to set camera properties, e.g. via v4l2-ctl commands.
+        ctrls       : The controls to be applied
+        toCam2      : If true, controls are set for the second camera
+        """
+        logger.debug(
+            "Thread %s: Camera.applyControlsToUsbCamera - toCam2: %s ctrls: %s", get_ident(), toCam2, ctrls
+        )
+        cfg = CameraCfg()
+        cc = cfg.controls
+        usbCc = cc.usbCamControls
+        if toCam2 == False:
+            camNum = Camera.camNum
+            camDev = Camera.camUsbDev
+        else:
+            camNum = Camera.camNum2
+            camDev = Camera.cam2UsbDev
+        logger.debug("Thread %s: Camera.applyControlsToUsbCamera - camNum: %s camDev: %s", get_ident(), camNum, camDev)
+
+        # Auto White Balance
+        Camera.applyMappedControlToUsbCamera("AwbEnable", ctrls, True, usbCc, camDev)
+
+        # Auto White Balance Mode
+        Camera.applyMappedControlToUsbCamera("AwbMode", ctrls, False, usbCc, camDev)
+
+        # Sharpness
+        Camera.applyDirectControlToUsbCamera("Sharpness", ctrls, usbCc, camDev)
+
+        # Brightness
+        Camera.applyDirectControlToUsbCamera("Brightness", ctrls, usbCc, camDev)
+
+        # Contrast
+        Camera.applyDirectControlToUsbCamera("Contrast", ctrls, usbCc, camDev)
+
+        # Saturation
+        Camera.applyDirectControlToUsbCamera("Saturation", ctrls, usbCc, camDev)
+
+        # AfMode
+        Camera.applyMappedControlToUsbCamera("AfMode", ctrls, False, usbCc, camDev)
+
+        # LensPosition
+        Camera.applyDirectControlToUsbCamera("LensPosition", ctrls, usbCc, camDev)
+
+    @staticmethod
+    def usbFrameApplyControls(
+        frame,
+        log = False,
+        exceptCtrl=None, exceptValue=None, toCam2=None
+    ):
+        """Apply the currently selected camera controls to a frame captured from a USB camera
+
+        frame       : Frame captured from the USB camera
+        log         : If true, log debug information (to prevent logging for each frame in video mode)
+        exceptCtrl  : Exception control. Optionally, one exceptional control can be specified
+                      If specified, the exceptValue will replace the value fom CameraCfg().controls
+                      Currently supported:
+                      - ExposureTime
+                      - AnalogueGain
+                      - FocalDistance -> LensPosition = 1 / FocalDistance
+        toCam2      : If true, controls are set for the second camera with control data from streamingCfg
+
+        Returns     : The frame with applied controls
+        """
+        if toCam2 is None:
+            toCam2 = False
+
+        if log:
+            logger.debug(
+                "Thread %s: Camera.usbFrameApplyControls - toCam2: %s", get_ident(), toCam2
+            )
+
+        cfg = CameraCfg()
+        if toCam2 is False:
+            cfgCtrls = cfg.controls
+        else:
+            cfgCtrls = cfg.streamingCfg[str(Camera.camNum2)]["controls"]
+        
+        if log:
+            logger.debug(
+                "Thread %s: Camera.usbFrameApplyControls - cfgCtrls=%s",
+                get_ident(),
+                cfgCtrls.__dict__,
+            )
+        
+        newFrame = frame
+
+        ctrls = {}
+        cnt = 0
+
+        # Apply selected controls
+        # Scaler crop
+        if cfgCtrls.include_scalerCrop:
+            ctrls["ScalerCrop"] = cfgCtrls.scalerCrop
+            cnt += 1
+
+            hFrame, wFrame = frame.shape[:2]
+            if log:
+                logger.debug(
+                    "Thread %s: Camera.usbFrameApplyControls - Frame size: width=%s height=%s",
+                    get_ident(),
+                    wFrame,
+                    hFrame,
+                )
+            X, Y, W, H = Camera.getUsbScalerCrop(wFrame, hFrame, log=log, forCam2=toCam2)
+            x, y, w, h = cfgCtrls.scalerCrop
+            if log:
+                logger.debug("Thread %s: Camera.usbFrameApplyControls - ScalerCrop Frame is %s", get_ident(), (X, Y, W, H))
+                logger.debug("Thread %s: Camera.usbFrameApplyControls - Cropping to %s", get_ident(), (x, y, w, h))
+            xc = x + int(w/2)
+            yc = y + int(h/2)
+            if log:
+                logger.debug("Thread %s: Camera.usbFrameApplyControls - Crop center is %s", get_ident(), (xc, yc))
+
+            aspectRatioFrame = W / H
+            aspectRatioCrop = w / h
+            if aspectRatioFrame > aspectRatioCrop:
+                # Frame is wider than crop aspect ratio -> increase width
+                wNew = int(h * aspectRatioFrame)
+                hNew = h
+                if log:
+                    logger.debug("Thread %s: Camera.usbFrameApplyControls - Frame is wider than crop aspect ratio. New size is %s", get_ident(), (wNew, hNew))
+            else:
+                # Frame is taller than crop aspect ratio -> increase height
+                wNew = w
+                hNew = int(w / aspectRatioFrame)
+                if log:
+                    logger.debug("Thread %s: Camera.usbFrameApplyControls - Frame is taller than crop aspect ratio. New size is %s", get_ident(), (wNew, hNew))
+            if wNew > W:
+                wNew = W
+            if hNew > H:
+                hNew = H
+
+            scaleToFrame = W / wFrame
+            wNew = int(wNew / scaleToFrame)
+            hNew = int(hNew / scaleToFrame)
+            xc = int((xc - X) / scaleToFrame)
+            yc = int((yc - Y) / scaleToFrame)
+
+            x1 = xc - int(wNew / 2)
+            if x1 < 0:
+                x1 = 0
+            y1 = yc - int(hNew / 2)
+            if y1 < 0:
+                y1 = 0
+            x2 = x1 + wNew
+            if x2 > wFrame:
+                x2 = wFrame
+            y2 = y1 + hNew
+            if y2 > hFrame:
+                y2 = hFrame
+            if log:
+                logger.debug("Thread %s: Camera.usbFrameApplyControls - Cropping coordinates are x1=%s y1=%s x2=%s y2=%s", get_ident(), x1, y1, x2, y2)
+            cropped = frame[y1:y2, x1:x2]
+            newFrame = cv2.resize(cropped, (wFrame, hFrame), interpolation=cv2.INTER_LINEAR)
+            if log:
+                logger.debug("Thread %s: Camera.usbFrameApplyControls - Cropping and resizing done", get_ident())
+        return newFrame
 
     @staticmethod
     def applyControls(
@@ -3478,7 +3801,7 @@ class Camera:
                 )
             else:
                 camCtrls = ctrls
-                Camera.applyControlsToUsbCamera(Camera.cam, ctrls)
+                Camera.applyControlsToUsbCamera(ctrls)
         else:
             if Camera.cam2IsUsb == False:
                 camCtrls = Controls(Camera.cam2)
@@ -3491,7 +3814,7 @@ class Camera:
                 )
             else:
                 camCtrls = ctrls
-                Camera.applyControlsToUsbCamera(Camera.cam2, ctrls)
+                Camera.applyControlsToUsbCamera(ctrls, toCam2=True)
         return camCtrls
 
     @staticmethod
@@ -3553,6 +3876,8 @@ class Camera:
             if wait:
                 time.sleep(wait)
             Camera.applyControls(Camera.ctrl.configuration)
+            if Camera.camIsUsb:
+                Camera.logUsbFrameApplyControls = True
             logger.debug(
                 "Thread %s: Camera.applyControlsForLivestream - Controlls applied",
                 get_ident(),
@@ -3919,9 +4244,6 @@ class Camera:
                     )
                     raise RuntimeError("USB camera could not be opened")
 
-            # if Camera.resetScalerCropRequested == True:
-            #    Camera.resetScalerCrop()
-
             # Camera.applyControls(Camera.ctrl.configuration)
             # logger.debug("Thread %s: Camera.framesUsb - controls applied", get_ident())
             # time.sleep(0.5)
@@ -3938,8 +4260,10 @@ class Camera:
             hflip,
             vflip,
         )
+        gotScalerCropLiveView = False
         try:
             cnt = 0
+            Camera.logUsbFrameApplyControls = True
             while True:
                 if Camera.cam.isOpened() == False:
                     raise UsbCameraOpenError("USB camera not open during live view")
@@ -3950,12 +4274,22 @@ class Camera:
                     if cnt > 100:
                         raise UsbCameraNoFrameReceivedError("No frame received from USB camera for live view")
                 else:
+                    if gotScalerCropLiveView == False:
+                        # Get the live view scaler crop
+                        if Camera.resetScalerCropRequested == True:
+                            Camera.resetScalerCropUsb()
+                        metadata = Camera.getUsbCamMetadata(Camera.cam)
+                        srvCam.scalerCropLiveView = metadata["ScalerCrop"]
+                        gotScalerCropLiveView = True
                     # logger.debug("Thread %s: Camera.framesUsb - Received frame from camera", get_ident())
                     # Apply controls for each frame to allow dynamic changes
                     if hflip == True:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, log=Camera.logUsbFrameApplyControls)
+                    Camera.logUsbFrameApplyControls = False
                     # Encode frame as JPEG
                     ret, buffer = cv2.imencode(".jpg", frame)
                     frameEncoded = buffer.tobytes()
@@ -4074,6 +4408,7 @@ class Camera:
         cfg = Camera.ctrl2.configuration
         hflip = cfg.transform.hflip
         vflip = cfg.transform.vflip
+        Camera.logUsbFrame2ApplyControls = True
         try:
             while True:
                 # logger.debug("Thread %s: Camera.frames2Usb - Receiving camera stream", get_ident())
@@ -4086,6 +4421,9 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, log=Camera.logUsbFrame2ApplyControls, toCam2=True)
+                    Camera.logUsbFrame2ApplyControls = False
                     # Encode frame as JPEG
                     ret, buffer = cv2.imencode(".jpg", frame)
                     frameEncoded = buffer.tobytes()
@@ -4149,13 +4487,107 @@ class Camera:
             raise
 
     @staticmethod
-    def getUsbCamMetadata(cam) -> dict:
+    def getUsbScalerCrop(width: int, height: int, log=True, forCam2=None) -> tuple:
+        """Get ScalerCrop for a given size for USB camera
+        
+            Determine ScalerCrop assuming that the camera will first crop to the requested aspect ratio
+            and then scale to the requested resolution
+        """
+        if forCam2 is None:
+            forCam2 = False
+        if log:
+            logger.debug("Thread %s: Camera.getUsbScalerCrop - width: %d, height: %d forCam2: %s", get_ident(), width, height, forCam2)
+        aspectRatio = width / height
+        cfg = CameraCfg()
+        if forCam2 == False:
+            sensorWidth = cfg.cameraProperties.pixelArraySize[0]
+            sensorHeight = cfg.cameraProperties.pixelArraySize[1]
+        else:
+            cam2Str = str(Camera.camNum2)
+            strCfg = cfg.streamingCfg[cam2Str]
+            if "cameraproperties" in strCfg:
+                cam2Props = strCfg["cameraproperties"]
+                sensorWidth = cam2Props.pixelArraySize[0]
+                sensorHeight = cam2Props.pixelArraySize[1]
+            else:
+                sensorWidth = cfg.cameraProperties.pixelArraySize[0]
+                sensorHeight = cfg.cameraProperties.pixelArraySize[1]
+        if log:
+            logger.debug("Thread %s: Camera.getUsbScalerCrop - sensorWidth: %d, sensorHeight: %d", get_ident(), sensorWidth, sensorHeight)
+        sensorAspectRatio = sensorWidth / sensorHeight
+        if aspectRatio > sensorAspectRatio:
+            # Crop height
+            cropHeight = sensorWidth / aspectRatio
+            cropY = (sensorHeight - cropHeight) / 2
+            scalerCrop = (
+                0,
+                int(cropY),
+                sensorWidth,
+                int(cropHeight),
+            )
+        else:
+            # Crop width
+            cropWidth = sensorHeight * aspectRatio
+            cropX = (sensorWidth - cropWidth) / 2
+            scalerCrop = (
+                int(cropX),
+                0,
+                int(cropWidth),
+                sensorHeight,
+            )
+        if log:
+            logger.debug("Thread %s: Camera.getUsbScalerCrop - scalerCrop: %s", get_ident(), scalerCrop)
+        return scalerCrop
+
+    @staticmethod
+    def getUsbCamMetadata(cam, log=True) -> dict:
         """Get metadata from USB camera using OpenCV"""
         logger.debug("Thread %s: Camera.getUsbCamMetadata", get_ident())
 
+        width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        cc = cfg.controls
+        if width > 0 and height > 0:
+            if cc.include_scalerCrop == True:
+                scalerCrop = cc.scalerCrop
+                # Map scalerCrop for LiveView to current resolution
+                if width != cfg.liveViewConfig.stream_size[0] or height != cfg.liveViewConfig.stream_size[1]:
+                    aspectRatioLiveView = cfg.liveViewConfig.stream_size[0] / cfg.liveViewConfig.stream_size[1]
+                    aspectRatioCurrent = width / height
+                    if aspectRatioLiveView != aspectRatioCurrent:
+                        x1, y1, w, h = scalerCrop
+                        if aspectRatioCurrent > aspectRatioLiveView:
+                            # Extend width
+                            newW = h * aspectRatioCurrent
+                            newX1 = x1 - (newW - w) / 2
+                            scalerCrop = (
+                                int(newX1),
+                                y1,
+                                int(newW),
+                                h,
+                            )
+                        else:
+                            # Extend height
+                            newH = w / aspectRatioCurrent
+                            newY1 = y1 - (newH - h) / 2
+                            scalerCrop = (
+                                x1,
+                                int(newY1),
+                                w,
+                                int(newH),
+                            )
+            else:
+                scalerCrop = Camera.getUsbScalerCrop(width, height)
+        else:
+            scalerCrop = sc.scalerCropMax
+
         metadata = {
-            "Width": cam.get(cv2.CAP_PROP_FRAME_WIDTH),
-            "Height": cam.get(cv2.CAP_PROP_FRAME_HEIGHT),
+            "Width": width,
+            "Height": height,
+            "ScalerCrop": scalerCrop,
             "FPS": cam.get(cv2.CAP_PROP_FPS),
             "Format (FOURCC)": int(cam.get(cv2.CAP_PROP_FOURCC)),
             "Format": "".join(
@@ -4172,7 +4604,7 @@ class Camera:
             "White Balance Auto WB": cam.get(cv2.CAP_PROP_AUTO_WB),
             "Focus": cam.get(cv2.CAP_PROP_FOCUS),
             "Autofocus": cam.get(cv2.CAP_PROP_AUTOFOCUS),
-}
+            }
         return metadata
 
     @staticmethod
@@ -4265,6 +4697,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, log=True)
                     cv2.imwrite(fp, frame)
                 else:
                     raise RuntimeError("Failed to capture image from USB camera")
@@ -4404,6 +4838,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, log=True, toCam2=True)
                     cv2.imwrite(fp, frame)
                 else:
                     raise RuntimeError("Failed to capture image from USB camera")
@@ -4790,6 +5226,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, log=True)
                     cv2.imwrite(fp, frame)
                     cv2.imwrite(fpr, frame, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
                 else:
@@ -4932,6 +5370,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, log=True, toCam2=True)
                     cv2.imwrite(fp, frame)
                     cv2.imwrite(fpr, frame, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
                 else:
@@ -5020,6 +5460,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame)
                     out.write(frame)
                     if Camera.stopVideoRequested == True:
                         logger.debug(
@@ -5041,6 +5483,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame)
                     out.write(frame)
                     if Camera.stopVideoRequested == True:
                         logger.debug(
@@ -5269,6 +5713,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, toCam2=True)
                     out.write(frame)
                     if Camera.stopVideoRequested2 == True:
                         logger.debug(
@@ -5291,6 +5737,8 @@ class Camera:
                         frame = cv2.flip(frame, 1)
                     if vflip == True:
                         frame = cv2.flip(frame, 0)
+                    # Apply controls
+                    frame = Camera.usbFrameApplyControls(frame, toCam2=True)
                     out.write(frame)
                     if Camera.stopVideoRequested2 == True:
                         logger.debug(
@@ -5646,7 +6094,11 @@ class Camera:
 
     @staticmethod
     def getMetaData() -> dict:
-        return Camera.cam.capture_metadata()
+        logger.debug("Thread %s: Camera.getMetaData", get_ident())
+        if Camera.camIsUsb == False:
+            return Camera.cam.capture_metadata()
+        else:
+            return Camera.getUsbCamMetadata(Camera.cam)
 
     @staticmethod
     def _photoSeriesThread():
@@ -5965,6 +6417,8 @@ class Camera:
                                     frame = cv2.flip(frame, 1)
                                 if vflip == True:
                                     frame = cv2.flip(frame, 0)
+                                # Apply controls
+                                frame = Camera.usbFrameApplyControls(frame)
                                 cv2.imwrite(fpjpg, frame)
                                 if ser.type == "raw+jpg":
                                     cv2.imwrite(fpraw, frame, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
@@ -6169,6 +6623,7 @@ class Camera:
         cfg = CameraCfg()
         sc = cfg.serverConfig
         cc = cfg.controls
+        cp = cfg.cameraProperties
         scInf = cls.cam.camera_controls["ScalerCrop"]
         sc.scalerCropMin = scInf[0]
         sc.scalerCropMax = scInf[1]
@@ -6177,7 +6632,31 @@ class Camera:
         sc.scalerCropLiveView = sc.scalerCropDef
         if cc.scalerCrop != sc.scalerCropDef:
             cc.include_scalerCrop = True
+            sc.zoomFactor = sc.zoomFactorStep * math.floor(
+                (100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep)
         else:
             cc.include_scalerCrop = False
-        cc.scalerCrop = sc.scalerCropDef
+        cls.resetScalerCropRequested = False
+
+    @classmethod
+    def resetScalerCropUsb(cls):
+        logger.debug("Thread %s: Camera.resetScalerCropUsb", get_ident())
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        cc = cfg.controls
+        cp = cfg.cameraProperties
+        ref = cfg.liveViewConfig.stream_size
+        sc.scalerCropMax = Camera.getUsbScalerCrop(ref[0], ref[1])
+        sc.scalerCropMin = (0, 0, sc.scalerCropMax[2] / 100, sc.scalerCropMax[3] / 100)
+        sc.scalerCropDef = sc.scalerCropMax
+        sc.zoomFactor = 100
+        sc.scalerCropLiveView = sc.scalerCropDef
+        if cc.scalerCrop == cfg.cameraProperties.scalerCropMaximum:
+            cc.scalerCrop = sc.scalerCropDef
+        if cc.scalerCrop != sc.scalerCropDef:
+            cc.include_scalerCrop = True
+            sc.zoomFactor = sc.zoomFactorStep * math.floor(
+                (100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep)
+        else:
+            cc.include_scalerCrop = False
         cls.resetScalerCropRequested = False

@@ -9,7 +9,7 @@ Interoperability between Cameras and GPIO devices is achieved through the freely
 **raspiCamSrv** supports all Raspberry Pi platforms from Pi Zero to Pi 5, running Bullseye, Bookworm or Trixie OS.
 
 Besides the currently available Raspberry Pi cameras, also compatible CSI cameras from other providers can be used.   
-USB web cams are seamlessly integrated, but control (focus, zoom, exposure) is still limited.
+USB web cams are seamlessly integrated, but control (focus, exposure) is still limited.
 
 **raspiCamSrv** is built with [Flask 3.x](https://flask.palletsprojects.com/en/stable/) and uses the [Picamera2 library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 
@@ -24,7 +24,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V4.0.0
+## Feature Overview V4.1.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -39,6 +39,9 @@ The setting for necessity of authentication applies also to photo snapshots.
 The non-active camera stream and photo can be accessed through endpoints ```http://<server>:<port>/video_feed2``` and ```http://<server>:<port>/photo_feed2```, respectively.
 - The second camera can be used in parallel to the active camera for taking photos, raw photos and videos.<br>(Sound recording with videos is restricted to the active camera)
 - The second camera can be controlled through the [API](./docs/API.md) as well as through the [Multi-Cam](./docs/CamMulticam.md) dialog.
+- Support of USB cameras with seamless integration with CSI cameras (only if OpenCV is installed)
+- Hot plug-in/-out of USB cameras without server restart
+- The server can be used without connected cameras for controlling [GPIO devices](./docs/SettingsDevices.md) with the [Event handling system](./docs/Trigger.md) or from the [Console](./docs/Console.md)
 - Photo taking and video recording can be started synchronously with both cameras.- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
 - [Stereo Vision](./docs/CamStereo.md) allows generation of 3D videos and depth maps
 - [Camera Calibration](./docs/CamCalibration.md) supports calibration of a stereo-camera pair as well as rectification based on [OpenCV](https://opencv.org/)
@@ -79,10 +82,10 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V4.0**
-- Support of USB cameras with seamless integration with CSI cameras (only if OpenCV is installed)
-- Hot plug-in/-out of USB cameras without server restart
-- The server can be used without connected cameras for controlling [GPIO devices](./docs/SettingsDevices.md) with the [Event handling system](./docs/Trigger.md) or from the [Console](./docs/Console.md)
+**New in V4.1**
+
+- [Digital Pan / Tilt / Zoom](./docs/ZoomPan.md) is also available for USB cameras
+- [Camera Controls](./docs/CameraControls.md#camera-controls-for-usb-cameras) are also available for USB cameras 
 
 
 ## Known Issues
