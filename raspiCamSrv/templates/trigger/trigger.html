@@ -1042,8 +1042,8 @@
     {% else %}
     <div id="trgmotion" class="triggergroup" style="display:none">
     {% endif %}
-        <h3>Motion Detection Configuration</h3>
         <div class="w3-half">
+            <h3>Motion Detection Configuration</h3>
             <form method="post" action="{{ url_for('trigger.motion') }}">
                 <table class="w3-table-all">
                     <tr>
@@ -1154,6 +1154,69 @@
                     <tr>
                         <td class="w3-tooltip" style="width:50%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                {% if sc.cv2Available == True %}
+                                Restrict motion detection to specific regions of interest.
+                                {% else %}
+                                OpenCV is not available. Regions of Interest cannot be used.
+                                {% endif %}
+                            </span>
+                            <label for="useroi">Use Regions of Interest:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if sc.cv2Available == True %}
+                            {% if tc.useRoI == True %}
+                            <input type="checkbox" id="useroi" name="useroi" 
+                                onclick="drawRoiWindow('useroi', '{{ sc.scalerCropLiveView }}')"
+                                value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="useroi" name="useroi" 
+                                onclick="drawRoiWindow('useroi', '{{ sc.scalerCropLiveView }}')"
+                                value="1">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="useroi" name="useroi" 
+                                onclick="drawRoiWindow('useroi', '{{ sc.scalerCropLiveView }}')"
+                                value="0" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <label for="regionofinterest">Regions of Interest:</label>
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Regions of interest for motion detection<br>
+                                A list of rectangles (tuples of 4 numbers
+                                denoting x_offset, y_offset, width and
+                                height). The rectangle units refer to the
+                                maximum scaler crop window.
+                            </span>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.useRoI == True %}
+                            <input type="text" id="regionofinterest" name="regionofinterest" value="{{ tc.regionOfInterestStr }}" disabled>
+                            {% else %}
+                            <input type="text" id="regionofinterest" name="regionofinterest" value="{{ tc.regionOfInterestStr }}" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <label for="regionofnointerest">Regions of No Interest:</label>
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Regions of no interest for motion detection<br>
+                                Motion within these regions will not trigger an event.                         </span>
+                        </td>
+                        <td style="width:50%">
+                            {% if tc.useRoI == True %}
+                            <input type="text" id="regionofnointerest" name="regionofnointerest" value="{{ tc.regionOfNoInterestStr }}" disabled>
+                            {% else %}
+                            <input type="text" id="regionofnointerest" name="regionofnointerest" value="{{ tc.regionOfNoInterestStr }}" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
                                 Show bounding boxes of motion detection on recorded video.
                             </span>
                             <label for="videobboxes">Video with Bounding Boxes:</label>
@@ -1166,36 +1229,107 @@
                             {% endif %}
                         </td>
                     </tr>
+                    <tr>
+                        <td class="w3-tooltip" style="width:50%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                {% if sc.cv2Available == True %}
+                                Show Regions of Interest on recorded photos and videos.<br>
+                                (For videos not available for Mean Square Difference algorithm)
+                                {% else %}
+                                Regions of Interest can not be shown on photos because OpenCV is not available.
+                                {% endif %}
+                            </span>
+                            <label for="photorois">Photos/Videos with RoI/RoNI:</label>
+                        </td>
+                        <td style="width:50%">
+                            {% if sc.cv2Available == True %}
+                            {% if tc.photoRois == True %}
+                            <input type="checkbox" id="photorois" name="photorois" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="photorois" name="photorois" value="0">
+                            {% endif %}
+                            {% else %}
+                            <input type="checkbox" id="photorois" name="photorois" value="0" disabled>
+                            {% endif %}
+                        </td>
+                    </tr>
                 </table>
                 <p style="margin-bottom: 0"></p>
-                <input class="w3-button w3-black" type="submit" value="Submit">
+                <input class="w3-button w3-black" onclick="enableRegionOfInterest()" type="submit" value="Submit">
             </form>
             <hr>
-            {% if sc.isTriggerTesting == False %}
-            {% if sc.isTriggerRecording == False %}
-            <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
-                <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection">
-            </form>
-            {% else %}
-            <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
-                <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection" disabled>
-            </form>
+            <!-- Live stream -->
+            {% if tc.useRoI == True %}
+            {% if sc.isLiveStream %}
+            <div id="drawroictrl">
+                <table>
+                    <tr>
+                        <td class="w3-tooltip" style="width:40%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select to draw regions of interest for motion detection.
+                            </span>
+                            <label for="useroi">Draw Regions of Interest:</label>
+                        </td>
+                        <td style="width:10%">
+                            <input type="checkbox" id="drawroi" name="drawroi" 
+                                onclick="switchRoiType('drawroi', 'drawroni')"
+                                value="1" checked>
+                        </td>
+                        <td class="w3-tooltip" style="width:40%">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Select to draw regions of NO interest for motion detection.
+                            </span>
+                            <label for="useroi">Draw Regions of NO Interest:</label>
+                        </td>
+                        <td style="width:10%">
+                            <input type="checkbox" id="drawroni" name="drawroni"
+                                onclick="switchRoiType('drawroni', 'drawroi')"
+                                value="0">
+                        </td>
+                    </tr>
+                </table>
+                <div id="roi-container" style="position: relative;">
+                    <img src="{{ url_for('trigger.trg_live_view_feed') }}" class="w3-image" id="liveviewforroi" alt="Camera Live View">
+                    <canvas id="canvasforroi"></canvas>
+                </div>
+            </div>
             {% endif %}
-            {% else %}
-            <form method="post" action="{{ url_for('trigger.stop_test_motion_detection') }}">
-                <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop Test Motion Detection">
-            </form>
             {% endif %}
         </div>
-        <div class="w3-half" style="height:85vh; overflow: auto">
+        <div class="w3-half" style="height:88vh; overflow: auto">
+            <div class="w3-center">
+                <div class="w3-bar" style="margin-top:10px; margin-bottom:10px">
+                    {% if tc.motionDetectAlgo > 1 %}
+                    {% if sc.isTriggerTesting == False %}
+                    {% if sc.isTriggerRecording == False %}
+                    <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection">
+                    </form>
+                    {% else %}
+                    <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection" disabled>
+                    </form>
+                    {% endif %}
+                    {% else %}
+                    <form method="post" action="{{ url_for('trigger.stop_test_motion_detection') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Stop Test Motion Detection">
+                    </form>
+                    {% endif %}
+                    {% else %}
+                    <form method="post" action="{{ url_for('trigger.test_motion_detection') }}">
+                        <input class="w3-button w3-black w3-round-xxlarge" type="submit" value="Test Motion Detection" disabled>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
             {% if sc.isTriggerTesting == True %}
-            <p> Reference: 
+            <p style="margin-top:0px; margin-bottom:5px"> Reference: 
             <a href="{{ tc.motionRefURL }}" target="_blank">{{ tc.motionRefTit }}</a>
             </p>
             <table>
                 <tr>
                     <td>
-                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                        <img  style="width: 100%; height: 205px; object-fit: scale-down"
                             src="{{ url_for('trigger.test_frame1_feed') }}" 
                             alt="Test stream 1">
                     </td>
@@ -1207,7 +1341,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                        <img  style="width: 100%; height: 205px; object-fit: scale-down"
                             src="{{ url_for('trigger.test_frame2_feed') }}" 
                             alt="Test stream 2">
                     </td>
@@ -1219,7 +1353,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                        <img  style="width: 100%; height: 205px; object-fit: scale-down"
                             src="{{ url_for('trigger.test_frame3_feed') }}" 
                             alt="Test stream 3">
                     </td>
@@ -1231,7 +1365,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <img  style="width: 100%; height: 220px; object-fit: scale-down"
+                        <img  style="width: 100%; height: 205px; object-fit: scale-down"
                             src="{{ url_for('trigger.test_frame4_feed') }}" 
                             alt="Test stream 4">
                     </td>
@@ -1880,6 +2014,7 @@
     <script>
         var triggerDelete = 0;
         var actionDelete = 0;
+        var activeTab = "";
 
         function openTriggerTab(trgTabName, trgTabButton) {
             var i;
@@ -1894,6 +2029,20 @@
                 b[i].classList = "w3-bar-item w3-button triggermenu";
             }
             document.getElementById(trgTabButton).classList = "w3-bar-item w3-button triggermenu w3-light-green";
+
+            activeTab = trgTabName
+
+            if ('{{ sc.isLiveStream }}' == "True") {
+                if (trgTabName == "trgmotion") {
+                    removeRoiWindowCanvas()
+                    drawRoiWindow('useroi', '{{ sc.scalerCropLiveView }}')
+                    drawAllRoiWindows();
+                } else {
+                    removeRoiWindowCanvas()
+                }
+            } else {
+                removeRoiWindowCanvas()
+            }
         }
 
         function dosubmit(form) {
@@ -2112,4 +2261,646 @@
             }
         }
     </script>
+    <script>
+        function enableRegionOfInterest() {
+            /*  enable tha ROI/RONI text fields to allow Flask to request its content
+            */
+            document.getElementById("regionofinterest").disabled = false
+            document.getElementById("regionofnointerest").disabled = false
+        }
+    </script>
+    <script>
+        function showRoiWindows(tabSelected, liveStreamActive, camRef) {
+            /*  If Trigger/Motion tab is selected, show th ROI/RONI Windows
+                if ROI/RONI drawing is enabled
+                This function is called after the page finished loading
+                in order to assure initial visibility of ROI windows
+                tabSelected:       name of the initially selected tab
+                liveStreamActive: "True"/"False" if live stream is active
+                camRef:            Current scaler crop
+            */
+            //console.log("showRoiWindows - tabselected:", tabSelected, " liveStreamActive:", liveStreamActive, " activeTab:", activeTab)
+
+            // We need to handle the case where a specific tab has been selected without posting.
+            // In this case, tabSelected is not the actually selected tab
+            // but the tab on which the last post has been made
+
+            currentTab = tabSelected
+            if (activeTab != "") {
+                currentTab = activeTab;
+            }
+
+            if (currentTab == "trgmotion") {
+                // First remove the existing canvas, which is required for resize
+                removeRoiWindow();
+                if (liveStreamActive == "True") {
+                    drawRoiWindow('useroi', camRef);
+                    drawAllRoiWindows();
+                }
+            }
+        }
+        function switchRoiType(id1, id2) {
+            /*  Switch between ROI and RONI drawing mode
+            */
+            var elmt1 = document.getElementById(id1);
+            var elmt2 = document.getElementById(id2);
+            if (elmt1.checked == true) {
+                elmt2.checked = false;
+            } else {
+                elmt2.checked = true;
+            }
+            setRoiUseCase();
+        }
+    </script>
+    <script>
+        var useCase;
+        var roiColor = "green";
+        var doDraw;
+        var roiWinTarget;
+        var roiCanvas;
+        var roiCanvasCtx;
+        var roiCanvasOffsetX;
+        var roiCanvasOffsetY;
+        var mouseIsDown;
+        var mouseStartX;
+        var mouseStartY;
+        var camXOffset;
+        var camYOffset;
+        var camWidth;
+        var camHeight;
+        var winXOffset;
+        var winYOffset;
+        var winWidth;
+        var winHeight;
+
+        function removeRoiWindowCanvas(){
+            /*  Removes the canvas for ROI Windows
+            */
+            var cnvEl = document.getElementById("canvasforroi");
+            if (cnvEl) {
+                // Unregister event listeners
+                document.getElementById('canvasforroi').removeEventListener('mousedown', function (e) {
+                    handleMouseDown(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('mousemove', function (e) {
+                    handleMouseMove(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('mouseup', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('mouseout', function (e) {
+                    handleMouseOut(e);
+                });   
+                document.getElementById('canvasforroi').removeEventListener('touchstart', function (e) {
+                    handleTouchStart(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('touchmove', function (e) {
+                    handleTouchMove(e);
+                }, true);
+                document.getElementById('canvasforroi').removeEventListener('touchend', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('touchcancel', function (e) {
+                    handleMouseOut(e);
+                });
+                roiCanvas = null;
+                roiCanvasCtx = null;
+            }
+        }
+
+        function parseWindows(wins) {
+            /*  Parses the tuple of one or multiple rectangles
+                ((x,x,x,x),(x,x,x,x))
+                and returns an array of rectangles as strings
+            */
+            var resa = [];
+            var cnt = 0;
+            if (wins[0] == "(") {
+                var wns = wins.slice(1);
+                if (wns[wns.length - 1] == ")") {
+                    wns = wns.slice(0, wns.length - 1);
+                    while (wns.length > 0) {
+                        var i = wns.indexOf(")");
+                        if ( i > 0) {
+                            wn = wns.slice(0, i + 1);
+                            resa[cnt] = wn;
+                            cnt = cnt + 1;
+                            if (i < wns.length) {
+                                wns = wns.slice(i + 2);
+                            } else {
+                                wns = "";
+                            }
+                        } else {
+                            wns = "";
+                        }
+                    }
+                }
+            }
+            return resa;
+        }
+
+        function parseWindow(wins) {
+            /*  Parses the rectangle
+                (x,x,x,x)
+                and returns an array of one rectangle as string
+            */
+            var resa = [] 
+            resa[0]= wins;
+            return resa;
+        }
+
+        function drawCnvWindow(win, index, winlist) {
+            /*  Draw the given window on the canvas
+            */
+            //console.log("drawCnvWindow win:", win);
+
+            // Parse the window spec for the ROI Window
+            var roiWina = parseRectTuple(win);
+            var roiWinXOffset = roiWina[0];
+            var roiWinYOffset = roiWina[1];
+            var roiWinWidth = roiWina[2];
+            var roiWinHeight = roiWina[3];
+            //console.log("cnv: ", roiCanvasOffsetX, roiCanvasOffsetY, roiCanvas.width, roiCanvas.height)
+            //console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
+            //console.log("roiw: ", roiWinXOffset, roiWinYOffset, roiWinWidth, roiWinHeight)
+
+            // Scale to canvas
+            var winWidth = Math.round(roiWinWidth * roiCanvas.width / camWidth);
+            var winHeight = Math.round(roiWinHeight * roiCanvas.height / camHeight);
+            var winXOffset = Math.round((roiWinXOffset - camXOffset) * roiCanvas.width / camWidth);
+            var winYOffset = Math.round((roiWinYOffset - camYOffset) * roiCanvas.height / camHeight);
+            //console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+
+            // Draw
+            roiCanvasCtx.strokeRect(winXOffset, winYOffset, winWidth, winHeight);
+        }
+
+        function drawFilledCnvWindow(win, index, winlist) {
+            /*  Draw the given window on the canvas
+            */
+            //console.log("drawFilledCnvWindow win:", win);
+
+            // Parse the window spec for the ROI Window
+            var roiWina = parseRectTuple(win);
+            var roiWinXOffset = roiWina[0];
+            var roiWinYOffset = roiWina[1];
+            var roiWinWidth = roiWina[2];
+            var roiWinHeight = roiWina[3];
+            //console.log("cnv: ", roiCanvasOffsetX, roiCanvasOffsetY, roiCanvas.width, roiCanvas.height)
+            //console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
+            //console.log("roiw: ", roiWinXOffset, roiWinYOffset, roiWinWidth, roiWinHeight)
+
+            // Scale to canvas
+            var winWidth = Math.round(roiWinWidth * roiCanvas.width / camWidth);
+            var winHeight = Math.round(roiWinHeight * roiCanvas.height / camHeight);
+            var winXOffset = Math.round((roiWinXOffset - camXOffset) * roiCanvas.width / camWidth);
+            var winYOffset = Math.round((roiWinYOffset - camYOffset) * roiCanvas.height / camHeight);
+            //console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+
+            // Draw
+            roiCanvasCtx.fillRect(winXOffset, winYOffset, winWidth, winHeight);
+        }
+
+        function drawAllRoiWindows() {
+            /*  Parses the windows entry in the target element
+                and draws all resulting windows
+            */
+            //console.log("drawAllRoiWindows)
+
+            // Clear canvas
+            if (roiCanvasCtx) {
+                roiCanvasCtx.clearRect(0, 0, roiCanvas.width, roiCanvas.height);
+            }
+
+            // Regions of interest
+            var roiWinlist = [];
+            var roiWindows = document.getElementById("regionofinterest").value;
+            //console.log("roiWindows:", roiWindows)
+            var roiWinlist = parseWindows(roiWindows)
+            //console.log("roiWinlist:", roiWinlist)
+            if (roiCanvasCtx) {
+                // Draw all windows
+                roiCanvasCtx.strokeStyle = "green";
+                roiCanvasCtx.lineWidth = 2;
+                roiWinlist.forEach(drawCnvWindow)
+            }
+
+            // Regions of NO interest
+            var roniWinlist = [];
+            var roniWindows = document.getElementById("regionofnointerest").value;
+            //console.log("roniWindows:", roniWindows)
+            var roniWinlist = parseWindows(roniWindows)
+            //console.log("roniWinlist:", roniWinlist)
+            if (roiCanvasCtx) {
+                // Draw all windows
+                roiCanvasCtx.fillStyle = "blue";
+                roiCanvasCtx.lineWidth = 2;
+                roniWinlist.forEach(drawFilledCnvWindow)
+            }
+        }
+
+        function addNewRoiWindow() {
+            /*  add a new ROI Window to the tuple of windows available in the target element
+            */
+            // Scale
+            //console.log('addNewRoiWindow');
+            //console.log("cnv: ", roiCanvasOffsetX, roiCanvasOffsetY, roiCanvas.width, roiCanvas.height)
+            //console.log("cam: ", camXOffset, camYOffset, camWidth, camHeight)
+            //console.log("win: ", winXOffset, winYOffset, winWidth, winHeight)
+            var roiWinWidth = Math.round(winWidth * camWidth / roiCanvas.width);
+            var roiWinHeight = Math.round(winHeight * camHeight / roiCanvas.height);
+            var roiWinXOffset = Math.round(camXOffset + winXOffset * camWidth / roiCanvas.width);
+            var roiWinYOffset = Math.round(camYOffset + winYOffset * camHeight / roiCanvas.height);
+            var roiWindows = roiWinTarget.value;
+            //console.log("roiWindows old:", roiWindows);
+
+            // Concatenate to roiWindows
+            roiWindows = roiWindows.slice(0, roiWindows.length - 1);
+            if (roiWindows.length > 1) {
+                roiWindows = roiWindows + ","
+            }
+            roiWindows = roiWindows 
+                + "(" 
+                + roiWinXOffset.toString() + "," 
+                + roiWinYOffset.toString() + ","
+                + roiWinWidth.toString() + ","
+                + roiWinHeight.toString()
+                + ")";
+            roiWindows = roiWindows + ")";
+            //console.log("roiWindows new:", roiWindows);
+
+            // Store in target
+            roiWinTarget.value = roiWindows;
+        }
+
+        function handleMouseDown(e) {
+            /*  In case of mouse down, memorize point as start of rectangle
+            */
+            //console.log('handleMouseDown')
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // save the starting x/y of the rectangle
+            mouseStartX = parseInt(e.clientX - roiCanvasOffsetX);
+            mouseStartY = parseInt(e.clientY - roiCanvasOffsetY);
+
+            // set a flag indicating the drag has begun
+            mouseIsDown = true;
+        }
+
+        function handleTouchStart(e) {
+            /*  In case of mouse down, memorize point as start of rectangle
+            */
+            //console.log('handleMouseDown')
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Always get the correct offset within the canvas
+            const rect = roiCanvas.getBoundingClientRect();
+            const touch = e.touches[0];
+
+            mouseStartX = touch.clientX - rect.left;
+            mouseStartY = touch.clientY - rect.top;
+
+            // set a flag indicating the drag has begun
+            mouseIsDown = true;
+        }
+
+        function handleMouseUp(e) {
+            /*  In case of mouse up, register end of drawing
+            */
+            //console.log('handleMouseUp');
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // the drag is over, clear the dragging flag
+            mouseIsDown = false;
+
+            // Add new window
+            addNewRoiWindow();
+        }
+
+        function handleMouseOut(e) {
+            /*  In case of mouse leaving the canvas,
+                Draw all windows
+            */
+            //console.log('handleMouseOut')
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // the drag is over, clear the dragging flag
+            mouseIsDown = false;
+            // Draw all windows
+            drawAllRoiWindows();
+        }
+
+        function handleMouseMove(e) {
+            /*  While mouse is moving with mouse down,
+                Clear canvas from previous rectangle
+                and draw rectangle with new coordinates.
+                Memorize rectangla parameters.
+            */
+            //console.log('handleMouseMove')
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // if we're not dragging, just return
+            if (!mouseIsDown) {
+                return;
+            }
+
+            // get the current mouse position
+            mouseX = parseInt(e.clientX - roiCanvasOffsetX);
+            mouseY = parseInt(e.clientY - roiCanvasOffsetY);
+
+            // clear the canvas
+            roiCanvasCtx.clearRect(0, 0, roiCanvas.width, roiCanvas.height);
+
+            // calculate the rectangle width/height based
+            // on starting vs current mouse position
+            var width = mouseX - mouseStartX;
+            var height = mouseY - mouseStartY;
+
+            // draw a new rect from the start position 
+            // to the current mouse position
+            if (useCase == "roi") {
+                roiCanvasCtx.strokeRect(mouseStartX, mouseStartY, width, height);
+            } else {
+                roiCanvasCtx.fillRect(mouseStartX, mouseStartY, width, height);
+            }
+            if (width >= 0) {
+                winXOffset = mouseStartX;
+                winWidth = width;
+            } else {
+                winXOffset = mouseX;
+                winWidth = -1 * width;
+            }
+            if (height >= 0) {
+                winYOffset = mouseStartY;
+                winHeight = height;
+            } else {
+                winYOffset = mouseY;
+                winHeight = -1 * height;
+            }
+        }
+
+        function handleTouchMove(e) {
+            /*  While mouse is moving with mouse down,
+                Clear canvas from previous rectangle
+                and draw rectangle with new coordinates.
+                Memorize rectangla parameters.
+            */
+            //console.log('handleMouseMove')
+            //console.log(e)
+            e.preventDefault();
+            e.stopPropagation();
+
+            // if we're not dragging, just return
+            if (!mouseIsDown) {
+                return;
+            }
+
+            // get the current mouse position
+            // Always get the correct offset within the canvas
+            const rect = roiCanvas.getBoundingClientRect();
+            const touch = e.touches[0];
+
+            mouseX = touch.clientX - rect.left;
+            mouseY = touch.clientY - rect.top;
+
+            // clear the canvas
+            roiCanvasCtx.clearRect(0, 0, roiCanvas.width, roiCanvas.height);
+
+            // calculate the rectangle width/height based
+            // on starting vs current mouse position
+            var width = mouseX - mouseStartX;
+            var height = mouseY - mouseStartY;
+
+            // draw a new rect from the start position 
+            // to the current mouse position
+            if (useCase == "roi") {
+                roiCanvasCtx.strokeRect(mouseStartX, mouseStartY, width, height);
+            } else {
+                roiCanvasCtx.fillRect(mouseStartX, mouseStartY, width, height);
+            }
+            if (width >= 0) {
+                winXOffset = mouseStartX;
+                winWidth = width;
+            } else {
+                winXOffset = mouseX;
+                winWidth = -1 * width;
+            }
+            if (height >= 0) {
+                winYOffset = mouseStartY;
+                winHeight = height;
+            } else {
+                winYOffset = mouseY;
+                winHeight = -1 * height;
+            }
+        }
+
+        function parseRectTuple(tuple) {
+            /*  Parse a Python tuple for libcamera.Rectangle
+                (xOffset, yOffset, width, height)
+            */
+            resn = [0, 0, 0, 0]
+            if (tuple[0] == "(") {
+                var tpl = tuple.slice(1)
+                if (tpl[tpl.length - 1] == ")") {
+                    tpl = tpl.slice(0, tpl.length - 1)
+                    var res = tpl.split(",")
+                    if (res.length == 4) {
+                        resn = [parseInt(res[0]), parseInt(res[1]), parseInt(res[2]), parseInt(res[3])]
+                    }
+                }
+            }
+            return resn
+        }
+
+        function setRoiUseCase(){
+            /*  Set the use case for ROI Windows
+                depending on selection of "drawroi" and "drawroni" checkboxes.
+            */
+            useCase = "roi";
+            roiWinTarget = document.getElementById("regionofinterest");
+            if (roiCanvasCtx) {
+                roiCanvasCtx.strokeStyle = "green";
+            }
+            var roniEl = document.getElementById("drawroni");
+            if (roniEl) {
+                if (roniEl.checked == true) {
+                    useCase = "roni";
+                    roiWinTarget = document.getElementById("regionofnointerest");
+                    if (roiCanvasCtx) {
+                        roiCanvasCtx.strokeStyle = "blue";
+                        roiCanvasCtx.fillStyle = "blue";
+                    }
+                }
+            }
+        }
+
+        function clearRoi(){
+            /*  Clear the ROI/RONI windows
+            */
+            roiWinTarget = document.getElementById("regionofinterest");
+            roiWinTarget.value = "()";
+            roniWinTarget = document.getElementById("regionofnointerest");
+            roniWinTarget.value = "()";
+        }
+
+        function drawRoiWindow(trg, camRef) {
+            /*  Initialize the drawing infrastructure for ROI Windows
+                trg: Trigger (checkbox)
+                     If checked, canvas and ROI Windows are drawn
+                     If unchecked, canvas is removed
+                camRef: Scaler crop for Live View as base for scaling
+            */
+            //console.log("drawRoiWindow trg:", trg, " camRef", camRef);
+
+            setRoiUseCase();
+
+            var ctrlEl = document.getElementById("drawroictrl");
+            var photoRoi = document.getElementById("photorois");
+
+            var trgEl = document.getElementById(trg);
+            if (trgEl) {
+                if (trgEl.checked == true) {
+                    doDraw = true;
+                    ctrlEl.style.display = "block";
+                    photoRoi.disabled = false;
+                } else {
+                    doDraw = false;
+                    ctrlEl.style.display = "none";
+                    photoRoi.checked = false;
+                    photoRoi.disabled = true;
+                }
+                //console.log("drawRoiWindow doDraw:", doDraw);
+                drawWindow(camRef);
+            }
+        }
+
+        function syncCanvas() {
+            /*  Sync the canvas with the current ROI/RONI windows
+            */
+            var img = document.getElementById("liveviewforroi");
+            var bRect = img.getBoundingClientRect();
+            roiCanvas.width = bRect.width;
+            roiCanvas.height = bRect.height;
+        }
+
+        function drawWindow(camRef) {
+            /*  Creates canvas over live view image and allows drawing of ROI Windows
+                tgt: Target element taking windows
+                camRef: Scaler crop for Live View as base for scaling
+            */
+            //console.log("drawWindow camRef", camRef);
+            // calculate camera crop window params
+            var camCrop = parseRectTuple(camRef);
+            camXOffset = camCrop[0];
+            camYOffset = camCrop[1];
+            camWidth = camCrop[2];
+            camHeight = camCrop[3];
+            //console.log(camXOffset, camYOffset, camWidth, camHeight);
+
+            if (doDraw == true) {
+                // Trigger active -> prepare canvas
+                var img = document.getElementById("liveviewforroi");
+                // Get the canvas
+                roiCanvas = document.getElementById('canvasforroi');
+                // Position and size the canvas
+                var bRect = img.getBoundingClientRect();
+                roiCanvas.style.position = "absolute";
+                roiCanvas.style.top = 0;
+                roiCanvas.style.left = 0;
+                roiCanvas.width = bRect.width;
+                roiCanvas.height = bRect.height;
+                // Set context
+                roiCanvasCtx = roiCanvas.getContext("2d");
+                roiCanvasCtx.strokeStyle = "green";
+                roiCanvasCtx.fillStyle = "blue";
+                roiCanvasCtx.lineWidth = 2;
+                // Determine canvas position
+                liveCanvasOffset = roiCanvas.getBoundingClientRect();
+                roiCanvasOffsetX = liveCanvasOffset.left
+                roiCanvasOffsetY = liveCanvasOffset.top
+                // Initialize mouse down
+                mouseIsDown = false;
+                // Register event listeners
+                document.getElementById('canvasforroi').addEventListener('mousedown', function (e) {
+                    handleMouseDown(e);
+                });
+                document.getElementById('canvasforroi').addEventListener('mousemove', function (e) {
+                    handleMouseMove(e);
+                });
+                document.getElementById('canvasforroi').addEventListener('mouseup', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('canvasforroi').addEventListener('mouseout', function (e) {
+                    handleMouseOut(e);
+                });
+                document.getElementById('canvasforroi').addEventListener('touchstart', function (e) {
+                    handleTouchStart(e);
+                });
+                document.getElementById('canvasforroi').addEventListener('touchmove', function (e) {
+                    handleTouchMove(e);
+                }, true);
+                document.getElementById('canvasforroi').addEventListener('touchend', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('canvasforroi').addEventListener('touchcancel', function (e) {
+                    handleMouseOut(e);
+                });
+            } else {
+                // Trigger inactive -> destroy canvas and clear ROIWindows
+                removeRoiWindow()
+                clearRoi();
+            }
+        }
+
+        function removeRoiWindow() {
+            /*  Remove RoiWindow canvas infrastructure
+            */
+            var cnvEl = document.getElementById("canvasforroi");
+            if (cnvEl) {
+                // Unregister event listeners
+                document.getElementById('canvasforroi').removeEventListener('mousedown', function (e) {
+                    handleMouseDown(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('mousemove', function (e) {
+                    handleMouseMove(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('mouseup', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('mouseout', function (e) {
+                    handleMouseOut(e);
+                });
+
+                document.getElementById('canvasforroi').removeEventListener('touchstart', function (e) {
+                    handleTouchStart(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('touchmove', function (e) {
+                    handleTouchMove(e);
+                }, true);
+                document.getElementById('canvasforroi').removeEventListener('touchend', function (e) {
+                    handleMouseUp(e);
+                });
+                document.getElementById('canvasforroi').removeEventListener('touchcancel', function (e) {
+                    handleMouseOut(e);
+                });                
+                roiCanvas = null;
+                roiCanvasCtx = null;
+            }
+        }
+    </script>
+    <style>
+        canvas {
+            border: 1px solid yellow;
+        }
+    </style>    
 {% endblock %}

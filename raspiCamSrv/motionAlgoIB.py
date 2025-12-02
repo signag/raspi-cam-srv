@@ -26,11 +26,16 @@ class MotionDetectAlgoIB():
         # Frames 2:t, 1:t-1
         self._frame1 = None
         self._frame2 = None
+        self._frame2o = None
         self._frame1g = None
         self._frame2g = None
         self._detections = None
         # Algorithn reference and testing
         self._test = False
+        self._rois = []
+        self._ronis = []
+        self._currentRoI = None
+        self._currentRoiIdx = None
         self._testFrame1 = None
         self._testFrame2 = None
         self._testFrame3 = None
@@ -46,6 +51,7 @@ class MotionDetectAlgoIB():
         self._recordingStart = None
         self._recordingActive = False
         self._video = None
+        self._videoWithRoi = False
     
     @property
     def frame1(self):
@@ -62,6 +68,14 @@ class MotionDetectAlgoIB():
     @frame2.setter
     def frame2(self, value):
         self._frame2 = value
+
+    @property
+    def frame2o(self):
+        return self._frame2o
+
+    @frame2o.setter
+    def frame2o(self, value):
+        self._frame2o = value
     
     @property
     def frame1g(self):
@@ -94,7 +108,39 @@ class MotionDetectAlgoIB():
     @test.setter
     def test(self, value:bool):
         self._test = value
-    
+
+    @property
+    def rois(self):
+        return self._rois
+
+    @rois.setter
+    def rois(self, value):
+        self._rois = value
+
+    @property
+    def ronis(self):
+        return self._ronis
+
+    @ronis.setter
+    def ronis(self, value):
+        self._ronis = value
+
+    @property
+    def currentRoI(self):
+        return self._currentRoI
+
+    @currentRoI.setter
+    def currentRoI(self, value):
+        self._currentRoI = value
+
+    @property
+    def currentRoiIdx(self):
+        return self._currentRoiIdx
+
+    @currentRoiIdx.setter
+    def currentRoiIdx(self, value):
+        self._currentRoiIdx = value
+
     @property
     def testFrame1(self):
         return self._testFrame1
@@ -190,8 +236,16 @@ class MotionDetectAlgoIB():
     @video.setter
     def video(self, value):
         self._video = value
-        
-    def startRecordMotion(self, fnRaw) -> str:
+
+    @property
+    def videoWithRoi(self):
+        return self._videoWithRoi
+
+    @videoWithRoi.setter
+    def videoWithRoi(self, value):
+        self._videoWithRoi = value
+
+    def startRecordMotion(self, fnRaw, includeRoI: bool = False) -> str:
         """ Start recording motion
         
             Input:
@@ -214,6 +268,7 @@ class MotionDetectAlgoIB():
                 assert self.video.isOpened()
                 self.recordingActive = True
                 self.recordIdx = 0
+            self.videoWithRoi = includeRoI
             self.recordMotion()
             done = True
         except Exception as e:
@@ -237,7 +292,33 @@ class MotionDetectAlgoIB():
         """
         if self.recordingActive == True:
             #logger.debug("Thread %s: MotionDetectFrameDiff.recordMotion - recordIdx:%s", get_ident(), self.recordIdx)
+            # Restore RONIs
+            for roni in self.ronis:
+                x = roni[0]
+                y = roni[1]
+                w = roni[2]
+                h = roni[3]
+                self.frame2[y:y+h, x:x+w] = self.frame2o[y:y+h, x:x+w]
             self._draw_bboxes()
+            if self.videoWithRoi:
+                for roi in self.rois:
+                    x = roi[0]
+                    y = roi[1]
+                    w = roi[2]
+                    h = roi[3]
+                    cv2.rectangle(self.frame2, (x,y), (x+w,y+h), (0,255,0), 2)
+                for roni in self.ronis:
+                    x = roni[0]
+                    y = roni[1]
+                    w = roni[2]
+                    h = roni[3]
+                    cv2.rectangle(self.frame2, (x,y), (x+w,y+h), (255,0,0), 2)
+                if self.currentRoI is not None:
+                    x = self.currentRoI[0]
+                    y = self.currentRoI[1]
+                    w = self.currentRoI[2]
+                    h = self.currentRoI[3]
+                    cv2.rectangle(self.frame2, (x,y), (x+w,y+h), (0,0,255), 2)  
             if len(self.frame2.shape) == 2:
                 framergb = cv2.cvtColor(self.frame2, cv2.COLOR_YUV2RGB_I420)
             elif len(self.frame2.shape) == 3:
@@ -263,9 +344,15 @@ class MotionDetectAlgoIB():
         """ Draw bounding boxes"""
         #logger.debug("Thread %s: MotionDetectFrameDiff._draw_bboxes", get_ident())
         if not self.detections is None:
+            if self.currentRoI is None:
+                xo = 0
+                yo = 0
+            else:
+                xo = self.currentRoI[0]
+                yo = self.currentRoI[1]
             for det in self.detections:
                 x1,y1,x2,y2 = det
-                cv2.rectangle(self.frame2, (x1,y1), (x2,y2), (0,255,0), 2)
+                cv2.rectangle(self.frame2, (x1+xo,y1+yo), (x2+xo,y2+yo), (0,255,0), 2)
 
     def _get_contour_detections(self, mask, thresh=400):
         """ Obtains initial proposed detections from contours discoverd on the mask. 
@@ -327,7 +414,7 @@ class MotionDetectAlgoIB():
     def _remove_contained_bboxes(self, boxes):
         """ Removes all smaller boxes that are contained within larger boxes.
         
-            Requires bboxes to be soirted by area (score)
+            Requires bboxes to be sorted by area (score)
             Inputs:
                 boxes - array bounding boxes sorted (descending) by area 
                         [[x1,y1,x2,y2]]
@@ -381,7 +468,7 @@ class MotionDetectFrameDiff(MotionDetectAlgoIB):
     def nms_threshold(self, value):
         self._nms_threshold = value
 
-    def detectMotion(self, frame2, frame1):
+    def detectMotion(self, frame2, frame1, camInfo: str, rois: list, ronis: list):
         """ Use frame differencing method to detect motion
         
             Inputs:
@@ -393,29 +480,91 @@ class MotionDetectFrameDiff(MotionDetectAlgoIB):
         """
         #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion", get_ident())
         motion = False
+        roiDetected = 0
+
+        triggerParams = {}
+        triggerParams["cam"] = camInfo
+        roiDetected = 0
+
         self.frame2 = copy.copy(frame2)
         self.frame1 = copy.copy(frame1)
-        self.frame2g = cv2.cvtColor(frame2, cv2.COLOR_RGB2GRAY)
-        self.frame1g = cv2.cvtColor(frame1, cv2.COLOR_RGB2GRAY)
+
+        self.frame2o = frame2
+        self.rois = rois
+        self.ronis = ronis
+
         if self.test == True:
-            self.testFrame1 = self._frameToStream(self.frame2g)
+            self.testFrame1 = self._frameToStream(self.frame2)
+            self.testFrame2 = copy.copy(self.frame2)[ :, :, 0]
+            self.testFrame3 = copy.copy(self.frame2)[ :, :, 0]
             #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - staged frame_gray", get_ident())
 
-        self.detections = self._get_detections(self.frame1g, self.frame2g, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold)
-        #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - got detections: %s", get_ident(), self.detections)
-        if self.test == True:
-            if not self.detections is None:
-                if len(self.detections) > 0:
-                    self._draw_bboxes()
-                    #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - done draw_bboxes", get_ident())
-            self.testFrame4 = self._frameToStream(self.frame2)
+        for roni in ronis:
+            x = roni[0]
+            y = roni[1]
+            w = roni[2]
+            h = roni[3]
+            self.frame2[y:y+h, x:x+w] = (255,0,0)
+            self.frame1[y:y+h, x:x+w] = (255,0,0)
+
+        self.frame2g = cv2.cvtColor(self.frame2, cv2.COLOR_RGB2GRAY)
+        self.frame1g = cv2.cvtColor(self.frame1, cv2.COLOR_RGB2GRAY)
+
+        if len(rois) == 0:
+            self.currentRoI = None
+            self.detections = self._get_detections(self.frame1g, self.frame2g, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold)
+            #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - got detections: %s", get_ident(), self.detections)
+            if self.test == True:
+                if not self.detections is None:
+                    if len(self.detections) > 0:
+                        self._draw_bboxes()
+                        #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - done draw_bboxes", get_ident())
+                self.testFrame4 = self._frameToStream(self.frame2)
+            else:
+                if not self.detections is None:
+                    if len(self.detections) > 0:
+                        triggerParams["BBox_thr"] = self.bbox_threshold
+                        triggerParams["IOU_thr"] = self.nms_threshold
+                        motion = True
         else:
-            if not self.detections is None:
-                if len(self.detections) > 0:
-                    motion = True
-        trigger = {"trigger":"Motion Detection", "triggertype":"Frame Diff.", "triggerparam":{"BBox_thr": self.bbox_threshold, "IOU_thr": self.nms_threshold}}
+            idx = 0
+            for roi in rois:
+                idx += 1
+                self.currentRoI = roi
+                x = roi[0]
+                y = roi[1]
+                w = roi[2]
+                h = roi[3]
+                self.frame2g = cv2.cvtColor(self.frame2[y:y+h, x:x+w], cv2.COLOR_RGB2GRAY)
+                self.frame1g = cv2.cvtColor(self.frame1[y:y+h, x:x+w], cv2.COLOR_RGB2GRAY)
+                self.detections = self._get_detections(self.frame1g, self.frame2g, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold)
+                #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - got detections: %s", get_ident(), self.detections)
+                if self.test == True:
+                    color = (0,255,0)
+                    if not self.detections is None:
+                        if len(self.detections) > 0:
+                            color = (0,0,255)
+                            self._draw_bboxes()
+                            #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - done draw_bboxes", get_ident())
+                    cv2.rectangle(self.frame2, (x,y), (x+w,y+h), color, 2)
+                else:
+                    if not self.detections is None:
+                        if len(self.detections) > 0:
+                            triggerParams["roi"] = idx
+                            triggerParams["BBox_thr"] = self.bbox_threshold
+                            triggerParams["IOU_thr"] = self.nms_threshold
+                            motion = True
+                            roiDetected = idx
+                            motion = True
+                            break
+            if self.test == True:
+                self.testFrame2 = self._frameToStream(self.testFrame2)
+                self.testFrame3 = self._frameToStream(self.testFrame3)
+                self.testFrame4 = self._frameToStream(self.frame2)
+
+        trigger = {"trigger":"Motion Detection", "triggertype":"Frame Diff.", "triggerparam":triggerParams}
         #logger.debug("Thread %s: MotionDetectFrameDiff.detectMotion - motion:%s", get_ident(), motion)
-        return (motion, trigger)
+        return (motion, trigger, roiDetected)
 
     def _get_detections(self, frame1, frame2, bbox_thresh=400, nms_thresh=1e-3, mask_kernel=np.array((9,9), dtype=np.uint8)):
         """ Main function to get detections via Frame Differencing
@@ -435,7 +584,14 @@ class MotionDetectFrameDiff(MotionDetectAlgoIB):
         mask = self._get_mask(frame1, frame2, mask_kernel)
         #logger.debug("Thread %s: MotionDetectFrameDiff._get_detections got mask", get_ident())
         if self.test == True:
-            self.testFrame3 = self._frameToStream(mask)
+            if self.currentRoI is None:
+                self.testFrame3 = self._frameToStream(mask)
+            else:
+                x = self.currentRoI[0]
+                y = self.currentRoI[1]
+                w = self.currentRoI[2]
+                h = self.currentRoI[3]
+                self.testFrame3[y:y+h, x:x+w] = copy.copy(mask[0:h, 0:w])
 
         # get initially proposed detections from contours
         detections = self._get_contour_detections(mask, bbox_thresh)
@@ -459,12 +615,22 @@ class MotionDetectFrameDiff(MotionDetectAlgoIB):
             Outputs: 
                 mask - Thresholded mask for moving pixels
             """
+        #logger.debug("Thread %s: MotionDetectFrameDiff._get_mask", get_ident())
         frame_diff = cv2.subtract(frame2, frame1)
 
         # blur the frame difference
         frame_diff = cv2.medianBlur(frame_diff, 3)
         if self.test == True:
-            self.testFrame2 = self._frameToStream(frame_diff)
+            if self.currentRoI is None:
+                self.testFrame2 = self._frameToStream(frame_diff)
+            else:
+                x = self.currentRoI[0]
+                y = self.currentRoI[1]
+                w = self.currentRoI[2]
+                h = self.currentRoI[3]
+                #logger.debug("Thread %s: MotionDetectFrameDiff._get_mask . Preparing test frame 2 with ROI", get_ident())
+                self.testFrame2[y:y+h, x:x+w] = copy.copy(frame_diff[0:h, 0:w])
+                #logger.debug("Thread %s: MotionDetectFrameDiff._get_mask . Done preparing test frame 2 with ROI", get_ident())
         
         mask = cv2.adaptiveThreshold(frame_diff, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
                 cv2.THRESH_BINARY_INV, 11, 3)
@@ -495,7 +661,7 @@ class MotionDetectOpticalFlow(MotionDetectAlgoIB):
         self.nms_threshold = 0.001
         self.motion_threshold = 1
 
-    def detectMotion(self, frame2, frame1):
+    def detectMotion(self, frame2, frame1, camInfo: str, rois: list, ronis: list):
         """ Use frame differencing method to detect motion
         
             Inputs:
@@ -507,24 +673,98 @@ class MotionDetectOpticalFlow(MotionDetectAlgoIB):
         """
         #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion", get_ident())
         motion = False
+        roiDetected = 0
+
+        triggerParams = {}
+        triggerParams["cam"] = camInfo
+        roiDetected = 0
+
         self.frame2 = copy.copy(frame2)
         self.frame1 = copy.copy(frame1)
 
-        self.detections = self._get_detections(self.frame1, self.frame2, motion_thresh=self.motion_threshold, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold)
-        #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - got detections: %s", get_ident(), self.detections)
+        self.frame2o = frame2
+        self.rois = rois
+        self.ronis = ronis
+
+        if self.test == True and len(ronis) > 0:
+            self.testFrame1 = copy.copy(self.frame2)
+            self.testFrame2 = copy.copy(self.frame2)
+            self.testFrame3 = copy.copy(self.frame2)
+            self.testFrame3 = self.testFrame3[:, :, 0]
+            self.testFrame4 = copy.copy(self.frame2)
+
         if self.test == True:
-            if not self.detections is None:
-                if len(self.detections) > 0:
-                    self._draw_bboxes()
-                    #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - done draw_bboxes", get_ident())
-            self.testFrame4 = self._frameToStream(self.frame2)
+            # convert to grayscale
+            self.testFrame1 = cv2.cvtColor(self.frame2, cv2.COLOR_RGB2GRAY)
+            # blurr image
+            self.testFrame1 = cv2.GaussianBlur(self.testFrame1, dst=None, ksize=(3,3), sigmaX=5)
+
+        for roni in ronis:
+            x = roni[0]
+            y = roni[1]
+            w = roni[2]
+            h = roni[3]
+            self.frame2[y:y+h, x:x+w] = (255,0,0)
+            self.frame1[y:y+h, x:x+w] = (255,0,0)
+
+        if len(rois) == 0:
+            self.currentRoI = None
+            self.detections = self._get_detections(self.frame1, self.frame2, motion_thresh=self.motion_threshold, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold)
+            #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - got detections: %s", get_ident(), self.detections)
+            if self.test == True:
+                if not self.detections is None:
+                    if len(self.detections) > 0:
+                        self._draw_bboxes()
+                        #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - done draw_bboxes", get_ident())
+                self.testFrame1 = self._frameToStream(self.testFrame1)
+                self.testFrame4 = self._frameToStream(self.frame2)
+            else:
+                if not self.detections is None:
+                    if len(self.detections) > 0:
+                        triggerParams["Motion_thr"] = self.motion_threshold
+                        triggerParams["BBox_thr"] = self.bbox_threshold
+                        triggerParams["IOU_thr"] = self.nms_threshold
+                        motion = True
         else:
-            if not self.detections is None:
-                if len(self.detections) > 0:
-                    motion = True
-        trigger = {"trigger":"Motion Detection", "triggertype":"Optical Flow", "triggerparam":{"Motion_thr": self.motion_threshold, "BBox_thr": self.bbox_threshold, "IOU_thr": self.nms_threshold}}    
+            idx = 0
+            for roi in rois:
+                idx += 1
+                self.currentRoI = roi
+                x = roi[0]
+                y = roi[1]
+                w = roi[2]
+                h = roi[3]
+                #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - checking ROI: %s", get_ident(), self.currentRoI)
+                self.detections = self._get_detections(self.frame1[y:y+h, x:x+w], self.frame2[y:y+h, x:x+w], motion_thresh=self.motion_threshold, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold)
+                #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - got detections: %s", get_ident(), self.detections)
+                if self.test == True:
+                    color = (0,255,0)
+                    if not self.detections is None:
+                        if len(self.detections) > 0:
+                            color = (0,0,255)
+                            self._draw_bboxes()
+                            #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - done draw_bboxes", get_ident())
+                    cv2.rectangle(self.frame2, (x,y), (x+w,y+h), color, 2)
+                else:
+                    if not self.detections is None:
+                        if len(self.detections) > 0:
+                            triggerParams["roi"] = idx
+                            triggerParams["Motion_thr"] = self.motion_threshold
+                            triggerParams["BBox_thr"] = self.bbox_threshold
+                            triggerParams["IOU_thr"] = self.nms_threshold
+                            motion = True
+                            roiDetected = idx
+                            motion = True
+                            break
+            if self.test == True:
+                self.testFrame1 = self._frameToStream(self.testFrame1)
+                self.testFrame2 = self._frameToStream(self.testFrame2)
+                self.testFrame3 = self._frameToStream(self.testFrame3)
+                self.testFrame4 = self._frameToStream(self.frame2)
+
+        trigger = {"trigger":"Motion Detection", "triggertype":"Optical Flow", "triggerparam":triggerParams}    
         #logger.debug("Thread %s: MotionDetectOpticalFlow.detectMotion - motion:%s", get_ident(), motion)
-        return (motion, trigger)
+        return (motion, trigger, roiDetected)
 
     def _get_detections(self, frame1, frame2, motion_thresh=1, bbox_thresh=400, nms_thresh=0.1, mask_kernel=np.ones((7,7), dtype=np.uint8)):
         """ Main function to get detections via Frame Differencing
@@ -539,10 +779,19 @@ class MotionDetectOpticalFlow(MotionDetectAlgoIB):
                 detections - list with bounding box locations of all detections
                     bounding boxes are in the form of: (xmin, ymin, xmax, ymax)
             """
+        #logger.debug("Thread %s: MotionDetectOpticalFlow._get_detections", get_ident())
         # get optical flow
         flow = self._compute_flow(frame1, frame2)
         if self.test == True:
-            self.testFrame2 = self._frameToStream(self._get_flow_viz(flow))
+            if self.currentRoI is None:
+                self.testFrame2 = self._frameToStream(self._get_flow_viz(flow))
+            else:
+                x = self.currentRoI[0]
+                y = self.currentRoI[1]
+                w = self.currentRoI[2]
+                h = self.currentRoI[3]
+                flow_viz = self._get_flow_viz(flow)
+                self.testFrame2[y:y+h, x:x+w] = copy.copy(flow_viz[0:h, 0:w])
             #logger.debug("Thread %s: MotionDetectOpticalFlow._get_detections - staged testFrame2", get_ident())
 
         # separate into magntiude and angle
@@ -550,7 +799,15 @@ class MotionDetectOpticalFlow(MotionDetectAlgoIB):
 
         motion_mask = self._get_motion_mask(mag, motion_thresh=motion_thresh, kernel=mask_kernel)
         if self.test == True:
-            self.testFrame3 = self._frameToStream(motion_mask)
+            if self.currentRoI is None:
+                self.testFrame3 = self._frameToStream(motion_mask)
+            else:
+                x = self.currentRoI[0]
+                y = self.currentRoI[1]
+                w = self.currentRoI[2]
+                h = self.currentRoI[3]
+                self.testFrame3[y:y+h, x:x+w] = copy.copy(motion_mask[0:h, 0:w])
+            #logger.debug("Thread %s: MotionDetectOpticalFlow._get_detections - staged testFrame3", get_ident())
 
         # get initially proposed detections from contours
         detections = self._get_contour_detections(motion_mask, thresh=bbox_thresh)
@@ -565,6 +822,7 @@ class MotionDetectOpticalFlow(MotionDetectAlgoIB):
         return self._non_max_suppression(bboxes, scores, threshold=nms_thresh)
     
     def _compute_flow(self, frame1, frame2):
+        #logger.debug("Thread %s: MotionDetectOpticalFlow._compute_flow", get_ident())
         # convert to grayscale
         gray1 = cv2.cvtColor(frame1, cv2.COLOR_RGB2GRAY)
         gray2 = cv2.cvtColor(frame2, cv2.COLOR_RGB2GRAY)
@@ -574,9 +832,6 @@ class MotionDetectOpticalFlow(MotionDetectAlgoIB):
         # blurr image
         gray1 = cv2.GaussianBlur(gray1, dst=None, ksize=(3,3), sigmaX=5)
         gray2 = cv2.GaussianBlur(gray2, dst=None, ksize=(3,3), sigmaX=5)
-        if self.test == True:
-            self.testFrame1 = self._frameToStream(gray2)
-            #logger.debug("Thread %s: MotionDetectOpticalFlow._compute_flow - staged frame_gray", get_ident())
 
         flow = cv2.calcOpticalFlowFarneback(gray1, gray2, None,
                                             pyr_scale=0.75,
@@ -670,6 +925,16 @@ class MotionDetectBgSubtract(MotionDetectAlgoIB):
         self._backSubModel = "MOG2"
         self._backSub = cv2.createBackgroundSubtractorMOG2(varThreshold=16, detectShadows=True)
         self._backSub.setShadowThreshold(0.5)
+
+        # For ROIs, each ROI will have its own background model
+        cfg = CameraCfg()
+        tc = cfg.triggerConfig
+        self._roiBackSubs = []
+        if tc.useRoI == True:
+            for roi in tc.regionOfInterest:
+                backSub = cv2.createBackgroundSubtractorMOG2(varThreshold=16, detectShadows=True)
+                backSub.setShadowThreshold(0.5)
+                self._roiBackSubs.append(backSub)
     
     @property
     def backSubModel(self):
@@ -678,18 +943,38 @@ class MotionDetectBgSubtract(MotionDetectAlgoIB):
     @backSubModel.setter
     def backSubModel(self, value):
         logger.debug("Thread %s: MotionDetectBgSubtract.backSubModel - value: %s", get_ident(), value)
+        cfg = CameraCfg()
+        tc = cfg.triggerConfig
         if value == "MOG2":
             self._backSub = cv2.createBackgroundSubtractorMOG2(varThreshold=16, detectShadows=True)
             self._backSub.setShadowThreshold(0.5)
+            self._roiBackSubs = []
+            if tc.useRoI == True:
+                for roi in tc.regionOfInterest:
+                    backSub = cv2.createBackgroundSubtractorMOG2(varThreshold=16, detectShadows=True)
+                    backSub.setShadowThreshold(0.5)
+                    self._roiBackSubs.append(backSub)
         elif value == "KNN":
             self._backSub = cv2.createBackgroundSubtractorKNN(dist2Threshold=1000, detectShadows=True)
+            self._roiBackSubs = []
+            if tc.useRoI == True:
+                for roi in tc.regionOfInterest:
+                    backSub = cv2.createBackgroundSubtractorKNN(dist2Threshold=1000, detectShadows=True)
+                    backSub.setShadowThreshold(0.5)
+                    self._roiBackSubs.append(backSub)
         else:
             value = "MOG2"
             self._backSub = cv2.createBackgroundSubtractorMOG2(varThreshold=16, detectShadows=True)
             self._backSub.setShadowThreshold(0.5)
+            self._roiBackSubs = []
+            if tc.useRoI == True:
+                for roi in tc.regionOfInterest:
+                    backSub = cv2.createBackgroundSubtractorMOG2(varThreshold=16, detectShadows=True)
+                    backSub.setShadowThreshold(0.5)
+                    self._roiBackSubs.append(backSub)
         self._backSubModel = value
 
-    def detectMotion(self, frame2, frame1):
+    def detectMotion(self, frame2, frame1, camInfo: str, rois: list, ronis: list):
         """ Use frame differencing method to detect motion
         
             Inputs:
@@ -701,30 +986,91 @@ class MotionDetectBgSubtract(MotionDetectAlgoIB):
         """
         #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion", get_ident())
         motion = False
+        roiDetected = 0
+
+        triggerParams = {}
+        triggerParams["cam"] = camInfo
+        roiDetected = 0
+
         self.frame2 = copy.copy(frame2)
         self.frame1 = copy.copy(frame1)
-        self.frame2g = cv2.cvtColor(self.frame2, cv2.COLOR_RGB2GRAY)
-        self.frame1g = cv2.cvtColor(self.frame1, cv2.COLOR_RGB2GRAY)
+
+        self.frame2o = frame2
+        self.rois = rois
+        self.ronis = ronis
+
         if self.test == True:
             self.testFrame1 = self._frameToStream(self.frame2)
+            self.testFrame2 = copy.copy(self.frame2)
+            self.testFrame3 = copy.copy(self.frame2)[ :, :, 0]
             #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - staged frame_gray", get_ident())
 
-        kernel=np.array((9,9), dtype=np.uint8)
-        self.detections = self._get_detections(self._backSub, self.frame2, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold, kernel=kernel)
-        #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - got detections: %s", get_ident(), self.detections)
-        if self.test == True:
-            if not self.detections is None:
-                if len(self.detections) > 0:
-                    self._draw_bboxes()
-                    #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - done draw_bboxes", get_ident())
-            self.testFrame4 = self._frameToStream(self.frame2)
+        for roni in ronis:
+            x = roni[0]
+            y = roni[1]
+            w = roni[2]
+            h = roni[3]
+            self.frame2[y:y+h, x:x+w] = (255,0,0)
+            self.frame1[y:y+h, x:x+w] = (255,0,0)
+
+        if len(rois) == 0:
+            self.currentRoI = None
+            kernel=np.array((9,9), dtype=np.uint8)
+            self.detections = self._get_detections(self._backSub, self.frame2, bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold, kernel=kernel)
+            #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - got detections: %s", get_ident(), self.detections)
+            if self.test == True:
+                if not self.detections is None:
+                    if len(self.detections) > 0:
+                        self._draw_bboxes()
+                        #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - done draw_bboxes", get_ident())
+                self.testFrame4 = self._frameToStream(self.frame2)
+            else:
+                if not self.detections is None:
+                    if len(self.detections) > 0:
+                        triggerParams["Model"] = self.backSubMod
+                        triggerParams["BBox_thr"] = self.bbox_threshold
+                        triggerParams["IOU_thr"] = self.nms_threshold
+                        motion = True
         else:
-            if not self.detections is None:
-                if len(self.detections) > 0:
-                    motion = True
-        trigger = {"trigger":"Motion Detection", "triggertype":"BG Subtraction", "triggerparam":{"Model": self.backSubMod, "BBox_thr": self.bbox_threshold, "IOU_thr": self.nms_threshold}}    
+            idx = 0
+            for roi in rois:
+                idx += 1
+                self.currentRoI = roi
+                self.currentRoiIdx = idx
+                x = roi[0]
+                y = roi[1]
+                w = roi[2]
+                h = roi[3]
+                kernel=np.array((9,9), dtype=np.uint8)
+                self.detections = self._get_detections(self._backSub, self.frame2[y:y+h, x:x+w], bbox_thresh=self.bbox_threshold, nms_thresh=self.nms_threshold, kernel=kernel)
+                #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - got detections: %s", get_ident(), self.detections)
+                if self.test == True:
+                    color = (0,255,0)
+                    if not self.detections is None:
+                        if len(self.detections) > 0:
+                            color = (0,0,255)
+                            self._draw_bboxes()
+                            #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - done draw_bboxes", get_ident())
+                    cv2.rectangle(self.frame2, (x,y), (x+w,y+h), color, 2)
+                else:
+                    if not self.detections is None:
+                        if len(self.detections) > 0:
+                            triggerParams["roi"] = idx
+                            triggerParams["Model"] = self.backSubMod
+                            triggerParams["BBox_thr"] = self.bbox_threshold
+                            triggerParams["IOU_thr"] = self.nms_threshold
+                            motion = True
+                            roiDetected = idx
+                            motion = True
+                            break
+            if self.test == True:
+                self.testFrame2 = self._frameToStream(self.testFrame2)
+                self.testFrame3 = self._frameToStream(self.testFrame3)
+                self.testFrame4 = self._frameToStream(self.frame2)
+
+        trigger = {"trigger":"Motion Detection", "triggertype":"BG Subtraction", "triggerparam":triggerParams}    
         #logger.debug("Thread %s: MotionDetectBgSubtract.detectMotion - motion:%s", get_ident(), motion)
-        return (motion, trigger)
+        return (motion, trigger, roiDetected)
     
     def _get_detections(self, backSub, frame, bbox_thresh=100, nms_thresh=0.1, kernel=np.array((9,9), dtype=np.uint8)):
         """ Main function to get detections via Frame Differencing
@@ -740,15 +1086,35 @@ class MotionDetectBgSubtract(MotionDetectAlgoIB):
             """
         #logger.debug("Thread %s: MotionDetectBgSubtract._get_detections - backSub %s", get_ident(), backSub)
         # Update Background Model and get foreground mask
-        fg_mask = backSub.apply(frame)
+        if self.currentRoI is None:
+            fg_mask = backSub.apply(frame)
+        else:
+            backSub = self._roiBackSubs[self.currentRoiIdx - 1]
+            fg_mask = backSub.apply(frame)
+
         if self.test == True:
-            self.testFrame2 = self._frameToStream(backSub.getBackgroundImage())
-            #logger.debug("Thread %s: MotionDetectBgSubtract._get_detections - staged background", get_ident())
+            if self.currentRoI is None:
+                self.testFrame2 = self._frameToStream(backSub.getBackgroundImage())
+                #logger.debug("Thread %s: MotionDetectBgSubtract._get_detections - staged background", get_ident())
+            else:
+                x = self.currentRoI[0]
+                y = self.currentRoI[1]
+                w = self.currentRoI[2]
+                h = self.currentRoI[3]
+                bgImage = backSub.getBackgroundImage()
+                self.testFrame2[y:y+h, x:x+w] = copy.copy(bgImage[0:h, 0:w])
 
         # get clean motion mask
         motion_mask = self._get_motion_mask(fg_mask, kernel=kernel)
         if self.test == True:
-            self.testFrame3 = self._frameToStream(motion_mask)
+            if self.currentRoI is None:
+                self.testFrame3 = self._frameToStream(motion_mask)
+            else:
+                x = self.currentRoI[0]
+                y = self.currentRoI[1]
+                w = self.currentRoI[2]
+                h = self.currentRoI[3]
+                self.testFrame3[y:y+h, x:x+w] = copy.copy(motion_mask[0:h, 0:w])
 
         # get initially proposed detections from contours
         detections = self._get_contour_detections(motion_mask, bbox_thresh)

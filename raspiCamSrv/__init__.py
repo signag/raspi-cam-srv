@@ -144,6 +144,7 @@ def create_app(test_config=None):
     sc = cfg.serverConfig
     sc.serverStartTime = serverStartTime
     sc.cfgPath = cfgPath
+    sc.cfgBackupPath = os.path.dirname(app.instance_path) + "/backups"
     sc.checkEnvironment()
     sc.database = os.path.join(app.instance_path, "raspiCamSrv.sqlite")
     stc = cfg.stereoCfg

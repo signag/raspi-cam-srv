@@ -559,6 +559,80 @@
                     </form>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    &nbsp;
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <form method="post" id="configbackup" action="{{ url_for('settings.configBackup') }}">
+                    <td>
+                        <input type="text" id="configbackupname" name="configbackupname" style="width: 22ch" value="" aria-label="Name for the backup">
+                    </td>
+                    <td>
+                        <input class="w3-button w3-black" style="width: 26ch" type="submit" onclick="confirmBackupConfig('configbackup', 'configbackupname')" value="Backup Stored Data">
+                    </td>
+                    <td colspan="4">
+                        Backup all persisted data (Configuration, Photos, Photo Series, Events, Calibration, Database)
+                    </td>
+                </form>
+            </tr>                
+            <tr>
+                <form method="post" id="configrestore" action="{{ url_for('settings.configRestore') }}">
+                    <td>
+                        <select name="configrestorename" id="configrestorename" style="width: 22ch">
+                            {% for bu in backups %}
+                            <option value="{{ bu }}">{{ bu }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input class="w3-button w3-black" style="width: 26ch" type="submit" onclick="confirmBackupRestore('configrestore', 'configrestorename')" value="Restore Backup">
+                    </td>
+                </form>
+                <td>
+                    Requires server restart!
+                </td>
+                <form method="post" id="serverrestart" action="{{ url_for('settings.serverRestart') }}">
+                    <td>
+                        <input class="w3-button w3-black" style="width: 16ch" type="submit" onclick="confirmServerRestart('serverrestart')" value="Restart Server">
+                    </td>
+                </form>
+                <td>
+                </td>
+            </tr>                
+            <tr>
+                <form method="post" id="configremove" action="{{ url_for('settings.configRemove') }}">
+                    <td>
+                         <select name="configremovename" id="configremovename" style="width: 22ch">
+                            {% for bu in backups %}
+                            <option value="{{ bu }}">{{ bu }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input class="w3-button w3-black" style="width: 26ch" type="submit" onclick="confirmBackupRemove('configremove', 'configremovename')" value="Remove Backup">
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                </form>
+            </tr>                
         </table>
         <h3>Unsaved Configuration Changes:</h3>
         <div style="max-height:65vh;overflow-y:auto">
@@ -1588,14 +1662,6 @@
                 document.getElementById(form).method = "get";
             }
         }
-        function confirmShutdown(form) {
-            if (confirm("Do you want to shut down the server?\nIf the server is running as service, it will restart automatically.\nOtherwise, you need to start it manually")) {
-                document.getElementById(form).method = "post";
-                document.getElementById(form).submit();
-            } else {
-                document.getElementById(form).method = "get";
-            }
-        }
         function confirmStore(form) {
             if (confirm("Do you want to replace the stored configuration with the current configuration?")) {
                 document.getElementById(form).method = "post";
@@ -1606,6 +1672,41 @@
         }
         function confirmLoad(form) {
             if (confirm("Do you want to replace the current configuration with the stored configuration?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmBackupConfig(form, nameElementId) {
+            backupName = document.getElementById(nameElementId).value;
+            if (confirm("Do you want to backup stored data as '" + backupName + "'?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmBackupRestore(form, nameElementId) {
+            backupName = document.getElementById(nameElementId).value;
+            if (confirm("Do you want to restore the backup '" + backupName + "'?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmBackupRemove(form, nameElementId) {
+            backupName = document.getElementById(nameElementId).value;
+            if (confirm("Do you want to remove the backup '" + backupName + "'?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmServerRestart(form) {
+            if (confirm("Do you want to restart the raspiCamSrv Flask server?")) {
                 document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
             } else {

@@ -37,7 +37,7 @@ For all events older than the *Retention Period*, cleanup will
 
 Event Details are shown in the Event Viewer for a specific day:
 
-![Event Viewer](./img/Trigger_Events.jpg)
+![Event Viewer](./img/Trigger_Events.gif)
 
 In the top area, you may 
 - change the active day using the date control or the arrow buttons.   
@@ -64,14 +64,21 @@ shows, from top to bottom:
 [Optical Flow](./TriggerMotion.md#test-for-optical-flow-algorithm)    
 [BG Subtraction](./TriggerMotion.md#test-for-background-subtraction-algorithm)
 - Trigger parameter (see [Motion](./TriggerMotion.md) tab)   
+cam : Camera Num by which motion was detected    
+roi : Index of the [Region of Interest](./TriggerMotion.md#regions-of-interest--regions-of-no-interest) in which motion was detected   
+**NOTE**: Motion detection analysis is stopped whenever motion has been detected in one of the RoIs. The index of this ROI is reported here.    
 msd : *Mean Square Threshold*    
 BBox_thr : *Bounding Box Threshold*    
 IOU_thr : *IOU Threshold*     
 Motion_thr : *Motion Threshold*    
 Model : *Background Subtraction Model* (1=MOG2, 2=KNN)
 
-
 You may use the information to fine tune the algorithm parameters on the [Motion](./TriggerMotion.md#motion-detection-configuration) tab.
+
+When [Photos/Videos with RoI/RoNI](./TriggerMotion.md) has been activated, borders of RoIs/RoNIs are shown on photos and videos (for "Mean Square Diff" not no videos):
+- Red borders represent *Regions of Interest* where motion was detected first.
+- Green borders represent the other specified *Regions of Interest.
+- Blue borders represent *Regions of NO Interest.
 
 In case that photos have been taken together with videos, this is represented as shown below.   
 Videos show the video length in the footer.

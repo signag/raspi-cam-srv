@@ -46,13 +46,15 @@ This allows identifying photos which have been synchronously taken and videos wh
 
 #### Save Active Camera Settings for Camera Switch
 
-This button stores the current [Camera Configuration](./Configuration.md) for all configurations as well as the current [Controls](./CameraControls.md) settings for the active camera in a specific structure (streamingCfg) so that it can be reused for streaming in a case that the other camera has been activated. (See also [Configuring MJPEG Stream and jpeg Photo](#configuring-mjpeg-stream-and-jpeg-photo))
+This button stores the current [Camera Configuration](./Configuration.md) for all configurations as well as the current [Controls](./CameraControls.md) settings for the active camera in a specific structure (streamingCfg) so that it can be reused for streaming in a case that the other camera has been activated.       
+In addition, also the camera-related settings of [Trigger](./Trigger.md) ([Trigger/Motion](./TriggerMotion.md) and [Trigger/Camera](./TriggerCameraActions.md)) will be stored in the streamingCfg.    
+(See also [Configuring MJPEG Stream and jpeg Photo](#configuring-mjpeg-stream-and-jpeg-photo))
 
 #### Synchronize Configurations
 
 This button is disabled if the two cameras are of different model.
 
-If they are the same model, the button can be used to transfer the configuration as well as the controls settings from the active camera to the second camera. This is especially useful in the case of [Stereo Vision](./CamStereo.md) where both cameras should be operated with identical configuration.
+If they are the same model, the button can be used to transfer the configuration, controls and camera-related Trigger settings from the active camera to the second camera. This is especially useful in the case of [Stereo Vision](./CamStereo.md) where both cameras should be operated with identical configuration.
 
 **NOTE**: the button does **not** save the settings for the active camera in the *streamingCfg* structure. This must be done explicitly and is recommended to be done before synchronizing.
 
@@ -60,8 +62,8 @@ If they are the same model, the button can be used to transfer the configuration
 
 With this button, you can switch the cameras so that the one sown on the right side will become the active camera.
 
-In case you have made changes of [Configuration](./Configuration.md) or [Controls](./CameraControls.md) which have not yet been saved for Camera Switch, there will be a warning:
-![CamSwitchWarning](./img/CamMulticamSwitchConfirm.jpg)
+In case you have made changes of [Configuration](./Configuration.md), [Controls](./CameraControls.md) or camera-related [Trigger](./Trigger.md) settings ([Trigger/Motion](./TriggerMotion.md) and [Trigger/Camera](./TriggerCameraActions.md)) which have not yet been saved for Camera Switch, there will be a warning:    
+![CamSwitchWarning](./img/CamMulticamSwitchConfirm.jpg)   
 To make sure your configuration changes survive the camera switxh, push [Save Active Camera Settings for Camera Switch](#save-active-camera-settings-for-camera-switch)
 
 ## Process Status Indicators

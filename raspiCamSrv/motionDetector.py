@@ -80,6 +80,10 @@ class MotionDetector():
     db = None
     mThread = None
     mThreadStop = False
+    camInfo = ""
+    rois = []
+    ronis = []
+    roiDetected = 0
     eventKey = None
     eventStart = None
     nrPhotos = 0
@@ -186,6 +190,110 @@ class MotionDetector():
             return None
 
     @classmethod
+    def prepareRoIs(cls):
+        """ Prepare Regions of Interest for motion detection
+
+            In the following, capital letters refer to sensor coordinates,
+            while lowercase letters refer to image coordinates.
+        """
+        logger.debug("Thread %s: MotionDetector.prepareRoIs", get_ident())
+
+        cls.rois = []
+        cls.ronis = []
+
+        cfg = CameraCfg()
+        sc = cfg.serverConfig
+        tc = cfg.triggerConfig
+
+        cls.camInfo = f"{sc.activeCamera}-{sc.activeCameraModel[:8]}"
+
+        if tc.useRoI == False:
+            return
+
+        # Sensor size
+        camProps = cfg.cameraProperties
+        Wsensor = camProps.pixelArraySize[0]
+        Hsensor = camProps.pixelArraySize[1]
+        logger.debug("Thread %s: MotionDetector.prepareRoIs - Sensor Size: %sx%s", get_ident(), Wsensor, Hsensor)
+
+        # Scaler Crop Live View
+        scalerCrop = sc.scalerCropLiveView
+        Xl = scalerCrop[0]
+        Yl = scalerCrop[1]
+        Wl = scalerCrop[2]
+        Hl = scalerCrop[3]
+        logger.debug("Thread %s: MotionDetector.prepareRoIs - Scaler Crop Live View: (%s,%s,%s,%s)", get_ident(), Xl, Yl, Wl, Hl)
+
+        # Live View size
+        lvCfg = cfg.liveViewConfig
+        streamSize = lvCfg.stream_size
+        wl = streamSize[0]
+        hl = streamSize[1]
+        logger.debug("Thread %s: MotionDetector.prepareRoIs - Live View Size: %sx%s", get_ident(), wl, hl)
+
+        # Regions of Interest
+        ROIs = tc.regionOfInterest
+        if len(ROIs) > 0:
+            logger.debug("Thread %s: MotionDetector.prepareRoIs - Preparing rois", get_ident())
+            for ROI in ROIs:
+                Xr = ROI[0]
+                Yr = ROI[1]
+                Wr = ROI[2]
+                Hr = ROI[3]
+                logger.debug("Thread %s: MotionDetector.prepareRoIs - Defined RoI: (%s,%s,%s,%s)", get_ident(), Xr, Yr, Wr, Hr)
+                # Convert to image coordinates
+                xr = int((Xr - Xl) * wl / Wl)
+                if xr < 0:
+                    xr = 0
+                if xr >= wl:
+                    xr = wl -1
+                yr = int((Yr - Yl) * hl / Hl)
+                if yr < 0:
+                    yr = 0
+                if yr >= hl:
+                    yr = hl -1
+                wr = int(Wr * wl / Wl)
+                if wr <= 0:
+                    wr = 1
+                hr = int(Hr * hl / Hl)
+                if hr <= 0:
+                    hr = 1
+                roi = (xr, yr, wr, hr)
+                logger.debug("Thread %s: MotionDetector.prepareRoIs - Converted roi: (%s,%s,%s,%s)", get_ident(), xr, yr, wr, hr)
+                cls.rois.append(roi)
+
+        # Regions of No Interest
+        RONIs = tc.regionOfNoInterest
+        if len(RONIs) > 0:
+            logger.debug("Thread %s: MotionDetector.prepareRoIs - Preparing ronis", get_ident())
+            for RONI in RONIs:
+                Xr = RONI[0]
+                Yr = RONI[1]
+                Wr = RONI[2]
+                Hr = RONI[3]
+                logger.debug("Thread %s: MotionDetector.prepareRoIs - Defined RONI: (%s,%s,%s,%s)", get_ident(), Xr, Yr, Wr, Hr)
+                # Convert to image coordinates
+                xr = int((Xr - Xl) * wl / Wl)
+                if xr < 0:
+                    xr = 0
+                if xr >= wl:
+                    xr = wl -1
+                yr = int((Yr - Yl) * hl / Hl)
+                if yr < 0:
+                    yr = 0
+                if yr >= hl:
+                    yr = hl -1
+                wr = int(Wr * wl / Wl)
+                if wr <= 0:
+                    wr = 1
+                hr = int(Hr * hl / Hl)
+                if hr <= 0:
+                    hr = 1
+                roni = (xr, yr, wr, hr)
+                logger.debug("Thread %s: MotionDetector.prepareRoIs - Converted roni: (%s,%s,%s,%s)", get_ident(), xr, yr, wr, hr)
+                cls.ronis.append(roni)
+
+    @classmethod
     def _motionDetected(cls, fCur, fPrv) -> tuple:
         """ Analyze input frames to detect motion
         
@@ -196,27 +304,64 @@ class MotionDetector():
         trigger = {}
 
         if tc.motionDetectAlgo == 1:
-            (motion, trigger) = cls._motionAlgo_MeanSquare(fCur, fPrv)
+            (motion, trigger, roiDetected) = cls._motionAlgo_MeanSquare(fCur, fPrv, cls.camInfo, cls.rois, cls.ronis)
+            cls.roiDetected = roiDetected
         if tc.motionDetectAlgo > 1:
-            (motion, trigger) = cls.mdAlgo.detectMotion(fCur, fPrv)
+            (motion, trigger, roiDetected) = cls.mdAlgo.detectMotion(fCur, fPrv, cls.camInfo, cls.rois, cls.ronis)
+            cls.roiDetected = roiDetected
             cls.event.set()
 
         return (motion, trigger)
 
     @staticmethod
-    def _motionAlgo_MeanSquare(fCur, fPrv) -> tuple:
+    def _motionAlgo_MeanSquare(fCur, fPrv, camInfo: str, rois: list, ronis: list) -> tuple:
         """ Mean Square algorithm for motion detection
         
         """
         # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare", get_ident())
 
+        triggerParams = {}
+        triggerParams["cam"] = camInfo
+        roiDetected = 0
+
+        for roni in ronis:
+            x = roni[0]
+            y = roni[1]
+            w = roni[2]
+            h = roni[3]
+            fCur[y:y+h, x:x+w] = 0
+            fPrv[y:y+h, x:x+w] = 0
+        # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare - cleared %s ronis", get_ident(), len(ronis))
+
         motion = False
-        msd = np.square(np.subtract(fCur, fPrv)).mean()
-        # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare msd: %s", get_ident(), msd)
-        if msd > CameraCfg().triggerConfig.msdThreshold:
-            motion = True
+        if len(rois) == 0:
+            msd = np.square(np.subtract(fCur, fPrv)).mean()
+            # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare msd: %s", get_ident(), msd)
+            if msd > CameraCfg().triggerConfig.msdThreshold:
+                triggerParams["msd"] = str(round(msd, 3))
+                motion = True
+        else:
+            idx = 0
+            for roi in rois:
+                idx += 1
+                x = roi[0]
+                y = roi[1]
+                w = roi[2]
+                h = roi[3]
+                rCur = fCur[y:y+h, x:x+w]
+                rPrv = fPrv[y:y+h, x:x+w]
+                msd = np.square(np.subtract(rCur, rPrv)).mean()
+                # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare shape(fCur)=%s", get_ident(), fCur.shape)
+                # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare shape(rCur)=%s", get_ident(), rCur.shape)
+                # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare roi (%s,%s,%s,%s) msd: %s", get_ident(), x, y, w, h, msd)
+                if msd > CameraCfg().triggerConfig.msdThreshold:
+                    triggerParams["roi"] = idx
+                    triggerParams["msd"] = str(round(msd, 3))
+                    motion = True
+                    roiDetected = idx
+                    break
         # logger.debug("Thread %s: MotionDetector._motionAlgo_MeanSquare - motion: %s", get_ident(), motion)
-        return (motion, {"trigger":"Motion Detection", "triggertype":"Mean Square Diff", "triggerparam":{"msd": str(round(msd, 3))}})
+        return (motion, {"trigger":"Motion Detection", "triggertype":"Mean Square Diff", "triggerparam":triggerParams}, roiDetected)
 
     @classmethod
     def _doAction(cls, trigger: str):
@@ -322,15 +467,15 @@ class MotionDetector():
             done = False
             logger.debug("Thread %s: MotionDetector._doAction - Starting video", get_ident())
             if tc.motionDetectAlgo == 1 \
-            or tc.videoBboxes == False:
+            or  (tc.videoBboxes == False and tc.photoRois == False):
                 if tc.actionVR == 1:
                     (done, encoder, err) = Camera.quickVideoStart(tc.actionPath + "/" + fnVideo)
                 else:
                     (done, err) = Camera.recordCircular(cls.videoCircOutput, tc.actionPath + "/" + fnVideo)
                     encoder = cls.videoEncoder
             if tc.motionDetectAlgo > 1 \
-            and tc.videoBboxes == True:
-                (done, fnVideo, err) = cls.mdAlgo.startRecordMotion(fnRaw)
+            and (tc.videoBboxes == True or tc.photoRois == True):
+                (done, fnVideo, err) = cls.mdAlgo.startRecordMotion(fnRaw, tc.photoRois)
                 encoder = None
             if done == True:
                 if encoder:
@@ -352,7 +497,10 @@ class MotionDetector():
 
         photoDone = False
         if doPhoto:
-            (done, err) = Camera.quickPhoto(tc.actionPath + "/" + fnPhoto)
+            fpPhoto = tc.actionPath + "/" + fnPhoto
+            (done, err, frame) = Camera.quickPhoto(fpPhoto, not tc.photoRois)
+            if tc.photoRois == True and done == False and err == "":
+                (done, err) = cls.savePhotoWithRois(frame, fpPhoto, cls.rois, cls.ronis, cls.roiDetected)
             photoDone = done
             if done:
                 with open(tc.logFilePath, "a") as f:
@@ -374,8 +522,9 @@ class MotionDetector():
                             else:
                                 cls._sendNotification()
             else:
-                with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Photo: " + fnPhoto + " Error:  " + err + "\n")
+                if err != "":
+                    with open(tc.logFilePath, "a") as f:
+                        f.write(logTS + " Photo: " + fnPhoto + " Error:  " + err + "\n")
 
         if doNotify:
             cls.notificationDone = now
@@ -392,6 +541,45 @@ class MotionDetector():
                 cls._sendNotification()
             else:
                 logger.debug("Thread %s: MotionDetector._doAction - Notification to be sent later", get_ident())
+
+    @staticmethod
+    def savePhotoWithRois(frame, fp, rois: list, ronis: list, roiDetected: int = 0) -> tuple:
+        """ Save a photo with ROIs drawn
+        
+        """
+        done = False
+        err = ""
+        try:
+            import cv2
+            logger.debug("Thread %s: MotionDetector.savePhotoWithRois - saving photo with rois to %s", get_ident(), fp)
+            for roni in ronis:
+                x = roni[0]
+                y = roni[1]
+                w = roni[2]
+                h = roni[3]
+                color = (255, 0, 0)
+                cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
+
+            idx = 0
+            for roi in rois:
+                idx += 1
+                x = roi[0]
+                y = roi[1]
+                w = roi[2]
+                h = roi[3]
+                if idx == roiDetected:
+                    color = (0, 0, 255)
+                else:
+                    color = (0, 255, 0)
+                cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
+
+            cv2.imwrite(fp, frame)
+            done = True
+            logger.debug("Thread %s: MotionDetector.savePhotoWithRois - done", get_ident())
+        except Exception as e:
+            err = str(e)
+            logger.error("Thread %s: MotionDetector.savePhotoWithRois - Error saving photo with rois: %s", get_ident(), err)
+        return (done, err)
 
     @staticmethod            
     def _initNotificationMessage(logTS, trigger) -> EmailMessage:
@@ -692,6 +880,7 @@ class MotionDetector():
         if cls.mThread is None:
             sc.error = None
             tc.error = None
+            cls.prepareRoIs()
             if tc.motionDetectAlgo == 2:
                 cls.mdAlgo.bbox_threshold = tc.bboxThreshold
                 cls.mdAlgo.nms_threshold = tc.nmsThreshold

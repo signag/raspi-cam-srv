@@ -8,6 +8,8 @@ This tab allows zooming and panning the image area within the dimensions support
 
 For more details, see [Image Cropping and Sensor Modes](./ScalerCrop.md)
 
+**NOTE**: When zoom or pan/tilt changes the cropping window of the Live View, [Regions of Interest](./TriggerMotion.md#regions-of-interest--regions-of-no-interest) which may heve been defined for [Motion Capturing](./TriggerMotion.md) may be adjusted to the new cropping window.
+
 ## Current zoom factor in %
 
 This value shows the current zoom factor.   

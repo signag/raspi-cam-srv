@@ -24,21 +24,72 @@ Whereas the *Mean Square Difference* is available in general, the other algorith
 
 This section allows specification of motion capturing aspects:
 
-- *Motion Detection Algorithm* allows selecting the algorithm by which the system will recognize motion through its camera.   
+- *Motion Detection Algorithm*    
+allows selecting the algorithm by which the system will recognize motion through its camera.   
 ![Motion Algos](./img/Trigger_Motion_Algos.jpg)    
 Depending on the selected algorithm, the relevant parameters are editable and can be adjusted.
-- *Mean Square Threshold* is the value of the mean square difference above which the system detects a motion event.
-- *Bounding Box Threshold* is the threshold for acceptable conrour sizes (see [IB-1](https://medium.com/@itberrios6/introduction-to-motion-detection-part-1-e031b0bb9bb2))
-- *IOU Threshold* is the Threshold for "Intersection Over Union or IOU" of overlapping bounding boxes (see [IB-1](https://medium.com/@itberrios6/introduction-to-motion-detection-part-1-e031b0bb9bb2))
-- *Motion Threshold* is the minimum flow threshold for motion used in *Optical Flow* algorithm (see [IB-2](https://medium.com/@itberrios6/introduction-to-motion-detection-part-2-6ec3d6b385d4))
-- *Background Subtraction Model* is the model used for generating a background model in *Background Subtraction* algorithm. (see [IB-3](https://medium.com/@itberrios6/introduction-to-motion-detection-part-3-025271f66ef9))
-- *Video with Bounding Boxes* allows selection of the type of video recorded for a motion event, if activated on the [Control](./Trigger.md#control) tab.   
+- *Mean Square Threshold*    
+is the value of the mean square difference above which the system detects a motion event.
+- *Bounding Box Threshold*    
+is the threshold for acceptable contour sizes (see [IB-1](https://medium.com/@itberrios6/introduction-to-motion-detection-part-1-e031b0bb9bb2))
+- *IOU Threshold*    
+is the Threshold for "Intersection Over Union or IOU" of overlapping bounding boxes (see [IB-1](https://medium.com/@itberrios6/introduction-to-motion-detection-part-1-e031b0bb9bb2))
+- *Motion Threshold*    
+is the minimum flow threshold for motion used in *Optical Flow* algorithm (see [IB-2](https://medium.com/@itberrios6/introduction-to-motion-detection-part-2-6ec3d6b385d4))
+- *Background Subtraction Model*    
+is the model used for generating a background model in *Background Subtraction* algorithm. (see [IB-3](https://medium.com/@itberrios6/introduction-to-motion-detection-part-3-025271f66ef9))
+- *Video with Bounding Boxes*    
+allows selection of the type of video recorded for a motion event, if activated on the [Control](./Trigger.md#control) tab.   
 If activated, the video will show bounding boxes around areas for which motion has been detected.   
 Otherwise, normal videos will be recorded.
+- *Use Regions of Interest*    
+If selected (and submitted) it will be possible to specify a set of rectangular areas which serve as *Regions of Interest* / *Regions of NO Interest*.    
+For *Regions of Interest* (RoI), motion will only be detected when occurring within these regions (see [below](#regions-of-interest--regions-of-no-interest)).    
+*Regions of NO Interest* (RoNI) will be generally excluded from motion detection.
+- *Regions of Interest*   
+This field holds the *Regions of Interest* as a tuple of tuples where each tuple represents one region with (x offset, y offset, width, height). The values refer to the [Pixel Array Size](./Information.md#camera-properties) of the sensor.    
+The field is not editable; it is populated when *Regions of Interest* are drawn.
+- *Regions of No Interest*   
+This field holds the *Regions of No Interest* as a tuple of tuples where each tuple represents one region with (x offset, y offset, width, height). The values refer to the [Pixel Array Size](./Information.md#camera-properties) of the sensor.    
+The field is not editable; it is populated when *Regions of No Interest* are drawn.
+- *Photos/Videos with RoI/RoNI*    
+This switch decides whether or not *Regions of Interest* and/or *Regions of NO Interest* are drawn on photos or videos captured while *Motion Detection* is active.   
+**NOTE**: When *Algorithm* "Mean Square Diff" is used, RoIs/RoNIs can only be shown on photos but not on videos.
 
 
 Any changes must be submitted with the **Submit** button.   
-Changes will be effective after the Motion Capturing Process has been started the next time.
+Changes will be effective after the Motion Capturing Process has been started the next time.    
+For example, trees or leaves moving in the wind are normally not of interest.
+
+## Regions of Interest / Regions of NO Interest
+
+In many cases, it is desirable to restrict the motion-sensitive region of the camera view to specific areas.
+
+**raspiCamSrv** supports two type of areas:
+- *Regions of Interest* (RoI) restrict motion detection to these areas
+- *Regions of NO Interest* (RoNI) exclude motion detection from specific areas.
+
+Both can be used simultaneously or alternatively.    
+When no RoI is defined, the entire cropping area will be the Region of Interest.   
+RoNIs will only have an effect if at least a part of them is within a RoI.
+
+**NOTE**: Regions of Interest may be automatically adjusted when the Live View is [zoomed or panned/tilted](./ZoomPan.md)
+
+After *Use Regions of Interest* has been activated (and submitted), a Live View will be shown with a canvas activated on which the intended regions can be drawn:
+
+![Motion RoI](./img/Trigger_Motion_RoI.gif)
+
+You first need to select the type of region to be drawn. Afterwards, you draw the region with left mouse key pressed.
+
+*Regions of Interest* are shown with green border line.  
+*Regions of No Interest* are shown as blue filled rectangle
+
+While drawing a new region, the borders of previously drawn regions are invisible.    
+All borders are shown as soon as the mouse pointer has left the drawing canvas.
+
+To remove previously drawn regions, just deactivate and activate the *Use Regions of Interest* checkbox without submitting.
+
+After all intended regions are finally drawn, submit the Motion Detection Configuration settings.
 
 ## Testing Motion Capturing
 
@@ -50,6 +101,8 @@ An active test run is indicated by the turquoise status indicator.
 - For the *Mean Square Difference* algorithm, there is no test. However, pressing the **Test Motion Detection** button will show the current framerate in the message line, if motion detection is active.
 - For the other algorithms, pressing the **Test Motion Detection** button will stop an active Motion Detection server and start a test run.    
 A set of 4 intermediate images are presented which are calculated from the last, or the last two, frames. 
+
+If Regions of Interest are defined, these will be considered and visualized during the test.
 
 ### Test for *Frame Differencing* Algorithm
 

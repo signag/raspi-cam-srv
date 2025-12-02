@@ -1781,6 +1781,7 @@ class Camera:
         logger.debug("Thread %s: Camera.getActiveCamera", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
+        trc = cfg.triggerConfig
         if (len(cfg.cameras) == 0) and (sc.noCamera == False):
             cfgCams = []
             cams = Picamera2.global_camera_info()
@@ -1881,6 +1882,7 @@ class Camera:
             )
             # Reset the active camera configuration
             cfg.resetActiveCameraSettings()
+            trc.setCameraSettingsToDefault()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(
                 f"Camera settings for {sc.activeCameraInfo} were reset due to camera model change"
@@ -1929,6 +1931,7 @@ class Camera:
         activeCam, activeCamIsUsb, activeCamUsbDev = Camera.getActiveCamera()
         cfg = CameraCfg()
         sc = cfg.serverConfig
+        trc = cfg.triggerConfig
         if sc.noCamera == True:
             return
 
@@ -2030,6 +2033,7 @@ class Camera:
                     CameraCfg().sensorModes = []
                     CameraCfg().rawFormats = []
                     CameraCfg().resetActiveCameraSettings() 
+                    trc.setCameraSettingsToDefault()
                     logger.debug(
                         "Thread %s: Camera.switchCamera: Camera-specific configs were reset",
                         get_ident(),
@@ -2055,6 +2059,7 @@ class Camera:
                     CameraCfg().sensorModes = []
                     CameraCfg().rawFormats = []
                     CameraCfg().resetActiveCameraSettings() 
+                    trc.setCameraSettingsToDefault()
                     logger.debug(
                         "Thread %s: Camera.switchCamera: Camera-specific configs were reset",
                         get_ident(),
@@ -2336,16 +2341,19 @@ class Camera:
         """Capture and return a buffer"""
         cfg = CameraCfg()
         if Camera.camIsUsb == False:
-            if cfg.triggerConfig.motionDetectAlgo == 1:
+            if cfg.triggerConfig.motionDetectAlgo == 0:
                 buf = Camera.cam.capture_buffer(cfg.liveViewConfig.stream)
                 (w, h) = cfg.liveViewConfig.stream_size
                 buf = buf[: w * h].reshape(h, w)
-                return buf
+                frameRaw = buf
             else:
-                return Camera.cam.capture_array(cfg.liveViewConfig.stream)
+                frameRaw = Camera.cam.capture_array(cfg.liveViewConfig.stream)
+                if cfg.liveViewConfig.format == "YUV420":
+                    if cv2Available == True:
+                        frameRaw = cv2.cvtColor(frameRaw, cv2.COLOR_YUV2BGR_I420)
         else:
             frame, frameRaw = self.get_frame()
-            return frameRaw
+        return copy.copy(frameRaw)
 
     def getLeftImageForStereo(self):
         """Capture and return a buffer"""
@@ -2816,6 +2824,7 @@ class Camera:
         logger.debug("Thread %s: Camera.setStreamingConfigs", get_ident())
         cfg = CameraCfg()
         sc = cfg.serverConfig
+        trc = cfg.triggerConfig
         strc = cfg.streamingCfg
         logger.debug(
             "Thread %s: Camera.setStreamingConfigs - current streamingCfg: %s",
@@ -2891,6 +2900,17 @@ class Camera:
                         sc.addChangeLogEntry(
                             f"Streaming configuration for {sc.activeCameraInfo} was reset due to camera status change"
                         )
+                if not "triggercamera" in scfg:
+                    resetActive = True
+                    logger.debug(
+                        "Thread %s: Camera.setStreamingConfigs - StreamingConfig for active camera %s does not have triggercamera",
+                        get_ident(),
+                        cn,
+                    )
+                    sc.unsavedChanges = True
+                    sc.addChangeLogEntry(
+                        f"Streaming configuration for {sc.activeCameraInfo} was extended with trigger camera settings"
+                    )
             else:
                 logger.debug(
                     "Thread %s: Camera.setStreamingConfigs - not found in strc.",
@@ -2917,6 +2937,7 @@ class Camera:
             scfg["rawconfig"] = copy.deepcopy(cfg.rawConfig)
             scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
             scfg["controls"] = copy.deepcopy(cfg.controls)
+            scfg["triggercamera"] = copy.deepcopy(trc.cameraSettings)
             strc[cn] = scfg
             logger.debug(
                 "Thread %s: Camera.setStreamingConfigs - created  entry for active camera %s",
@@ -3149,6 +3170,7 @@ class Camera:
         """Restore active configuration and controls from a previously saved streaming config"""
         cfg = CameraCfg()
         sc = cfg.serverConfig
+        trc = cfg.triggerConfig
         strc = cfg.streamingCfg
         logger.debug("Thread %s: Camera.restoreConfigFromStreamingConfig for camera %s", get_ident(), sc.activeCamera)
 
@@ -3212,8 +3234,29 @@ class Camera:
                     get_ident(),
                     cfg.controls.__dict__,
                 )
+            if "triggercamera" in scfg:
+                trc.cameraSettings = copy.deepcopy(scfg["triggercamera"])
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - Trigger camera settings restored from streaming config for camera %s",
+                    get_ident(),
+                    cn,
+                )
+            else:
+                trc.setCameraSettingsToDefault()
+                logger.debug(
+                    "Thread %s: Camera.restoreConfigFromStreamingConfig - Trigger camera settings set to defaults for camera %s",
+                    get_ident(),
+                    cn,
+                )
             logger.debug(
                 "Thread %s: Camera.restoreConfigFromStreamingConfig - restored config and controls from streaming config %s",
+                get_ident(),
+                cn,
+            )
+        else:
+            trc.setCameraSettingsToDefault()
+            logger.debug(
+                "Thread %s: Camera.restoreConfigFromStreamingConfig - Trigger camera settings set to defaults for camera %s",
                 get_ident(),
                 cn,
             )
@@ -4866,19 +4909,38 @@ class Camera:
         return fp
 
     @staticmethod
-    def quickPhoto(fp: str) -> tuple:
-        """Take a photo assuming that the camera is started"""
+    def quickPhoto(fp: str, saveImage: bool = True) -> tuple:
+        """Take a photo assuming that the camera is started
+        
+        Parameters:
+            fp:         File path where the photo shall be saved
+            saveImage:  True: save image to file
+                        False: do not save image but return frame
+        Returns:
+            done:   True if photo was saved to file
+            err:    Error message if any
+            img:    Image frame if saveImage is False
+        """
         logger.debug("Thread %s: Camera.quickPhoto - filename: %s", get_ident(), fp)
         done = False
         err = ""
+        frameRaw = None
         cfg = CameraCfg()
         if Camera.camIsUsb == False:
             if Camera.cam.started:
                 try:
-                    request = Camera.cam.capture_request()
-                    request.save(cfg.photoConfig.stream, fp)
-                    request.release()
-                    done = True
+                    if saveImage == True:
+                        request = Camera.cam.capture_request()
+                        request.save(cfg.photoConfig.stream, fp)
+                        request.release()
+                        done = True
+                    else:
+                        request = Camera.cam.capture_request()
+                        frameRaw = Camera.cam.capture_array(cfg.liveViewConfig.stream)
+                        if cfg.liveViewConfig.format == "YUV420":
+                            if cv2Available == True:
+                                frameRaw = cv2.cvtColor(frameRaw, cv2.COLOR_YUV2BGR_I420)
+                        request.release()
                 except Exception as e:
                     err = str(e)
             else:
@@ -4886,11 +4948,12 @@ class Camera:
         else:
             if Camera.cam.isOpened() == True:
                 frame, frameRaw = Camera().get_frame()
-                cv2.imwrite(fp, frameRaw)
-                done = True
+                if saveImage == True:
+                    cv2.imwrite(fp, frameRaw)
+                    done = True
             else:
                 err = "USB Camera not started"
-        return (done, err)
+        return (done, err, copy.copy(frameRaw))
 
     @staticmethod
     def quickUsbVideoThread(out):
@@ -4979,7 +5042,7 @@ class Camera:
                 err = "Camera not started"
         else:
             if Camera.cam.isOpened() == True:
-                frameRate = 14.5
+                frameRate = 30
                 Camera.cam.set(cv2.CAP_PROP_FPS, frameRate)
                 fourcc = cv2.VideoWriter_fourcc(*"avc1")
                 width = int(Camera.cam.get(cv2.CAP_PROP_FRAME_WIDTH))

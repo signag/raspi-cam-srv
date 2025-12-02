@@ -30,6 +30,8 @@ def trigger():
     cfg = CameraCfg()
     sc = cfg.serverConfig
     tc = cfg.triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     if tc.evStart == None:
         tc.evStart = datetime.now()
     if tc.calStart == None:
@@ -43,6 +45,28 @@ def trigger():
     # logger.debug("event list: %s", tc.eventList)
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
+
+def trg_gen(camera):
+    """Video streaming generator function."""
+    # logger.debug("Thread %s: In trg_gen", get_ident())
+    yield b"--frame\r\n"
+    while True:
+        frame, frameRaw = camera.get_frame()
+        if frame is not None:
+            # logger.debug("Thread %s: trg_gen - Got frame of length %s", get_ident(), len(frame))
+            yield b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n--frame\r\n"
+
+@bp.route("/live_view_feed")
+@login_required
+def trg_live_view_feed():
+    logger.debug(
+        "Thread %s: In trg_live_view_feed - client IP: %s", get_ident(), request.remote_addr
+    )
+    sc = CameraCfg().serverConfig
+    sc.registerStreamingClient(request.remote_addr, "live_view", get_ident())
+    Camera().startLiveStream()
+    return Response(trg_gen(Camera()), mimetype="multipart/x-mixed-replace; boundary=frame")
+
 @bp.route("/trgcontrol", methods=("GET", "POST"))
 @login_required
 def trgcontrol():
@@ -52,6 +76,8 @@ def trgcontrol():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcontrol"
     tmp = {}
     if request.method == "POST":
@@ -124,6 +150,8 @@ def motion():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     logger.debug("tc.motionDetectAlgo: %s", tc.motionDetectAlgo)
     sc.lastTriggerTab = "trgmotion"
     tmp = {}
@@ -149,6 +177,26 @@ def motion():
             tc.videoBboxes = False
         else:
             tc.videoBboxes = True
+        if request.form.get("photorois") is None:
+            tc.photoRois = False
+        else:
+            tc.photoRois = True
+        if request.form.get("useroi") is None:
+            tc.useRoI = False
+            roiWindowsStr = "()"
+            tc.regionOfInterestStr = roiWindowsStr
+            roniWindowsStr = "()"
+            tc.regionOfNoInterestStr = roniWindowsStr
+        else:
+            Camera().startLiveStream()
+            tc.useRoI = True
+            roiWindowsStr = request.form["regionofinterest"]
+            tc.regionOfInterestStr = roiWindowsStr
+            roniWindowsStr = request.form["regionofnointerest"]
+            tc.regionOfNoInterestStr = roniWindowsStr
+            if len(tc.regionOfInterestStr) == 0 \
+            and len(tc.regionOfNoInterestStr) == 0:
+                tc.useRoI = False
         if sc.isTriggerTesting == True:
             msg = "Please restart Motion Detection test to use the changed parameters!"
             flash(msg)
@@ -158,6 +206,7 @@ def motion():
                 flash(msg)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Trigger Motion settings changed")
+        cfg.streamingCfgInvalid = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/test_motion_detection", methods=("GET", "POST"))
@@ -169,6 +218,8 @@ def test_motion_detection():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgmotion"
     tmp = {}
     if request.method == "POST":
@@ -217,6 +268,8 @@ def stop_test_motion_detection():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgmotion"
     tmp = {}
     if request.method == "POST":
@@ -242,7 +295,7 @@ def gen_testFrame1(motionDetector):
     yield b'--frame\r\n'
     while True:
         frame = motionDetector.get_testFrame1()
-        if frame:
+        if frame is not None:
             #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
             yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
@@ -261,7 +314,7 @@ def gen_testFrame2(motionDetector):
     yield b'--frame\r\n'
     while True:
         frame = motionDetector.get_testFrame2()
-        if frame:
+        if frame is not None:
             #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
             yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
@@ -280,7 +333,7 @@ def gen_testFrame3(motionDetector):
     yield b'--frame\r\n'
     while True:
         frame = motionDetector.get_testFrame3()
-        if frame:
+        if frame is not None:
             #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
             yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
@@ -299,7 +352,7 @@ def gen_testFrame4(motionDetector):
     yield b'--frame\r\n'
     while True:
         frame = motionDetector.get_testFrame4()
-        if frame:
+        if frame is not None:
             #logger.debug("Thread %s: gen_gray - Got frame of length %s", get_ident(), len(frame))
             yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
@@ -312,6 +365,8 @@ def action():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     logger.debug("tc.actionVR: %s", tc.actionVR)
     sc.lastTriggerTab = "trgaction"
     tmp = {}
@@ -335,6 +390,7 @@ def action():
             flash(err)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Trigger Camera Actions changed")
+        cfg.streamingCfgInvalid = True
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/notify", methods=("GET", "POST"))
@@ -346,6 +402,8 @@ def notify():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgnotify"
     scr = cfg.secrets
     tmp = {}
@@ -438,6 +496,8 @@ def start_triggered_capture():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcontrol"
     tmp = {}
     if request.method == "POST":
@@ -484,6 +544,8 @@ def stop_triggered_capture():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcontrol"
     tmp = {}
     if request.method == "POST":
@@ -507,6 +569,8 @@ def prev_month():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(hours=-168)
     tc.evStartMidnight()
@@ -521,6 +585,8 @@ def prev_day():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(hours=-24)
     tc.evStartMidnight()
@@ -535,6 +601,8 @@ def set_date():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     if request.method == "POST":
         tc.evStartDateStr = request.form.get("evstartdate")
@@ -550,6 +618,8 @@ def next_day():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(hours=24)
     tc.evStartMidnight()
@@ -564,6 +634,8 @@ def next_month():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(hours=168)
     tc.evStartMidnight()
@@ -578,6 +650,8 @@ def prev_hor():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(hours=-1)
     return redirect(url_for("trigger.trigger"))
@@ -591,6 +665,8 @@ def prev_quarter():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(minutes=-15)
     return redirect(url_for("trigger.trigger"))
@@ -604,6 +680,8 @@ def set_time():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     if request.method == "POST":
         tc.evStartTimeStr = request.form.get("evstarttime")
@@ -618,6 +696,8 @@ def next_quarter():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(minutes=15)
     return redirect(url_for("trigger.trigger"))
@@ -631,6 +711,8 @@ def next_hour():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = tc.evStart + timedelta(hours=1)
     return redirect(url_for("trigger.trigger"))
@@ -644,6 +726,8 @@ def events_now():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tc.evStart = datetime.now()
     return redirect(url_for("trigger.trigger"))
@@ -657,6 +741,8 @@ def event_include_video():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tmp = {}
     if request.method == "POST":
@@ -675,6 +761,8 @@ def event_include_photo():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     tmp = {}
     if request.method == "POST":
@@ -693,6 +781,8 @@ def do_refresh():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgevents"
     if request.method == "POST":
         pass
@@ -720,6 +810,8 @@ def set_cal_month():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcalendar"
     if request.method == "POST":
         tc.calStartDateStr = request.form.get("setcalmonth")
@@ -734,6 +826,8 @@ def next_cal_month():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcalendar"
     tc.calStart = tc.calStart + timedelta(hours=750)
     return redirect(url_for("trigger.trigger"))
@@ -747,6 +841,8 @@ def calendar_now():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcalendar"
     tc.calStart = datetime.now()
     return redirect(url_for("trigger.trigger"))
@@ -760,6 +856,8 @@ def do_refresh_calendar():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcalendar"
     if request.method == "POST":
         pass
@@ -774,6 +872,8 @@ def calendar_goto():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcalendar"
     if request.method == "POST":
         day = request.form.get("selectedday")
@@ -793,6 +893,8 @@ def do_cleanup():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcalendar"
     if request.method == "POST":
         err = None
@@ -816,6 +918,8 @@ def do_download_log():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgcalendar"
     if request.method == "POST":
         err = None
@@ -839,6 +943,8 @@ def new_trigger():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgtriggers"
     tmp = {}
     if request.method == "POST":
@@ -980,6 +1086,8 @@ def trigger_activation():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgtriggers"
     tmp = {}
     if request.method == "POST":
@@ -1093,6 +1201,8 @@ def new_action():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgactions"
     tmp = {}
     if request.method == "POST":
@@ -1225,6 +1335,8 @@ def action_activation():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgactions"
     tmp = {}
     actionUsage = []
@@ -1270,6 +1382,8 @@ def trigger_action():
     g.version = version
     sc = cfg.serverConfig
     tc = cfg._triggerConfig
+    if tc.useRoI == True:
+        Camera().startLiveStream()
     sc.lastTriggerTab = "trgtriggeractions"
     tmp = {}
     if request.method == "POST":

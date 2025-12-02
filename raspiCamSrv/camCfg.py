@@ -422,8 +422,12 @@ class TriggerConfig():
         self._bboxThreshold = 400
         self._nmsThreshold = 0.001
         self._motionThreshold = 1
+        self._useRoI = False
+        self._regionOfNoInterest = ()
+        self._regionOfInterest = ()
         self._backSubModel = "MOG2"
         self._videoBboxes = True
+        self._photoRois = False
         self._motionTestFrame1Title = ""
         self._motionTestFrame2Title = ""
         self._motionTestFrame3Title = ""
@@ -655,6 +659,146 @@ class TriggerConfig():
         self._motionThreshold = value
 
     @property
+    def useRoI(self) -> bool:
+        return self._useRoI
+
+    @useRoI.setter
+    def useRoI(self, value: bool):
+        self._useRoI = value
+
+    @property
+    def regionOfNoInterest(self) -> tuple:
+        return self._regionOfNoInterest
+
+    @regionOfNoInterest.setter
+    def regionOfNoInterest(self, value: tuple):
+        self._regionOfNoInterest = value
+        
+    @property
+    def regionOfNoInterestStr(self) -> str:
+        res = "("
+        for win in self.regionOfNoInterest:
+            if len(res) > 1:
+                res = res + ","
+            res = res + "(" + str(win[0]) + "," + str(win[1]) + "," + str(win[2]) + "," + str(win[3]) + ")"
+        res = res + ")"
+        return res
+
+    @regionOfNoInterestStr.setter
+    def regionOfNoInterestStr(self, value: str):
+        """Parse the string representation for regionOfNoInterest
+        """
+        self._regionOfNoInterest = ()
+        # Get the list of windows
+        winlist = TriggerConfig._parseWindows(value)
+        for win in winlist:
+            awin = TriggerConfig._parseRectTuple(win)
+            # Add window from list to _regionOfNoInterest tuple
+            awin = (awin,)
+            self._regionOfNoInterest += awin
+
+    @property
+    def regionOfInterest(self) -> tuple:
+        return self._regionOfInterest
+
+    @regionOfInterest.setter
+    def regionOfInterest(self, value: tuple):
+        self._regionOfInterest = value
+        
+    @property
+    def regionOfInterestStr(self) -> str:
+        res = "("
+        for win in self.regionOfInterest:
+            if len(res) > 1:
+                res = res + ","
+            res = res + "(" + str(win[0]) + "," + str(win[1]) + "," + str(win[2]) + "," + str(win[3]) + ")"
+        res = res + ")"
+        return res
+
+    @regionOfInterestStr.setter
+    def regionOfInterestStr(self, value: str):
+        """Parse the string representation for regionOfInterest
+        """
+        self._regionOfInterest = ()
+        # Get the list of windows
+        winlist = TriggerConfig._parseWindows(value)
+        for win in winlist:
+            awin = TriggerConfig._parseRectTuple(win)
+            # Add window from list to _regionOfInterest tuple
+            awin = (awin,)
+            self._regionOfInterest += awin
+
+    def _getRectangleFromCrop(self, crop: tuple) -> tuple:
+        """ Get rectangle (x1, y1, x2, y2) from crop (x, y, w, h)
+
+        Args:
+            crop (tuple): Cropping rectangle defined as (x, y, w, h)
+        Returns:
+            tuple: (x1, y1, x2, y2)
+        """
+        x1 = crop[0]
+        y1 = crop[1]
+        x2 = x1 + crop[2]
+        y2 = y1 + crop[3]
+
+        if x2 < x1:
+            xx = x1
+            x1 = x2
+            x2 = xx
+
+        if y2 < y1:
+            yy = y1
+            y1 = y2
+            y2 = yy
+
+        return (x1, y1, x2, y2)
+
+    def checkRoisAgainstScalerCropLiveView(self, scalerCrop:tuple) -> bool:
+        """ Check that the RoIs are within the scaler crop used for live view
+
+        Args:
+            scalerCrop (tuple): (x, y, w, h) of scaler crop
+        Returns:
+            bool: True if RiIs/RoNIs are unchanged, False if they have been adjusted
+        """
+        unchanged = True
+        (scX1, scY1, scX2, scY2) = self._getRectangleFromCrop(scalerCrop)
+        newRois = ()
+        for roi in self.regionOfInterest:
+            (rX1, rY1, rX2, rY2) = self._getRectangleFromCrop(roi)
+            if rX1 < scX1:
+                rX1 = scX1
+            if rY1 < scY1:
+                rY1 = scY1
+            if rX2 > scX2:
+                rX2 = scX2
+            if rY2 > scY2:
+                rY2 = scY2
+            if rX2 > rX1 and rY2 > rY1:
+                newRois += ((rX1, rY1, rX2 - rX1, rY2 - rY1),)
+        if self._regionOfInterest != newRois:
+            unchanged = False
+            self._regionOfInterest = newRois
+
+        newRonis = ()
+        for roni in self.regionOfNoInterest:
+            (rX1, rY1, rX2, rY2) = self._getRectangleFromCrop(roni)
+            if rX1 < scX1:
+                rX1 = scX1
+            if rY1 < scY1:
+                rY1 = scY1
+            if rX2 > scX2:
+                rX2 = scX2
+            if rY2 > scY2:
+                rY2 = scY2
+            if rX2 > rX1 and rY2 > rY1:
+                newRonis += ((rX1, rY1, rX2 - rX1, rY2 - rY1),)
+        if self._regionOfNoInterest != newRonis:
+            unchanged = False
+            self._regionOfNoInterest = newRonis
+        return unchanged
+
+    @property
     def backSubModel(self) -> str:
         return self._backSubModel
 
@@ -669,6 +813,14 @@ class TriggerConfig():
     @videoBboxes.setter
     def videoBboxes(self, value: bool):
         self._videoBboxes = value
+
+    @property
+    def photoRois(self) -> bool:
+        return self._photoRois
+
+    @photoRois.setter
+    def photoRois(self, value: bool):
+        self._photoRois = value
 
     @property
     def motionTestFrame1Title(self) -> str:
@@ -1200,6 +1352,45 @@ class TriggerConfig():
         db.execute("DELETE FROM events WHERE date <= ?", (dateRem,)).fetchall()
         db.commit()
         logger.debug("Removed old events")
+
+    @staticmethod    
+    def _parseWindows(wins: str) -> list:
+        """  Parses the tuple-string of one or multiple rectangles
+            "((x,x,x,x),(x,x,x,x))"
+            and returns an array of rectangles as strings
+        """
+        resa = []
+        if wins.startswith("("):
+            wns = wins[1:]
+            if wns.endswith(")"):
+                wns = wns[0: len(wns) - 1]
+                while len(wns) > 0:
+                    i = wns.find(")")
+                    if i > 0:
+                        wn = wns[0: i + 1]
+                        resa.append(wn)
+                        if i < len(wns):
+                            wns = wns[i + 2:].strip()
+                        else:
+                            wns = ""
+                    else:
+                        wns = ""
+        return resa
+
+    @staticmethod    
+    def _parseRectTuple(stuple: str) -> tuple:
+        """  Parse a Python tuple string for a rectangle
+             "(xOffset, yOffset, width, height)"
+        """
+        rest = (0, 0, 0, 0)
+        if stuple.startswith("("):
+            tpl = stuple[1:]
+            if tpl.endswith(")"):
+                tpl = tpl[0: len(tpl) - 1]
+                res = tpl.rsplit(",")
+                if len(res) == 4:
+                    rest = (int(res[0]), int(res[1]), int(res[2]), int(res[3]))
+        return rest
         
     def checkNotificationRecipient(self, user=None, pwd=None) -> tuple:
         """ Check login to mail server using available credentials
@@ -1621,6 +1812,111 @@ class TriggerConfig():
                 break
         return action
 
+    @property
+    def cameraSettings(self) -> dict:
+        cs = {}
+        cs["actionPhoto"] = self._actionPhoto
+        cs["actionVideo"] = self._actionVideo
+        cs["motionDetectAlgo"] = self._motionDetectAlgo
+        cs["msdThreshold"] = self._msdThreshold
+        cs["bboxThreshold"] = self._bboxThreshold
+        cs["nmsThreshold"] = self._nmsThreshold
+        cs["motionThreshold"] = self._motionThreshold
+        cs["useRoI"] = self._useRoI
+        cs["regionOfNoInterest"] = self._regionOfNoInterest
+        cs["regionOfInterest"] = self._regionOfInterest
+        cs["backSubModel"] = self._backSubModel
+        cs["videoBboxes"] = self._videoBboxes
+        cs["photoRois"] = self._photoRois
+        cs["actionVR"] = self._actionVR
+        cs["actionCircSize"] = self._actionCircSize
+        cs["actionVideoDuration"] = self._actionVideoDuration
+        cs["actionPhotoBurst"] = self._actionPhotoBurst
+        cs["actionPhotoBurstDelaySec"] = self._actionPhotoBurstDelaySec
+        return cs
+
+    @cameraSettings.setter
+    def cameraSettings(self, value: dict):
+        if "actionPhoto" in value:
+            self._actionPhoto = value["actionPhoto"]
+        if "actionVideo" in value:
+            self._actionVideo = value["actionVideo"]
+        if "motionDetectAlgo" in value:
+            self._motionDetectAlgo = value["motionDetectAlgo"]
+        if "msdThreshold" in value:
+            self._msdThreshold = value["msdThreshold"]
+        if "bboxThreshold" in value:
+            self._bboxThreshold = value["bboxThreshold"]
+        if "nmsThreshold" in value:
+            self._nmsThreshold = value["nmsThreshold"]
+        if "motionThreshold" in value:
+            self._motionThreshold = value["motionThreshold"]
+        if "useRoI" in value:
+            self._useRoI = value["useRoI"]
+        if "regionOfNoInterest" in value:
+            self._regionOfNoInterest = value["regionOfNoInterest"]
+        if "regionOfInterest" in value:
+            self._regionOfInterest = value["regionOfInterest"]
+        if "backSubModel" in value:
+            self._backSubModel = value["backSubModel"]
+        if "videoBboxes" in value:
+            self._videoBboxes = value["videoBboxes"]
+        if "photoRois" in value:
+            self._photoRois = value["photoRois"]
+        if "actionVR" in value:
+            self._actionVR = value["actionVR"]
+        if "actionCircSize" in value:
+            self._actionCircSize = value["actionCircSize"]
+        if "actionVideoDuration" in value:
+            self._actionVideoDuration = value["actionVideoDuration"]
+        if "actionPhotoBurst" in value:
+            self._actionPhotoBurst = value["actionPhotoBurst"]
+        if "actionPhotoBurstDelaySec" in value:
+            self._actionPhotoBurstDelaySec = value["actionPhotoBurstDelaySec"]
+
+    def setCameraSettingsToDefault(self):
+        self._actionPhoto = True
+        self._actionVideo = True
+        self._motionDetectAlgo = 1
+        self._msdThreshold = 10
+        self._bboxThreshold = 400
+        self._nmsThreshold = 0.001
+        self._motionThreshold = 1
+        self._useRoI = False
+        self._regionOfNoInterest = ()
+        self._regionOfInterest = ()
+        self._backSubModel = "MOG2"
+        self._videoBboxes = True
+        self._photoRois = True
+        self._actionVR = 1
+        self._actionCircSize = 5
+        self._actionVideoDuration = 10
+        self._actionPhotoBurst = 1
+        self._actionPhotoBurstDelaySec = 2
+
+    @property
+    def cameraDefaultSettings(self) -> dict:
+        cs = {}
+        cs["actionPhoto"] = True
+        cs["actionVideo"] = True
+        cs["motionDetectAlgo"] = 1
+        cs["msdThreshold"] = 10
+        cs["bboxThreshold"] = 400
+        cs["nmsThreshold"] = 0.001
+        cs["motionThreshold"] = 1
+        cs["useRoI"] = False
+        cs["regionOfNoInterest"] = ()
+        cs["regionOfInterest"] = ()
+        cs["backSubModel"] = "MOG2"
+        cs["videoBboxes"] = True
+        cs["actionVR"] = 1
+        cs["actionCircSize"] = 5
+        cs["actionVideoDuration"] = 10
+        cs["actionPhotoBurst"] = 1
+        cs["actionPhotoBurstDelaySec"] = 2
+        return cs
+        
+
     @classmethod                
     def initFromDict(cls, dict:dict):
         cc = TriggerConfig()
@@ -2027,7 +2323,7 @@ class CameraControls():
             else:
                 self._lensPosition = 1.0 / value
         else:
-            raise ValueError("focalDistance must be > 0")
+            self._lensPosition = 9999.9
         
     @property
     def afMetering(self) -> int:
@@ -3924,6 +4220,7 @@ class ServerConfig():
         self._curDeviceType = None
         self._gpioDevices = []
         self._cfgPath = None
+        self._cfgBackupPath = None
         self._changeLog = []
 
         # Check access of microphone
@@ -5169,6 +5466,14 @@ class ServerConfig():
         self._cfgPath = value
 
     @property
+    def cfgBackupPath(self) -> str:
+        return self._cfgBackupPath
+
+    @cfgBackupPath.setter
+    def cfgBackupPath(self, value: str):
+        self._cfgBackupPath = value
+
+    @property
     def API_active(self) -> bool:
         return self._API_active
 
@@ -6264,6 +6569,9 @@ class ServerConfig():
                             setattr(sc, key, typ)
                             break
             elif key == "_unsavedChanges":
+                setattr(sc, key, False)
+            elif key == "_isTriggerTesting":
+                # Never start with trigger testing active
                 setattr(sc, key, False)
             elif key == "_debianVersion":
                 # Do not overwrite the Debian version from stored configuration

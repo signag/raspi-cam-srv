@@ -24,7 +24,7 @@ Due to responsive layout from [W3.CSS](https://www.w3schools.com/w3css/), all mo
 
 - For release history and updating an existing system, see [Release Notes](./docs/ReleaseNotes.md).    
 
-## Feature Overview V4.1.0
+## Feature Overview V4.2.0
 
 For more details, see the [User Guide](docs/UserGuide.md).    
 
@@ -41,6 +41,8 @@ The non-active camera stream and photo can be accessed through endpoints ```http
 - The second camera can be controlled through the [API](./docs/API.md) as well as through the [Multi-Cam](./docs/CamMulticam.md) dialog.
 - Support of USB cameras with seamless integration with CSI cameras (only if OpenCV is installed)
 - Hot plug-in/-out of USB cameras without server restart
+- [Digital Pan / Tilt / Zoom](./docs/ZoomPan.md) is also available for USB cameras
+- [Camera Controls](./docs/CameraControls.md#camera-controls-for-usb-cameras) are also available for USB cameras 
 - The server can be used without connected cameras for controlling [GPIO devices](./docs/SettingsDevices.md) with the [Event handling system](./docs/Trigger.md) or from the [Console](./docs/Console.md)
 - Photo taking and video recording can be started synchronously with both cameras.- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./docs/Information.md#streaming-clients) together with their IP address and the streams they are using.
 - [Stereo Vision](./docs/CamStereo.md) allows generation of 3D videos and depth maps
@@ -82,10 +84,10 @@ This includes a continuous live stream while taking photos, videos or photo seri
 (See [Generation of Python Code for Camera](./docs/Troubelshooting.md#generation-of-python-code-for-camera))
 - The [raspiCamSrv API](./docs/API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
 
-**New in V4.1**
+**New in V4.2**
 
-- [Digital Pan / Tilt / Zoom](./docs/ZoomPan.md) is also available for USB cameras
-- [Camera Controls](./docs/CameraControls.md#camera-controls-for-usb-cameras) are also available for USB cameras 
+- [Regions of Interest / Regions of NO Interest](./docs/TriggerMotion.md#regions-of-interest--regions-of-no-interest) can be specified for [Motion Detection](./docs/TriggerMotion.md).
+- [Backup and Restorage](./docs/SettingsConfiguration.md) of configuration and other stored data.
 
 
 ## Known Issues

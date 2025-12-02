@@ -14,6 +14,20 @@ The list of *Unsaved Configuration Changes* lists all actions with their time of
 - Button *Reload Cameras* resets and reloads the entire camera configuration (see [Reloading Cameras](#reloading-cameras)). This fuction must be applied when USB cameras have been unplugged or new USB cameras plugged in while the server was active (hot plug). This will adjust the entire camera configuration to the new setup.<br>**NOTE**: Use this function **immediately** after unplugging a USB camera. Otherwise errors can occur when using other functions<br>**NOTE**: This has no effect when CSI cameras have been plugged in or out. This requires rebooting the Raspberry Pi, to be effective.
 - Button *Reset Server* stops any background activity (live stream, video, photo series, motion capturing and event handling) and replaces the current configuration with the default configuration.<br>[Photo Series](./PhotoSeries.md) and [Events](./TriggerEventViewer.md) are not affected. Any associated resources remain unchanged. However, an active [Photo Series](./PhotoSeries.md) will be paused and needs to be continued.<br>**NOTE**: If you had activated [API](./SettingsAPI.md) access before, this will no longer be available when the configuration is reset.<br>The same applies to [Notification Settings](./TriggerNotification.md) which need to be reconfigured.<br>**NOTE**: If you had activated *Start Server with Stored Configuration*, this will be deactivated. Probably, you might want to store the new configuration bofore activating this again.
 - *Start server with stored Configuration* controls whether a server start shall use the default configuration or the stored configuration.
+- Button *Backup Stored Data*   
+With this button, you can create a [backup](#backups) of all data currently stored in the file system.   
+Before pressing the button, you need to enter a unique name for the backup.
+- Button *Restore Backup*    
+With this button, you can restore the selected backup.   
+After restore is completed and confirmed by the status message, you need to restart the server with the *Restart Server* button.
+- Button *Remove Backup*   
+With this button, you can remove the selected Backup.
+- Button *Restart Server*   
+will restart the raspiCamSrv Flask server.    
+The system will automatically detect whether the server was started as system unit, as user unit or from the command line.    
+In the latter case, you are asked to stop the server manually.   
+When the server restarts, the browser will lose connection.    
+Press the browser's **Back** button until you see the recently used raspiCamSrv screen and then push any of the upper menu options to reconnect with the restored configuration.
 
 #### Server Configuration Storage
 
@@ -61,3 +75,20 @@ When comparing the lists, the system will look for matching Num, Model, USB and 
 If one of these parameters differs, the camera with that number will be initialized based on the current Camera Properties and Sensor Modes. Any previously specified [Configuration](./Configuration.md) or [Controls](./CameraControls.md) will be reset to default values for the respective camera type.
 
 In the example above, Camera 0 will keep their settings and Camera 1 will be reset.
+
+## Backups
+
+Backups preserve the currently stored data structures of **raspiCamSrv** so that they can be consistently restored later.
+
+This includes:
+- all [configuration data](#server-configuration-storage) stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/config```
+- all photos stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/photos```
+- all [photo series](./PhotoSeries.md#photo-series-in-the-file-system) stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/photoseries```
+- all [event data](./TriggerActive.md#event-data) stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/events```
+- The [Camera calipration photos](./CamCalibration.md#calibration-data-storage) for a [Stereo Camera System](./CamStereo.md) stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/calib_photos```
+- The Stereo Camera calibration parameters stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/calib_data```
+- The SQLite database with [User data](./Authentication.md) and [Event data](./TriggerActive.md#database) stored as ```~/prg/raspi-cam-srv/instance/raspiCamSrv.sqlite```
+
+When a backup is created, all these data are stored underneath ```~/prg/raspi-cam-srv/backups/<backup-name>``` where ```<backup-name>``` is the name given to the backup:
+
+![Backup](./img/Settings_Backup.jpg)

@@ -12,9 +12,12 @@ from gpiozero import Button, RotaryEncoder, MotionSensor, DistanceSensor, LightS
 from gpiozero import LED, PWMLED, RGBLED, Buzzer, TonalBuzzer, Servo, AngularServo, Motor, DigitalOutputDevice, OutputDevice
 from raspiCamSrv.gpioDevices import StepperMotor
 import os
+import shutil
 import ast
 import time
 from pathlib import Path
+import psutil
+import subprocess
 import json
 from raspiCamSrv.auth import login_required
 import logging
@@ -47,7 +50,9 @@ def main():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    backups = getBeckupsList()
+
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/serverconfig", methods=("GET", "POST"))
 @login_required
@@ -67,6 +72,8 @@ def serverconfig():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     sc.lastSettingsTab = "settingsparams"
     if request.method == "POST":
         msg = None
@@ -163,7 +170,7 @@ def serverconfig():
                 reloadCameraSystem()
         if msg:
             flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 def reloadCameraSystem():
     """Reload the camera system in case of hot plug-in/-out
@@ -208,6 +215,8 @@ def reloadCameras():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         if sc.isVideoRecording:
@@ -245,7 +254,7 @@ def reloadCameras():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Settings/Camera system reloaded")
         los = getLoadConfigOnStart(cfgPath)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/resetServer", methods=("GET", "POST"))
 @login_required
@@ -265,6 +274,8 @@ def resetServer():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         if sc.isVideoRecording:
@@ -366,7 +377,375 @@ def resetServer():
         sc.unsavedChanges = False
         sc.clearChangeLog()
         los = getLoadConfigOnStart(cfgPath)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/configBackup", methods=("GET", "POST"))
+@login_required
+def configBackup():
+    logger.debug("configBackup")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+    sc.lastSettingsTab = "settingsconfig"
+
+    if request.method == "POST":
+        msg = ""
+        backupRoot = sc.cfgBackupPath
+        logger.debug("configBackup - backupRoot=%s", backupRoot)
+        if not os.path.exists(backupRoot):
+            os.makedirs(backupRoot, exist_ok=True)
+        if request.form["configbackupname"]:
+            backupName = request.form["configbackupname"]
+            if backupName.strip() == "":
+                msg = "Please enter a valid backup name"
+        else:
+            msg = "Please enter a valid backup name"
+        if msg == "":
+            backupPath = backupRoot + "/" + backupName
+            logger.debug("configBackup - backupPath=%s", backupPath)
+            if os.path.exists(backupPath):
+                msg = "Backup name already exists. Please choose a different name."
+        if msg == "":
+            try:
+                os.makedirs(backupPath, exist_ok=True)
+                
+                # Backup calib_data
+                stc = cfg.stereoCfg
+                src = sc.photoRoot + "/" + stc.calibDataSubPath
+                dst = backupPath + "/static/" + stc.calibDataSubPath
+                copyDir(src, dst)
+
+                #Backup calib_photos
+                src = sc.photoRoot + "/" + stc.calibPhotosSubPath
+                dst = backupPath + "/static/" + stc.calibPhotosSubPath
+                copyDir(src, dst)
+
+                #Backup config
+                src = sc.cfgPath
+                dst = backupPath + "/static/" + "config"
+                copyDir(src, dst)
+
+                #Backup events
+                tc = cfg.triggerConfig
+                src = tc.actionPath
+                dst = backupPath + "/static/" + "events"
+                copyDir(src, dst)
+
+                #Backup photos
+                src = sc.photoRoot + "/photos"
+                dst = backupPath + "/static/" + "photos"
+                copyDir(src, dst)
+
+                #Backup photo series
+                ps = PhotoSeriesCfg()
+                src = ps.rootPath
+                dst = backupPath + "/static/" + "photoseries"
+                copyDir(src, dst)
+                
+                # Backup database
+                src = sc.database
+                dst = backupPath + "/instance/" + "database"
+                copyDir(src, dst)
+
+            except Exception as e:
+                msg = f"Error creating configuration backup: {e}"
+
+        if msg == "":
+            msg = "Configuration backup created under " +  backupPath
+        flash(msg)
+        los = getLoadConfigOnStart(cfgPath)
+        backups = getBeckupsList()
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+def copyDir(src: str, dst: str):
+    """Recursively copy a directory from src to dst.
+
+    Args:
+        src (str): Source directory path.
+        dst (str): Destination directory path.
+    """
+    logger.debug("copyDir - src: %s, dst: %s", src, dst)
+    if not os.path.exists(src):
+        logger.debug("copyDir - Source not found: %s", src)
+        return
+
+    if not os.path.exists(dst):
+        os.makedirs(dst, exist_ok=True)
+        logger.debug("copyDir - Destination directory created: %s", dst)
+
+    if os.path.isdir(src) == True:
+        for item in os.listdir(src):
+            s = os.path.join(src, item)
+            d = os.path.join(dst, item)
+            if os.path.isdir(s):
+                copyDir(s, d)
+            else:
+                shutil.copy2(s, d)
+    if os.path.isfile(src) == True:
+        shutil.copy2(src, dst)
+
+def restoreDir(src: str, dst: str):
+    """Recursively restore a directory from src to dst.
+
+    Args:
+        src (str): Source directory path.
+        dst (str): Destination directory path.
+    """
+    logger.debug("restoreDir - src: %s, dst: %s", src, dst)
+    if os.path.exists(src):
+        if os.path.exists(dst):
+            shutil.rmtree(dst)
+        copyDir(src, dst)
+    else:
+        if os.path.exists(dst):
+            shutil.rmtree(dst)
+
+def getBeckupsList() -> list:
+    """Get the list of available backups.
+
+    Returns:
+        list: List of backup names.
+    """
+    logger.debug("getBeckupsList")
+    res = []
+    cfg = CameraCfg()
+    sc = cfg.serverConfig
+    backupRoot = sc.cfgBackupPath
+    if os.path.exists(backupRoot):
+        for entry in os.listdir(backupRoot):
+            backupPath = backupRoot + "/" + entry
+            if os.path.isdir(backupPath):
+                res.append(entry)
+    logger.debug("getBeckupsList - found %s backups", len(res))
+    return res
+
+@bp.route("/configRestore", methods=("GET", "POST"))
+@login_required
+def configRestore():
+    logger.debug("configRestore")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+    sc.lastSettingsTab = "settingsconfig"
+
+    if request.method == "POST":
+        msg = ""
+        if request.form["configrestorename"]:
+            backupName = request.form["configrestorename"]
+            if backupName.strip() == "":
+                msg = "Please select a valid backup name"
+        else:
+            msg = "Please select a valid backup name"
+
+        if msg == "":
+            backupRoot = sc.cfgBackupPath
+            backupPath = backupRoot + "/" + backupName
+            logger.debug("configBackup - backupPath=%s", backupPath)
+            try:
+                os.makedirs(backupPath, exist_ok=True)
+                
+                # Restore calib_data
+                stc = cfg.stereoCfg
+                dst = sc.photoRoot + "/" + stc.calibDataSubPath
+                src = backupPath + "/static/" + stc.calibDataSubPath
+                restoreDir(src, dst)
+
+                #Restore calib_photos
+                dst = sc.photoRoot + "/" + stc.calibPhotosSubPath
+                src = backupPath + "/static/" + stc.calibPhotosSubPath
+                restoreDir(src, dst)
+
+                #Restore config
+                dst = sc.cfgPath
+                src = backupPath + "/static/" + "config"
+                restoreDir(src, dst)
+
+                #Restore events
+                tc = cfg.triggerConfig
+                dst = tc.actionPath
+                src = backupPath + "/static/" + "events"
+                restoreDir(src, dst)
+
+                #Restore photos
+                dst = sc.photoRoot + "/photos"
+                src = backupPath + "/static/" + "photos"
+                restoreDir(src, dst)
+
+                #Restore photo series
+                ps = PhotoSeriesCfg()
+                dst = ps.rootPath
+                src = backupPath + "/static/" + "photoseries"
+                restoreDir(src, dst)
+                
+                # Restore database
+                dst = sc.database
+                src = backupPath + "/instance/" + "database" + "/raspiCamSrv.sqlite"
+                shutil.copy2(src, dst)
+
+            except Exception as e:
+                msg = f"Error restoring backup {backupName}: {e}"
+
+        if msg == "":
+            msg = "Backup restored from " +  backupPath
+        flash(msg)
+        los = getLoadConfigOnStart(cfgPath)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/configRemove", methods=("GET", "POST"))
+@login_required
+def configRemove():
+    logger.debug("configRemove")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+
+    sc.lastSettingsTab = "settingsconfig"
+    if request.method == "POST":
+        msg = ""
+        if request.form["configremovename"]:
+            backupName = request.form["configremovename"]
+            if backupName.strip() == "":
+                msg = "Please select a valid backup name"
+        else:
+            msg = "Please select a valid backup name"
+        if msg == "":
+            backupRoot = sc.cfgBackupPath
+            backupPath = backupRoot + "/" + backupName
+            try:
+                shutil.rmtree(backupPath)
+            except Exception as e:
+                msg = f"Error removing backup {backupName}: {e}"
+
+        if msg == "":
+            msg = f"Backup {backupName} was removed."
+        flash(msg)
+        los = getLoadConfigOnStart(cfgPath)
+        backups = getBeckupsList()
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/serverRestart", methods=("GET", "POST"))
+@login_required
+def serverRestart():
+    logger.debug("serverRestart")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+
+    sc.lastSettingsTab = "settingsconfig"
+    if request.method == "POST":
+        msg = ""
+        startup_source = detect_startup_source()
+        logger.debug("Startup source detected: %s", startup_source)
+
+        try:
+            if startup_source == 1:
+                result = subprocess.run(
+                    ["sudo", "systemctl", "restart", "raspiCamSrv.service"],
+                    capture_output=True, text=True
+                )
+            elif startup_source == 2:
+                result = subprocess.run(
+                    ["systemctl", "--user", "restart", "raspiCamSrv.service"],
+                    capture_output=True, text=True
+                )
+            elif startup_source == 3:
+                msg = "Please restart the server from the command line."
+            
+            else:
+                msg = "Unable to detect the server startup source. Please restart the server manually."
+
+        except CalledProcessError as e:
+            logger.error("serverRestart - CalledProcessError: %s", e)
+            msg = "Error restarting server: " + str(e)
+        except Exception as e:
+            logger.error("serverRestart - Exception: %s", e)
+            msg = "Error restarting server: " + str(e)
+
+        if msg == "":
+            msg = "Configuration backup created under " +  backupPath
+        flash(msg)
+        los = getLoadConfigOnStart(cfgPath)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+def detect_startup_source():
+    """Detect the source from which the application was started.
+
+    Returns:
+        int: Type of the startup source.
+             1: systemd system unit
+             2: systemd user unit
+             3: command line
+             0: unknown
+    """
+    logger.debug("detect_startup_source")
+    ret = 0
+
+    # Check parent
+    parent = psutil.Process(os.getpid()).parent().name()
+
+    # Check cgroup
+    cgroup = Path("/proc/self/cgroup").read_text()
+
+    # systemd user or system unit
+    if "system.slice" in cgroup:
+        ret = 1
+    if "user.slice" in cgroup and ".service" in cgroup:
+        ret = 2
+
+    # Command line terminal
+    if parent in ("bash", "zsh", "fish") or "session-" in cgroup:
+        ret = 3
+
+    logger.debug("detect_startup_source - ret=%s", ret)
+    return ret
 
 @bp.route("/remove_users", methods=("GET", "POST"))
 @login_required
@@ -387,6 +766,8 @@ def remove_users():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     if request.method == "POST":
         cnt = 0
         msg = None
@@ -432,7 +813,7 @@ def remove_users():
                 flash(msg)
         else:
             flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/register_user", methods=("GET", "POST"))
 @login_required
@@ -453,9 +834,11 @@ def register_user():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     if request.method == "POST":
         return render_template("auth/register.html", sc=sc, cp=cp)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/store_config", methods=("GET", "POST"))
 @login_required
@@ -475,6 +858,8 @@ def store_config():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         cfgPath = current_app.static_folder + "/config"
@@ -487,7 +872,7 @@ def store_config():
         sc.unsavedChanges = False
         sc.clearChangeLog()
         flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/load_config", methods=("GET", "POST"))
 @login_required
@@ -507,6 +892,8 @@ def load_config():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         msg = ""
@@ -589,7 +976,7 @@ def load_config():
             sc.clearChangeLog()
         if msg != "":
             flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 def getLoadConfigOnStart(cfgPath: str) -> bool:
     logger.debug("getLoadConfigOnStart")
@@ -628,6 +1015,8 @@ def loadConfigOnStart():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -637,36 +1026,7 @@ def loadConfigOnStart():
         cb = not request.form.get("loadconfigonstartcb") is None
         setLoadConfigOnStart(cfgPath, cb)
         los = getLoadConfigOnStart(cfgPath)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
-
-@bp.route('/shutdown', methods=("GET", "POST"))
-@login_required
-def shutdown():
-    logger.debug("In shutdown")
-    g.hostname = request.host
-    g.version = version
-    cam = Camera()
-    cfg = CameraCfg()
-    cs = cfg.cameras
-    sc = cfg.serverConfig
-    tc = cfg.triggerConfig
-    cfgPath = current_app.static_folder + "/config"
-    los = getLoadConfigOnStart(cfgPath)
-    result = {}
-    # Check connection and access of microphone
-    sc.checkMicrophone()
-    cp = cfg.cameraProperties
-    sc.curMenu = "settings"
-    sc.lastSettingsTab = "settingsconfig"
-    if request.method == "POST":
-        shutdown = request.environ.get('werkzeug.server.shutdown')
-        if shutdown is None:
-            msg = "raspiCamSrv is not running with Werkzeug Server. Shut down manually."
-        else:
-            shutdown()
-            msg = "Server shutting down ..."
-        flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/api_config", methods=("GET", "POST"))
 @login_required
@@ -686,6 +1046,8 @@ def api_config():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     sc.lastSettingsTab = "settingsapi"
     if request.method == "POST":
         msg = ""
@@ -726,7 +1088,7 @@ def api_config():
                     sc.jwtAuthenticationActive = False
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Settings/API Settings changed")
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/generate_token", methods=("GET", "POST"))
 @login_required
@@ -746,6 +1108,8 @@ def generate_token():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     sc.lastSettingsTab = "settingsapi"
     if request.method == "POST":
         access_token = create_access_token(identity=g.user['username'])
@@ -765,6 +1129,8 @@ def vbutton_dimensions():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -807,7 +1173,7 @@ def vbutton_dimensions():
             flash(msg)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Settings/Versatile Buttons changed")
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/vbutton_settings', methods=("GET", "POST"))
 @login_required
@@ -823,6 +1189,8 @@ def vbutton_settings():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -850,7 +1218,7 @@ def vbutton_settings():
             flash(msg)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Settings/Versatile Buttons changed")
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/abutton_dimensions', methods=("GET", "POST"))
 @login_required
@@ -866,6 +1234,8 @@ def abutton_dimensions():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -907,7 +1277,7 @@ def abutton_dimensions():
             flash(msg)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Settings/Action Buttons changed")
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/abutton_settings', methods=("GET", "POST"))
 @login_required
@@ -923,6 +1293,8 @@ def abutton_settings():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -950,7 +1322,7 @@ def abutton_settings():
             flash(msg)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Settings/Action Buttons changed")
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/new_device', methods=("GET", "POST"))
 @login_required
@@ -966,6 +1338,8 @@ def new_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1004,7 +1378,7 @@ def new_device():
         if not deviceId is None:
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Settings/Devices - new device added: {deviceId}")
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/select_device', methods=("GET", "POST"))
 @login_required
@@ -1020,6 +1394,8 @@ def select_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1040,7 +1416,7 @@ def select_device():
                 break
         if msg != "":
             flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 def checkDeviceDeletion(deviceId: str, tc:TriggerConfig) -> str:
     """ Check whether a device can be deleted
@@ -1087,6 +1463,8 @@ def delete_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1123,7 +1501,7 @@ def delete_device():
                 sc.addChangeLogEntry(f"Settings/Devices - device deleted: {deviceDel}")
         if msg != "":
             flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 def parseTuple(stuple: str) -> tuple[str, tuple]:
     """ Parse a string which is assumed to be a tuple
@@ -1243,6 +1621,8 @@ def device_properties():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1321,7 +1701,7 @@ def device_properties():
         if not sc.curDeviceId is None:
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Settings/Devices - device properties changed for {sc.curDeviceId}")
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 def storeResult(result:dict, test:str, testResult:str) -> dict:
     """ Store a test result in the results dict
@@ -1359,6 +1739,8 @@ def test_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1453,7 +1835,7 @@ def test_device():
         if msg != "":
             flash(msg)
     logger.debug("settings.test_device - result %s", result)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/calibrate_device', methods=("GET", "POST"))
 @login_required
@@ -1469,6 +1851,8 @@ def calibrate_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1496,7 +1880,7 @@ def calibrate_device():
             msg = f"Device {dev.id} does not need calibration."
         if msg != "":
             flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/calibrate_fbwd', methods=("GET", "POST"))
 @login_required
@@ -1512,6 +1896,8 @@ def calibrate_fbwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1563,7 +1949,7 @@ def calibrate_fbwd():
                         msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/calibrate_bwd', methods=("GET", "POST"))
 @login_required
@@ -1579,6 +1965,8 @@ def calibrate_bwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1630,7 +2018,7 @@ def calibrate_bwd():
                         msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/docalibrate', methods=("GET", "POST"))
 @login_required
@@ -1646,6 +2034,8 @@ def docalibrate():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1706,7 +2096,7 @@ def docalibrate():
                 
     if msg != "":
         flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/calibrate_fwd', methods=("GET", "POST"))
 @login_required
@@ -1722,6 +2112,8 @@ def calibrate_fwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1773,7 +2165,7 @@ def calibrate_fwd():
                         msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route('/calibrate_ffwd', methods=("GET", "POST"))
 @login_required
@@ -1789,6 +2181,8 @@ def calibrate_ffwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
+    backups = getBeckupsList()
+
     # Check connection and access of microphone
     sc.checkMicrophone()
     cp = cfg.cameraProperties
@@ -1840,4 +2234,4 @@ def calibrate_ffwd():
                         msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
-    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result)
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)

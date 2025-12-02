@@ -261,6 +261,7 @@ def set_zoom():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -289,6 +290,8 @@ def set_zoom():
             sc.unsavedChanges = True
             sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
             cfg.streamingCfgInvalid = True
+            if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+                sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -302,6 +305,7 @@ def zoom_in():
     logger.debug("cfg.liveViewConfig.controls=%s", cfg.liveViewConfig.controls)
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -345,6 +349,8 @@ def zoom_in():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -389,6 +395,7 @@ def zoom_out():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -427,6 +434,8 @@ def zoom_out():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -439,6 +448,7 @@ def zoom_full():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -468,6 +478,8 @@ def zoom_full():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -480,6 +492,7 @@ def pan_up():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -503,6 +516,8 @@ def pan_up():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -515,6 +530,7 @@ def pan_left():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -544,6 +560,8 @@ def pan_left():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -556,6 +574,7 @@ def pan_center():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -588,6 +607,8 @@ def pan_center():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -600,6 +621,7 @@ def pan_right():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -623,6 +645,8 @@ def pan_right():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -635,6 +659,7 @@ def pan_down():
     cfg = CameraCfg()
     cc = cfg.controls
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
     if request.method == "POST":
@@ -658,6 +683,8 @@ def pan_down():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Pan changed for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 
@@ -686,6 +713,8 @@ def zoom_default():
         sc.unsavedChanges = True
         sc.addChangeLogEntry(f"Image section set to default for {sc.activeCameraInfo}")
         cfg.streamingCfgInvalid = True
+        if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+            sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
 
 

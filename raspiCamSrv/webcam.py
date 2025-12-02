@@ -100,6 +100,7 @@ def store_streaming_config():
     sc.curMenu = "webcam"
     sc.lastCamTab = "multicam"
     if request.method == "POST":
+        tc = cfg.triggerConfig
         scfg = cfg.streamingCfg[str(sc.activeCamera)]
         scfg["cameraproperties"] = copy.deepcopy(cfg.cameraProperties)
         if sc.activeCameraIsUsb == False:
@@ -109,6 +110,7 @@ def store_streaming_config():
         scfg["rawconfig"] = copy.deepcopy(cfg.rawConfig)
         scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
         scfg["controls"] = copy.deepcopy(cfg.controls)
+        scfg["triggercamera"] = copy.deepcopy(tc.cameraSettings)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(
             f"Camera settings for {sc.activeCameraInfo} saved for camera switch and streaming"
@@ -136,6 +138,7 @@ def sync_settings():
     tmp["intent"] = str(ster.intentIdx)
     tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
     sc = cfg.serverConfig
+    tc = cfg.triggerConfig
     str2 = None
     if sc.isLiveStream2:
         str2 = cfg.streamingCfg[str(Camera().camNum2)]
@@ -152,6 +155,7 @@ def sync_settings():
             scfg["rawconfig"] = copy.deepcopy(cfg.rawConfig)
             scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
             scfg["controls"] = copy.deepcopy(cfg.controls)
+            scfg["triggercamera"] = copy.deepcopy(tc.cameraSettings)
             Camera().restartLiveStream2()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(

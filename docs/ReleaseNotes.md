@@ -39,6 +39,21 @@ In case that the server did not start correctly or if you see an unexpected beha
 - If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
 - Then repeat step 4, above
 
+## V4.2.0
+
+### New Features
+- For [Motion Detection](./TriggerMotion.md), *Regions of Interest* as well as *Regions of NO Interest* can be specified.    
+These are respected during Motion Detection for CSI as well as USB cameras and for all *Motion Detection Algorithms*
+- In case of multiple cameras, the camera-related [Ttigger](./Trigger.md) settings ([Trigger/Motion](./TriggerMotion.md) and [Trigger/Camera](./TriggerCameraActions.md)) are now camera-specific.     
+When the active camera is switched, these settings are replaced by those which had been defined and [saved for camera switch](./CamMulticam.md#save-active-camera-settings-for-camera-switch) for the new camera, before.    
+This is especially important when regions of interest are used for motion detection. These settings will not be lost when cameras are switched.
+- [Backup and Restorage](./SettingsConfiguration.md) of configuration and other stored data.
+
+### Bugfixes
+
+- For USB cameras an error occurred when *Focus* was set to 0.0 with *Autofocus Mode* "Manual". This is now fixed.
+- For [Motion Capturing](./TriggerMotion.md) with USB cameras, the frame rate for video recording was increased from 14.5 to 30. With this frame rate, the video length is in better accord with the configured duration.
+
 ## V4.1.0
 
 ### New Features

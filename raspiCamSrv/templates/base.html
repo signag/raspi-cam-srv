@@ -10,6 +10,11 @@
         onload="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')"
         onresize="showAfWindows('{{ sc.lastLiveTab }}', '{{ sc.isVideoRecording }}', 'include_afwindows', '{{ sc.isZoomModeDraw }}', '{{ sc.scalerCropLiveView }}')"
     >
+    {% elif sc.curMenu == "trigger" %}
+    <body 
+        onload="showRoiWindows('{{ sc.lastTriggerTab }}', '{{ sc.isLiveStream }}', '{{ sc.scalerCropLiveView }}')"
+        onresize="showRoiWindows('{{ sc.lastTriggerTab }}', '{{ sc.isLiveStream }}', '{{ sc.scalerCropLiveView }}')"
+    >
     {% else %}
     <body>
     {% endif %}
