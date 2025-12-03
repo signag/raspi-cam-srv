@@ -542,9 +542,9 @@
 
         function onlineHelp(noCam) {
             if (noCam == 0) {
-                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Information.md");
+                window.open("{{ sc.getBaseHelpUrl() }}/Information/");
             } else {
-                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Information_NoCam.md");
+                window.open("{{ sc.getBaseHelpUrl() }}/Information_NoCam/");
             }
         }
     </script>

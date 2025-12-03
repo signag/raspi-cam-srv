@@ -55,7 +55,7 @@ The following table contains  systematic values for Exposure Time and Analogue G
 
 ![1/3EV](img/PhotoSeriesExpTab1_3.jpg)
 
-## Parameter Taple (1 EV)
+## Parameter Table (1 EV)
 
 The following table contains  systematic values for Exposure Time and Analogue Gain with 1 EV, corresponding roughly to commercial camera settings
 

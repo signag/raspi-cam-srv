@@ -44,7 +44,7 @@ If activated, the video will show bounding boxes around areas for which motion h
 Otherwise, normal videos will be recorded.
 - *Use Regions of Interest*    
 If selected (and submitted) it will be possible to specify a set of rectangular areas which serve as *Regions of Interest* / *Regions of NO Interest*.    
-For *Regions of Interest* (RoI), motion will only be detected when occurring within these regions (see [below](#regions-of-interest--regions-of-no-interest)).    
+For *Regions of Interest* (RoI), motion will only be detected when occurring within these regions (see [below](#regions-of-interest-and-regions-of-no-interest)).    
 *Regions of NO Interest* (RoNI) will be generally excluded from motion detection.
 - *Regions of Interest*   
 This field holds the *Regions of Interest* as a tuple of tuples where each tuple represents one region with (x offset, y offset, width, height). The values refer to the [Pixel Array Size](./Information.md#camera-properties) of the sensor.    
@@ -61,7 +61,7 @@ Any changes must be submitted with the **Submit** button.
 Changes will be effective after the Motion Capturing Process has been started the next time.    
 For example, trees or leaves moving in the wind are normally not of interest.
 
-## Regions of Interest / Regions of NO Interest
+## Regions of Interest and Regions of NO Interest
 
 In many cases, it is desirable to restrict the motion-sensitive region of the camera view to specific areas.
 

@@ -9,7 +9,7 @@ The list of *Unsaved Configuration Changes* lists all actions with their time of
 
 ![Configuration](./img/Settings_Config.jpg)
 
-- Button *Store Configuration* generates a set of JSON files which include the entire configuration of the **raspiCamSrv** server (see [below](#configuration-storage)).<br>**NOTE**: This does not include [Photo Series](./PhotoSeries.md). These are persisted automatically and independently. It also does not include [Events](./TriggerActive.md).
+- Button *Store Configuration* generates a set of JSON files which include the entire configuration of the **raspiCamSrv** server (see [below](#server-configuration-storage)).<br>**NOTE**: This does not include [Photo Series](./PhotoSeries.md). These are persisted automatically and independently. It also does not include [Events](./TriggerActive.md).
 - Button *Load Stored Configuration* replaces the current configuration with the previously stored configuration.<br>[Photo Series](./PhotoSeries.md) and [Events](./TriggerEventViewer.md) are not affected.<br>**NOTE**: If you had activated [API](./SettingsAPI.md) access before, this will be deactivated when the stored configuration is loaded. You need to restart the server to activate it again.
 - Button *Reload Cameras* resets and reloads the entire camera configuration (see [Reloading Cameras](#reloading-cameras)). This fuction must be applied when USB cameras have been unplugged or new USB cameras plugged in while the server was active (hot plug). This will adjust the entire camera configuration to the new setup.<br>**NOTE**: Use this function **immediately** after unplugging a USB camera. Otherwise errors can occur when using other functions<br>**NOTE**: This has no effect when CSI cameras have been plugged in or out. This requires rebooting the Raspberry Pi, to be effective.
 - Button *Reset Server* stops any background activity (live stream, video, photo series, motion capturing and event handling) and replaces the current configuration with the default configuration.<br>[Photo Series](./PhotoSeries.md) and [Events](./TriggerEventViewer.md) are not affected. Any associated resources remain unchanged. However, an active [Photo Series](./PhotoSeries.md) will be paused and needs to be continued.<br>**NOTE**: If you had activated [API](./SettingsAPI.md) access before, this will no longer be available when the configuration is reset.<br>The same applies to [Notification Settings](./TriggerNotification.md) which need to be reconfigured.<br>**NOTE**: If you had activated *Start Server with Stored Configuration*, this will be deactivated. Probably, you might want to store the new configuration bofore activating this again.
@@ -50,6 +50,7 @@ When the configuration is stored with the *Store Configuration* button, a set of
 ## Reloading Cameras
 
 When the function **Reload Cameras** is applied, the system will 
+
 1. [Detect](./Information.md#detection-of-cameras) the currently connected cameras
 2. [Identify](./Information.md#identification-of-usb-cameras) USB cameras, if connected 
 3. Then determine Camera Properties (e.g. model) and Sensor Modes for CSI and [USB](./Information.md#determining-camera-properties-for-usb-cameras) cameras.
@@ -81,6 +82,7 @@ In the example above, Camera 0 will keep their settings and Camera 1 will be res
 Backups preserve the currently stored data structures of **raspiCamSrv** so that they can be consistently restored later.
 
 This includes:
+
 - all [configuration data](#server-configuration-storage) stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/config```
 - all photos stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/photos```
 - all [photo series](./PhotoSeries.md#photo-series-in-the-file-system) stored under folder ```~/prg/raspi-cam-srv/raspi-cam-srv/static/photoseries```

@@ -167,7 +167,7 @@ This feature can also be used to persist specific settings under an indicative n
 
 All resources related to a Photo Series are stored in the file system under    
 ```/home/<user>/prg/raspi-cam-srv/RaspiCamSrv/static/photoseries/<name>```   
-where \<user> is the user ID specified during [system setup](../README.md#system-setup) and \<name> is the name of the series.
+where \<user> is the user ID specified during [system setup](./system_setup.md) and \<name> is the name of the series.
 
 After [Creation of a new Series](#creation-of-a-new-series), the folder has been created and a [Series Configuration File](#series-configuration-file), a [Series Log File](#series-log-file) and a [Series Camera File](#series-camera-file) have been initiated:
 

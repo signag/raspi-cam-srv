@@ -1266,7 +1266,7 @@
             }
         }
         function onlineHelp() {
-            window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Cam.md");
+            window.open("{{ sc.getBaseHelpUrl() }}/Cam/");
         }
     </script>
     {% if sc.curMenu == "webcam" and sc.lastCamTab == "calibcam"  and ster.calibPhotoRecording == True %}

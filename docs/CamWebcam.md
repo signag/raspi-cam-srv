@@ -2,9 +2,10 @@
 
 [![Up](img/goup.gif)](./Cam.md)
 
-**raspiCamSrv** enables webcam functionalities with Raspberry Pi cameras.
+**raspiCamSrv** enables webcam functionalities with Raspberry Pi cameras as well as with USB cameras.
 
-For Pi 5 with two camera ports, both cameras can be streamed simultaneously.
+For Pi 5 with two camera ports, both cameras can be streamed simultaneously.    
+Alternatively, you can choose one of the connected USB cameras as *Active* or *Second* camera.
 
 This page shows the URLS for MJPEG streaming as well as for photo snapshots:
 

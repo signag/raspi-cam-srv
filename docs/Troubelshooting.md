@@ -5,7 +5,7 @@
 This page intends to collect information on how to deal with errors or problems which may occur while running **raspiCamSrv**.
 
 - **Password forgotten**    
-If you have your password forgotten, there are two alternatives:<br>1. Somone else is Superuser:<br>Ask him to remove your user entry and create a new one (See [Settings / Users](./SettingsUsers.md)).<br>2. You are the Superuser.<br>You need to reset the database where user entries are stored.<br>You do this with with ```flask --app raspiCamSrv init-db``` (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation) Step 11).<br>At the next Login, you need to Register as new Superuser (see [Authorization](./Authentication.md))
+If you have your password forgotten, there are two alternatives:<br>1. Somone else is Superuser:<br>Ask him to remove your user entry and create a new one (See [Settings / Users](./SettingsUsers.md)).<br>2. You are the Superuser.<br>You need to reset the database where user entries are stored.<br>You do this with with ```flask --app raspiCamSrv init-db``` (see [RaspiCamSrv Installation](./installation.md) Step 11).<br>At the next Login, you need to Register as new Superuser (see [Authorization](./Authentication.md))
 
 - **ERROR in motionDetector: Exception in _motionThread: OpenCV(4.6.0)**   
 This error may occur when trying to use [extended motion capturing](./TriggerMotion.md) while the 'YUV420' stream format is set for the [Live View Configuration](./Configuration.md). <br>It seems that OpenCV is not capable to handle images with this format.    
@@ -17,7 +17,7 @@ See [raspi-cam-srv Issue #48](https://github.com/signag/raspi-cam-srv/issues/48)
 - **No Connection to server although server has been started as service**.    
 This may happen (see [raspi-cam-srv Issue #8](https://github.com/signag/raspi-cam-srv/issues/8)) if the service has been started before the network interfaces are ready.   
 The systemd journal will indicate that the Flask server is only listening to *localhost* (127.0.0.1)   
-In this case, more restrictive settings in the *After* clause of the [service configuration](../README.md#service-configuration) file may be required (see [systemd Network Configuration Synchronization Points](https://systemd.io/NETWORK_ONLINE/)) 
+In this case, more restrictive settings in the *After* clause of the [service configuration](./service_configuration.md) file may be required (see [systemd Network Configuration Synchronization Points](https://systemd.io/NETWORK_ONLINE/)) 
 - **SystemError: No cameras were found on the server's device**   
 See [raspi-cam-srv Issue #6](https://github.com/signag/raspi-cam-srv/issues/6)
 - **ERROR in camera_pi: Could not import SensorConfiguration from picamera2.configuration. Bypassing sensor configuration**   

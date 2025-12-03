@@ -58,7 +58,7 @@ If they are the same model, the button can be used to transfer the configuration
 
 **NOTE**: the button does **not** save the settings for the active camera in the *streamingCfg* structure. This must be done explicitly and is recommended to be done before synchronizing.
 
-#### <<< Switch Cameras >>>
+#### Switch Cameras
 
 With this button, you can switch the cameras so that the one sown on the right side will become the active camera.
 

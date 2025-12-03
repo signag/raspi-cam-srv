@@ -1,9 +1,8 @@
 # raspiCamSrv Focus Handling
 
-[![Up](img/goup.gif)](./LiveScreen.md)
+[![Up](img/goup.gif)](./CameraControls.md)
 
 Focus handling is not supported by camera versions 1 and 2.   
-Focus handling is currently not supported for USB cameras.
 
 ![Focus handling](img/Focus.jpg)
 

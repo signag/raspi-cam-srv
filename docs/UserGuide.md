@@ -1,6 +1,6 @@
 # RaspiCamSrv User Guide
 
-[![Up](img/goup.gif)](../README.md)
+[![Up](img/goup.gif)](./index.md)
 
 The variant of the user interface, described on this page, refers to the case where **at least one camera** (CSI or USB) is available.   
 If this is not the case, refer to the [reduced user interface](./UserGuide_NoCam.md).
@@ -29,38 +29,40 @@ Related to usability in the UI, you will almost see no difference between CSI an
 
 #### Title bar
 On the right side, the title bar shows
+
 - the current server connection
 - the active camera as advertised by Picamera2
 - the active user
 - A special icon will indicate unsaved configuration changes:<br>![Changes](./img/UnsavedChangesIndicator.jpg)<br>It will vanish after changes have been saved with [Settings/Configuration/Store Configuration](./SettingsConfiguration.md) or after a stored configuration has been loaded.   
-The icon can be pressed to save unsaved changes.
+The icon can be pressed (2 times) to save unsaved changes.
 
 On the left side, the title bar shows the application name (raspiCamSrv) and the current screen.
 
 #### Main Menu
 
 The main menu (black background) allows navigation to different screens:
+
 - **Live** shows the [Live Screen](./LiveScreen.md) which includes functionality for image control as well as photo- and video taking
 - **Config** gives access to camera [Tuning](./Tuning.md) and camera [Configuration](./Configuration.md) where basic camera configurations can be specified for different scenarios.
-- **Info** opens the [Camera Information](./Information.md) page with information on installed cameras as well as Properties and Sensor Modes of the active camera.
+- **Info** opens the [Camera Information](./Information.md) page with information on the system and installed cameras as well as Properties and Sensor Modes of the active camera.
 - **Photos** shows the [Photos](./PhotoViewer.md) where the currently available photos and videos can be browsed and inspected in detail.
-- **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for control of photo series.
+- **Photoseries** opens the [Photo Series](./PhotoSeries.md) page for definition and control of photo series.
 - **Trigger** Allows configuring and controlling [triggered actions](./Trigger.md), based on [Motion Capturing](./TriggerMotion.md) as well as on configured [events from GPIO-connected sensors](./TriggerTriggers.md)
-- **Cam** gives access to the dialogs for [Web Cam](./CamWebcam.md) access [Multi Cam](./CamMulticam.md) for multi-camera control.    
-If a [Stereo Camera configuration](./Settings.md#activating--deactivating-stereo-vision) is activated, it hosts also the dialogs for [Camera Calibration](./CamCalibration.md) as well as for [Stereo Vision](./CamStereo.md).
+- **Cam** gives access to the dialogs for [Web Cam](./CamWebcam.md) access; [Multi Cam](./CamMulticam.md) for multi-camera control.    
+If a [Stereo Camera configuration](./Settings.md#activating-and-deactivating-stereo-vision) is activated, it hosts also the dialogs for [Camera Calibration](./CamCalibration.md) as well as for [Stereo Vision](./CamStereo.md).
 - **Console** is dedicated to manually controlled interactions with the [Raspberry Pi OS](./ConsoleVButtons.md) or with [GPIO-connected Actors](./ConsoleActionButtons.md), such as motors, servos or LEDs.
 - **Settings** opens the [Settings](./Settings.md) page for all kinds of static configurations for **raspiCamSrv**.
-- **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
+- **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md)
 
-**NOTE:** Selecting an option on the main menue will issue a request to the server with a specific URL and, thus, refresh the screen.
+**NOTE:** Selecting an option on the main menu will issue a request to the server with a specific URL and, thus, refresh the screen.
 
-#### Submenue
+#### Submenu
 
-Many of the **raspiCamSrv** pages, selected by a [Main Menue](#main-menu) option have a submenue.    
+Many of the **raspiCamSrv** pages, selected by a [Main Menu](#main-menu) option have a submenu.    
 Submenues are indicated by a green background.
 
-**NOTE:** Selecting an option on a submenue will **not** issue a new request and, thus, will **not** refresh the screen with new information from the server.    
-Instead, submenue options activate different sections of the currently loaded page.   
+**NOTE:** Selecting an option on a submenu will **not** issue a new request and, thus, will **not** refresh the screen with new information from the server.    
+Instead, submenu options activate different sections of the currently loaded page.   
 However, *Submit* buttons on a page section apply only to data shown on the active section and not to data on other sections of the same page.
 
 
@@ -86,6 +88,7 @@ From right to left, these indicate the status of
 Red color indicates that a process is active whereas gray indicates that it is inactive.   
 
 In the case of [motion capture](./TriggerMotion.md) or [event handling](./Trigger.md),    
+
 - yellow color indicates that the process is active but currently not scheduled to register events
 - turquoise color indicates that the motion capture process runs in [test mode](./TriggerMotion.md#testing-motion-capturing)
 

@@ -1,0 +1,98 @@
+site_name: raspiCamSrv Documentation
+plugins:
+    - search
+    - mike
+theme:
+  name: material
+  favicon: img/favicon.ico
+
+nav:
+  - Home: index.md
+  - Getting Started: 
+      - Overview: getting_started_overview.md
+      - Requirements: requirements.md
+      - System Setup: system_setup.md
+      - Installation: installation.md
+      - Service Configuration: service_configuration.md
+      - Alternatives:
+          - Running raspiCamSrv as Docker container: SetupDocker.md
+          - Setup of Raspberry Pi Zero as Standalone System: bp_PiZero_Standalone.md
+          - Configuring as Hotspot:
+              - Hotspot Setup for Bullseye: bp_Hotspot_Bullseye.md
+              - Hotspot Setup for Boookworm and Trixie: bp_Hotspot_Bookworm.md
+      - Trouble Shooting Guide: Troubelshooting.md
+  - Features: features.md
+  - References:
+      - Picamera2 Manual: https://pip-assets.raspberrypi.com/categories/652-raspberry-pi-camera-module-2/documents/RP-008156-DS-2-picamera2-manual.pdf
+  - Releases:
+      - Release Notes: ReleaseNotes.md
+      - Updating a raspiCamSrv Installation: updating_raspiCamSrv.md
+  - User Guide:
+      - Overview: UserGuide.md
+      - Authentication: Authentication.md
+      - Live Menu:
+          - Live Screen: LiveScreen.md
+          - Camera Controls:
+               - Overview: CameraControls.md
+               - Focus Handling: FocusHandling.md
+               - Zoom/Pan/Tilt: ZoomPan.md
+               - Auto-Exposure: CameraControls_AutoExposure.md
+               - Exposure: CameraControls_Exposure.md
+               - Image: CameraControls_Image.md
+               - Camera Controls for USB Cameras: CameraControls_UsbCams.md
+               - Cropping: ScalerCrop.md
+      - Photo / Video Taking: Phototaking.md
+      - Config Manu:
+          - raspiCamSrv Camera Configuration: Configuration.md
+          - Tuning: Tuning.md
+      - Info Menu:
+          - System and Camera Information: Information.md
+      - Photos Menu:
+          - Photo Viewer: PhotoViewer.md
+      - Photo Series Menu:
+          - Photo Series: PhotoSeries.md
+          - Timelapse Series: PhotoSeriesTimelapse.md
+          - Exposure Series: PhotoSeriesExp.md
+          - Focus Stack Series: PhotoSeriesFocus.md
+      - Trigger Menu:
+          - Overview: Trigger.md
+          - Trigger Configuration: TriggerTriggers.md
+          - Action Configuration: TriggerActions.md
+          - Trigger/Action Configuration: TriggerTriggerActions.md
+          - Motion Detection Configuration: TriggerMotion.md
+          - Camera Action Configuration: TriggerCameraActions.md
+          - Notification Configuration: TriggerNotification.md
+          - Active Motion Capturing: TriggerActive.md
+          - Event Viewer and Calendar: TriggerEventViewer.md
+      - Cam Menu:
+          - Overview: Cam.md
+          - Web Cam Dialog: CamWebcam.md
+          - Multi-Cam Dialog: CamMulticam.md
+          - Camera Calibration Dialog: CamCalibration.md
+          - Stereo Camera Dialog: CamStereo.md
+      - Console Menu:
+          - Overview: Console.md
+          - Versatile Buttons: ConsoleVButtons.md
+          - Action Buttons: ConsoleActionButtons.md
+      - Settings Menu:
+          - Settings Parameters: Settings.md
+          - Configuration Management: SettingsConfiguration.md
+          - User Management: SettingsUsers.md
+          - API Settings: SettingsAPI.md
+          - Settings for Versatile Buttons: SettingsVButtons.md
+          - Settings for Action Buttons: SettingsAButtons.md
+          - GPIO Device Configuration: SettingsDevices.md
+          - GPIO Devices:
+              - Stepper Motor: gpioDevices/StepperMotor.md
+      - Background Processes: Background Processes.md
+  - No Camera Mode:
+      - User Guide: UserGuide_NoCam.md
+      - System Information: Information_NoCam.md
+      - Settings: Settings_NoCam.md
+      - Configuration Management: SettingsConfiguration_NoCam.md
+
+  - API: API.md
+
+
+
+

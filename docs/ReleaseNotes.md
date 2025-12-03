@@ -1,43 +1,13 @@
 # Release Notes
 
-[![Up](img/goup.gif)](../README.md)
+[![Up](img/goup.gif)](./index.md)
 
-## Update Procedure
+## V4.3.0
 
-Before updating, make sure that
-- [video recording](./Phototaking.md#video) is stopped
-- there are no active [photoseries](./PhotoSeries.md)
-- [triggered capture](./Trigger.md) (motion tracking) is stopped
-- server will not [start with stored configuration](./SettingsConfiguration.md)
+## Changes
 
-It is recommended configuring [Versatile Buttons](./ConsoleVButtons.md) for the commands described in the following, so that update and server restart can be initiated directly from the Web UI.
-
-For update, proceed as follows:    
-(If running a Docker container see [Update Procedure for Docker Container](./SetupDocker.md#update-procedure))
-
-1. Within a SSH session go to the **raspiCamSrv** root directory    
-```cd ~/prg/raspi-cam-srv```
-2. If you have made local changes (e.g. logging), you may need to reset the workspace with   
-```git reset --hard```
-3. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
-```git pull```    
-As a result, you will see a summary of changes with respect to the previously installed version.
-4. Restart the service, depending on [how the service was installed](../README.md#service-configuration)    
-```sudo systemctl restart raspiCamSrv.service```    
-or    
-```systemctl --user restart raspiCamSrv.service```
-5. Check that the service started correctly     
-```sudo journalctl -e```    
-or    
-```journalctl --user -e```
-6. If you used [start with stored configuration](./SettingsConfiguration.md) before updating, you may now try to activate this again.<br>In cases where configuration parameters were not modified with the update, this will usually work.<br>If not, you will need to prepare and store your preferred configuration again.
-
-In case that the server did not start correctly or if you see an unexpected behavior in the UI, you may have forgotten to deactivate [start with stored configuration](./SettingsConfiguration.md)<br>In this case, you can do the following:
-
-- ```cd ~/prg/raspi-cam-srv/raspiCamSrv/static/config```
-- Check whether a file ```_loadConfigOnStart.txt``` exists in this folder.
-- If it exists, remove it:<br>```rm _loadConfigOnStart.txt```
-- Then repeat step 4, above
+- Documentation has been moved to [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/).     
+The entire documentation will be versioned with the software and Online Help links will point to documentation with the version of the software, rather than to the latest version.
 
 ## V4.2.0
 
@@ -59,7 +29,7 @@ This is especially important when regions of interest are used for motion detect
 ### New Features
 
 - [Zoom and Pan](./ZoomPan.md) are now also available for USB Cameras.
-- [Focus handling and Image Controls](./CameraControls.md#camera-controls-for-usb-cameras) are now available for USB Cameras.    
+- [Focus handling and Image Controls](./CameraControls_UsbCams.md) are now available for USB Cameras.    
 **NOTE** These features have currently been tested with different Logitech cameras. Please notify if other cameras show unexpected behavior.
 
 ### Changes
@@ -92,11 +62,11 @@ This covers part of [raspi-cam-srv Discussion #77](https://github.com/signag/ras
 
 ### New Features
 
-- Seamless integration of **USB cameras** with CSI cameras (see [Info](./Information.md) and [Multi Cam](./CamMulticam.md))<br>USB cameras are accessed through OpenCV which must have been installed (see [Installation](../README.md#raspicamsrv-installation) Step 10.).<br>The use of USB cameras can be activated or deactivated in the [Settings](./Settings.md).<br>USB cameras are handled in exactly the same way as CSI cameras and they can be used in all operational functions, except [Focus Stacks](./PhotoSeriesFocus.md) and [Exposure Series](./PhotoSeriesExp.md).<br>**NOTE**: Currently [Controls](./CameraControls.md) (Focus, Zooming, Ecposure and Image control) cannot be used with USB cameras. However, images can be flipped and resolution can be adjusted with [Configuration](./Configuration.md).
+- Seamless integration of **USB cameras** with CSI cameras (see [Info](./Information.md) and [Multi Cam](./CamMulticam.md))<br>USB cameras are accessed through OpenCV which must have been installed (see [Installation](./installation.md) Step 11.).<br>The use of USB cameras can be activated or deactivated in the [Settings](./Settings.md).<br>USB cameras are handled in exactly the same way as CSI cameras and they can be used in all operational functions, except [Focus Stacks](./PhotoSeriesFocus.md) and [Exposure Series](./PhotoSeriesExp.md).<br>**NOTE**: Currently [Controls](./CameraControls.md) (Focus, Zooming, Ecposure and Image control) cannot be used with USB cameras. However, images can be flipped and resolution can be adjusted with [Configuration](./Configuration.md).
 - Hot-Plug of USB cameras is supported. See button **Reload Cameras** in [Settings / Configuration](./SettingsConfiguration.md).
 - **No-Camera** Mode is supported.<br>Before, when no cameras were installed, **raspiCamSrv** could not be started.<br>Now, it is possible to use **raspiCamSrv** also without cameras, for example in order to control [GPIO Devices](./SettingsDevices.md) through the [Action Buttons](./ConsoleActionButtons.md) or through the [Event Handling Infrastructure](./Trigger.md) or in order to use the [Versatile Buttons](./ConsoleVButtons.md) Console to issue freely configurable OS commands and see their output.
-- [Switching Cameras](./CamMulticam.md#-switch-cameras-) in the [Multi Cam](./CamMulticam.md) dialog now requires confirmation when Camera [Confoguration](./Configuration.md) and/or [Controls](./CameraControls.md) were changed and not yet saved for camera switch. This shall avoid unintended loss of configuration work when switching the cameras.
-- [Installation Procedure](./../README.md#raspicamsrv-installation) has been updated for use with **Debian-Trixie**, the successor of **Bullseye**.<br>Tests have so far only be made with a Raspberry Pi Zero 2 system with connected CSI and USB camera.<br>Please report any issues, you may run into, in other configurations.
+- [Switching Cameras](./CamMulticam.md#switch-cameras) in the [Multi Cam](./CamMulticam.md) dialog now requires confirmation when Camera [Confoguration](./Configuration.md) and/or [Controls](./CameraControls.md) were changed and not yet saved for camera switch. This shall avoid unintended loss of configuration work when switching the cameras.
+- [Installation Procedure](./installation.md) has been updated for use with **Debian-Trixie**, the successor of **Bullseye**.<br>Tests have so far only be made with a Raspberry Pi Zero 2 system with connected CSI and USB camera.<br>Please report any issues, you may run into, in other configurations.
 
 ### Bugfixes
 
@@ -188,7 +158,7 @@ Thus, whenever the [Configuration Status Indicator](./UserGuide.md#process-statu
 
 ### Changes
 
-- Adapted [Installation procedure](./../README.md#raspicamsrv-installation) step 10 for version of [matplotlib](https://matplotlib.org/).    
+- Adapted [Installation procedure](./installation.md) step 11 for version of [matplotlib](https://matplotlib.org/).    
 As discussed in [picamera2 issue \#1211](https://github.com/raspberrypi/picamera2/issues/1211), Picamera2 relies on the numpy version coming with Debian installation, which is numpy 1.x.  
 On the other hand, matplotlib version 3.8 and later seem to require numpy 2.x, which is binary incompatible to version 1.x.
 - For [StepperMotor](./gpioDevices/StepperMotor.md), the minimum speed (which is achieved by setting *speed=0*) has been reduced by a factor of 10.    
@@ -205,7 +175,7 @@ Now ```Camera.streamOutput``` and ```Camera.stream2Output``` are accessible whic
 - Thread-safe handling of last live stream access. The last access of a client to a camera stream controls automatic shutdown of the streaming server after 10 sec of inactivity (see [Streaming](./UserGuide.md#streaming)).    
 Since streaming clients and servers are executed in different threads, it could happen in rare cases that a client has tried to access a stream in a phase where the server has started but not yet completed to shut down because of inactivity.    
 Since the camera is closed when streaming is shut down, different camera errors could occur, depending on camera shutdown status.   
-This could occur in particular when taking photos or taking [Photo Snapshots](./Webcam.md#photo-snapshot) through the Web URL.   
+This could occur in particular when taking photos or taking [Photo Snapshots](./CamWebcam.md#photo-snapshot) through the Web URL.   
 Now, access to the time of last stream access has been made thread-safe by holding locks while a process is evaluating or changing this value and, in cases where inactivity is detected by the server, the lock is only released after the server has completely shut down.    
 (Fixes [raspi-cam-srv issue #61](https://github.com/signag/raspi-cam-srv/issues/61))
 
@@ -237,7 +207,7 @@ The result is returned in JSON format. Error messages are shown if an attribute 
 
 ### Changes
 
-In dialog [Web Cam](./Webcam.md), the button **Memorize Configuration and Controls for Camera Change** was renamed to **Save Active Camera Settings for Camera Switch** in order to more clearly express its functionality.   
+In dialog [Web Cam](./CamWebcam.md), the button **Memorize Configuration and Controls for Camera Change** was renamed to **Save Active Camera Settings for Camera Switch** in order to more clearly express its functionality.   
 See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 
 ## V3.5.2
@@ -397,7 +367,7 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 
 - V2.11.0 introduces the new [raspiCamSrv API](./API.md) for interoperability of raspiCamSrv with other software packages.<br>This resolves the feature request raspi-cam-srv issue #34 [API?](https://github.com/signag/raspi-cam-srv/discussions/34)
 
-- Required installation actions:<br>In order to allow API support, it is necessary to install an additional package.<br>This can be done before or after the [Update Procedure](#update-procedure):<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>```pip install flask-jwt-extended```
+- Required installation actions:<br>In order to allow API support, it is necessary to install an additional package.<br>This can be done before or after the [Update Procedure](./updating_raspiCamSrv.md):<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>```pip install flask-jwt-extended```
 
 ### Changes
 
@@ -425,7 +395,7 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 
 - Fixed function [Load Stored Configuration](./SettingsConfiguration.md) on the [Settings](./Settings.md) screen.<br>This function failed in cases when only a single camera is connected to a Raspberry Pi.<br>Resolves raspi-cam-srv issue #39 [load_config route assumes LiveStream2 exists (causes crash if non-existent)](https://github.com/signag/raspi-cam-srv/issues/39)
 
-- Fixed [Switch Cameras](./Webcam.md#-switch-cameras-) on the [Web Cam](./Webcam.md) screen.<br>If working with two cameras, this function caused an error when [Triggered Capture of Videos and Photos](./Trigger.md), a [Photo Series](./PhotoSeries.md) or [Video Recording](./Phototaking.md#video) is currently active.<br>The user is now asked to stop either of these processes before switching cameras.
+- Fixed [Switch Cameras](./CamMulticam.md#switch-cameras) on the [Web Cam](./CamWebcam.md) screen.<br>If working with two cameras, this function caused an error when [Triggered Capture of Videos and Photos](./Trigger.md), a [Photo Series](./PhotoSeries.md) or [Video Recording](./Phototaking.md#video) is currently active.<br>The user is now asked to stop either of these processes before switching cameras.
 
 ## V2.10.2
 
@@ -502,13 +472,13 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 - On the [Settings](./Settings.md) screen, new parameters for geographical latitude, longitude and elevation as well as a time zone selector have been added.<br>Non-zero settings for these parameters are required for using [Sun-controlled Photo Series](./PhotoSeriesTimelapse.md)
 
 ### Bugfixes
-- For [Motion Detection](./TriggerMotion.md), the list of supported algorithms had shown only "Mean Square Diff", even if **Ext. Motion Detection supported** was activated in the [Settings](./Settings.md) screen.<br>Now all available algorithms can be selected and used if the modules cv2, matplotlib and numpy are installed on the system (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation), step 10)
+- For [Motion Detection](./TriggerMotion.md), the list of supported algorithms had shown only "Mean Square Diff", even if **Ext. Motion Detection supported** was activated in the [Settings](./Settings.md) screen.<br>Now all available algorithms can be selected and used if the modules cv2, matplotlib and numpy are installed on the system (see [RaspiCamSrv Installation](./installation.md), 11)
 
 ## V2.7.1
 
 ### Bugfixes
 
-- Images from a photo snapshot URL (see [Web Cam](./Webcam.md)) could not be saved using 'save as' from the context menu.   
+- Images from a photo snapshot URL (see [Web Cam](./CamWebcam.md)) could not be saved using 'save as' from the context menu.   
 The reason was that these images still contained the framing and mime type from MJPEG streaming.   
 This is now fixed.   
 This solves [raspi-cam-srv Issue #22](https://github.com/signag/raspi-cam-srv/issues/22)
@@ -604,7 +574,7 @@ Now, the camera is given a second more time after different steps of switching.
 ### Bugfixes
 
 - Switching the camera caused ```RuntimeError: Unable to stop preview.``` (see [raspi-cam-srv Issue #14](https://github.com/signag/raspi-cam-srv/issues/14)).    
-This is now fixed. Switching the camera can be done from the [Settings](./Settings.md#switching-the-active-camera) screen as well as from the [WebCam](./Webcam.md#-switch-cameras-) screen.
+This is now fixed. Switching the camera can be done from the [Settings](./Settings.md#switching-the-active-camera) screen as well as from the [WebCam](./CamMulticam.md#switch-cameras) screen.
 
 ## V2.5.1
 
@@ -736,9 +706,9 @@ Previously, the error was only shown in the [events logfile](./TriggerActive.md#
 
 ### New Features
 
-- Streaming of second camera added (see [Webcam](./Webcam.md) page). A single **raspiCamSrv** server can now simultaneously stream both cameras connected to a Raspberry Pi 5.
+- Streaming of second camera added (see [Webcam](./CamWebcam.md) page). A single **raspiCamSrv** server can now simultaneously stream both cameras connected to a Raspberry Pi 5.
 - The camera configuration and controls for the active camera can be preserved also for a situation when this camera acts as "other" camera.
-- Streaming configurations for both cameras are stored together with the entire configuration (see [Settings](./SettingsConfiguration.md-storage)) and can be loaded on server restart.
+- Streaming configurations for both cameras are stored together with the entire configuration (see [Settings](./SettingsConfiguration.md)) and can be loaded on server restart.
 
 ## V2.2.3
 
@@ -816,7 +786,7 @@ This error is now captured and, if it occurs, the *sensor* element in the config
 ### New Features
 
 - Added endpoint for photo snapshots ([raspi-cam-srv Issue #5](https://github.com/signag/raspi-cam-srv/issues/5))  
-(see [Web Cam](./Webcam.md))
+(see [Web Cam](./CamWebcam.md))
 
 ## V2.0.0
 

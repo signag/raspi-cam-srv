@@ -1725,9 +1725,9 @@
 
         function onlineHelp(noCam) {
             if (noCam == 0) {
-                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Settings.md");
+                window.open("{{ sc.getBaseHelpUrl() }}/Settings/");
             } else {
-                window.open("https://github.com/signag/raspi-cam-srv/blob/main/docs/Settings_NoCam.md");
+                window.open("{{ sc.getBaseHelpUrl() }}/Settings_NoCam/");
             }
         }
         function confirmDeleteDevice(form) {

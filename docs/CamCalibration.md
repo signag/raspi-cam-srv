@@ -4,7 +4,7 @@
 
 This dialog allows calibration of the [stereo camera system](./CamStereo.md#stereo-camera) in order to improve the quality of the stereo result.
 
-**NOTE**:The dialog is only accessible if [Stereo Vision](./Settings.md#activating--deactivating-stereo-vision) has been activated.
+**NOTE**:The dialog is only accessible if [Stereo Vision](./Settings.md#activating-and-deactivating-stereo-vision) has been activated.
 
 **REMINDER**: When finished with calibration you will need to [Store Configuration](./Settings.md#configuration) in order to preserve the results over a server restart.
 

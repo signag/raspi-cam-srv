@@ -23,10 +23,12 @@ The result will be shown in the *Focus Stack* subdialog:
 ![Fochs Stack Final](img/PhotoSeriesFoc2.jpg)
 
 Together with each photo, characteristic metadata are shown:
+
 - The *Lens Position* with which the photo was taken<br>(reciprocal of Focal Distance)
 - The *Focal Distance* which was varied within the series
 - The *Focus FoM*, a Figure of Merit (FoM) to indicate how in-focus the frame is. A larger FocusFoM value indicates a more in-focus frame.
 
 More information can be gained from 
+
 - the [Series Camera File](./PhotoSeries.md#series-camera-file) which lists the configuration and control parameters applied before shooting a photo
 - the [Series Log File](./PhotoSeries.md#series-log-file) which lists the metadata captured together with each photo.

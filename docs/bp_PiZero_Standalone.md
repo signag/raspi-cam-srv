@@ -1,6 +1,6 @@
 # Setup of Raspberry Pi Zero as Standalone System
 
-[![Up](img/goup.gif)](../README.md)
+[![Up](img/goup.gif)](./getting_started_overview.md)
 
 This section describes how to set up a Raspberry Pi **Zero W** or **Zero 2 W** as standalone system.
 
@@ -74,11 +74,11 @@ The process of configuration is slightly different, depending on the cosen OS:
 
 For installation, you will need to connect through ethernet.
 
-Then, follow the [raspiCamSrv Installation Procedure](../README.md#raspicamsrv-installation)
+Then, follow the [raspiCamSrv Installation Procedure](./installation.md)
 
 ## 6. Configure raspiCamSrv Sercice
 
-Follow the [Service Configuration](../README.md#service-configuration) instructions
+Follow the [Service Configuration](./service_configuration.md) instructions
 
 ## 7. Test
 

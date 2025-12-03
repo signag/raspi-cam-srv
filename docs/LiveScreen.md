@@ -10,10 +10,10 @@ After photos or videos have been taken in the current session, its layout is as 
 ## Layout
 
 ### Top Left Quarter
-This is the area where a Live stream is shown, except for phases when videos are recorded.
+This is the area where a Live stream is shown, except for phases when videos are recorded and when [Configuration](./Configuration.md) for Live View and Video are not compatible..
 
 ### Top Right Quarter
-This area allows selecting and configuration of all [Camera Controls](./CameraControls.md). These are parameters which affect the characteristics of images and outputs of the camera and which can be modified while the camera is running.   
+This area allows selecting and configuration of all [Camera Controls](./CameraControls.md) supported by Picamera2. These are parameters which affect the characteristics of images and outputs of the camera and which can be modified while the camera is running.   
 The menu row of this section groups the controls into several categories.
 
 ### Bottom Left Quarter
@@ -28,3 +28,5 @@ Raw photos or videos are not shown directly. Instead a placeholder in the config
 Here, the metadata of the currently visible photo/video are shown.
 The metadata are captured within the same **Capturing Request** together with the photo itself.   
 In the case of videos, the metadata are captured immediately before recording starts.
+
+Alternatively to metadata, the histogram of the photo can be shown.

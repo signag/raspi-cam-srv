@@ -1,6 +1,6 @@
 # raspiCamSrv Zoom & Pan
 
-[![Up](img/goup.gif)](./LiveScreen.md)
+[![Up](img/goup.gif)](./CameraControls.md)
 
 ![ZoomAndPan](img/Zoom.jpg)
 
@@ -8,7 +8,7 @@ This tab allows zooming and panning the image area within the dimensions support
 
 For more details, see [Image Cropping and Sensor Modes](./ScalerCrop.md)
 
-**NOTE**: When zoom or pan/tilt changes the cropping window of the Live View, [Regions of Interest](./TriggerMotion.md#regions-of-interest--regions-of-no-interest) which may heve been defined for [Motion Capturing](./TriggerMotion.md) may be adjusted to the new cropping window.
+**NOTE**: When zoom or pan/tilt changes the cropping window of the Live View, [Regions of Interest](./TriggerMotion.md#regions-of-interest-and-regions-of-no-interest) which may heve been defined for [Motion Capturing](./TriggerMotion.md) may be adjusted to the new cropping window.
 
 ## Current zoom factor in %
 
@@ -38,9 +38,12 @@ This shows the scaler crop rectangle which is currently active for the live view
 
 The *Current ScalerCrop (Live View)* is the base for determining offset and size of the *Autofocus Windows* when drawing rectangles on the canvas (see [Focus](./FocusHandling.md)).
 
+The *Current ScalerCrop (Live View)* is also the base for [Regions of Interest or Regions of No Interest](./TriggerMotion.md#regions-of-interest-and-regions-of-no-interest), which can be defined for [Motion Capturing](./TriggerMotion.md).
+
 ## Zoom
 
 The following buttons allow zooming:
+
 - Zoom in   
 zooms into the image (reduces the viewport), keeping the center.
 - Zoom out   

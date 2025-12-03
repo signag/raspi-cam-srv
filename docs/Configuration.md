@@ -6,7 +6,8 @@ Configuration parameters are so basic that they need to be applied before the ca
 
 Picamera2 provides three configuration bases which can be taken as is for a specific use case or they can be adjusted in one or several aspects.
 
-These are
+These are:
+
 - Preview configuration   
 for previews on a screen connected to the Raspberry Pi
 - Still configuration   
@@ -17,6 +18,7 @@ for videos
 **raspiCamSrv** does not make direct use of these configurations.
 
 Instead, the following configurations can be fully configured:
+
 - Live View configuration   
 which will be applied to the live stream
 - Photo configuration   
@@ -44,7 +46,7 @@ The *Config* submenu includes a tab *Tuning* which is described in [raspiCamSrv 
 
 An individual configuration tab is available for each use case. All tabs have essentially the same structure:   
 
-As a general aspect, the green [Submenue](./UserGuide.md#submenue) bar includes an option to synchronize the aspect ratio of [stream sizes](#stream-size-width-height) across all configurations if this has been changed for the current configuration.   
+As a general aspect, the green [Submenu](./UserGuide.md#submenu) bar includes an option to synchronize the aspect ratio of [stream sizes](#stream-size-width-height) across all configurations if this has been changed for the current configuration.   
 If this option is activated after it was previously deactivated, all aspect ratios will be set to the one of the current configuration. 
 
 **NOTE**: For USB cameras this option is unchecked and the checkbox is disabled becaus USB cameras scale and crop with the correct aspect ratio intrinsically.
@@ -93,6 +95,7 @@ For the *Raw Photo* use case, "Custom" cannot be selected. Raw photos will allwa
 Specifies the stream to be used for the respective use case.
 
 The camera system supports three streams (see [Picamera2 Manual](./picamera2-manual.pdf)):
+
 - the **main** stream
 - the **lowres** stream
 - and the **raw** stream
@@ -108,7 +111,7 @@ If a standard Sensor Mode has been selected, the size related to the mode is sho
 If "Custom" has been selected as sensor mode, you may enter any size here (except for *Raw Photos*).   
 Produced photos or videos will then be in the specified format.
 
-If the option to synchronize aspect ratios (right side of green Submenue bar) is selected, the *Stream Size*s for all other configurations will be adjusted to reproduce the aspect ratio of the current configuration.
+If the option to synchronize aspect ratios (right side of green Submenu bar) is selected, the *Stream Size*s for all other configurations will be adjusted to reproduce the aspect ratio of the current configuration.
 
 **NOTE:** If, after submitting a *Live View* configuration, you get an error message ```
 lores Stream Size must not exceed main Stream Size (Photo)```, you need to go to the *Photo* configuration and adjust its *Stream Size* to the desired value.

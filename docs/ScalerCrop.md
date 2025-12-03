@@ -16,6 +16,7 @@ A camera can operate in a limited number of **Sensor Modes** (e.g. Sensor Modes 
 Information on Sensor Modes is shown in the [Sensor Mode x](./Information.md#sensor-modes) section of the [Info](./Information.md) screen.
 
 Each Sensor Mode is characterized by (among others) 
+
 - a Bit Depth
 - a Frame Rate
 - a specific field of view (Crop Limits) which either spans the entire PixelArraySize or a subarea of it.
@@ -50,7 +51,7 @@ Whereas in a standard case, ScalerCrop Maximum and ScalerCrop Default cover the 
 
 ## Strategy
 
-The strategies by which the camera operates are not fully documented in detail.   
+The strategies, by which the camera operates, are not fully documented in detail.   
 However, systematic experiments with the relevant parameters show the following bahavior:
 
 - Use the [Camera Configuration](./Configuration.md) to specify the **Stream Sizes** for different use cases.    

@@ -50,10 +50,10 @@ A value smaller than the *Detection Pause* (see [Trigger Control](./Trigger.md#c
 If the value is chosen as a multiple (N) of the *Detection Pause*, only every Nth event will be notified.
 - *Include Video* specifies whether or not the event video will be included in the mail.    
 If this is selected, the mail will be sent not earlier than video recording has terminated.    
-This is determined by *Video Duration* (see [Trigger Actions](./Trigger.md#actions)).   
+This is determined by *Video Duration* (see [Camera Actions](./TriggerCameraActions.md)).   
 Keep in mind that the video size should not exceed the maximum mail size allowed by the provider.
 - *Include Photos* specifies whether or not photos should be attached to the mail.   
-If this is selected and a number > 1 has been specified for *Photo Burst* (see [Trigger Actions](./Trigger.md#actions)), the mail will not be sent before the last photo has been taken or the next event has been registered.
+If this is selected and a number > 1 has been specified for *Photo Burst* (see [Camera Actions](./TriggerCameraActions.md)), the mail will not be sent before the last photo has been taken or the next event has been registered.
 
 ### Submitting Configuration Settings
 

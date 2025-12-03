@@ -28,7 +28,7 @@ A status change will only take effect for clients if the server is restarted wit
 
 1. [Store the configuration](./SettingsConfiguration.md)
 2. Make sure that the server is configured to [Start with stored Configuration](./SettingsConfiguration.md)
-3. Restart the server (see [Update Procedure, step 4](./ReleaseNotes.md#update-procedure))
+3. Restart the server (see [Update Procedure, step 4](./updating_raspiCamSrv.md))
 
 
 ### API enabled but not active

@@ -1,12 +1,13 @@
-[![Up](img/goup.gif)](../README.md)
-
 # Running **raspiCamSrv** as Docker Container
+
+[![Up](img/goup.gif)](./getting_started_overview.md)
 
 A container image is available for **raspiCamSrv** at [https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general](https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general)
 
 **ATTENTION**: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~475 MB).
 
 **1. Preconditions**
+
 - [Installation of Docker on a Raspberry Pi](#installation-of-docker-on-a-raspberry-pi)
 - [Check Contiguous Memory (CMA)](#checking-contiguous-memory-cma)
 - [Deactivate raspiCamSrv Service from manual Installation](#deactivate-raspicamsrv-service-from-manual-installation)
@@ -117,14 +118,12 @@ The [Docker](https://www.docker.com/) documentation includes descriptions on how
 The most convenient way is using the [convenience script](https://docs.docker.com/engine/install/raspberry-pi-os/#install-using-the-convenience-script) provided by the Docker team:
 
 
-|Step|Action
-|----|--------------------------------------------------
-|1.  | Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with \<user> and \<host> as specified during setup with Imager.
-|2.  | Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
-|3.  | Install Docker using the [convenience script](https://docs.docker.com/engine/install/raspberry-pi-os/#install-using-the-convenience-script):<br>```curl -sSL https://get.docker.com \| sh```
-|4.  | Add current user to the ```docker``` group:<br>```sudo usermod -aG docker $USER```
-|5.  | Log out and log in to activate the modified group assignment:<br>```logout```<br>```ssh <user>@<host>```
-|6.  | Check that Docker is working correctly:<br>```docker run hello-world```
+1. Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with \<user> and \<host> as specified during setup with Imager.
+2. Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
+3. Install Docker using the [convenience script](https://docs.docker.com/engine/install/raspberry-pi-os/#install-using-the-convenience-script):<br>```curl -sSL https://get.docker.com \| sh```
+4. Add current user to the ```docker``` group:<br>```sudo usermod -aG docker $USER```
+5. Log out and log in to activate the modified group assignment:<br>```logout```<br>```ssh <user>@<host>```
+6. Check that Docker is working correctly:<br>```docker run hello-world```
 
 ## Checking Contiguous Memory (CMA)
 
@@ -138,19 +137,15 @@ The value for ```CmaTotal``` should be at least the value found for Raspberry Pi
 
 If the value on your system is smaller, it needs to be increased:
 
-|Step|Action
-|----|--------------------------------------------------
-|1.  | Edit the Raspberry Pi configuration file:<br>```sudo nano /boot/firmware/config.txt```
-|2   | Find the line<br>```dtoverlay=vc4-kms-v3d```<br>and replace it with<br>```dtoverlay=vc4-kms-v3d,cma-512``` for > 2GB systems<br>```dtoverlay=vc4-kms-v3d,cma-384``` for > 1GB systems<br>```dtoverlay=vc4-kms-v3d,cma-320``` for smaller systems
-|3.  | Reboot<br>```sudo reboot```
+1. Edit the Raspberry Pi configuration file:<br>```sudo nano /boot/firmware/config.txt```
+2.  Find the line<br>```dtoverlay=vc4-kms-v3d```<br>and replace it with<br>```dtoverlay=vc4-kms-v3d,cma-512``` for > 2GB systems<br>```dtoverlay=vc4-kms-v3d,cma-384``` for > 1GB systems<br>```dtoverlay=vc4-kms-v3d,cma-320``` for smaller systems
+3. Reboot<br>```sudo reboot```
 
 ## Deactivate raspiCamSrv Service from manual Installation
 
 If you have installed raspiCamSrv manually, you need to deactivate the service:
 
 
-|Step|Action
-|----|--------------------------------------------------
-|1.  | Stop the service:<br>```sudo systemctl stop raspiCamSrv.service```<br>or<br>```systemctl --user stop raspiCamSrv.service```
-|2.  | Disable the service so that it does not automatically start with boot:<br>```sudo systemctl disable raspiCamSrv.service```<br>or<br>```systemctl --user disable raspiCamSrv.service```
+1. Stop the service:<br>```sudo systemctl stop raspiCamSrv.service```<br>or<br>```systemctl --user stop raspiCamSrv.service```
+2. Disable the service so that it does not automatically start with boot:<br>```sudo systemctl disable raspiCamSrv.service```<br>or<br>```systemctl --user disable raspiCamSrv.service```
 

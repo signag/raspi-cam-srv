@@ -5,6 +5,7 @@
 This is a variant of the general [Settings](./Settings.md) screen, which shows up when no camera is available.
 
 Other sections focus on
+
 - [Server Configuration](./SettingsConfiguration.md)
 - [User Management](./SettingsUsers.md)
 - [API Management](./API.md)
@@ -47,7 +48,7 @@ If the setting is changed, it is necessary to
 
 1. [Store the configuration](./SettingsConfiguration.md)
 2. Make sure that the server is configured to [Start with stored Configuration](./SettingsConfiguration.md)
-3. Restart the server (see [Update Procedure, step 4](./ReleaseNotes.md#update-procedure))
+3. Restart the server (see [Update Procedure, step 4](./updating_raspiCamSrv.md))
 
 This will be indicated through the hint
 

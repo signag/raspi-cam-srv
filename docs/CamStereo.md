@@ -4,7 +4,7 @@
 
 This dialog features [stereo camera](#stereo-camera) capabilities and can be used for visualizing [Depth Maps](#depth-maps) and [3D Video](#3d-video). Both can also be [streamed independently](#streaming).
 
-**NOTE**:The dialog is only accessible if [Stereo Vision](./Settings.md#activating--deactivating-stereo-vision) has been activated.
+**NOTE**:The dialog is only accessible if [Stereo Vision](./Settings.md#activating-and-deactivating-stereo-vision) has been activated.
 
 ![Stereo-Cam](img/CamStereoCam1.jpg)
 
@@ -17,7 +17,7 @@ These cameras need to be arranged as a stereo system with a typical human eye di
 
 For a 3D-printable model, see [Raspberry Pi Camera 3 Stereo Case](https://makerworld.com/en/models/1742837-raspberry-pi-camera-3-stereo-case)
 
-**NOTE**: *Stereo Vision* needs to be activated in the [Settings](./Settings.md#activating--deactivating-stereo-vision) dialog.
+**NOTE**: *Stereo Vision* needs to be activated in the [Settings](./Settings.md#activating-and-deactivating-stereo-vision) dialog.
 
 ## Implementation
 

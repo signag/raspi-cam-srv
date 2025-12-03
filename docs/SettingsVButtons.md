@@ -27,7 +27,7 @@ The checkbox *Interactive Commandline* controls whether [Console](./Console.md) 
 - *Shape*<br>The shape of each button can be selected from a small set of standard shapes (Rectangle, Rounded, Circular, Square).<br>The example layout of the above configuration is shown for the [Console](./Console.md) screen.
 - *Color*<br>The Color of each button can be selected from a small set of standard Colors (Black, Red, Green, Yellow, Blue).<br>The example layout of the above configuration is shown for the [Console](./Console.md) screen.
 - *Button Text*<br>Text to be shown on the button.
-- *Command*<br>Linux command to be executed on OS level.<br>You may use available Linux commands or run your own scripts.<br>It is recommended to test these commands on an OS prompt before configuring and running them out of **raspiCamSrv**<br>The working directory is that of the service (see [Service Configuration](../README.md#service-configuration)).
+- *Command*<br>Linux command to be executed on OS level.<br>You may use available Linux commands or run your own scripts.<br>It is recommended to test these commands on an OS prompt before configuring and running them out of **raspiCamSrv**<br>The working directory is that of the service (see [Service Configuration](./service_configuration.md)).
 - *Conf*<br>If the checkbox is checked, the respective button will require a confirmation before the command will be executed.
 
 Any changes for these settings need to be submitted with the button underneath the table

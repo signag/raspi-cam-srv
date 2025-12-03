@@ -75,10 +75,11 @@ For a test either the entire test or the individual steps may have preconfigured
 Some devices require state tracking and, therefore, calibration.
 
 This applies currently to the StepperMotor:    
-The StepperMotor itself does not have knowledge about its current position and if the class is instantiated, the *current_angle* is set to zero.   
+The StepperMotor itself does not have knowledge about its current position and when the class is instantiated, the *current_angle* is set to zero.   
 For usage of the StepperMotor it is, however, essential to know the position at any time.
 
 It is, therefore, necessary to
+
 1. set a certain state as reference "Zero"
 2. track and memorize any movements
 3. set the last state whenever the device class is instantiated

@@ -16,6 +16,7 @@ This section shows information on the server hardware with *Model* and *Board Re
 For the operating system, the kernel version (result of ```uname -r```), the Debian version (result of *Description* from ```lsb_release -a``` and ```cat /etc/debian_version```) and the system architecture (32-/64-bit) (result from ```dpkg-architecture --query DEB_HOST_ARCH```) are shown.
 
 *Process Info* shows current process information for the raspiCamSrv server process (result of Linux ```ps -eLf``` command)
+
 - *PID*: Process ID of Flask process (PID)
 - *Start*: Process start time (STIME): either start time (HH:MM) at current day or day (MonDD) when process was started.
 - *#Threads*: Number of threads (NLWP)
@@ -33,7 +34,7 @@ The time shown here is the system time at the moment when the check for time syn
 raspiCamSrv analyzes the output of command ```timedatectl``` to check the system clock synchronization status.    
 If this check fails or times out (60 sec), raspiCamSrv will start nevertheless. In this case, the information "System time not synced at raspiCamSrv start" will be shown here.
 
-*Software Stack* shows information on installed packages with Verion (*Ver*) and the path from which the packages were loaded (*Loc*).
+*Software Stack* shows information on installed packages with Version (*Ver*) and the path from which the packages were loaded (*Loc*).
 
 ### Camera x
 
@@ -57,6 +58,7 @@ The information "(Not in use)" for a USB camera indicates that the camera has be
 #### Status
 
 *Current Status* shows the status of the camera:
+
 - open / closed
 - started / stopped
 - current [Sensor Mode](#sensor-modes)   
@@ -83,6 +85,7 @@ In this case, you can use function [Reload Cameras](./SettingsConfiguration.md) 
 
 The tab lists the clients which are currently using one of the camera streams.   
 Along with the IP address of the client, a list of streams is shown which the client is using:
+
 - *live_view*<br> [The Live View](./LiveScreen.md) stream<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLiveActive.jpg)
 - *video_feed*<br>The [video Stream](./CamWebcam.md#video-stream) for the active camera<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLiveActive.jpg)
 - *video_feed2*<br>The [video Stream](./CamWebcam.md#video-stream) for the second camera, if available<br>indicated by [Process Status Indicator](./UserGuide.md#process-status-indicators) ![indicator_live](./img/ProcessIndicatorLive2Active.jpg)
@@ -149,35 +152,37 @@ For each camera, the information provided by Picamera2 includes
 - ```Rotation```: How the camera is rotated for normal operation, as reported by libcamera
 - ```ID```: An identifier string for the camera, indicating how the camera is connected. <br>You can tell from this value whether the camera is accessed using I2C or USB.
 
- ## Identification of USB Cameras
 
- A camera is identified as USB camera, if ```usb``` is found in the ```ID```.
 
- In **raspiCamSrv**, USB cameras are accessed through [OpenCV](https://opencv.org/) rather than through Picamera2, which provides only very limited support for USB cameras.
+## Identification of USB Cameras
 
- However, with OpenCV, a camera cannot be accessed through the Picamera2 camera number (```Num```).    
- Instead, the ```/dev/videoX``` of the Linux kernel must be used.
+A camera is identified as USB camera, if ```usb``` is found in the ```ID```.
 
- For mapping of the Picamera2 camera number (```Num```) to the device number, **raspiCamSrv** uses the following algorithm:
+In **raspiCamSrv**, USB cameras are accessed through [OpenCV](https://opencv.org/) rather than through Picamera2, which provides only very limited support for USB cameras.
 
- Assuming that the ```ID``` is structured in the following way:
+However, with OpenCV, a camera cannot be accessed through the Picamera2 camera number (```Num```).    
+Instead, the ```/dev/videoX``` of the Linux kernel must be used.
 
- e.g.:   
- ```/base/axi/pcie@1000120000/rp1/usb@200000-2:1.0-046d:085c```
+For mapping of the Picamera2 camera number (```Num```) to the device number, **raspiCamSrv** uses the following algorithm:
 
- | Component                       | Meaning 
- |---------------------------------|------------
- | ```/base/axi/pcie@1000120000``` | Root of the system-on-chip’s PCIe controller
- | ```/rp1/usb@200000```           | The RP1 I/O controller’s USB host controller (i.e. USB root hub)
- | ```-2:1.0```                    | USB device address and interface: port 2, interface 1.0
- | ```-046d:085c```                | Vendor ID : Product ID (046d = Logitech, 085c = C922 Pro Stream Webcam)
+Assuming that the ```ID``` is structured in the following way:
 
- Now, with Video for Linux (V4L2), we can list all video devices:
+e.g.:   
+```/base/axi/pcie@1000120000/rp1/usb@200000-2:1.0-046d:085c```
 
- ```v4l2-ctl --list-devices``` reveals, for example:
+| Component                       | Meaning 
+|---------------------------------|------------
+| ```/base/axi/pcie@1000120000``` | Root of the system-on-chip’s PCIe controller
+| ```/rp1/usb@200000```           | The RP1 I/O controller’s USB host controller (i.e. USB root hub)
+| ```-2:1.0```                    | USB device address and interface: port 2, interface 1.0
+| ```-046d:085c```                | Vendor ID : Product ID (046d = Logitech, 085c = C922 Pro Stream Webcam)
 
- ```
- ...
+Now, with Video for Linux (V4L2), we can list all video devices:
+
+```v4l2-ctl --list-devices``` reveals, for example:
+
+```
+...
 rpi-hevc-dec (platform:rpi-hevc-dec):
         /dev/video19
         /dev/media1
@@ -194,7 +199,7 @@ C922 Pro Stream Webcam (usb-xhci-hcd.0-2):
         /dev/video1
         /dev/media3
  
- ```
+```
 
 Each header within the list shows the camera's model and port (```(usb-xhci-hcd.0-2)``` indicates port 2)
 
@@ -406,6 +411,7 @@ Camera Controls
 ```
 
 **raspiCamSrv** analyzes this list with respect to a limited set of controls and registers
+
 - control name
 - value data type
 - minimum value
@@ -416,4 +422,4 @@ For the active camera, this information is appended to the Camera Controls data 
 
 In order to establish this data structure, USB cameras need to be activated once as *Active Camera*.
 
-The controls information is cused to customize the [Camera Controls](./CameraControls.md#camera-controls-for-usb-cameras) screens when a USB camera is the *Active Camera*.
+The controls information is cused to customize the [Camera Controls](./CameraControls_UsbCams.md) screens when a USB camera is the *Active Camera*.

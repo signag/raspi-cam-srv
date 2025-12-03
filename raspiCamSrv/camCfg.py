@@ -13,6 +13,7 @@ from datetime import time
 from datetime import timedelta
 import raspiCamSrv.dbx as dbx
 from raspiCamSrv.gpioDeviceTypes import gpioDeviceTypes
+from raspiCamSrv import versionDoc
 import smtplib
 from pathlib import Path
 import zoneinfo
@@ -6414,6 +6415,15 @@ class ServerConfig():
         else:
             thrTime = str(thrTimed)
             return (prcPid, prcStime, prcNlwp, prcTime, thrTime)
+    
+    def getBaseHelpUrl(self) -> str:
+        """ Get the base URL for help pages
+        
+        """
+        logger.debug("ServerConfig.getBaseHelpUrl")
+        baseHelpUrl = "https://signag.github.io/raspi-cam-srv/" + versionDoc.docversion + "/"
+        logger.debug("ServerConfig.getBaseHelpUrl - baseHelpUrl = %s", baseHelpUrl)
+        return baseHelpUrl
 
     @classmethod                
     def initFromDict(cls, dict:dict):

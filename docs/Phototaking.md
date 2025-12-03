@@ -11,6 +11,7 @@ As long as no photo has been taken, the *Live* screen will show like below:
 ![Foto0](img/Foto0.jpg)
 
 Now, you can use
+
 - the **Photo** button to take a photo,   
 where the file type can be selected in the [Settings](./Settings.md) screen. ("jpg" is recommended)
 - the **Raw** button to take a raw photo.   
@@ -39,7 +40,7 @@ The **Video** button has changed to **Stop** which must be used to stop video re
 
 If audio is recorded along with video (see [Settings](./Settings.md#recording-audio-along-with-video)), this will be indicated by the process indicator:
 
-![Processindicator](img/ProcessIndicator3.jpg)
+![Processindicator](./img/ProcessIndicator22.jpg)
 
 ### With paused Live Stream
 

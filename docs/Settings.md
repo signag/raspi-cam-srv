@@ -5,6 +5,7 @@
 The Parameters section of the Settings screen is used for specification of general parameters.
 
 Other sections focus on
+
 - [Server Configuration](./SettingsConfiguration.md)
 - [User Management](./SettingsUsers.md)
 - [API Management](./API.md)
@@ -24,8 +25,8 @@ The General Paramenters include
 - [Audio settings](#recording-audio-along-with-video) for systems with microphones if sound is to be recorded along with videos
 - *Path for Photos/Videos* shows the path where media will be stored.
 - File types for *Photo*, *Raw* Photo and *Video*
-- *Use Stereo Vision* allows activating [Stereo capabilities](#activating--deactivating-stereo-vision) for systems having 2 non-USB cameras of the same type connected.
-- *Show Histograms* allows [activatig/deactivating Histograms](#activating--deactivating-histograms) display of histograms
+- *Use Stereo Vision* allows activating [Stereo capabilities](#activating-and-deactivating-stereo-vision) for systems having 2 non-USB cameras of the same type connected.
+- *Show Histograms* allows [activatig/deactivating Histograms](#activating-and-deactivating-histograms) display of histograms
 - *Ext. Motion Detection supported* shows whether the actually installed libraries allow support of [Extended Motion Tracking Algoritms](#extended-motion-detection-support)
 - *Req. Auth for Streaming* controls whether [streaming requires authentication](#configuring-authentication-for-streaming)
 - *Allow access through API* shows whether the installed libraries allow secure [API access](#api-access).<br>Also if it is supported, it can be deactivated.
@@ -60,14 +61,14 @@ If a streaming URL is entered in a browser and there is no valid Flask session, 
 A valid Flask session exists, if login has been passed once within an active browser instance, either in another tab of the browser window intended for streaming or within another window of the **same** browser.   
 Closing all windows of a browser kills the session. 
 
-## Activating / Deactivating Stereo Vision
+## Activating and Deactivating Stereo Vision
 
 If your system has 2 non-USB cameras of the seme model connected, you can use these as [stereo camera system](https://en.wikipedia.org/wiki/Computer_stereo_vision).
 
 **raspiCamSrv** supports basic stereo features such as [3D Videos and Depth Maps](./CamStereo.md) as well as [Calibration and Rectification](./CamCalibration.md).
 
 These features can only be activated if it has been recognized at system startup that 2 non-USB cameras of the same model are connected to the system.    
-In addition, it is required that OpenCV, and numpy are installed (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation) Step 10).    
+In addition, it is required that OpenCV, and numpy are installed (see [RaspiCamSrv Installation](./installation.md) Step 11).    
 
 If any of these conditions is not met, the reason will be indicated:
 
@@ -79,11 +80,11 @@ If any of these conditions is not met, the reason will be indicated:
 
 
 
-## Activating / Deactivating Histograms
+## Activating and Deactivating Histograms
 
 **raspiCamSrv** can show histograms for photos.   
 Histograms are generated with [OpenCV](https://de.wikipedia.org/wiki/OpenCV).  
-This requires that the packages OpenCV, numpy and matplotlib are installed (see [RaspiCamSrv Installation](../README.md#raspicamsrv-installation) Step 9)   
+This requires that the packages OpenCV, numpy and matplotlib are installed (see [RaspiCamSrv Installation](./installation.md) Step 9)   
 
 
 If these packages are installed, you can select whether or not to *Show Histograms*.   
@@ -100,14 +101,14 @@ The system will automatically detect whether or not the required packages are in
 
 In all installations, [Motion Capturing](./TriggerMotion.md) with the *Mean Square Difference* algorithm are supported.
 
-In order to also be able to use the extended algorithms, the following modules must be installed (see [Installation procedure, Step 10](../README.md#raspicamsrv-installation)):
+In order to also be able to use the extended algorithms, the following modules must be installed (see [Installation procedure, Step 11](./installation.md)):
 
 - OpenCV
 - numpy
 - matplotlib
 
 When the server starts up, it will be checked whether these modules can be imported.   
-If the import had failed, this will be indicated on the Settings screen in the same way as for [Histograms](#activating--deactivating-histograms), above.   
+If the import had failed, this will be indicated on the Settings screen in the same way as for [Histograms](#activating-and-deactivating-histograms), above.   
 Then, only the *Mean Square Difference* algorithm will be offered  for choice on the [Trigger/Motion](./TriggerMotion.md) tab.
 
 ## Recording Audio along with Video
@@ -123,7 +124,7 @@ In order to access the microphone, **raspiCamSrv** needs to run in the user envi
 This is automatically the case when the Flask service is directly started from the command line in the **raspiCamSrv** virtual environment with   
 ```flask --app raspiCamSrv run --debug --host=0.0.0.0```
 
-Alternatively, **raspiCamSrv** can be configured as **user** service as described in [README / Service Configuration for Audio Support](../README.md#service-configuration-for-audio-support)
+Alternatively, **raspiCamSrv** can be configured as **user** service as described in [README / Service Configuration for Audio Support](./service_configuration.md#service-configuration-for-audio-support)
 
 ### Configuration
 
@@ -168,7 +169,7 @@ If the setting is changed, it is necessary to
 
 1. [Store the configuration](./SettingsConfiguration.md)
 2. Make sure that the server is configured to [Start with stored Configuration](./SettingsConfiguration.md)
-3. Restart the server (see [Update Procedure, step 4](./ReleaseNotes.md#update-procedure))
+3. Restart the server (Button *Restart Server* in [Settings/Configuration](./SettingsConfiguration.md))
 
 This will be indicated through the hint
 

@@ -1,6 +1,6 @@
 # RaspiCamSrv User Guide (No Camera)
 
-[![Up](img/goup.gif)](../README.md)
+[![Up](img/goup.gif)](./index.md)
 
 This is a special variant of the general **raspiCamSrv** [User Interface](./UserGuide.md) for the case when no camera is available.
 
@@ -36,17 +36,17 @@ The main menu (black background) allows navigation to different screens:
 - **Trigger** Allows configuring and controlling [triggered actions](./Trigger.md), based on configured [events from GPIO-connected sensors](./TriggerTriggers.md)
 - **Console** is dedicated to manually controlled interactions with the [Raspberry Pi OS](./ConsoleVButtons.md) or with [GPIO-connected Actors](./ConsoleActionButtons.md), such as motors, servos or LEDs.
 - **Settings** opens the [Settings](./Settings.md) page for all kinds of static configurations for **raspiCamSrv**.
-- **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md#log-in)
+- **Log Out** will log the active user out and direct to the [Log-In Screen](./Authentication.md)
 
-**NOTE:** Selecting an option on the main menue will issue a request to the server with a specific URL and, thus, refresh the screen.
+**NOTE:** Selecting an option on the main menu will issue a request to the server with a specific URL and, thus, refresh the screen.
 
-#### Submenue
+#### Submenu
 
-Most of the **raspiCamSrv** pages, selected by a [Main Menue](#main-menu) option have a submenue.    
+Most of the **raspiCamSrv** pages, selected by a [Main Menu](#main-menu) option have a submenu.    
 Submenues are indicated by a green background.
 
-**NOTE:** Selecting an option on a submenue will **not** issue a new request and, thus, will **not** refresh the screen with new information from the server.    
-Instead, submenue options activate different sections of the currently loaded page.   
+**NOTE:** Selecting an option on a submenu will **not** issue a new request and, thus, will **not** refresh the screen with new information from the server.    
+Instead, submenu options activate different sections of the currently loaded page.   
 However, *Submit* buttons on a page section apply only to data shown on the active section and not to data on other sections of the same page.
 
 
