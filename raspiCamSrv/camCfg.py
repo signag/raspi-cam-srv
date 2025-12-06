@@ -6421,7 +6421,7 @@ class ServerConfig():
         
         """
         logger.debug("ServerConfig.getBaseHelpUrl")
-        baseHelpUrl = "https://signag.github.io/raspi-cam-srv/" + versionDoc.docversion + "/"
+        baseHelpUrl = "https://signag.github.io/raspi-cam-srv/" + versionDoc.docversion
         logger.debug("ServerConfig.getBaseHelpUrl - baseHelpUrl = %s", baseHelpUrl)
         return baseHelpUrl
 

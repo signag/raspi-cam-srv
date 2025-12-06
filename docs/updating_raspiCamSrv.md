@@ -18,18 +18,21 @@ For update, proceed as follows:
 ```cd ~/prg/raspi-cam-srv```
 2. If you have made local changes (e.g. logging), you may need to reset the workspace with   
 ```git reset --hard```
-3. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
-```git pull```    
+3. If you have created unversioned files, you may need to clean the workspace with   
+```git clean -fd```
+4. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
+(normally you need to pull only the ```main``` branch)
+```git pull origin main```    
 As a result, you will see a summary of changes with respect to the previously installed version.
-4. Restart the service, depending on [how the service was installed](./service_configuration.md)    
+5. Restart the service, depending on [how the service was installed](./service_configuration.md)    
 ```sudo systemctl restart raspiCamSrv.service```    
 or    
 ```systemctl --user restart raspiCamSrv.service```
-5. Check that the service started correctly     
+6. Check that the service started correctly     
 ```sudo journalctl -e```    
 or    
 ```journalctl --user -e```
-6. If you used [start with stored configuration](./SettingsConfiguration.md) before updating, you may now try to activate this again.<br>In cases where configuration parameters were not modified with the update, this will usually work.<br>If not, you will need to prepare and store your preferred configuration again.
+7. If you used [start with stored configuration](./SettingsConfiguration.md) before updating, you may now try to activate this again.<br>In cases where configuration parameters were not modified with the update, this will usually work.<br>If not, you will need to prepare and store your preferred configuration again.
 
 In case that the server did not start correctly or if you see an unexpected behavior in the UI, you may have forgotten to deactivate [start with stored configuration](./SettingsConfiguration.md)<br>In this case, you can do the following:
 

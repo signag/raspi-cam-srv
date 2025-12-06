@@ -128,7 +128,7 @@ The most convenient way is using the [convenience script](https://docs.docker.co
 ## Checking Contiguous Memory (CMA)
 
 Cameras on Raspberry Pi use CMA memory (see [Picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 8.3).
-The default size of CMA memory is different for different Raspberry Pi models and can be shown with
+The default size of CMA memory is different for different Raspberry Pi models and can be shown with     
 ```cat /proc/meminfo```
 
 On a Pi 5, the available CMA memory (~65 MB) was found to be too small for accessing cameras from a Docker container when larger image sizes are used.
