@@ -3316,7 +3316,7 @@
 </ol>
 <h2 id="checking-contiguous-memory-cma">Checking Contiguous Memory (CMA)</h2>
 <p>Cameras on Raspberry Pi use CMA memory (see <a href="https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf">Picamera2 Manual</a>, chapter 8.3).
-The default size of CMA memory is different for different Raspberry Pi models and can be shown with
+The default size of CMA memory is different for different Raspberry Pi models and can be shown with   <br />
 <code>cat /proc/meminfo</code></p>
 <p>On a Pi 5, the available CMA memory (~65 MB) was found to be too small for accessing cameras from a Docker container when larger image sizes are used.</p>
 <p>The value for <code>CmaTotal</code> should be at least the value found for Raspberry Pi Zero of 262144 kB.</p>
