@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../installation/">
+        <link rel="prev" href="../installation_man/">
       
       
         <link rel="next" href="../SetupDocker/">
@@ -385,6 +385,83 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alternatives
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Alternatives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_man/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual Step by Step Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -502,53 +579,6 @@
   
   
   
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Alternatives
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Alternatives
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
       <a href="../SetupDocker/" class="md-nav__link">
         
@@ -614,10 +644,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_5" >
         
           
-          <label class="md-nav__link" for="__nav_2_6_3" id="__nav_2_6_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2_5_5" id="__nav_2_5_5_label" tabindex="0">
             
   
   
@@ -635,8 +665,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_6_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_6_3">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_5">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -834,7 +864,7 @@
   
   
     <li class="md-nav__item">
-      <a href="https://pip-assets.raspberrypi.com/categories/652-raspberry-pi-camera-module-2/documents/RP-008156-DS-2-picamera2-manual.pdf" class="md-nav__link">
+      <a href="../picamera2_manual/" class="md-nav__link">
         
   
   
@@ -3201,6 +3231,7 @@
 
 <h1 id="service-configuration">Service Configuration</h1>
 <p><a href="../getting_started_overview/"><img alt="Up" src="../img/goup.gif" /></a></p>
+<p><strong>NOTE</strong>: This installation step is included in the <a href="../installation/">automatic installation</a></p>
 <p>When the Flask server is started in a SSH session as described in <a href="../installation/">Installation Step 11</a>, it will terminate with the SSH session.</p>
 <p>Instead, you may want the server to start up independently from any user sessions, restart after a failure and automatically start up when the device is powered up.</p>
 <p>In order to achieve this, the Flask server start can be configured as service under control of systemd.</p>
