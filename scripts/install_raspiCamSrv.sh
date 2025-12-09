@@ -14,6 +14,7 @@ INSTALL_ROOT="$HOME/prg"
 REPO_URL="https://github.com/signag/raspi-cam-srv.git"
 SERVICE_PORT=5000
 HOSTNAME="$(hostname)"
+IS_LITE=false
 
 ##############################################
 # Detect OS version and check for full version
@@ -26,6 +27,7 @@ if dpkg -l | grep -q raspberrypi-ui-mods || \
     OS_VARIANT="full"
 else
     OS_VARIANT="lite"
+    IS_LITE=true
 fi
 echo
 echo "Detected OS codename: $OS_CODENAME $OS_VARIANT"
@@ -197,6 +199,12 @@ fi
 echo 
 echo "Step 11.4: Installing flask-jwt-extended ..."
 pip install --ignore-installed flask-jwt-extended
+
+if [ "$IS_LITE" = true ]; then
+    echo 
+    echo "Step 11.5: Installing psutil ..."
+    pip install --ignore-installed psutil
+fi
 
 ############################################
 # Initialize database
