@@ -2,6 +2,8 @@
 
 [![Up](img/goup.gif)](./getting_started_overview.md)
 
+**NOTE**: This installation step is included in the [automatic installation](./installation.md)
+
 When the Flask server is started in a SSH session as described in [Installation Step 11](./installation.md), it will terminate with the SSH session.
 
 Instead, you may want the server to start up independently from any user sessions, restart after a failure and automatically start up when the device is powered up.

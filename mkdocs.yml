@@ -13,8 +13,9 @@ nav:
       - Requirements: requirements.md
       - System Setup: system_setup.md
       - Installation: installation.md
-      - Service Configuration: service_configuration.md
       - Alternatives:
+          - Manual Step by Step Installation: installation_man.md
+          - Service Configuration: service_configuration.md
           - Running raspiCamSrv as Docker container: SetupDocker.md
           - Setup of Raspberry Pi Zero as Standalone System: bp_PiZero_Standalone.md
           - Configuring as Hotspot:
@@ -23,7 +24,7 @@ nav:
       - Trouble Shooting Guide: Troubelshooting.md
   - Features: features.md
   - References:
-      - Picamera2 Manual: https://pip-assets.raspberrypi.com/categories/652-raspberry-pi-camera-module-2/documents/RP-008156-DS-2-picamera2-manual.pdf
+      - Picamera2 Manual: picamera2_manual.md
   - Releases:
       - Release Notes: ReleaseNotes.md
       - Updating a raspiCamSrv Installation: updating_raspiCamSrv.md
