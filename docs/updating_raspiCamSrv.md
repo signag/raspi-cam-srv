@@ -21,7 +21,7 @@ For update, proceed as follows:
 3. If you have created unversioned files, you may need to clean the workspace with   
 ```git clean -fd```
 4. Use [git pull](https://git-scm.com/docs/git-pull) to update to the latest version     
-(normally you need to pull only the ```main``` branch)
+(normally you need to pull only the ```main``` branch)     
 ```git pull origin main```    
 As a result, you will see a summary of changes with respect to the previously installed version.
 5. Restart the service, depending on [how the service was installed](./service_configuration.md)    
