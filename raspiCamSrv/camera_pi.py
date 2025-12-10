@@ -2752,6 +2752,7 @@ class Camera:
                             tc = scfg["tuningconfig"]
                             if tc.loadTuningFile == False:
                                 cls.cam2 = Picamera2(cls.camNum2)
+                                prgLogger.debug("picam2 = Picamera2(%s)", cls.camNum2)
                             else:
                                 tuning = Picamera2.load_tuning_file(
                                     tc.tuningFile, tc.tuningFolder
@@ -2763,10 +2764,20 @@ class Camera:
                                     cls.camNum2,
                                     tc.tuningFilePath,
                                 )
+                                prgLogger.debug(
+                                    "tuning = Picamera2.load_tuning_file(%s, %s)",
+                                    tc.tuningFile,
+                                    tc.tuningFolder,
+                                )
+                                prgLogger.debug(
+                                    "picam2 = Picamera2(%s, tuning=tuning)", cls.camNum2
+                                )
                         else:
                             cls.cam2 = Picamera2(cls.camNum2)
+                            prgLogger.debug("picam2 = Picamera2(%s)", cls.camNum2)
                     else:
                         cls.cam2 = Picamera2(cls.camNum2)
+                        prgLogger.debug("picam2 = Picamera2(%s)", cls.camNum2)
                 else:
                     cls.cam2 = cv2.VideoCapture(cls.cam2UsbDev, cv2.CAP_V4L2)
                     if not cls.cam2 or not cls.cam2.isOpened():
@@ -4357,13 +4368,15 @@ class Camera:
     def frames():
         logger.debug("Thread %s: Camera.frames", get_ident())
         srvCam = CameraCfg()
+        piModelLower5 = srvCam.serverConfig.raspiModelLower5
         try:
             cc, cr = Camera.ctrl.requestConfig(srvCam.photoConfig)
             if cc:
                 # If the request for photoConfig caused a configuration change, restart with a new configuration
                 Camera.ctrl.clearConfig()
                 Camera.ctrl.requestConfig(srvCam.photoConfig)
-            Camera.ctrl.requestConfig(srvCam.rawConfig, cfgPhoto=srvCam.photoConfig)
+            if piModelLower5 == False:
+                Camera.ctrl.requestConfig(srvCam.rawConfig, cfgPhoto=srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.liveViewConfig)
             Camera.cam, started = Camera.ctrl.requestStart(
                 Camera.cam,
@@ -5228,6 +5241,7 @@ class Camera:
         fpr = ""
         cfg = CameraCfg()
         sc = cfg.serverConfig
+        piModelLower5 = sc.raspiModelLower5
 
         if noEvents == False:
             logger.debug(
@@ -5327,7 +5341,9 @@ class Camera:
             logger.debug(
                 "Thread %s: Camera.takeRawImage: Request released", get_ident()
             )
-
+            
+            if piModelLower5 == True:
+                Camera.ctrl.clearConfig()
             Camera.cam = Camera.ctrl.restoreLivestream(Camera.cam, exclusive)
             if (
                 sc.isPhotoSeriesRecording == False

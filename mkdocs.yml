@@ -1,4 +1,4 @@
-site_name: raspiCamSrv Documentation
+site_name: raspiCamSrv V4.3.x Documentation
 plugins:
     - search
     - mike

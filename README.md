@@ -1,4 +1,4 @@
-# raspiCamSrv
+# raspiCamSrv V4.3.1
 
 **raspiCamSrv** is a Web server for Raspberry Pi systems for control and streaming of CSI and USB cameras as well as for controlling a large variety of connected GPIO devices.
 
@@ -26,5 +26,4 @@ To [get started with raspiCamSrv](https://signag.github.io/raspi-cam-srv/4.3/get
 1. [Check necessary requirements](https://signag.github.io/raspi-cam-srv/4.3/requirements/)
 2. [Set up your Raspberry Pi](https://signag.github.io/raspi-cam-srv/4.3/system_setup/)
 3. [Install raspiCamSrv](https://signag.github.io/raspi-cam-srv/4.3/installation/)
-4. [Configure raspiCamSrv Service](https://signag.github.io/raspi-cam-srv/4.3/service_configuration/)
-5. Refer to the raspiCamSrv [User Guide](https://signag.github.io/raspi-cam-srv/4.3/UserGuide/)
+4. Refer to the raspiCamSrv [User Guide](https://signag.github.io/raspi-cam-srv/4.3/UserGuide/)
