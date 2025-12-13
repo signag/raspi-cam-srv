@@ -118,7 +118,7 @@ The [Docker](https://www.docker.com/) documentation includes descriptions on how
 The most convenient way is using the [convenience script](https://docs.docker.com/engine/install/raspberry-pi-os/#install-using-the-convenience-script) provided by the Docker team:
 
 
-1. Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with \<user> and \<host> as specified during setup with Imager.
+1. Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with ```<user>``` and ```<host>``` as specified during setup with Imager.
 2. Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
 3. Install Docker using the [convenience script](https://docs.docker.com/engine/install/raspberry-pi-os/#install-using-the-convenience-script):<br>```curl -sSL https://get.docker.com \| sh```
 4. Add current user to the ```docker``` group:<br>```sudo usermod -aG docker $USER```

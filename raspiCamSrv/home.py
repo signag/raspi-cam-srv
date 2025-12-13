@@ -38,6 +38,7 @@ def index():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.error = None
+    sc.getLatestVersion(now=True)
     Camera().startLiveStream()
     logger.debug("Thread %s: Camera instantiated", get_ident())
     if sc.noCamera == False:
@@ -141,6 +142,7 @@ def focus_control():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "focus"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         if cp.hasFocus:
             ctrls = {}
@@ -224,6 +226,7 @@ def trigger_autofocus():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "focus"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         if cp.hasFocus:
             if cc.afMode == controls.AfModeEnum.Auto:
@@ -264,6 +267,7 @@ def set_zoom():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         step = int(request.form["zoomfactorstep"])
         sc.zoomFactorStep = step
@@ -308,6 +312,7 @@ def zoom_in():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         logger.debug("ScalerCrop old: %s", cc.scalerCrop)
         xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2] / 2)
@@ -398,6 +403,7 @@ def zoom_out():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2] / 2)
         yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3] / 2)
@@ -451,6 +457,7 @@ def zoom_full():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.isZoomModeDraw = False
         sc.zoomFactor = 100
@@ -495,6 +502,7 @@ def pan_up():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         yOffset = cc.scalerCrop[1] - step
@@ -533,6 +541,7 @@ def pan_left():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         xOffset = cc.scalerCrop[0] - step
@@ -577,6 +586,7 @@ def pan_center():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         logger.debug("pan_center scalerCropDef: %s", sc.scalerCropDef)
         logger.debug("pan_center scalerCrop   : %s", cc.scalerCrop)
@@ -624,6 +634,7 @@ def pan_right():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         xOffset = cc.scalerCrop[0] + step
@@ -662,6 +673,7 @@ def pan_down():
     tc = cfg.triggerConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         step = int((sc.scalerCropDef[2] * sc.zoomFactorStep) / 100)
         yOffset = cc.scalerCrop[1] + step
@@ -699,6 +711,7 @@ def zoom_default():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "zoom"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.isZoomModeDraw = False
         sc.zoomFactor = 100
@@ -744,6 +757,7 @@ def ae_control():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "autoexposure"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         if request.form.get("include_aeconstraintmode") is None:
             cc.include_aeConstraintMode = False
@@ -808,6 +822,7 @@ def exposure_control():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "exposure"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         if request.form.get("include_analoguegain") is None:
             cc.include_analogueGain = False
@@ -875,6 +890,7 @@ def image_control():
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
     sc.lastLiveTab = "image"
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         if request.form.get("include_noisereductionmode") is None:
             cc.include_noiseReductionMode = False
@@ -942,6 +958,7 @@ def meta_clear():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayMeta = None
         sc.displayPhoto = None
@@ -961,6 +978,7 @@ def meta_prev():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayMetaFirst -= 10
         if sc.displayMetaFirst < 0:
@@ -981,6 +999,7 @@ def meta_next():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayMetaFirst += 10
         sc.displayMetaLast = sc.displayMetaFirst + 10
@@ -1001,6 +1020,7 @@ def photoBuffer_add():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayBufferAdd()
         if sc.displayContent == "hist":
@@ -1019,6 +1039,7 @@ def photoBuffer_remove():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayBufferRemove()
         if sc.displayContent == "hist":
@@ -1038,6 +1059,7 @@ def photoBuffer_prev():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayBufferPrev()
         if sc.displayContent == "hist":
@@ -1057,6 +1079,7 @@ def photoBuffer_next():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayBufferNext()
         if sc.displayContent == "hist":
@@ -1076,6 +1099,7 @@ def show_photo():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.isDisplayHidden = False
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -1091,6 +1115,7 @@ def hide_photo():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.isDisplayHidden = True
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -1106,6 +1131,7 @@ def clear_buffer():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayBufferClear()
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
@@ -1121,6 +1147,7 @@ def take_photo():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         timeImg = datetime.datetime.now()
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
@@ -1157,6 +1184,7 @@ def take_raw_photo():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         timeImg = datetime.datetime.now()
         filename = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.photoType
@@ -1191,6 +1219,7 @@ def record_video():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         timeImg = datetime.datetime.now()
         filenameVid = timeImg.strftime("%Y%m%d_%H%M%S") + "." + sc.videoType
@@ -1236,6 +1265,7 @@ def stop_recording():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         logger.debug("Requesting video recording to stop")
         Camera().stopVideoRecording()
@@ -1296,6 +1326,7 @@ def show_histogram():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         if sc.useHistograms:
             if sc.displayHistogram is None:
@@ -1315,6 +1346,7 @@ def show_metadata():
     cc = cfg.controls
     sc = cfg.serverConfig
     cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
     if request.method == "POST":
         sc.displayContent = "meta"
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)

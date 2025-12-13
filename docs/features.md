@@ -1,68 +1,178 @@
 
-## Feature Overview V4.2.0
+# Features V4.3.x
+
+[![Up](img/goup.gif)](./index.md)
 
 For more details, see the [User Guide](./UserGuide.md).    
 
 ![Live Overview](./img/Live.jpg)
 
-- The [Live screen](./LiveScreen.md) shows a live stream of the active camera and allows individually selecting and setting all [camera controls](./CameraControls.md) supported by Picamera2.
-- The **live stream** (MJPEG stream) can also be directly accessed through the endpoint ```http://<server>:<port>/video_feed```.   
-It can be configured whether or not authentication is required.
-- Web access to photo snapshots is achieved through the URL ```http://<server>:<port>/photo_feed```.   
-The setting for necessity of authentication applies also to photo snapshots.
-- For systems with 2 Raspberry Pi cameras (currently Pi 5) both cameras can stream and record simultaneously.    
-The non-active camera stream and photo can be accessed through endpoints ```http://<server>:<port>/video_feed2``` and ```http://<server>:<port>/photo_feed2```, respectively.
-- The second camera can be used in parallel to the active camera for taking photos, raw photos and videos.<br>(Sound recording with videos is restricted to the active camera)
-- The second camera can be controlled through the [API](./API.md) as well as through the [Multi-Cam](./CamMulticam.md) dialog.
-- Support of USB cameras with seamless integration with CSI cameras (only if OpenCV is installed)
-- Hot plug-in/-out of USB cameras without server restart
-- [Digital Pan / Tilt / Zoom](./ZoomPan.md) is also available for USB cameras
-- [Camera Controls](./CameraControls_UsbCams.md) are also available for USB cameras 
-- The server can be used without connected cameras for controlling [GPIO devices](./SettingsDevices.md) with the [Event handling system](./Trigger.md) or from the [Console](./Console.md)
-- Photo taking and video recording can be started synchronously with both cameras.- Clients which are currently streaming through **raspiCamSrv** are shown on the [Info Screen](./Information.md#streaming-clients) together with their IP address and the streams they are using.
-- [Stereo Vision](./CamStereo.md) allows generation of 3D videos and depth maps
-- [Camera Calibration](./CamCalibration.md) supports calibration of a stereo-camera pair as well as rectification based on [OpenCV](https://opencv.org/)
-- Support of [Tuning](./Tuning.md) by selection and management of tuning files.
-- Triggered capture of videos and photos (see [Triggered Capture of Videos and Photos](./Trigger.md)) with motion detection
-- Support for interaction with GPIO-connected devices based on the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) library. All basic input and output devices provided by *gpiozero* are supported and can be configured in the [Settings / Devices](./SettingsDevices.md) dialog. In addition, also support for [Stepper Motor](./gpioDevices/StepperMotor.md) is provided.
-- State tracking and calibration for output [Devices](./SettingsDevices.md) available for [StepperMotor](./gpioDevices/StepperMotor.md)
-- Events occurring on Input [Devices](./SettingsDevices.md), such as sensors or buttons, can be configured as [Triggers](./TriggerTriggers.md) for the execution of [Actions](./TriggerActions.md). Various actors, such as LEDs, buzzers, motors and servos can thus be integrated. All this integrates well with available functionality of the camera system.
-- [Event Handling](./Trigger.md#event-handling-infrastructure) fully integrates Camera with GPIO-connected devices 
-- Besides [Trigger](./TriggerTriggers.md)-based [Action](./TriggerActions.md) execution, actions can also be envoked through flexibly configurable [Action Buttons](./ConsoleActionButtons.md).
-- [Event viewer](./TriggerEventViewer.md) with calendar overview
-- Notification on captured events by e-Mail (see [Notification](./TriggerNotification.md))
-- [Extended Motion Capturing Algorithms](./TriggerMotion.md) are available, including [Frame Differencing](./TriggerMotion.md#test-for-frame-differencing-algorithm), [Optical Flow](./TriggerMotion.md#test-for-optical-flow-algorithm) and [Background Subtraction](./TriggerMotion.md#test-for-background-subtraction-algorithm)
-- The [Extended Motion Capturing Algorithms](./TriggerMotion.md) can be run in a testing mode, showing live views of intermediate image processing results which can help for a better understanding of the algorithms and adjustment of their variable parameters.
-- For cameras with focus control (camera 3), it is also possible to graphically draw autofocus windows and trigger the autofocus to measure the LensPosition which is translated into a focal distance (see [Focus handling](./FocusHandling.md)).
-- For zooming, the intended image section can be [drawn graphically](./ZoomPan.md#graphically-setting-the-zoom-window) on the live stream area.
-- Photos, raw photos and videos can be taken, which are shown in the lower part of the [Live screen](./LiveScreen.md) together with their metadata or alternatively with their histogram (see [Photo taking](./Phototaking.md)).
-- Videos can be recorded along with audio if a microphone (e.g. USB microphone) is connected to the Raspberry Pi (see [Recording Audio along with Video](./Settings.md#recording-audio-along-with-video))
-- "Intelligent" camera control supporting simultaneous camera access from different tasks as long as the requested configurations are compatible (see [raspiCamSrv Tasks and Background Processes](./Background%20Processes.md)).   
-This includes a continuous live stream while taking photos, videos or photo series.   
-- For raw photos and videos, a jpeg placeholder is shown
-- The photos taken may be added to a display buffer for inspection of photos and metadata and for comparison (see [Photo Display](./Phototaking.md#photo-display))
-- On the [Config screen](./Configuration.md), camera configurations can be specified for four different use cases (Live View, Photo, Raw Photo and Video). These will be applied together with the selected controls when photos or videos will be taken. The *Live view* configuration will also be immediately applied to the Live stream.
-- When modifying [Stream Sizes](./Configuration.md#stream-size-width-height) to non-standard aspect ratios, an option can assure that this is syncronously done for all camera configurations, so that Live Stream, Photos, Raw Photos and Videos have all the same aspect ratio and are not distorted.
-- The [Info screen](./Information.md) shows the installed cameras, and, for the active camera, the camera properties as well as the available sensor modes.
-- The [Photos screen](./PhotoViewer.md) allows scrolling through all available photos and videos with detail views of selected items.
-- This screen allows also photo/video download and deletion.
-- With the [Photo Series](./PhotoSeries.md) screen, different kinds of photo series ([Timelapse Series](./PhotoSeriesTimelapse.md), [Exposure Series](./PhotoSeriesExp.md), [Focus Stacks](./PhotoSeriesFocus.md)) can be configured, executed and monitored during their progress.
-- For [Timelapse Series](./PhotoSeriesTimelapse.md), it is possible to define active periods depending on sunrise and sunset.
-- The [Photo Series](./PhotoSeries.md) screen allows also to persist specific [Camera Configurations](./Configuration.md) together with [Camera Controls](./CameraControls.md) in the file system for later reuse.
-- Photo Series can be set to be [automatically continued](./PhotoSeries.md#series-configuration) on server start if they had been interrupted by a server stop or system shutdown or reboot.
-- On the [Console](./Console.md), configurable buttons allow execution of arbitrary OS commands and scripts including restart of the Flask service or reboot of the Raspberry Pi.
-- The [Settings screen](./Settings.md) allows a few configuration settings such as selection of the active camera as well as selecting the type of photos, raw photos and videos in the range supported by Picamera2
-- The Settings screen includes also functions to control the **raspiCamSrv** [Server Configuration](./SettingsConfiguration.md).<br>The entire configuration can be persisted or loaded from stored configuration files.
-- It is also possible to configure the server to use the persisted configuration on server startup.
-- Access to the server requires [registration and authentification](./Authentication.md).
-- Generator for executable Python code including the entire interface to Picamera2 of a **raspiCamSrv** session.   
-(See [Generation of Python Code for Camera](./Troubelshooting.md#generation-of-python-code-for-camera))
-- The [raspiCamSrv API](./API.md) allows integration of the Raspberry Pi cameras with automated systems allowing these to take photos, start/stop video recording, start/stop motion detection, switching cameras and query status information.<br>Server access to the API endpoints is protected through JSON Web Tokens (JWT).
+## Feature Overview
 
-**New in V4.2**
+### Platform Support
 
-- [Regions of Interest / Regions of NO Interest](./TriggerMotion.md#regions-of-interest-and-regions-of-no-interest) can be specified for [Motion Detection](./TriggerMotion.md).
-- [Backup and Restorage](./SettingsConfiguration.md) of configuration and other stored data.
+- raspiCamSrv can be run on all currenly known Raspberry Pi **hardware platforms** (except microcontroller boards) from Raspberry [Pi Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/) to [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)
+- Supported **Operating Systems** are the **Raspberry Pi** OS versions Bullseye, Bookworm and Trixie.
+- The recommended variant for all of these is the full 64-Bit variant recommended by [**Raspberry Pi** Imager](https://www.raspberrypi.com/software/)
+
+
+### Camera Support
+
+- raspiCamSrv supports the currently available [Raspberry Pi Cameras](https://www.raspberrypi.com/documentation/accessories/camera.html), however AI features for the [AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html) are currently not yet supported.
+- CSI Cameras from other providers can be used as long as they are supported by Picamera2.
+- USB cameras connected through the Pi's USB ports are seamlessly integrated, however control options are limited, depending on their capabilities.
+
+### Camera Management
+
+- raspiCamSrv can detect and use all **CSI** and **USB** cameras connected to a Raspberry Pi, as long as they are identified by Picamera2, which is usually the case.
+- One of these camaras must be selected as *Active Camera*.    
+[Camera configuration](./Configuration.md) (e.g. stream size colour space or flipping) as well as [controls](./CameraControls.md) (e.g. focus, zoom/pan/tilt, exposure- and image-control) can be actively modified only for the *Active Camera*.
+- Another camera, if available, can be selected as *Second Camera* by [Multi Camera Control](./CamMulticam.md).
+- All settings for the *Active Camera* can be preserved before it is replaced by another camera (e.g. by switching cameras). They will be restored/applied when this camera is set as *Active Camera* or as *Second Camera*.
+- Function [Reload Cameras](./SettingsConfiguration.md) allows hot plug-in/-out of USB cameras without server restart
+
+### Camera Configuration
+
+- raspiCamSrv supports all [camera configuration options](./Configuration.md#configuration-tab) which are foreseen by Picamera2.
+- Individual configuration sets can be specified for 4 different use-cases: Live View, Photo, Raw Photo and Video.
+- Before the camera is started, raspiCamSrv configures all three camera streams (lowres, main, raw) for the most likely use-cases. This allows to keep the live stream (lowres) active while the camera is being used for phototaking (main), raw photo taking (raw) or video recording (main)
+- If necessary, specific applications can request the camera for exclusive use.
+- Support of Camera [Tuning](./Tuning.md) by selection and management of tuning files.
+
+### Camera Control
+
+- raspiCamSrv supports all [Camera Control options](./CameraControls.md) foreseen by Picamera2.
+- [Focus control](./FocusHandling.md) if supported by the camera (e.g. camera module 3 or specific USB cameras).
+- Graphically drawing *Autofocus Windows* for CSI cameras.
+- [Pan / Tilt / Zoom](./ZoomPan.md) for CSI as well as for USB cameras.
+- [Auto Exposure Control](./CameraControls_AutoExposure.md) for CSI cameras.
+- [Exposure Control](./CameraControls_Exposure.md) for CSI cameras.
+- [Image Control](./CameraControls_Image.md) for CSI cameras as well as for USB camaras (if supported by the camera).
+
+### Photo Taking / Video Recording
+
+- Taking [Photos / Raw Photos](./Phototaking.md).
+- Recording [Video](./Phototaking.md#video).
+- Recording [Audio along with the Video](./Settings.md#recording-audio-along-with-video).
+- Photo/Video [metadata](./Phototaking.md#metadata) display.
+- Photo [histogram](./Phototaking.md) generation and display.
+- [Display buffer](./Phototaking.md#photo-display) for comparison of photos and metadata/histogram.
+- [Photo Viewer](./PhotoViewer.md)
+- [Photo Download](./PhotoViewer.md)
+
+### Streaming
+
+- Endpoint for [streaming](./CamWebcam.md) (MJPEG) the active camera.
+- Endpoint for [streaming](./CamWebcam.md) the second camera.
+- Endpoints for photo snapshots of active and second camera.
+- Option for activating / deactivating authentication for streaming and snapshots.
+
+### Multi-Camera Features
+
+- [Selection](./CamMulticam.md) of *Active Camera* and *Second Camera* out of connected CSI and USB cameras.
+- [Simultaneous streaming](./CamWebcam.md) of both cameras.
+- [Simultaneous photo taking or video recording](./CamMulticam.md#buttons) for both cameras.
+- [Camera switch](./CamMulticam.md#switch-cameras).
+- [Preserving active camera configuration and controls](./CamMulticam.md#configuring-mjpeg-stream-and-jpeg-photo) for later reuse.
+- [Stereo vision support](./Settings.md#activating-and-deactivating-stereo-vision) for two cameras of same model.
+- [Synchronization of settings](./CamMulticam.md#synchronize-configurations) for stereo cameras
+- [Camera calibration](./CamCalibration.md) for stereo cameras.
+- [Depth Maps](./CamStereo.md#depth-maps)
+- [3D Video](./CamStereo.md#3d-video)
+
+### Photo Series
+
+- [Definition of Photo Series](./PhotoSeries.md) (# shots, interval etc.).
+- [Control of Photo Series](./PhotoSeries.md) (start, stop, pause, resume).
+- [Download of Photo Series](./PhotoSeries.md).
+- [Timelapse Series](./PhotoSeriesTimelapse.md) with optional sunrise/sunset restrictions.
+- [Exposure Series](./PhotoSeriesExp.md) with varying exposure time or gain (ISO).
+- [Exposure Series Result](./PhotoSeriesExp.md#result) showing histograms.
+- [Focus Stack Series](./PhotoSeriesFocus.md) iterating through a range of focus settings.
+- Capability for [auto restart](./PhotoSeries.md#series-configuration) of series when Server or Raspi is restarted.
+
+### Motion Detection
+
+- [Scheduled Detection of Motion](./TriggerActive.md).
+- Support for [different algorithms](./TriggerMotion.md) for motion detection.
+- [Adjustable Sensitivity](./TriggerMotion.md) for motion detection.
+- Support for [Regions of Interest](./TriggerMotion.md#regions-of-interest-and-regions-of-no-interest).
+- Support for [Regions of NO Interest](./TriggerMotion.md#regions-of-interest-and-regions-of-no-interest)
+- [Test Mode for Motion Detection](./TriggerMotion.md#testing-motion-capturing).
+
+### GPIO Device Management
+
+- Configuration of [GPIO Devices](./SettingsDevices.md).
+- [Testing](./SettingsDevices.md#testing-a-device) of GPIO Devices
+- [Device Calibration](./SettingsDevices.md#calibrating-a-device) for devices which rquire state tracking (e.g. stepper motor)
+- Device control through [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html)
+- All gpiozero device types are supported in raspiCamSrv
+- Own device types can be added by [configuration](./SettingsDevices.md#device-type-configuration) (see [Stepper Motor](./gpioDevices/StepperMotor.md))
+
+### Event Handling - Triggers and Actions
+
+- [Configuration of Triggers](./TriggerTriggers.md)
+- Triggering by [GPIO Input Devices](./SettingsDevices.md) (button, sensors)
+- Triggering by [Motion Detection](./TriggerMotion.md)
+- Triggering by Camera events (photo taken, video start, video stop)
+- [Configuration of Actions](./TriggerActions.md)
+- Actions by [GPIO Output Devices](./SettingsDevices.md) (LED, buzzer, servo, motor)
+- Actions by Camera (take photo, start/stop video)
+- [Camera Actions](./TriggerCameraActions.md) in case of motion detection (video duration, photo burst)
+- [Notification](./TriggerNotification.md) actions (mail, mail attachments)
+- [Action-to-Trigger Association](./TriggerTriggerActions.md)
+- [Event Viewer](./TriggerEventViewer.md#events)
+- [Event Calendar](./TriggerEventViewer.md)
+- [Detailed Event Information](./TriggerEventViewer.md#events)
+- Event Photos / Videos with motion detection frame
+- Event Photos / Videos with RoI RoNI
+
+### Console Functions
+
+- Freely configurable [Array of Versatile Buttons](./ConsoleVButtons.md)
+- Freely configurable [Array of Action Buttons](./ConsoleActionButtons.md) for execution of configured [Actions](./TriggerActions.md).
+
+### API
+
+- Selected functions of raspiCamSrv are accessible through specific [Web Service End Points](./API.md)
+- API access is secured through JSON Web Tokens (JWT).
+- A Postman collection is available for testing
+- A specific API (probe) is available for 'probing' attribute values of raspiCamSrv live objects.
+
+### Privacy Protection
+
+- raspiCamSrv access requires registered [users](./Authentication.md)
+- The Superuser can manage other users: create, remove, reset password
+- Login requires a password
+- For streaming, it is possible to disable the necessity of authentication
+- API access is secured through JSON Web Tokens (JWT).
+- Secrets (mail account, JWT secret key) are held in a separate secrets store which is not part of the persisted configuration data.
+
+### Configuration Management
+
+- Configuration Management refers to the way how raspiCamSrv handles its operational data which may be modified during user sessions.
+- [On request](./SettingsConfiguration.md), all data of the raspiCamSrv server can be [persisted as JSON files](./SettingsConfiguration.md#server-configuration-storage)
+- Optionally, the server can start with the stored configuration or with an initialized setup.
+- An [indicator](./UserGuide.md#elements) shows when configuration data have been modified during a session.
+- All modifications, which have not yet been saved, are [listed in a dialog](./SettingsConfiguration.md).
+- You can create backups of entire configuration sets and restore them at another time.
+
+### System Information
+
+- Information on the Raspberry Pi System, the raspiCamSrv software stack and the connected cameras is shown on the [Info / Installed Cameras](./Information.md#installed-cameras) screen.
+- [Properties of the Active Camera](./Information.md#camera-properties) are also shown.
+- In addition, the Info Menu provides also details for the individual [Sensor Modes](./Information.md#sensor-modes) of the *Active Camera*.
+
+### No Camera
+
+- raspiCamSrv can operate in a special mode when [no camera is connected](./UserGuide_NoCam.md).
+- In this case, all camera-related features are invisible.
+- Functions which do not require a camera, remain available: [GPIO devices](./SettingsDevices.md), [Event Handling](./Trigger.md), [Console](./Console.md).
+
+### Supervision
+
+- For error analysis, [Logging](./Troubelshooting.md#logging) can be activated on module level.
+- In order to inspect the interface of raspiCamSrv with Picamera2, it is possible to activate [Generation of Python Code for the Camera](./Troubelshooting.md#generation-of-python-code-for-camera). This will create an executable Python file including all Picamera2 calls.
 
 
 

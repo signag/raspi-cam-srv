@@ -14,6 +14,7 @@ from datetime import timedelta
 import raspiCamSrv.dbx as dbx
 from raspiCamSrv.gpioDeviceTypes import gpioDeviceTypes
 from raspiCamSrv import versionDoc
+from raspiCamSrv.version import version as currentVersion
 import smtplib
 from pathlib import Path
 import zoneinfo
@@ -21,6 +22,7 @@ from secrets import token_urlsafe
 import threading
 from time import sleep
 import importlib
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -4223,6 +4225,13 @@ class ServerConfig():
         self._cfgPath = None
         self._cfgBackupPath = None
         self._changeLog = []
+        self._versionCurrent = ""
+        self._versionLatest = ""
+        self._versionCheckTime = None
+        self._versionCheckIntervalHours = 24
+        self._versionCheckEnabled = True
+        self._versionCheckFrom = ""
+        self._updateDone = False
 
         # Check access of microphone
         self.checkMicrophone()
@@ -5475,6 +5484,170 @@ class ServerConfig():
         self._cfgBackupPath = value
 
     @property
+    def versionCurrent(self) -> str:
+        return currentVersion
+
+    @property
+    def versionLatest(self) -> str:
+        if self._versionLatest == "":
+            self._versionLatest = currentVersion
+        return self._versionLatest
+    
+    @versionLatest.setter
+    def versionLatest(self, value: str):
+        self._versionLatest = value
+
+    @property
+    def versionCheckTime(self) -> datetime:
+        return self._versionCheckTime
+    
+    @versionCheckTime.setter
+    def versionCheckTime(self, value: datetime):
+        dt = datetime(year=value.year, month=value.month, day=value.day, hour=value.hour, minute=value.minute)
+        self._versionCheckTime = dt
+
+    @property
+    def versionCheckTimeIso(self) -> str:
+        if self.versionCheckTime is None:
+            return None
+        else:
+            return self.versionCheckTime.isoformat()
+
+    @property
+    def versionCheckIntervalHours(self) -> int:
+        return self._versionCheckIntervalHours
+
+    @versionCheckIntervalHours.setter
+    def versionCheckIntervalHours(self, value: int):
+        self._versionCheckIntervalHours = value
+
+    @property
+    def versionCheckEnabled(self) -> bool:
+        return self._versionCheckEnabled
+
+    @versionCheckEnabled.setter
+    def versionCheckEnabled(self, value: bool):
+        self._versionCheckEnabled = value
+
+    @property
+    def versionCheckFrom(self) -> str:
+        if self._versionCheckFrom == "":
+            self._versionCheckFrom = self.versionCurrent
+        if self.isLaterVersion(self.versionCurrent, self._versionCheckFrom):
+            self._versionCheckFrom = self.versionCurrent
+        return self._versionCheckFrom
+
+    @versionCheckFrom.setter
+    def versionCheckFrom(self, value: str):
+        self._versionCheckFrom = value
+
+    def getLatestVersion(self, now: bool = False) -> str:
+        """ Get the latest version from GitHub releases
+
+        Args:
+            now (bool, optional): If True, the version is fetched from GitHub even
+            if the last check was recent. Defaults to False.
+        Returns:
+            str: the latest version string
+        """
+        version = currentVersion
+        if self.versionCheckEnabled == False:
+            return version
+
+        version = self.versionLatest
+
+        url = "https://raw.githubusercontent.com/signag/raspi-cam-srv/main/docs/ReleaseNotes.md"
+
+        try:
+            if now == False:
+                if self.versionCheckTime is not None:
+                    delta = datetime.now() - self.versionCheckTime
+                    hours = delta.total_seconds() / 3600
+                    if hours < self.versionCheckIntervalHours:
+                        return self.versionLatest
+                else:
+                    return self.versionLatest
+
+            response = requests.get(url)
+            response.raise_for_status()  # Raise error if request failed
+            content = response.text
+            lines = content.splitlines()
+            for line in lines:
+                if line.startswith("## V"):
+                    version = line[3:].strip()
+                    self.versionLatest = version
+                    break
+                    
+            self.versionCheckTime = datetime.now()
+
+        except Exception as e:
+            logger.error(f"Error getting latest version from GitHub: {e}")
+            version = self.versionLatest
+        return version
+
+    @property
+    def canUpdate(self) -> bool:
+        """ Check whether installed version can be updated
+        """
+        if self.versionCheckEnabled == False:
+            return False
+
+        verIgnore = self.versionCheckFrom[1:].split(".")
+        for i in range(len(verIgnore)):
+            verIgnore[i] = int(verIgnore[i])
+
+        verLatest = self.versionLatest[1:].split(".")
+        for i in range(len(verLatest)):
+            verLatest[i] = int(verLatest[i])
+        
+        if len(verIgnore) != len(verLatest):
+            return True
+        if len(verIgnore) != 3:
+                return True
+        if verLatest[0] > verIgnore[0]:
+            return True
+        if verLatest[0] == verIgnore[0]:
+            if verLatest[1] > verIgnore[1]:
+                return True
+            if verLatest[1] == verIgnore[1]:
+                if verLatest[2] > verIgnore[2]:
+                    return True
+        return False
+
+    def isLaterVersion(self, v1: str, v2: str) -> bool:
+        """ Check whether version v1 is later than version v2
+        """
+        ver1 = v1[1:].split(".")
+        for i in range(len(ver1)):
+            ver1[i] = int(ver1[i])
+
+        ver2 = v2[1:].split(".")
+        for i in range(len(ver2)):
+            ver2[i] = int(ver2[i])
+
+        if len(ver1) != len(ver2):
+            return False
+        if len(ver1) != 3:
+                return False
+        if ver1[0] > ver2[0]:
+            return True
+        if ver1[0] == ver2[0]:
+            if ver1[1] > ver2[1]:
+                return True
+            if ver1[1] == ver2[1]:
+                if ver1[2] > ver2[2]:
+                    return True
+        return False
+
+    @property
+    def updateDone(self) -> bool:
+        return self._updateDone
+
+    @updateDone.setter
+    def updateDone(self, value: bool):
+        self._updateDone = value
+
+    @property
     def API_active(self) -> bool:
         return self._API_active
 
@@ -6595,6 +6768,12 @@ class ServerConfig():
                 # Do not overwrite the server start time
                 # It has been set when the ServerConfig singleton has been instantiated
                 pass
+            elif key == "_versionCurrent":
+                setattr(sc, key, "")
+            elif key == "_versionLatest":
+                setattr(sc, key, "")
+            elif key == "_updateDone":
+                setattr(sc, key, False)
             else:
                 setattr(sc, key, value)
         # Reset process status variables

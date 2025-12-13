@@ -160,6 +160,9 @@ def create_app(test_config=None):
 
     # Check display photo and buffer
     sc.displayBufferCheck()
+
+    # Check Latest version
+    sc.getLatestVersion(now=True)
     
     # Configure Triggered Capture
     tcActionPath = app.static_folder + "/events"

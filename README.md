@@ -1,6 +1,6 @@
-# raspiCamSrv V4.3.1
+# raspiCamSrv V4.3.2
 
-**raspiCamSrv** is a Web server for Raspberry Pi systems for control and streaming of CSI and USB cameras as well as for controlling a large variety of connected GPIO devices.
+**raspiCamSrv** is a Web server for Raspberry Pi systems providing an App for control and streaming of CSI and USB cameras as well as for controlling a large variety of connected GPIO devices.
 
 While all currently connected cameras are accessible by the system, up to two cameras can be operated simultaneously at a time, supporting multi-camera features like Stereo Vision.
 

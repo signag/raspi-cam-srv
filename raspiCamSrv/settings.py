@@ -2235,3 +2235,158 @@ def calibrate_ffwd():
     if msg != "":
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/versionCheckEnabled", methods=("GET", "POST"))
+@login_required
+def versionCheckEnabled():
+    logger.debug("versionCheckEnabled")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+
+    sc.lastSettingsTab = "settingsupdate"
+    if request.method == "POST":
+        msg = ""
+        versionCheckEnabled = not request.form.get("versioncheckenabledcb") is None
+        if sc.versionCheckEnabled != versionCheckEnabled:
+            sc.versionCheckEnabled = versionCheckEnabled
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Settings/Update: Check for Updates changed to {sc.versionCheckEnabled}")
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/serverUpdate", methods=("GET", "POST"))
+@login_required
+def serverUpdate():
+    logger.debug("serverUpdate")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+    sc.lastSettingsTab = "settingsupdate"
+    if request.method == "POST":
+        msg = ""
+        if sc.versionCurrent == sc.versionLatest:
+            msg = "You are already using the latest version."
+        else:
+            try:
+                result = subprocess.run(
+                    ["git", "pull", "origin", "main", "--depth=1"],
+                    capture_output=True, text=True
+                )
+                sc.updateDone = True
+                msg = "raspiCamSrv updated successfully. Please restart the server to apply the update."
+            except CalledProcessError as e:
+                logger.error("serverUpdate - CalledProcessError: %s", e)
+                msg = "Error updating server: " + str(e)
+            except Exception as e:
+                logger.error("serverUpdate - Exception: %s", e)
+                msg = "Error updating server: " + str(e)
+        if msg != "":
+            flash(msg)
+
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/updateIgnoreLatest", methods=("GET", "POST"))
+@login_required
+def updateIgnoreLatest():
+    logger.debug("updateIgnoreLatest")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+    sc.lastSettingsTab = "settingsupdate"
+    if request.method == "POST":
+        msg = ""
+        sc.versionCheckFrom = sc.versionLatest
+        sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Update: Ignored latest version {sc.versionLatest}")
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/versionCheckIntervalHours", methods=("GET", "POST"))
+@login_required
+def versionCheckIntervalHours():
+    logger.debug("versionCheckIntervalHours")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+    sc.lastSettingsTab = "settingsupdate"
+    if request.method == "POST":
+        msg = ""
+        intvl = int(request.form["versioncheckintervalhours"])
+        sc.versionCheckIntervalHours = intvl
+        sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Update: Version Check Interval changed to {sc.versionCheckIntervalHours} hours")
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route("/versionCheckNow", methods=("GET", "POST"))
+@login_required
+def versionCheckNow():
+    logger.debug("versionCheckNow")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBeckupsList()
+    sc.lastSettingsTab = "settingsupdate"
+    if request.method == "POST":
+        msg = ""
+        sc.getLatestVersion(now=True)
+        sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Update: Version Check Interval changed to {sc.versionCheckIntervalHours} hours")
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)

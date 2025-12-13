@@ -28,6 +28,12 @@ Related to usability in the UI, you will almost see no difference between CSI an
 ### Elements
 
 #### Title bar
+
+On the left side, the title bar shows
+
+- the current version of raspiCamSrv<br>If an update to this version is available, the version number is shown in yellow:<br>![New Release Indicator](./img/CanUpdate_Indicator.jpg)<br>
+(See [Settings/Update](./SettingsUpdate.md) dialog)
+
 On the right side, the title bar shows
 
 - the current server connection

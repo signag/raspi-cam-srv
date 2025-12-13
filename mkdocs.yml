@@ -85,6 +85,7 @@ nav:
           - GPIO Device Configuration: SettingsDevices.md
           - GPIO Devices:
               - Stepper Motor: gpioDevices/StepperMotor.md
+          - Update: SettingsUpdate.md
       - Background Processes: Background Processes.md
   - No Camera Mode:
       - User Guide: UserGuide_NoCam.md

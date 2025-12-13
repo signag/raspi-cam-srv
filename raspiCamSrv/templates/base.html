@@ -20,7 +20,16 @@
     {% endif %}
         <div class="w3-container">
             <div class="w3-bar w3-blue w3-large">
-                <div class="w3-bar-item w3-left">raspiCamSrv {{ g.version }}</div>
+                <div class="w3-bar-item w3-left">
+                    raspiCamSrv
+                    {% if sc.canUpdate == True %}
+                    <span class="w3-text-yellow">
+                    {% else %}
+                    <span>
+                    {% endif %}
+                        {{ g.version }}
+                    </span>
+                </div>
                 <div class="w3-bar-item w3-center">{% block header %}{% endblock %}</div>
                 {% if g.user %}
                 <div class="w3-bar-item w3-right" style="padding-top:0;padding-bottom:0">

@@ -61,6 +61,13 @@
         <button class="w3-bar-item w3-button settingsmenu" id="settingsdevicesbtn"
             onclick="openSettingsTab('settingsdevices', 'settingsdevicesbtn')">Devices</button>
         {% endif %}
+        {% if sc.lastSettingsTab == "settingsupdate" %}
+        <button class="w3-bar-item w3-button settingsmenu w3-light-green" id="settingsupdatebtn"
+            onclick="openSettingsTab('settingsupdate', 'settingsupdatebtn')">Updates</button>
+        {% else %}
+        <button class="w3-bar-item w3-button settingsmenu" id="settingsupdatebtn"
+            onclick="openSettingsTab('settingsupdate', 'settingsupdatebtn')">Updates</button>
+        {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
             <div class="w3-tooltip">
                 <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from GitHub
@@ -1610,6 +1617,136 @@
         </div>
         {% endif %}
     </div>
+    {% if sc.lastSettingsTab == "settingsupdate" %}
+    <div id="settingsupdate" class="settingsgroup">
+    {% else %}
+    <div id="settingsupdate" class="settingsgroup" style="display:none">
+    {% endif %}
+        <h3>raspiCamSrv Updates</h3>
+        <table>
+            <tr>
+                <td style="width:20%" class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        If selected, the system will check for updates and indicate when an update is available.
+                    </span>
+                    <label for="versioncheckenabledcb">Check for Updates :</label>
+                </td>
+                <td style="width:20%">
+                    <form id="versioncheckenabled" method="post" action="{{ url_for('settings.versionCheckEnabled') }}">
+                        {% if sc.versionCheckEnabled == True %}
+                        <input type="checkbox" id="versioncheckenabledcb" name="versioncheckenabledcb" onchange="doSubmit('versioncheckenabled')" value="1" checked>
+                        {% else %}
+                        <input type="checkbox" id="versioncheckenabledcb" name="versioncheckenabledcb" onchange="doSubmit('versioncheckenabled')" value="0">
+                        {% endif %}
+                    </form>
+                </td>
+                <td style="width:25%">
+                </td>
+                <td style="width:35%">
+                </td>
+            </tr>
+            {% if sc.versionCheckEnabled == True %}
+            <tr>
+                <td style="width:20%" class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        The latest version of raspiCamSrv, as checked at the indicated time.
+                    </span>
+                    <label for="latestversion">Latest Version:</label>
+                </td>
+                <td style="width:20%">
+                    <input style="width: 18ch" type="text" id="latestversion" name="latestversion" value="{{ sc.versionLatest }}" readonly>
+                </td>
+                <td style="width:25%">
+                    <a href="https://signag.github.io/raspi-cam-srv/latest/ReleaseNotes/" target="_blank">See Release Notes</a>
+                </td>
+                <td style="width:35%">
+                </td>
+            </tr>
+            <tr>
+                <td style="width:20%" class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        The currently installed version of raspiCamSrv.
+                    </span>
+                    <label for="currentversion">Installed Version:</label>
+                </td>
+                <td style="width:20%">
+                    <input style="width: 18ch" type="text" id="currentversion" name="currentversion" value="{{ sc.versionCurrent }}" readonly>
+                </td>
+                {% if (sc.canUpdate == True and sc.updateDone == False) or (sc.canUpdate == False and sc.isLaterVersion(sc.versionLatest, sc.versionCurrent)) %}
+                <form method="post" id="serverupdate" action="{{ url_for('settings.serverUpdate') }}">
+                    <td style="width:25%">
+                        <input class="w3-button w3-black" style="width:26ch" type="submit" onclick="confirmServerUpdate('serverupdate')" value="Update to {{ sc.versionLatest }}">
+                    </td>
+                </form>
+                {% endif %}
+                {% if sc.updateDone == True %}
+                <form method="post" id="serverrestartupdate" action="{{ url_for('settings.serverRestart') }}">
+                    <td style="width:25%">
+                        <input class="w3-button w3-black" style="width: 26ch" type="submit" onclick="confirmServerRestart('serverrestartupdate')" value="Restart Server">
+                    </td>
+                </form>
+                {% endif %}
+                <td style="width:35%">
+                </td>
+            </tr>
+            <tr>
+                <td style="width:20%" class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        You will be notified if the latest version is later than the version specified here.
+                    </span>
+                    <label for="versioncheckfrom">Notify on Version later than:</label>
+                </td>
+                <td style="width:20%">
+                    <input style="width: 18ch" type="text" id="versioncheckfrom" name="versioncheckfrom" value="{{ sc.versionCheckFrom }}" readonly>
+                </td>
+                {% if sc.canUpdate == True %}
+                <form method="post" id="updateignorelatest" action="{{ url_for('settings.updateIgnoreLatest') }}">
+                    <td style="width:25%">
+                        <input class="w3-button w3-black" style="width: 26ch" type="submit" onclick="confirmIgnoreLatest('updateignorelatest')" value="Ignore version {{ sc.versionLatest }}">
+                    </td>
+                </form>
+                {% endif %}
+                <td style="width:35%">
+                </td>
+            </tr>
+            <tr>
+                <td style="width:20%" class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        The time when the latest version check was performed.
+                    </span>
+                    <label for="versionchecktime">Latest Version checked at:</label>
+                </td>
+                <td style="width:20%">
+                    <input style="width: 18ch" type="datetime-local" id="versionchecktime" name="versionchecktime" value="{{ sc.versionCheckTimeIso }}" readonly>
+                </td>
+                <td style="width:25%">
+                </td>
+                <td style="width:35%">
+                </td>
+            </tr>
+            <tr>
+                <td style="width:20%" class="w3-tooltip">
+                    <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                        The latest version of raspiCamSrv, as checked at the indicated time.
+                    </span>
+                    <label for="versioncheckenabledcb">Check Interval (Hours):</label>
+                </td>
+                <td style="width:20%">
+                    <form method="post" id="versioncheckintervalhoursfrm" action="{{ url_for('settings.versionCheckIntervalHours') }}">
+                        <input style="width: 18ch" type="number" onchange="doSubmit('versioncheckintervalhoursfrm')" id="versioncheckintervalhours" name="versioncheckintervalhours" min="" max="200" step="1" value="{{ sc.versionCheckIntervalHours }}">
+                    </form>
+                </td>
+                <form method="post" id="versionchecknow" action="{{ url_for('settings.versionCheckNow') }}">
+                    <td style="width:25%">
+                        <input class="w3-button w3-black" style="width: 26ch" type="submit" value="Check Now">
+                    </td>
+                </form>
+                <td style="width:35%">
+                </td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
     
     <script>
         var deviceTypeImages;
@@ -1707,6 +1844,22 @@
         }
         function confirmServerRestart(form) {
             if (confirm("Do you want to restart the raspiCamSrv Flask server?")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmServerUpdate(form) {
+            if (confirm("Do you want to update raspiCamSrv to the latest version?\nYou will need to restart the server afterwards.")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+        function confirmIgnoreLatest(form) {
+            if (confirm("Do you want to be no longer informed about update to version {{ sc.versionLatest }}?")) {
                 document.getElementById(form).method = "post";
                 document.getElementById(form).submit();
             } else {

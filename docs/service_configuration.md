@@ -14,7 +14,7 @@ The following procedure is for the case where **audio recording** with video is 
 
 1. Open a SSH session on the Raspberry Pi
 2. Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-3. Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace all (4) occurrences of '\<user>' with the user ID, specified during [System Setup](./system_setup.md)<br>If you need a port different from 5000 (see [RaspiCamSrv Installation](./installation.md), step 11), replace also ```port 5000``` by your port.
+3. Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace all (4) occurrences of '```<user>```' with the user ID, specified during [System Setup](./system_setup.md)<br>If you need a port different from 5000 (see [RaspiCamSrv Installation](./installation.md), step 11), replace also ```port 5000``` by your port.
 4. Stage the service configuration file to systemd:<br>```sudo cp ~/raspiCamSrv.service /etc/systemd/system```
 5. Start the service:<br>```sudo systemctl start raspiCamSrv.service```
 6. Check that the Flask server has started as service:<br>```sudo journalctl -ef```
@@ -33,7 +33,7 @@ If your system is a trixie or a bookworm system (```lsb_release -a```) follow th
 
 1. Open a SSH session on the Raspberry Pi
 2. Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-3. Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace all (4) occurrences of '\<user>' with the user ID, specified during [System Setup](./system_setup.md)<br>If necessary, raplace also the standard port 5000 with your port.<br>Remove the entry User=\<user> from the [System] section<br>In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```
+3. Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>Replace all (4) occurrences of '```<user>```' with the user ID, specified during [System Setup](./system_setup.md)<br>If necessary, raplace also the standard port 5000 with your port.<br>Remove the entry User=```<user>``` from the [System] section<br>In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```
 4. Create the directory for systemd user units<br>```mkdir -p ~/.config/systemd/user```
 5. Stage the service configuration file to systemd for user units:<br>```cp ~/raspiCamSrv.service ~/.config/systemd/user```
 6. Start the service:<br>```systemctl --user start raspiCamSrv.service```
@@ -50,7 +50,7 @@ If your system is a bullseye system (```lsb_release -a```), which is currently s
 1. Open a SSH session on the Raspberry Pi
 2. Clone branch 0_3_12_next of Picamera2 repository<br>```cd ~/prg```<br>```git clone -b 0_3_12_next https://github.com/raspberrypi/picamera2```
 3. Copy the service template *raspiCamSrv.service* which is provided with **raspiCamSrv** to your home directory<br>```cp ~/prg/raspi-cam-srv/config/raspiCamSrv.service ~``` 
-4. Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>- Replace '\<user>' with the user ID, specified during [System Setup](./system_setup.md)<br>- If necessary, raplace also the standard port 5000 with your port.<br>- Add another Environment entry: ```Environment="PYTHONPATH=/home/<user>/prg/picamera2"```<br>- Remove the entry User=\<user> from the [System] section<br>- In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```<br>For an example of the final .service file, see below
+4. Adjust the service configuration:<br>```nano ~/raspiCamSrv.service```<br>- Replace '```<user>```' with the user ID, specified during [System Setup](./system_setup.md)<br>- If necessary, raplace also the standard port 5000 with your port.<br>- Add another Environment entry: ```Environment="PYTHONPATH=/home/<user>/prg/picamera2"```<br>- Remove the entry User=```<user>``` from the [System] section<br>- In section [Install], change ```WantedBy=multi-user.target``` to ```WantedBy=default.target```<br>For an example of the final .service file, see below
 5. Create the directory for systemd user units<br>```mkdir -p ~/.config/systemd/user```
 6. Stage the service configuration file to systemd for user units:<br>```cp ~/raspiCamSrv.service ~/.config/systemd/user```
 7. Start the service:<br>```systemctl --user start raspiCamSrv.service```

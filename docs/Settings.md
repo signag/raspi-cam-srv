@@ -12,6 +12,7 @@ Other sections focus on
 - [Versatile Buttons](./SettingsVButtons.md)
 - [Action Buttons](./SettingsAButtons.md)
 - [Devices](./SettingsDevices.md)
+- [Update](./SettingsUpdate.md)
 
 *Users* and/or *API* may be invisible, depending on context.    
 For the case that no camera is connected, see [Settings (No Camera)](./Settings_NoCam.md).

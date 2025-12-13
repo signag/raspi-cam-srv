@@ -2,13 +2,19 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.3.2
+
+### New Feature
+
+- [raspiCamSrv Version Updates](./SettingsUpdate.md) supports periodical search for updates on GitHub with indication of new versions and version update as well as server restart from the UI.
+
 ## V4.3.1
 
 ### Bugfix
-- Fixed the issue with bad Live Stream quality for Raspberry Pi models \< 5.    
+- Fixed the issue with bad Live Stream quality for Raspberry Pi models ```<``` 5.    
 When starting the live stream, raspiCamSrv usually configurs the camera with all 3 streams (lowres, main, raw), so that the live stream (lowres) can remain active while photos (main), raw photos (raw) or videos (main) are taken.    
-For Raspberry Pi Zero and other models \< 5, it turned out that the stream quality is bad when the raw stream is included in the configuration.    
-Now, for models \< 5, the raw stream is excluded from the configuration for the live stream, resulting in better quality.   
+For Raspberry Pi Zero and other models ```<``` 5, it turned out that the stream quality is bad when the raw stream is included in the configuration.    
+Now, for models ```<``` 5, the raw stream is excluded from the configuration for the live stream, resulting in better quality.   
 For these models, when a raw photo is taken, the live stream will be temporarily stopped and reactivated without raw stream configuration after the raw photo has been stored.
 
 ## V4.3.0
@@ -61,7 +67,7 @@ This is especially important when regions of interest are used for motion detect
 ## V4.0.1
 
 ### Bugfixes
-- Fixed error "Error \<class 'ValueError'\> : Class Camera has no element when_motion_detected"   
+- Fixed error "Error ```<class 'ValueError'>``` : Class Camera has no element when_motion_detected"   
 Cause of the error was a wrong configuration for [Triggers](./TriggerTriggers.md) with *Source* 'Camera', which had included an event 'when_motion_detected'. This event is only available for *Source* 'MotionDetector'.    
 The wrong configuration is now corrected.    
 If you have configured a Trigger for event 'when_motion_detected' with *Source* 'Camera', you need to delete it and replace it with a trigger with *Source* 'MotionDetector'    
