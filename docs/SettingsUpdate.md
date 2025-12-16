@@ -15,7 +15,7 @@ The Update dialog shows the following fields:
 - *See Release Notes*<br>The link opens the latest release notes for inspection of new features.
 - *Installed Version*<br>This field shows the currently installed version.
 - *Update to Vx.y.z*<br>This button is only visible if you can update to a newer version.<br>Pressing the button will issue a ```git pull origin main --depth=1``` command to update raspiCamSrv.<br>After the update has completed successfully, the button will turn to (see below):
-- *Restart Server*<br>This button will restart the raspiCamSrv Flask server to switch to the new version.<br>**NOTE**: After completion of the update, the active server is still on the old version.<br>When the server restarts, the browser will get an empty response. You should press the *Back* button of the browser to return to the previous screen and then press any menu options of the **black** menu bar.
+- *Restart Server*<br>This button will restart the raspiCamSrv Flask server to switch to the new version.
 - *Notify on Version later than*<br>Initially, this field shows the current version.<br>If you want to skip updates to the indicated latest version, you can press the *Ignore ...* button and the field will show the latest version.<br>Information on possible updates will only be given, if the latest version on GitHub is later than the version shown in this field.
 - *Latest Version checked at*<br>This shows the time when the indicated *Latest Version* was retrieved from GitHub.
 - *Check Interval (Hours)*<br>Is the interval with which raspiCamSrv will check for updates.
@@ -24,6 +24,12 @@ The Update dialog shows the following fields:
 ## Dialog after successfull Update
 
 ![Update 2](./img/Settings_Upd_3.jpg)
+
+Now, you need to restart the server with the *Restart Server* button.
+
+**NOTE**: After completion of the update, the active server is still on the old version.<br>When the server restarts, the browser will get an empty response. You should press the *Back* button of the browser to return to the previous screen and then press any menu options of the **black** menu bar.
+
+If the server is still on the old version after restart, you can follow the [manual update procedure](./updating_raspiCamSrv.md).
 
 ## Dialog with *Check for Updates* deactivated
 

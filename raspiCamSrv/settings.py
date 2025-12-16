@@ -2293,7 +2293,11 @@ def serverUpdate():
         else:
             try:
                 result = subprocess.run(
-                    ["git", "pull", "origin", "main", "--depth=1"],
+                    ["git", "fetch", "origin", "main", "--depth=1"],
+                    capture_output=True, text=True
+                )
+                result = subprocess.run(
+                    ["git", "reset", "--hard", "origin/main"],
                     capture_output=True, text=True
                 )
                 sc.updateDone = True

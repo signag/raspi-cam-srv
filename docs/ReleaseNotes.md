@@ -2,6 +2,21 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.4.1
+
+## Bugfix
+
+- Fixed the update procedure with dialog [Settings/Update](./SettingsUpdate.md).    
+The procedure implemented in V4.3.2 did not work correctly.    
+Although it confirmed that the update was successful, the version remained at the old version after restart.   
+If you were running into that issue, you should  
+-- ```ssh``` to the server    
+-- ```cd prg/raspi-cam-srv```    
+-- ```git reset --hard origin/main```      
+The [Update Procedure](./updating_raspiCamSrv.md) has been modified, accordingly.   
+For versions 4.4.1 and later, the [Settings/Update](./SettingsUpdate.md) procedure should work correctly.
+
+
 ## V4.4.0
 
 ## New Feature
