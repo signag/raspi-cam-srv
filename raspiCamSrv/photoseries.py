@@ -1022,3 +1022,18 @@ def focusstack_properties():
             msg = "Series parameters can not be changed for a series in status " + sr.status
             flash(msg)
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
+
+@bp.route("/media-viewer")
+@login_required
+def media_viewer():
+    src = request.args.get("src")
+    media_type = request.args.get("type", "image")
+
+    filename = os.path.basename(src) if src else ""
+
+    return render_template(
+        "media_viewer.html",
+        src=src,
+        media_type=media_type,
+        filename=filename
+    )

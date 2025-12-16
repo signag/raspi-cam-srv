@@ -549,9 +549,10 @@
                         {% set name=entry['name'] %}
                         <tr>
                             <td>
-                                <img style="width: 100%; height: 150px; object-fit: scale-down"
+                                <img style="width: 100%; height: 150px; object-fit: scale-down; cursor: pointer"
                                     src="{{ url }}" 
                                     alt="{{ name }}"
+                                    onclick="openMedia(this.src)"
                                 >
                             </td>
                         </tr>
@@ -1209,7 +1210,7 @@
                     {% if relPathPhoto %}
                     {% set urlphoto=url_for('static', filename=relPathPhoto) %}
                     <td style="width:30%;">
-                        <img style="width: 100%; height: 150px; object-fit: scale-down" src="{{ urlphoto }}" alt="{{ name }}">
+                        <img style="width: 100%; height: 150px; object-fit: scale-down; cursor: pointer" onclick="openMedia(this.src)" src="{{ urlphoto }}" alt="{{ name }}">
                     </td>
                     {% else %}
                     <td style="width:30%;">
@@ -1407,7 +1408,7 @@
                     {% if relPathPhoto %}
                     {% set urlphoto=url_for('static', filename=relPathPhoto) %}
                     <td style="width:50%;">
-                        <img style="width: 100%; height: 150px; object-fit: scale-down" src="{{ urlphoto }}" alt="{{ name }}">
+                        <img style="width: 100%; height: 150px; object-fit: scale-down; cursor: pointer" onclick="openMedia(this.src)" src="{{ urlphoto }}" alt="{{ name }}">
                     </td>
                     {% else %}
                     <td style="width:50%;">
@@ -1551,6 +1552,14 @@
         }
         function onlineHelp() {
             window.open("{{ sc.getBaseHelpUrl() }}/PhotoSeries/");
+        }
+
+        function openMedia(src) {
+            window.open(
+                '/media-viewer?src=' + encodeURIComponent(src),
+                '_blank',
+                'noopener'
+            );
         }
     </script>
 {% endblock %}

@@ -2,6 +2,30 @@
 
 {% block header %}
 {% block title %}Trigger{% endblock %}
+    <style>
+        /* Custom styles for the photo viewer page */
+        .video-wrapper {
+        position: relative;
+        width: 100%;
+        }
+
+        /* Native video */
+        .video-wrapper video {
+        width: 100%;
+        display: block;
+        }
+
+        /* Overlay captures clicks on video surface only */
+        .open-overlay {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 20%; /* height of native controls */
+        cursor: pointer;
+        background: transparent;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -2057,21 +2081,28 @@
             }
 
             if (type != "video") {
-                tag = "<img style='width: 100%; height: 900px; object-fit: scale-down'"
+                tag = "<img style='width: 100%; height: 900px; object-fit: scale-down; cursor:pointer'"
                 tag = tag + " src='" + url + "'"
                 tag = tag + " class='w3-border w3-padding'"
                 tag = tag + " alt='" + name + "'"
+                tag = tag + " onclick='openMedia(this.src)'"
                 tag = tag + ">"
                 tag = tag + "<p>" + file + "</p>"
                 //console.log("tag:", tag)
                 tgtP.innerHTML = tag
             } else {
-                tag = "<video style='width: 100%; height: 900px; object-fit: scale-down'"
-                tag = tag + " class='w3-border w3-padding'"
-                tag = tag + " controls>"
-                tag = tag + "<source src='" + url + "'" + " type='video/mp4'>"
-                tag = tag + "Your browser does not support mp4 video"
-                tag = tag + "</video>"
+                tag =       "<div class='video-wrapper'>"
+                tag = tag + "   <video style='width: 100%; height: 900px; object-fit: scale-down'"
+                tag = tag + "          class='w3-border w3-padding'"
+                tag = tag + "          controls>"
+                tag = tag + "       <source src='" + url + "'" + " type='video/mp4'>"
+                tag = tag + "       Your browser does not support mp4 video"
+                tag = tag + "   </video>"
+                tag = tag + "   <div class='open-overlay'"
+                tag = tag + "        onclick='openVideo(\"" + url + "\")'"
+                tag = tag + "        title='Open in new window'>"
+                tag = tag + "    </div>"
+                tag = tag + " </div>"
                 tag = tag + "<p>" + file + "</p>"
                 //console.log("tag:", tag)
                 tgtP.innerHTML = tag
@@ -2902,5 +2933,22 @@
         canvas {
             border: 1px solid yellow;
         }
-    </style>    
+    </style>
+    <script>
+        function openMedia(src) {
+            window.open(
+                '/media-viewer?src=' + encodeURIComponent(src),
+                '_blank',
+                'noopener'
+            );
+        }
+
+        function openVideo(src) {
+            window.open(
+                '/media-viewer?type=video&src=' + encodeURIComponent(src),
+                '_blank',
+                'noopener'
+            );
+        }
+    </script>
 {% endblock %}

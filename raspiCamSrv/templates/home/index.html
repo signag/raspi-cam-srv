@@ -1527,9 +1527,10 @@ RaspiCamSrv's Live page
                     <!-- The active Photo-->
                     <td colspan="5">
                         <img
-                            style="width: 100%; height: 480px; object-fit: scale-down"
+                            style="width: 100%; height: 480px; object-fit: scale-down; cursor: pointer;"
                             src="{{ url_for('static', filename=sc.displayPhoto) }}" 
-                            class="w3-image">
+                            class="w3-image"
+                            onclick="openMedia(this.src, '{{ sc.displayFile }}')">
                     </td>
                 </tr>
                 {% endif %}
@@ -2498,6 +2499,29 @@ RaspiCamSrv's Live page
             window.open("{{ sc.getBaseHelpUrl() }}/LiveScreen/");
         }
     </script>
+    <script>
+        function openMedia(src, fileName) {
+            const parts = src.split("/");
+            const fnParts = fileName.split(".");
+            const ext = fnParts[fnParts.length - 1].toLowerCase();
+            if (ext === "mp4") {
+                parts[parts.length - 1] = fileName;
+                src = parts.join("/");
+                window.open(
+                    '/media-viewer?type=video&src=' + encodeURIComponent(src),
+                    '_blank',
+                    'noopener'
+                );
+            } else {
+                window.open(
+                    '/media-viewer?type=image&src=' + encodeURIComponent(src),
+                    '_blank',
+                    'noopener'
+                );
+            }
+        }
+    </script>
+
     <style>
         canvas {
             border: 1px solid red;

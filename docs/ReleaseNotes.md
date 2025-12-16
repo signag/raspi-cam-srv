@@ -2,6 +2,12 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.4.0
+
+## New Feature
+
+- [Media Viewer](./UserGuide.md#media-viewer) added to all images and videos in the UI.
+
 ## V4.3.2
 
 ### New Feature
@@ -11,6 +17,7 @@
 ## V4.3.1
 
 ### Bugfix
+
 - Fixed the issue with bad Live Stream quality for Raspberry Pi models ```<``` 5.    
 When starting the live stream, raspiCamSrv usually configurs the camera with all 3 streams (lowres, main, raw), so that the live stream (lowres) can remain active while photos (main), raw photos (raw) or videos (main) are taken.    
 For Raspberry Pi Zero and other models ```<``` 5, it turned out that the stream quality is bad when the raw stream is included in the configuration.    

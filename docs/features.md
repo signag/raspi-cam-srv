@@ -1,5 +1,5 @@
 
-# Features V4.3.x
+# Features V4.4.x
 
 [![Up](img/goup.gif)](./index.md)
 
@@ -59,6 +59,7 @@ For more details, see the [User Guide](./UserGuide.md).
 - [Display buffer](./Phototaking.md#photo-display) for comparison of photos and metadata/histogram.
 - [Photo Viewer](./PhotoViewer.md)
 - [Photo Download](./PhotoViewer.md)
+- **NEW**: Photos/videos are enabled for being inspected in a separate [Media Viewer](./UserGuide.md#media-viewer) window.
 
 ### Streaming
 

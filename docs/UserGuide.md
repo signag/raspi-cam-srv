@@ -142,3 +142,36 @@ Streaming of the active camera can be deactivated, if a **raspiCamSrv** task is 
 For a full understanding of application details, users should familiarize with the official document [Raspberry Pi - The Picamera2 Library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).  
 The document version, on which this raspiCamSrv release is based, is also included in this documentation: [picamera2-manual.pdf](./picamera2-manual.pdf)
 
+## Media Viewer
+
+In several dialogs, the raspiCamSrv UI shows photos or videos which have been taken with the camera system.    
+Although most of these are larger than typical thumbnails, they may be too small for more detailed inspection of quality or image details.
+
+Therefore, raspiCamSrv provides a Media Viewer which can be started by clicking on the image or video.
+
+The availability of a Media Viewer is indicated by a modified cursor when hovering over the image.
+
+![MediaViewer Start](./img/MediaViewer_1.jpg)
+
+Klicking on the image, will open a new browser tab with the selected image or video:
+
+![MediaViewer Start](./img/MediaViewer_2.jpg)
+
+The tab can be separated from the main browser window and zoomed to screen size or full screen mode.
+
+The file name of the image/video is shown as tab title.
+
+### Media Viewer for videos
+
+When videos are shown with controller icons for play/stop etc., only the upper area is sensitive for starting the media viewer whereas the lower area is used for controlling the video playback.
+
+![MediaViewer Start](./img/MediaViewer_3.jpg)
+
+The Media Viewer browser tab will include its own set of controls:
+
+![MediaViewer Start](./img/MediaViewer_4.jpg)
+
+### Live Stream
+
+The live stream, available in dialogs [Live](./LiveScreen.md), [Cam](./Cam.md) and [Trigger/Motion](./TriggerMotion.md) are not enabled for Media Viewer activation. Instead, the live stream can be directly opened in a separate window using the [Streaming URL](./CamWebcam.md).
+

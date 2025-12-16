@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>{{ filename }}</title>
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .viewer {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      img, video {
+        max-width: 100vw;
+        max-height: calc(100vh);
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="viewer">
+      {% if media_type == "video" %}
+        <video src="{{ src }}" controls autoplay></video>
+      {% else %}
+        <img src="{{ src }}" alt="{{ filename }}">
+      {% endif %}
+    </div>
+  </body>
+</html>

@@ -1350,3 +1350,18 @@ def show_metadata():
     if request.method == "POST":
         sc.displayContent = "meta"
     return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
+@bp.route("/media-viewer")
+@login_required
+def media_viewer():
+    src = request.args.get("src")
+    media_type = request.args.get("type", "image")
+
+    filename = os.path.basename(src) if src else ""
+
+    return render_template(
+        "media_viewer.html",
+        src=src,
+        media_type=media_type,
+        filename=filename
+    )
