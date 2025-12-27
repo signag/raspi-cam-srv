@@ -4232,6 +4232,8 @@ class ServerConfig():
         self._versionCheckEnabled = True
         self._versionCheckFrom = ""
         self._updateDone = False
+        self._webCamActiveCamPhotoCfg = "LIVE"
+        self._webCamSecondCamPhotoCfg = "LIVE"
 
         # Check access of microphone
         self.checkMicrophone()
@@ -5648,6 +5650,22 @@ class ServerConfig():
         self._updateDone = value
 
     @property
+    def webCamActiveCamPhotoCfg(self) -> str:
+        return self._webCamActiveCamPhotoCfg
+    
+    @webCamActiveCamPhotoCfg.setter
+    def webCamActiveCamPhotoCfg(self, value: str):
+        self._webCamActiveCamPhotoCfg = value
+
+    @property
+    def webCamSecondCamPhotoCfg(self) -> str:
+        return self._webCamSecondCamPhotoCfg
+
+    @webCamSecondCamPhotoCfg.setter
+    def webCamSecondCamPhotoCfg(self, value: str):
+        self._webCamSecondCamPhotoCfg = value
+
+    @property
     def API_active(self) -> bool:
         return self._API_active
 
@@ -6798,6 +6816,49 @@ class ServerConfig():
                 break
 
         return sc
+    
+    def sliderPosToCtrlVal(self, min:float, max:float, default:float, pos:float) -> float:
+        """Convert slider position (-1 ... 1) to control value (min ... max; default)
+
+           Function: 
+              pos <  0: value = default + (default - min) * pos^3
+              pos >= 0: value = default + (max - default) * pos^3
+
+              -1 -> min
+               0 -> default
+               1 -> max
+        """
+        if pos < 0:
+            val = default + (default - min) * (pos ** 3)
+        else:
+            val = default + (max - default) * (pos ** 3)
+        val = round(val, 3)
+        return val
+
+    def ctrlValToSliderPos(self, min:float, max:float, default:float, val:float) -> float:
+        """Convert control value (min ... max; default) to slider position (-1 ... 1)
+
+           Function: 
+              val <  default: pos = - ((default - val) / (default - min))^(1/3)
+              val >= default: pos =   ((val - default) / (max - default))^(1/3)
+
+              min -> -1
+              default -> 0
+              max -> 1
+        """
+        logger.debug("CameraCfg.ctrlValToSliderPos - min: %f, max: %f, default: %f, val: %f", min, max, default, val)
+        if default <= min:
+            pos =   ((val - default) / (max - default)) ** (1/3)
+        elif default >= max:
+            pos = - ((default - val) / (default - min)) ** (1/3)
+        else:
+            if val < default:
+                pos = - ((default - val) / (default - min)) ** (1/3)
+            else:
+                pos =   ((val - default) / (max - default)) ** (1/3)
+        pos = round(pos, 3)
+        logger.debug("CameraCfg.ctrlValToSliderPos - pos: %f", pos)
+        return pos
 
 class Secrets():
     """ Class for secrets which are never persisted

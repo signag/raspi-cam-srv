@@ -50,7 +50,7 @@ def main():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
@@ -72,7 +72,7 @@ def serverconfig():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsparams"
     if request.method == "POST":
@@ -215,7 +215,7 @@ def reloadCameras():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
@@ -274,7 +274,7 @@ def resetServer():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
@@ -311,6 +311,7 @@ def resetServer():
         logger.debug("Resetting server configuration")
         setLoadConfigOnStart(cfgPath, False)
         photoRoot = sc.photoRoot
+        backupPath = sc.cfgBackupPath
         prgOutputPath = sc.prgOutputPath
         database = sc.database
         actionPath = tc.actionPath
@@ -328,6 +329,7 @@ def resetServer():
         sc = cfg.serverConfig
         tc = cfg.triggerConfig
         sc.photoRoot = photoRoot
+        sc.cfgBackupPath = backupPath
         sc.prgOutputPath = prgOutputPath
         sc.database = database
         tc.actionPath = actionPath
@@ -397,7 +399,7 @@ def configBackup():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
     sc.lastSettingsTab = "settingsconfig"
 
     if request.method == "POST":
@@ -466,7 +468,7 @@ def configBackup():
             msg = "Configuration backup created under " +  backupPath
         flash(msg)
         los = getLoadConfigOnStart(cfgPath)
-        backups = getBeckupsList()
+        backups = getBackupsList()
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 def copyDir(src: str, dst: str):
@@ -512,13 +514,13 @@ def restoreDir(src: str, dst: str):
         if os.path.exists(dst):
             shutil.rmtree(dst)
 
-def getBeckupsList() -> list:
+def getBackupsList() -> list:
     """Get the list of available backups.
 
     Returns:
         list: List of backup names.
     """
-    logger.debug("getBeckupsList")
+    logger.debug("getBackupsList")
     res = []
     cfg = CameraCfg()
     sc = cfg.serverConfig
@@ -528,7 +530,7 @@ def getBeckupsList() -> list:
             backupPath = backupRoot + "/" + entry
             if os.path.isdir(backupPath):
                 res.append(entry)
-    logger.debug("getBeckupsList - found %s backups", len(res))
+    logger.debug("getBackupsList - found %s backups", len(res))
     return res
 
 @bp.route("/configRestore", methods=("GET", "POST"))
@@ -549,7 +551,7 @@ def configRestore():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
     sc.lastSettingsTab = "settingsconfig"
 
     if request.method == "POST":
@@ -633,7 +635,7 @@ def configRemove():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
@@ -656,7 +658,7 @@ def configRemove():
             msg = f"Backup {backupName} was removed."
         flash(msg)
         los = getLoadConfigOnStart(cfgPath)
-        backups = getBeckupsList()
+        backups = getBackupsList()
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
 @bp.route("/serverRestart", methods=("GET", "POST"))
@@ -677,7 +679,7 @@ def serverRestart():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
@@ -766,7 +768,7 @@ def remove_users():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     if request.method == "POST":
         cnt = 0
@@ -834,7 +836,7 @@ def register_user():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     if request.method == "POST":
         return render_template("auth/register.html", sc=sc, cp=cp)
@@ -858,7 +860,7 @@ def store_config():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
@@ -892,7 +894,7 @@ def load_config():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
@@ -1015,7 +1017,7 @@ def loadConfigOnStart():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1046,7 +1048,7 @@ def api_config():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsapi"
     if request.method == "POST":
@@ -1108,7 +1110,7 @@ def generate_token():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsapi"
     if request.method == "POST":
@@ -1129,7 +1131,7 @@ def vbutton_dimensions():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1189,7 +1191,7 @@ def vbutton_settings():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1234,7 +1236,7 @@ def abutton_dimensions():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1293,7 +1295,7 @@ def abutton_settings():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1338,7 +1340,7 @@ def new_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1394,7 +1396,7 @@ def select_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1463,7 +1465,7 @@ def delete_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1621,7 +1623,7 @@ def device_properties():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1739,7 +1741,7 @@ def test_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1851,7 +1853,7 @@ def calibrate_device():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1896,7 +1898,7 @@ def calibrate_fbwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -1965,7 +1967,7 @@ def calibrate_bwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -2034,7 +2036,7 @@ def docalibrate():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -2112,7 +2114,7 @@ def calibrate_fwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -2181,7 +2183,7 @@ def calibrate_ffwd():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     # Check connection and access of microphone
     sc.checkMicrophone()
@@ -2254,7 +2256,7 @@ def versionCheckEnabled():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
 
     sc.lastSettingsTab = "settingsupdate"
     if request.method == "POST":
@@ -2284,7 +2286,7 @@ def serverUpdate():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
     sc.lastSettingsTab = "settingsupdate"
     if request.method == "POST":
         msg = ""
@@ -2331,7 +2333,7 @@ def updateIgnoreLatest():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
     sc.lastSettingsTab = "settingsupdate"
     if request.method == "POST":
         msg = ""
@@ -2358,7 +2360,7 @@ def versionCheckIntervalHours():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
     sc.lastSettingsTab = "settingsupdate"
     if request.method == "POST":
         msg = ""
@@ -2386,7 +2388,7 @@ def versionCheckNow():
     cfgPath = current_app.static_folder + "/config"
     los = getLoadConfigOnStart(cfgPath)
     result = {}
-    backups = getBeckupsList()
+    backups = getBackupsList()
     sc.lastSettingsTab = "settingsupdate"
     if request.method == "POST":
         msg = ""

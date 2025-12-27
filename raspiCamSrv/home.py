@@ -285,9 +285,10 @@ def set_zoom():
             time.sleep(0.5)
             metadata = Camera.getMetaData()
             sc.scalerCropLiveView = metadata["ScalerCrop"]
-            zoomFactor = sc.zoomFactorStep * math.floor(
-                (100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep
-            )
+            #zoomFactor = sc.zoomFactorStep * math.floor(
+            #    (100 * cc.scalerCrop[2] / cp.pixelArraySize[0]) / sc.zoomFactorStep
+            #)
+            zoomFactor = round(100 * cc.scalerCrop[2] / cp.pixelArraySize[0], 3)
             if zoomFactor <= 0:
                 zoomFactor = sc.zoomFactorStep
             sc.zoomFactor = zoomFactor
@@ -1365,3 +1366,299 @@ def media_viewer():
         media_type=media_type,
         filename=filename
     )
+
+@bp.route("/live_direct_control", methods=("GET", "POST"))
+@login_required
+def live_direct_control():
+    logger.debug("In live_direct_control")
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.getLatestVersion(now=True)
+    return render_template("home/liveDirectPanel.html", cc=cc, sc=sc, cp=cp)
+
+@bp.route("/dc_set_Sharpness", methods=["POST"])
+@login_required
+def dc_set_Sharpness():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_Sharpness - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 0.0
+        max = 32.0
+        default = 1.0
+    else:
+        min = float(cc.usbCamControls["Sharpness"]["min"])
+        max = float(cc.usbCamControls["Sharpness"]["max"])
+        default = float(cc.usbCamControls["Sharpness"]["default"])
+    cc.sharpness = sc.sliderPosToCtrlVal(min, max, default, spos)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_Contrast", methods=["POST"])
+@login_required
+def dc_set_Contrast():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_Contrast - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 0.0
+        max = 32.0
+        default = 1.0
+    else:
+        min = float(cc.usbCamControls["Contrast"]["min"])
+        max = float(cc.usbCamControls["Contrast"]["max"])
+        default = float(cc.usbCamControls["Contrast"]["default"])
+    cc.contrast = sc.sliderPosToCtrlVal(min, max, default, spos)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_Saturation", methods=["POST"])
+@login_required
+def dc_set_Saturation():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_Saturation - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 0.0
+        max = 32.0
+        default = 1.0
+    else:
+        min = float(cc.usbCamControls["Saturation"]["min"])
+        max = float(cc.usbCamControls["Saturation"]["max"])
+        default = float(cc.usbCamControls["Saturation"]["default"])
+    cc.saturation = sc.sliderPosToCtrlVal(min, max, default, spos)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_Brightness", methods=["POST"])
+@login_required
+def dc_set_Brightness():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_Brightness - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = -1.0
+        max = 1.0
+        default = 0.0
+    else:
+        min = float(cc.usbCamControls["Brightness"]["min"])
+        max = float(cc.usbCamControls["Brightness"]["max"])
+        default = float(cc.usbCamControls["Brightness"]["default"])
+    cc.brightness = sc.sliderPosToCtrlVal(min, max, default, spos)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_exposureTimeSec", methods=["POST"])
+@login_required
+def dc_set_exposureTimeSec():
+    logger.debug("In dc_set_exposureTimeSec")
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("dc_set_exposureTimeSec - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 0.0
+        max = 10.0
+        default = 0.0
+    else:
+        min = float(cc.usbCamControls["ExposureTime"]["min"])
+        max = float(cc.usbCamControls["ExposureTime"]["max"])
+        default = float(cc.usbCamControls["ExposureTime"]["default"])
+    cc.exposureTimeSec = sc.sliderPosToCtrlVal(min, max, default, spos)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_exposureValue", methods=["POST"])
+@login_required
+def dc_set_exposureValue():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_exposureValue - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = -8.0
+        max = 8.0
+        default = 0.0
+    else:
+        min = float(cc.usbCamControls["ExposureValue"]["min"])
+        max = float(cc.usbCamControls["ExposureValue"]["max"])
+        default = float(cc.usbCamControls["ExposureValue"]["default"])
+    cc.exposureValue = sc.sliderPosToCtrlVal(min, max, default, spos)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_AnalogueGain", methods=["POST"])
+@login_required
+def dc_set_AnalogueGain():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_AnalogueGain - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 1.0
+        max = 99.0
+        default = 1.0
+    else:
+        min = float(cc.usbCamControls["AnalogueGain"]["min"])
+        max = float(cc.usbCamControls["AnalogueGain"]["max"])
+        default = float(cc.usbCamControls["AnalogueGain"]["default"])
+    cc.analogueGain = sc.sliderPosToCtrlVal(min, max, default, spos)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_ColourGainRed", methods=["POST"])
+@login_required
+def dc_set_ColourGainRed():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_ColourGainRed - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 0.0
+        max = 32.0
+        default = 0.0
+    else:
+        min = float(cc.usbCamControls["ColourGainRed"]["min"])
+        max = float(cc.usbCamControls["ColourGainRed"]["max"])
+        default = float(cc.usbCamControls["ColourGainRed"]["default"])
+    cc.colourGains = (sc.sliderPosToCtrlVal(min, max, default, spos), cc.colourGains[1])
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_ColourGainBlue", methods=["POST"])
+@login_required
+def dc_set_ColourGainBlue():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_ColourGainBlue - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 0.0
+        max = 32.0
+        default = 0.0
+    else:
+        min = float(cc.usbCamControls["ColourGainBlue"]["min"])
+        max = float(cc.usbCamControls["ColourGainBlue"]["max"])
+        default = float(cc.usbCamControls["ColourGainBlue"]["default"])
+    cc.colourGains = (cc.colourGains[0], sc.sliderPosToCtrlVal(min, max, default, spos))
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_FocalDistance", methods=["POST"])
+@login_required
+def dc_set_FocalDistance():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_FocalDistance - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    if sc.activeCameraIsUsb == False:
+        min = 0.001
+        max = 999.0
+    else:
+        min = float(cc.usbCamControls["LensPosition"]["min"])
+        max = float(cc.usbCamControls["LensPosition"]["max"])
+    cc.focalDistance = round((max * spos**3.0), 3)
+    cfg.streamingCfgInvalid = True
+    Camera().applyControlsForLivestream()
+    return '', 204
+
+@bp.route("/dc_set_ZoomFactor", methods=["POST"])
+@login_required
+def dc_set_ZoomFactor():
+    data = request.get_json()
+    spos = float(data["value"])
+    logger.debug("In dc_set_ZoomFactor - data: %s", spos)
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cp = cfg.cameraProperties
+
+    zoomFactor = spos
+
+    logger.debug("ScalerCrop old: %s", cc.scalerCrop)
+    xCenter = cc.scalerCrop[0] + int(cc.scalerCrop[2] / 2)
+    yCenter = cc.scalerCrop[1] + int(cc.scalerCrop[3] / 2)
+    width = int(sc.scalerCropDef[2] * zoomFactor / 100)
+    height = int(sc.scalerCropDef[3] * zoomFactor / 100)
+
+    if width < sc.scalerCropMin[2]:
+        height = int(height * sc.scalerCropMin[2] / width)
+        width = sc.scalerCropMin[2]
+    if height < sc.scalerCropMin[3]:
+        width = int(width * sc.scalerCropMin[3] / height)
+        height = sc.scalerCropMin[3]
+
+    if width > cp.pixelArraySize[0]:
+        width = cp.pixelArraySize[0]
+    if height > cp.pixelArraySize[1]:
+        height = cp.pixelArraySize[1]
+
+    x0 = int(xCenter - width / 2)
+    y0 = int(yCenter - height / 2)
+
+    if x0 < 0:
+        x0 = 0
+    if y0 < 0:
+        y0 = 0
+    if x0 + width > cp.pixelArraySize[0]:
+        x0 = cp.pixelArraySize[0] - width
+    if y0 + height > cp.pixelArraySize[1]:
+        y0 = cp.pixelArraySize[1] - height
+
+    sccrop = (x0, y0, width, height)
+    sc.zoomFactor = zoomFactor
+    cc.scalerCrop = sccrop
+    cc.include_scalerCrop = True
+    logger.debug("ScalerCrop new: %s", cc.scalerCrop)
+    Camera().applyControlsForLivestream()
+    time.sleep(0.5)
+    if cc.scalerCrop != sc.scalerCropDef:
+        cc.include_scalerCrop = True
+    else:
+        cc.include_scalerCrop = False
+    metadata = Camera().getMetaData()
+    sc.scalerCropLiveView = metadata["ScalerCrop"]
+    sc.unsavedChanges = True
+    sc.addChangeLogEntry(f"Zoom changed for {sc.activeCameraInfo}")
+    cfg.streamingCfgInvalid = True
+    if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
+        sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
+    return '', 204

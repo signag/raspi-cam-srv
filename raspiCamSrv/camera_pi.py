@@ -2423,6 +2423,30 @@ class Camera:
         logger.debug("Thread %s: Camera.get_photoFrame - Returning frame", get_ident())
         return Camera.frame
 
+    def get_photoFrame_hr(self):
+        """Return photo frame, assuming that camera is runnuing """
+        logger.debug("Thread %s: Camera.get_photoFrame_hr", get_ident())
+        frame = None
+        cfg = CameraCfg()
+        if Camera.camIsUsb == False:
+            if Camera.cam.started:
+                try:
+                    buffer = io.BytesIO()
+                    Camera.cam.capture_file(buffer, format="jpeg", name=cfg.photoConfig.stream)
+                    frame = buffer.getvalue()
+                except Exception as e:
+                    logger.error("Camera.get_photoFrame_hr - Error %s", e)
+            else:
+                err = "Camera not started"
+                logger.error("Camera.get_photoFrame_hr - Error %s", err)
+        else:
+            if Camera.cam.isOpened() == True:
+                frame, frameRaw = Camera().get_frame()
+            else:
+                err = "USB Camera not started"
+                logger.error("Camera.get_photoFrame_hr - Error %s", err)
+        return frame
+
     def get_photoFrame2(self):
         """Return the current camera 2 frame."""
         logger.debug("Thread %s: Camera.get_photoFrame2", get_ident())
@@ -2444,6 +2468,42 @@ class Camera:
             return Camera.frame2
         else:
             return None
+
+    def get_photoFrame2_hr(self):
+        """Return photo frame, assuming that camera is runnuing """
+        logger.debug("Thread %s: Camera.get_photoFrame2_hr", get_ident())
+        frame = None
+        cfg = CameraCfg()
+        strc = cfg.streamingCfg
+        if Camera.cam2IsUsb == False:
+            if Camera.cam2.started:
+                camNum2Str = str(Camera.camNum2)
+                if camNum2Str in strc:
+                    scfg = strc[camNum2Str]
+                    if "photoconfig" in scfg:
+                        stream = scfg["photoconfig"].stream
+                        try:
+                            buffer = io.BytesIO()
+                            Camera.cam2.capture_file(buffer, format="jpeg", name=stream)
+                            frame = buffer.getvalue()
+                        except Exception as e:
+                            logger.error("Camera.get_photoFrame2_hr - Error %s", e)
+                    else:
+                        err = "Camera 2 photo config not found"
+                        logger.error("Camera.get_photoFrame2_hr - Error %s", err)
+                else:
+                    err = "Camera 2 config not found"
+                    logger.error("Camera.get_photoFrame2_hr - Error %s", err)
+            else:
+                err = "Camera 2 not started"
+                logger.error("Camera.get_photoFrame2_hr - Error %s", err)
+        else:
+            if Camera.cam2.isOpened() == True:
+                frame, frameRaw = Camera().get_frame2()
+            else:
+                err = "USB Camera not started"
+                logger.error("Camera.get_photoFrame2_hr - Error %s", err)
+        return frame
 
     @staticmethod
     def loadCameraSpecifics():

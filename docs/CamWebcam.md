@@ -30,4 +30,12 @@ The camera stream as well as its *stream size* can be configured in the [Configu
 
 ## Photo Snapshot
 
-The photo snapshot is currently also using the LIVE configuration.
+For the photo snapshot, you can choose between using the [LIVE configuration](./Configuration.md), usually configured with the *lores* stream with low resolution and a snapshot using the [FOTO configuration](./Configuration.md), usually configured with the *main* stream with high resolution.
+
+**NOTE**: Photo snapshots with high resolution assume an active live stream where the *lores* and the *main* streams of the camera are **simultaneously** configured (see [raspiCamSrv Tasks](./Background%20Processes.md)). 
+
+If your [configurations](./Configuration.md) for LIVE and FOTO are incompatible (for example using a different *Colour Space* or when both use the *main* stream with different resolutions), the live stream will request exclusive camera access with only the LIVE configuration activated. In this case, the URL for the high resolution photo snapshot will return an image with the resolution configured for LIVE.
+
+If the live stream is active at the time when the photo snapshot is triggered, the snapshot will be taken immediately.    
+Otherwise, the live stream will be activated before the snapshot is taken. This requres starting the camera and giving it time to gather sufficient information for the auto-algorithms, which results in larger latency (1 to 1.5 sec).
+

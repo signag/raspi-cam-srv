@@ -1,4 +1,4 @@
-site_name: raspiCamSrv V4.4.x Documentation
+site_name: raspiCamSrv V4.5.x Documentation
 plugins:
     - search
     - mike
@@ -42,6 +42,7 @@ nav:
                - Image: CameraControls_Image.md
                - Camera Controls for USB Cameras: CameraControls_UsbCams.md
                - Cropping: ScalerCrop.md
+          - Direct Control Panel: LiveDirectControl.md
       - Photo / Video Taking: Phototaking.md
       - Config Manu:
           - raspiCamSrv Camera Configuration: Configuration.md

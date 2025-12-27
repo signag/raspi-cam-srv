@@ -109,16 +109,20 @@ At the bottom of the screen, there is a message line where application messages 
 
 **raspiCamSrv** supports streaming MJPEG video.
 
-The straming URL is   
-```http://<server>:<port>/video_feed``` for MJPEG video   
-```http://<server>:<port>/photo_feed``` for photo snapshots      
-Both URLs can be accessed without authentication if the checkbox *Req. Auth for Streaming* on the [Settings](./Settings.md) screen is deactivated.   
-If this checkbox is activated, a user must have logged in to raspiCamSrv once in the same browser session which shall be used for streaming. A streaming request in a browser session without login will redirect to the login screen.
+The straming URLs are   
+```http://<server>:<port>/video_feed``` for MJPEG video with Active Camera   
+```http://<server>:<port>/photo_feed``` for photo snapshots with Active Camera and low resolution     
+```http://<server>:<port>/photo_feed_hr``` for photo snapshots with Active Camera and high resolution     
+```http://<server>:<port>/video_feed2``` for MJPEG video with Second Camera   
+```http://<server>:<port>/photo_feed2``` for photo snapshots with Second Camera and low resolution     
+```http://<server>:<port>/photo_feed2_hr``` for photo snapshots with Second Camera and high resolution     
+All URLs can be accessed without authentication if the checkbox *Req. Auth for Streaming* on the [Settings](./Settings.md) screen is deactivated.   
+If this checkbox is activated, a user must have logged in to raspiCamSrv once in the same browser session which shall be used for streaming. A streaming or snapshot request in a browser session without login will redirect to the login screen.
 
 In the web client, an active streaming server is indicated with the process status indicators as    
 ![ProcessStatusIndicator](./img/ProcessIndicator1.jpg) if only the active camera is streaming or   
 ![ProcessStatusIndicator](./img/ProcessIndicator10.jpg) if both cameras are streaming or     
-![ProcessStatusIndicator](./img/ProcessIndicator11.jpg) if if only the other (not active) camera is streaming     
+![ProcessStatusIndicator](./img/ProcessIndicator11.jpg) if if only the second camera is streaming     
 
 A live stream is shown in in the [Live Screen](./LiveScreen.md) for the active camera or on the [Web Cam](./CamWebcam.md) or [Multi-Cam](./CamMulticam.md) pages for both cameras.
 

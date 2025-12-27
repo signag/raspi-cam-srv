@@ -2,9 +2,25 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.5.0
+
+### New Features
+
+- [Direct Control Panel](./LiveDirectControl.md) added to [Live View](./LiveScreen.md#accessing-the-direct-control-panel) for fine tuning of numeric [Camera Control](./CameraControls.md) parameters.
+- Added additional endpoints for photo snapshots with high resolution. Previews are available in the [Cam/WebCam](./CamWebcam.md) dialog. Please note the [special restrictions](./CamWebcam.md#photo-snapshot).    
+Covers [raspi-cam-srv Issue #79](https://github.com/signag/raspi-cam-srv/issues/79)
+
+### Changes
+
+- Style sheet switched to [W3.CSS](https://www.w3schools.com/w3css) 5.02
+
+### Bugfixes
+
+- Fixed ```TypeError: stat: path should be string, bytes, os.PathLike or integer, not NoneType``` which could occur after a [Reset Server](./Settings.md#configuration)
+
 ## V4.4.1
 
-## Bugfix
+### Bugfix
 
 - Fixed the update procedure with dialog [Settings/Update](./SettingsUpdate.md).    
 The procedure implemented in V4.3.2 did not work correctly.    
@@ -16,10 +32,9 @@ If you were running into that issue, you should
 The [Update Procedure](./updating_raspiCamSrv.md) has been modified, accordingly.   
 For versions 4.4.1 and later, the [Settings/Update](./SettingsUpdate.md) procedure should work correctly.
 
-
 ## V4.4.0
 
-## New Feature
+### New Feature
 
 - [Media Viewer](./UserGuide.md#media-viewer) added to all images and videos in the UI.
 
@@ -41,7 +56,7 @@ For these models, when a raw photo is taken, the live stream will be temporarily
 
 ## V4.3.0
 
-## Changes
+### Changes
 
 - Documentation has been moved to [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/).     
 The entire documentation will be versioned with the software and Online Help links will point to documentation with the version of the software, rather than to the latest version.

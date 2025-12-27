@@ -30,3 +30,29 @@ The metadata are captured within the same **Capturing Request** together with th
 In the case of videos, the metadata are captured immediately before recording starts.
 
 Alternatively to metadata, the histogram of the photo can be shown.
+
+## Accessing the Direct Control Panel
+
+For fine tuning all numeric control parameters (e.g. *Focal Distance*, *Zoom Factor*, *Contrast*, etc.), you can use the [Direct Control Panel](./LiveDirectControl.md).
+
+When hovering with the mouse over the Live Stream area, you will get a hint:
+
+![Direct Control hint](./img/LiveDirectControlOpen.jpg)
+
+Before clicking on the Live Stream, you will need to activate those control parameters which you want to adjust:
+
+- [Focal Distance](./FocusHandling.md)
+- [Zoom Factor](./ZoomPan.md) (does not require activation)
+- [Exposure Time](./CameraControls_Exposure.md)
+- [Exposure Value](./CameraControls_Exposure.md)
+- [Analogue Gain](./CameraControls_Exposure.md)
+- [Colour Gain](./CameraControls_Exposure.md)
+- [Sharpness](./CameraControls_Image.md)
+- [Contrast](./CameraControls_Image.md)
+- [Saturation](./CameraControls_Image.md)
+- [Brightness](./CameraControls_Image.md)
+
+Some of these parameters might not be available if the Active Camera is a USB camera.
+
+Furthermore, if you want to restrict to a specific image section, you need specify this on the [Zoom](./ZoomPan.md) window first.   
+The [Direct Control Panel](./LiveDirectControl.md) allows only zooming into that window but not changing the window itself.

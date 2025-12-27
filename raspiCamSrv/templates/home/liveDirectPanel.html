@@ -1,0 +1,569 @@
+<!--
+RaspiCamSrv's Live page    
+-->
+{% extends 'base.html' %}
+
+{% block header %}
+    {% block title %}Live - Direct Control{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="w3-bar w3-green">
+    <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
+        <div class="w3-tooltip">
+            <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
+                GitHub
+            </span>
+            <img src="{{ url_for('static', filename='onlineHelp.png') }}" class="w3-image" id="onlinehelp"
+                alt="Online help" style="height:34px; width:34px" onclick="onlineHelp()">
+        </div>
+    </div>
+</div>
+<div>
+    <p>&nbsp;</p>
+    <div class="w3-grid" style="grid-template-columns: 1fr 4fr 1fr">
+        <div></div>
+        <div>
+            <table style="margin: auto; width: 310px;">
+                {% if sc.activeCameraIsUsb == False or "LensPosition" in cc.usbCamControls %}
+                {% if cc.include_lensPosition == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 0.001 %}
+                {% set max = 999.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["LensPosition"]["min"] | float %}
+                {% set max = cc.usbCamControls["LensPosition"]["max"] | float %}
+                {% endif %}
+                {% set minVal = ((min/max)**(1.0/3.0))|round(3, "common") %}
+                {% set val = ((cc.focalDistance/max)**(1.0/3.0))|round(3, "common") %}
+                <tr>
+                    <td style="width: 120px;">
+                        <label for="focaldistance">Focal Distance:</label>
+                    </td>
+                    <td style="width: 145px;">
+                        <input 
+                            style="width: 100%;"
+                            type="range" 
+                            id="focaldistance" 
+                            name="focaldistance" 
+                            min=0.0 
+                            max=1.0
+                            step=0.001 
+                            value="{{ val }}"
+                            onchange="setFocalDistance(this.value, {{ minVal }})"
+                            oninput="focaldistanceoutput.value = this.value"
+                        >
+                    </td>
+                    <td style="width: 45px;">
+                        <output name="focaldistanceoutput" id="focaldistanceoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+            </table>
+        </div>
+        <div></div>
+        <div>
+            <table style ="width: 180px; margin-left: auto; margin-right: 10px;">
+                {% if sc.activeCameraIsUsb == False or "ExposureTime" in cc.usbCamControls %}
+                {% if cc.include_exposureTime == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 0.0 %}
+                {% set max = 10.0 %}
+                {% set default = 0.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["ExposureTime"]["min"] | float %}
+                {% set max = cc.usbCamControls["ExposureTime"]["max"] | float %}
+                {% set default = cc.usbCamControls["ExposureTime"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.exposureTimeSec) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="exposuretimesec">Exposure Time:</label>
+                        <output style="display:inline-block" name="exposuretimesecoutput" id="exposuretimesecoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="exposuretimesec" 
+                            name="exposuretimesec" 
+                            min=-1.0 
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setExposureTimeSec(this.value, 0.0)"
+                            oninput="exposuretimesecoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+                {% if sc.activeCameraIsUsb == False or "ExposureValue" in cc.usbCamControls %}
+                {% if cc.include_exposureValue == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = -8.0 %}
+                {% set max = 8.0 %}
+                {% set default = 0.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["ExposureValue"]["min"] | float %}
+                {% set max = cc.usbCamControls["ExposureValue"]["max"] | float %}
+                {% set default = cc.usbCamControls["ExposureValue"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.exposureValue) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="exposurevalue">Exposure Value:</label>
+                        <output style="display:inline-block" name="exposurevalueoutput" id="exposurevalueoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="exposurevalue" 
+                            name="exposurevalue" 
+                            min=-1.0 
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setExposureValue(this.value)"
+                            oninput="exposurevalueoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+                {% if sc.activeCameraIsUsb == False or "AnalogueGain" in cc.usbCamControls %}
+                {% if cc.include_analogueGain == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 1.0 %}
+                {% set max = 99.0 %}
+                {% set default = 1.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["AnalogueGain"]["min"] | float %}
+                {% set max = cc.usbCamControls["AnalogueGain"]["max"] | float %}
+                {% set default = cc.usbCamControls["AnalogueGain"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.analogueGain) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="analoguegain">Analogue Gain:</label>
+                        <output style="display:inline-block" name="analoguegainoutput" id="analoguegainoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="analoguegain" 
+                            name="analoguegain" 
+                            min=-1.0
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setAnalogueGain(this.value, 0.0)"
+                            oninput="analoguegainoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+                {% if sc.activeCameraIsUsb == False or "ColourGainRed" in cc.usbCamControls %}
+                {% if cc.include_colourGains == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 0.0 %}
+                {% set max = 32.0 %}
+                {% set default = 0.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["ColourGainRed"]["min"] | float %}
+                {% set max = cc.usbCamControls["ColourGainRed"]["max"] | float %}
+                {% set default = cc.usbCamControls["ColourGainRed"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.colourGains[0]) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="colourgainred">Colour Gain Red:</label>
+                        <output style="display:inline-block" name="colourgainredoutput" id="colourgainredoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="colourgainred" 
+                            name="colourgainred" 
+                            min=-1.0
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setColourGainRed(this.value, 0.0)"
+                            oninput="colourgainredoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+                {% if sc.activeCameraIsUsb == False or "ColourGainBlue" in cc.usbCamControls %}
+                {% if cc.include_colourGains == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 0.0 %}
+                {% set max = 32.0 %}
+                {% set default = 0.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["ColourGainBlue"]["min"] | float %}
+                {% set max = cc.usbCamControls["ColourGainBlue"]["max"] | float %}
+                {% set default = cc.usbCamControls["ColourGainBlue"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.colourGains[1]) %}
+                <tr>
+                    <td>
+                        <label for="colourgainblue">Colour Gain Blue:</label>
+                        <output style="display:inline" name="colourgainblueoutput" id="colourgainblueoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="colourgainblue" 
+                            name="colourgainblue" 
+                            min=-1.0
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setColourGainBlue(this.value, 0.0)"
+                            oninput="colourgainblueoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+            </table>
+        </div>
+        <div class="w3-border" style="justify-content: center; align-items: center;">
+            <img 
+                src="{{ url_for('home.live_view_feed') }}" 
+                class="w3-image" 
+                id="liveviewimage" 
+                alt="Camera Live View"
+                style="width: 100%; height: 100%; object-fit: contain;"
+            >
+        </div>
+        <div>
+            <table>
+                {% if sc.activeCameraIsUsb == False or "Sharpness" in cc.usbCamControls %}
+                {% if cc.include_sharpness == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 0.0 %}
+                {% set max = 32.0 %}
+                {% set default = 1.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["Sharpness"]["min"] | float %}
+                {% set max = cc.usbCamControls["Sharpness"]["max"] | float %}
+                {% set default = cc.usbCamControls["Sharpness"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.sharpness) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="sharpness">Sharpness:</label>
+                        <output style="display:inline-block" name="sharpnessoutput" id="sharpnessoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="sharpness" 
+                            name="sharpness" 
+                            min=-1.0 
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setSharpness(this.value)"
+                            oninput="sharpnessoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+                {% if sc.activeCameraIsUsb == False or "Contrast" in cc.usbCamControls %}
+                {% if cc.include_contrast == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 0.0 %}
+                {% set max = 32.0 %}
+                {% set default = 1.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["Contrast"]["min"] | float %}
+                {% set max = cc.usbCamControls["Contrast"]["max"] | float %}
+                {% set default = cc.usbCamControls["Contrast"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.contrast) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="contrast">Contrast:</label>
+                        <output style="display:inline-block" name="contrastoutput" id="contrastoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="contrast" 
+                            name="contrast" 
+                            min=-1.0 
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setContrast(this.value)"
+                            oninput="contrastoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+                {% if sc.activeCameraIsUsb == False or "Saturation" in cc.usbCamControls %}
+                {% if cc.include_saturation == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = 0.0 %}
+                {% set max = 32.0 %}
+                {% set default = 1.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["Saturation"]["min"] | float %}
+                {% set max = cc.usbCamControls["Saturation"]["max"] | float %}
+                {% set default = cc.usbCamControls["Saturation"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.saturation) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="saturation">Saturation:</label>
+                        <output style="display:inline-block" name="saturationoutput" id="saturationoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="saturation" 
+                            name="saturation" 
+                            min=-1.0
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setSaturation(this.value)"
+                            oninput="saturationoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+                {% if sc.activeCameraIsUsb == False or "Brightness" in cc.usbCamControls %}
+                {% if cc.include_brightness == True %}
+                {% if sc.activeCameraIsUsb == False %}
+                {% set min = -1.0 %}
+                {% set max = 1.0 %}
+                {% set default = 0.0 %}
+                {% else %}
+                {% set min = cc.usbCamControls["Brightness"]["min"] | float %}
+                {% set max = cc.usbCamControls["Brightness"]["max"] | float %}
+                {% set default = cc.usbCamControls["Brightness"]["default"] | float %}
+                {% endif %}
+                {% set val = sc.ctrlValToSliderPos(min, max, default, cc.brightness) %}
+                <tr>
+                    <td class="w3-tooltip">
+                        <label style="display:inline-block" for="brightness">Brightness:</label>
+                        <output style="display:inline-block" name="brightnessoutput" id="brightnessoutput">{{ val }}</output>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input 
+                            type="range" 
+                            id="brightness" 
+                            name="brightness" 
+                            min=-1.0
+                            max=1.0 
+                            step=0.01 
+                            value="{{ val }}"
+                            onchange="setBrightness(this.value)"
+                            oninput="brightnessoutput.value = this.value"
+                        >
+                    </td>
+                </tr>
+                {% endif %}
+                {% endif %}
+
+            </table>
+        </div>
+        <div></div>
+        <div>
+            <table style="margin: auto; width: 310px;">
+                <tr>
+                    <td style="width: 120px;">
+                        <label for="zoomfactor">Zoom Factor:</label>
+                    </td>
+                    {% set max = sc.zoomFactor %}
+                    <td style="width: 145px;">
+                        <input 
+                            style="width: 100%;"
+                            type="range" 
+                            id="zoomfactor" 
+                            name="zoomfactor" 
+                            min=10.0
+                            max=100.0 
+                            step=0.01 
+                            value="{{ sc.zoomFactor }}"
+                            onchange="setZoomFactor(this.value, {{ max }})"
+                            oninput="zoomfactoroutput.value = this.value"
+                        >
+                    </td>
+                    <td  style="width: 45px;">
+                        <output name="zoomfactoroutput" id="zoomfactoroutput">{{ sc.zoomFactor }}</output>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div>
+        </div>
+    </div>
+</div>
+<script>
+    function showAfWindows(tabSelected, vrActive, trgAf, trgZoom, camRef) {
+        const x = 0;
+    }
+
+    function doSubmit(form) {
+        document.getElementById(form).submit();
+    }
+
+    function setSharpness(val) {
+        fetch("{{ url_for('home.dc_set_Sharpness') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setContrast(val) {
+        fetch("{{ url_for('home.dc_set_Contrast') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setSaturation(val) {
+        fetch("{{ url_for('home.dc_set_Saturation') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setBrightness(val) {
+        fetch("{{ url_for('home.dc_set_Brightness') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setExposureTimeSec(val, min) {
+        if (val < min) {
+            val = min;
+            document.getElementById("exposuretimesec").value = min;
+            document.getElementById("exposuretimesecoutput").value = min;
+        }
+        fetch("{{ url_for('home.dc_set_exposureTimeSec') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setExposureValue(val) {
+        fetch("{{ url_for('home.dc_set_exposureValue') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setAnalogueGain(val, min) {
+        if (val < min) {
+            val = min;
+            document.getElementById("analoguegain").value = min;
+            document.getElementById("analoguegainoutput").value = min;
+        }
+        fetch("{{ url_for('home.dc_set_AnalogueGain') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setColourGainRed(val, min) {
+        if (val < min) {
+            val = min;
+            document.getElementById("colourgainred").value = min;
+            document.getElementById("colourgainredoutput").value = min;
+        }
+        fetch("{{ url_for('home.dc_set_ColourGainRed') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setColourGainBlue(val, min) {
+        if (val < min) {
+            val = min;
+            document.getElementById("colourgainblue").value = min;
+            document.getElementById("colourgainblueoutput").value = min;
+        }
+        fetch("{{ url_for('home.dc_set_ColourGainBlue') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setFocalDistance(val, min) {
+        if (val < min) {
+            val = min;
+            document.getElementById("focaldistance").value = min;
+            document.getElementById("focaldistanceoutput").value = min;
+        }
+        fetch("{{ url_for('home.dc_set_FocalDistance') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+
+    function setZoomFactor(val, max) {
+        if (val > max) {
+            val = max;
+            document.getElementById("zoomfactor").value = val;
+            document.getElementById("zoomfactoroutput").value = val;
+        }
+        fetch("{{ url_for('home.dc_set_ZoomFactor') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: val })
+        });
+    }
+    function onlineHelp() {
+        window.open("{{ sc.getBaseHelpUrl() }}/LiveDirectControl/");
+    }
+</script>
+{% endblock %}

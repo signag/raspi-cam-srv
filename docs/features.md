@@ -48,6 +48,7 @@ For more details, see the [User Guide](./UserGuide.md).
 - [Auto Exposure Control](./CameraControls_AutoExposure.md) for CSI cameras.
 - [Exposure Control](./CameraControls_Exposure.md) for CSI cameras.
 - [Image Control](./CameraControls_Image.md) for CSI cameras as well as for USB camaras (if supported by the camera).
+- **NEW**: Panel for [Direct Control](./LiveDirectControl.md) of numeric control parameters.
 
 ### Photo Taking / Video Recording
 
@@ -59,13 +60,14 @@ For more details, see the [User Guide](./UserGuide.md).
 - [Display buffer](./Phototaking.md#photo-display) for comparison of photos and metadata/histogram.
 - [Photo Viewer](./PhotoViewer.md)
 - [Photo Download](./PhotoViewer.md)
-- **NEW**: Photos/videos are enabled for being inspected in a separate [Media Viewer](./UserGuide.md#media-viewer) window.
+- Photos/videos are enabled for being inspected in a separate [Media Viewer](./UserGuide.md#media-viewer) window.
 
 ### Streaming
 
 - Endpoint for [streaming](./CamWebcam.md) (MJPEG) the active camera.
 - Endpoint for [streaming](./CamWebcam.md) the second camera.
-- Endpoints for photo snapshots of active and second camera.
+- Endpoints for photo snapshots of active and second camera with low resolution.
+- **NEW**: Endpoints for photo snapshots of active and second camera with high resolution.
 - Option for activating / deactivating authentication for streaming and snapshots.
 
 ### Multi-Camera Features

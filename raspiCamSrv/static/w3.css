@@ -1,4 +1,4 @@
-/* W3.CSS 4.15 December 2020 by Jan Egil and Borge Refsnes */
+﻿/* W3.CSS 5.02 March 31 2025 by Jan Egil and Borge Refsnes */
 html {
     box-sizing: border-box
 }
@@ -11,8 +11,7 @@ html {
 
 /* Extract from normalize.css by Nicolas Gallagher and Jonathan Neal git.io/normalize */
 html {
-    /*-ms-text-size-adjust: 100%;*/
-    text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%
 }
 
@@ -1104,6 +1103,33 @@ a {
     margin-bottom: 16px
 }
 
+.w3-grid {
+    display: grid
+}
+
+.w3-grid-padding {
+    display: grid;
+    gap: 16px
+}
+
+.w3-flex {
+    display: flex
+}
+
+.w3-text-center {
+    text-align: center
+}
+
+.w3-text-bold,
+.w3-bold {
+    font-weight: bold
+}
+
+.w3-text-italic,
+.w3-italic {
+    font-style: italic
+}
+
 .w3-code,
 .w3-codespan {
     font-family: Consolas, "courier new";
@@ -1509,6 +1535,14 @@ a {
     box-shadow: none !important
 }
 
+.w3-rtl {
+    direction: rtl
+}
+
+.w3-ltr {
+    direction: ltr
+}
+
 /* Colors */
 .w3-amber,
 .w3-hover-amber:hover {
@@ -1672,6 +1706,79 @@ a {
 .w3-hover-dark-gray:hover {
     color: #fff !important;
     background-color: #616161 !important
+}
+
+.w3-asphalt,
+.w3-hover-asphalt:hover {
+    color: #fff !important;
+    background-color: #343a40 !important
+}
+
+.w3-crimson,
+.w3-hover-crimson:hover {
+    color: #fff !important;
+    background-color: #a20025 !important
+}
+
+.w3-cobalt,
+w3-hover-cobalt:hover {
+    color: #fff !important;
+    background-color: #0050ef !important
+}
+
+.w3-emerald,
+.w3-hover-emerald:hover {
+    color: #fff !important;
+    background-color: #008a00 !important
+}
+
+.w3-olive,
+.w3-hover-olive:hover {
+    color: #fff !important;
+    background-color: #6d8764 !important
+}
+
+.w3-paper,
+.w3-hover-paper:hover {
+    color: #000 !important;
+    background-color: #f8f9fa !important
+}
+
+.w3-sienna,
+.w3-hover-sienna:hover {
+    color: #fff !important;
+    background-color: #a0522d !important
+}
+
+.w3-taupe,
+.w3-hover-taupe:hover {
+    color: #fff !important;
+    background-color: #87794e !important
+}
+
+.w3-danger {
+    color: #fff !important;
+    background-color: #dd0000 !important
+}
+
+.w3-note {
+    color: #000 !important;
+    background-color: #fff599 !important
+}
+
+.w3-info {
+    color: #fff !important;
+    background-color: #0a6fc2 !important
+}
+
+.w3-warning {
+    color: #000 !important;
+    background-color: #ffb305 !important
+}
+
+.w3-success {
+    color: #fff !important;
+    background-color: #008a00 !important
 }
 
 .w3-pale-red,

@@ -77,6 +77,62 @@ def webcam():
         "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
     )
 
+@bp.route("/active_camera_photo_cfg", methods=("GET", "POST"))
+@login_required
+def active_camera_photo_cfg():
+    logger.debug("In active_camera_photo_cfg")
+    Camera().startLiveStream()
+    Camera().startLiveStream2()
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    ster = cfg.stereoCfg
+    cs = cfg.cameras
+    camL, camR = getStereoCameras()
+    doInitCalibration(camL, camR)
+    tmp = {}
+    tmp["intent"] = str(ster.intentIdx)
+    tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
+    sc = cfg.serverConfig
+    str2 = None
+    if sc.isLiveStream2:
+        str2 = cfg.streamingCfg[str(Camera().camNum2)]
+    sc.curMenu = "webcam"
+    sc.lastCamTab = "webcam"
+    if request.method == "POST":
+        sc.webCamActiveCamPhotoCfg = request.form["activecameraphotocfg"]
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
+@bp.route("/second_camera_photo_cfg", methods=("GET", "POST"))
+@login_required
+def second_camera_photo_cfg():
+    logger.debug("In second_camera_photo_cfg")
+    Camera().startLiveStream()
+    Camera().startLiveStream2()
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    ster = cfg.stereoCfg
+    cs = cfg.cameras
+    camL, camR = getStereoCameras()
+    doInitCalibration(camL, camR)
+    tmp = {}
+    tmp["intent"] = str(ster.intentIdx)
+    tmp["stereoAlgo"] = str(ster.intentAlgoIdx)
+    sc = cfg.serverConfig
+    str2 = None
+    if sc.isLiveStream2:
+        str2 = cfg.streamingCfg[str(Camera().camNum2)]
+    sc.curMenu = "webcam"
+    sc.lastCamTab = "webcam"
+    if request.method == "POST":
+        sc.webCamSecondCamPhotoCfg = request.form["secondcameraphotocfg"]
+    return render_template(
+        "webcam/webcam.html", sc=sc, cfg=cfg, str2=str2, ster=ster, tmp=tmp, cs=cs
+    )
+
 @bp.route("/store_streaming_config", methods=("GET", "POST"))
 @login_required
 def store_streaming_config():
@@ -409,12 +465,28 @@ def photo_feed():
     return Response(Camera().get_photoFrame(), mimetype="image/jpeg")
 
 
+@bp.route("/photo_feed_hr")
+@login_for_streaming
+def photo_feed_hr():
+    # logger.debug("Thread %s: In photo_feed_hr", get_ident())
+    Camera().startLiveStream()
+    return Response(Camera().get_photoFrame_hr(), mimetype="image/jpeg")
+
+
 @bp.route("/photo_feed2")
 @login_for_streaming
 def photo_feed2():
     # logger.debug("Thread %s: In photo_feed2", get_ident())
     Camera().startLiveStream2()
     return Response(Camera().get_photoFrame2(), mimetype="image/jpeg")
+
+
+@bp.route("/photo_feed2_hr")
+@login_for_streaming
+def photo_feed2_hr():
+    # logger.debug("Thread %s: In photo_feed2_hr", get_ident())
+    Camera().startLiveStream2()
+    return Response(Camera().get_photoFrame2_hr(), mimetype="image/jpeg")
 
 
 @bp.route("/cam_take_photo", methods=("GET", "POST"))

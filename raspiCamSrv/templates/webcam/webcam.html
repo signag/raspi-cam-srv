@@ -88,20 +88,12 @@
             <tr>
                 <td>
                     {% if sc.isLiveStream %}
-                    {% if sc.activeCameraIsUsb == False %}
-                    Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
-                    {% else %}
-                    Using default Camera Configuration
-                    {% endif %}
+                    Using Camera Configuration <b>LIVE</b>
                     {% endif %}
                 </td>
                 <td>
                     {% if str2 != None %}
-                    {% if sc.secondCameraIsUsb == False %}
-                    Using stored configuration with camera stream <b>{{ str2["liveconfig"].stream }}</b>
-                    {% else %}
-                    Using default Camera Configuration
-                    {% endif %}
+                    Using Camera Configuration <b>LIVE</b>
                     {% endif %}
                 </td>
             </tr>
@@ -157,18 +149,46 @@
                 <td>
                     {% if sc.isLiveStream %}
                     {% if sc.activeCameraIsUsb == False %}
-                    Using Configuration <b>LIVE</b> with camera stream <b>{{ cfg.liveViewConfig.stream }}</b>
+                    <p style="margin: 0; display: inline-block;">Using Camera Configuration</p> 
+                    <form style="display: inline-block;" id="activecameraphotocfgform" method="post" action="{{ url_for('webcam.active_camera_photo_cfg') }}">
+                        <select style="display: inline-block;" name="activecameraphotocfg" id="activecameraphotocfg" onchange="doSubmit('activecameraphotocfgform')">
+                            {% if sc.webCamActiveCamPhotoCfg == "LIVE" %}
+                                <option value="LIVE" selected>LIVE</option>
+                            {% else %}
+                                <option value="LIVE">LIVE</option>
+                            {% endif %}
+                            {% if sc.webCamActiveCamPhotoCfg == "FOTO" %}
+                                <option value="FOTO" selected>FOTO</option>
+                            {% else %}
+                                <option value="FOTO">FOTO</option>
+                            {% endif %}
+                        </select>
+                    </form>
                     {% else %}
-                    Using default Camera Configuration
+                    Using Camera Configuration <b>LIVE</b>
                     {% endif %}
                     {% endif %}
                 </td>
                 <td>
                     {% if str2 != None %}
                     {% if sc.secondCameraIsUsb == False %}
-                    Using stored Configuration <b>{{ str2["liveconfig"].name }}</b> with camera stream <b>{{ str2["liveconfig"].stream }}</b>
+                    <p style="margin: 0; display: inline-block;">Using Camera Configuration</p> 
+                    <form style="display: inline-block;" id="secondcameraphotocfgform" method="post" action="{{ url_for('webcam.second_camera_photo_cfg') }}">
+                        <select style="display: inline-block;" name="secondcameraphotocfg" id="secondcameraphotocfg" onchange="doSubmit('secondcameraphotocfgform')">
+                            {% if sc.webCamSecondCamPhotoCfg == "LIVE" %}
+                                <option value="LIVE" selected>LIVE</option>
+                            {% else %}
+                                <option value="LIVE">LIVE</option>
+                            {% endif %}
+                            {% if sc.webCamSecondCamPhotoCfg == "FOTO" %}
+                                <option value="FOTO" selected>FOTO</option>
+                            {% else %}
+                                <option value="FOTO">FOTO</option>
+                            {% endif %}
+                        </select>
+                    </form>
                     {% else %}
-                    Using default Camera Configuration
+                    Using Camera Configuration <b>LIVE</b>
                     {% endif %}
                     {% endif %}
                 </td>
@@ -176,24 +196,40 @@
             <tr>
                 <td>
                     {% if sc.isLiveStream %}
+                    {% if sc.webCamActiveCamPhotoCfg == "LIVE" %}
                     <img src="{{ url_for('webcam.photo_feed') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% else %}
+                    <img src="{{ url_for('webcam.photo_feed_hr') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage" alt="Camera Live View">
+                    {% endif %}
                     {% endif %}
                 </td>
                 <td>
                     {% if str2 != None %}
+                    {% if sc.webCamSecondCamPhotoCfg == "LIVE" %}
                     <img src="{{ url_for('webcam.photo_feed2') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% else %}
+                    <img src="{{ url_for('webcam.photo_feed2_hr') }}" class="w3-image"style="width: 100%; height: 350px; object-fit: scale-down" id="liveviewimage2" alt="Camera 2 Live View">
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>
             <tr>
                 <td>
                     {% if sc.isLiveStream %}
+                    {% if sc.webCamActiveCamPhotoCfg == "LIVE" %}
                     Photo URL: <a href="http://{{ g.hostname }}/photo_feed" target="_blank">http://{{ g.hostname }}/photo_feed</a>
+                    {% else %}
+                    Photo URL: <a href="http://{{ g.hostname }}/photo_feed_hr" target="_blank">http://{{ g.hostname }}/photo_feed_hr</a>
+                    {% endif %}
                     {% endif %}
                 </td>
                 <td>
                     {% if str2 != None %}
+                    {% if sc.webCamSecondCamPhotoCfg == "LIVE" %}
                     Photo URL: <a href="http://{{ g.hostname }}/photo_feed2" target="_blank">http://{{ g.hostname }}/photo_feed2</a>
+                    {% else %}
+                    Photo URL: <a href="http://{{ g.hostname }}/photo_feed2_hr" target="_blank">http://{{ g.hostname }}/photo_feed2_hr</a>
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>
