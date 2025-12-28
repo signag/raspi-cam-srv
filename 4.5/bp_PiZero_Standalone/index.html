@@ -12,7 +12,7 @@
         <link rel="prev" href="../SetupDocker/">
       
       
-        <link rel="next" href="../bp_Hotspot_Bullseye/">
+        <link rel="next" href="../bp_Hotspot_Trixie/">
       
       
         
@@ -643,10 +643,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-configure-raspicamsrv-sercice" class="md-nav__link">
+  <a href="#6-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Configure raspiCamSrv Sercice
+        6. Test
       
     </span>
   </a>
@@ -654,10 +654,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-test" class="md-nav__link">
+  <a href="#updating-a-stanalone-raspicamsrv-system" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Test
+        Updating a Stanalone RaspiCamSrv System
       
     </span>
   </a>
@@ -727,14 +727,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../bp_Hotspot_Bullseye/" class="md-nav__link">
+      <a href="../bp_Hotspot_Trixie/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Hotspot Setup for Bullseye
+    Hotspot Setup for Trixie
   
 
     
@@ -762,7 +762,35 @@
   <span class="md-ellipsis">
     
   
-    Hotspot Setup for Boookworm and Trixie
+    Hotspot Setup for Boookworm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bp_Hotspot_Bullseye/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hotspot Setup for Bullseye
   
 
     
@@ -3335,10 +3363,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-configure-raspicamsrv-sercice" class="md-nav__link">
+  <a href="#6-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Configure raspiCamSrv Sercice
+        6. Test
       
     </span>
   </a>
@@ -3346,10 +3374,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-test" class="md-nav__link">
+  <a href="#updating-a-stanalone-raspicamsrv-system" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Test
+        Updating a Stanalone RaspiCamSrv System
       
     </span>
   </a>
@@ -3394,10 +3422,9 @@
 <ul>
 <li><strong>Model</strong><br>
 Make sure to select the correct model</li>
-<li><strong>Bullseye or Bookworm?</strong><br>
-raspiCamSrv can be used with both systems.<br>
-Whereas there were still some issues for early versions of Bookworm on Pi Zero systems, 
-this is no longer the case with the current version.</li>
+<li><strong>Bullseye, Bookworm or Trixie?</strong><br>
+raspiCamSrv can be used with all of these systems.<br>
+Unless other reasons force taking one of the older OS, it is recommended to use the officially recommended, which is currently Trixie.</li>
 <li><strong>Full or lite system?</strong><br>
 It is recommended to install the full system although the desktop environment will not be required.</li>
 <li><strong>OS Customisation</strong><br>
@@ -3406,7 +3433,7 @@ however this will assure that the <em>Wireless LAN Country</em> will be set.</li
 </ul>
 <h2 id="2-power-up">2. Power Up</h2>
 <ol>
-<li>Connect the camera (the small CSI-2 port of Pi Zero and Pi 5 require a special cable)</li>
+<li>If camera applications are intended, connect the camera (the small CSI-2 port of Pi Zero and Pi 5 require a special cable)</li>
 <li>Insert the microSD card into the card slot</li>
 <li>If available, encapsulate the Pi into a case</li>
 <li>Connect the network USB cable through an ethernet adapter to a switch of your local network</li>
@@ -3425,18 +3452,22 @@ sudo apt full-upgrade
 <h2 id="4-configure-hotspot">4. Configure Hotspot</h2>
 <p>The process of configuration is slightly different, depending on the cosen OS:</p>
 <ul>
-<li><a href="../bp_Hotspot_Bullseye/">Hotspot Configuration for 'Bullseye' OS</a></li>
+<li><a href="../bp_Hotspot_Trixie/">Hotspot Configuration for 'Trixie' OS</a></li>
 <li><a href="../bp_Hotspot_Bookworm/">Hotspot Configuration for 'Bookworm' OS</a></li>
+<li><a href="../bp_Hotspot_Bullseye/">Hotspot Configuration for 'Bullseye' OS</a></li>
 </ul>
 <h2 id="5-install-raspicamsrv">5. Install raspiCamSrv</h2>
 <p>For installation, you will need to connect through ethernet.</p>
-<p>Then, follow the <a href="../installation/">raspiCamSrv Installation Procedure</a></p>
-<h2 id="6-configure-raspicamsrv-sercice">6. Configure raspiCamSrv Sercice</h2>
-<p>Follow the <a href="../service_configuration/">Service Configuration</a> instructions</p>
-<h2 id="7-test">7. Test</h2>
+<p>Then, follow the <a href="../installation/">raspiCamSrv Installation Procedure</a>, which will also do the Service configuration.</p>
+<h2 id="6-test">6. Test</h2>
 <p>After rebooting, first test using the client connected with ethernet cable.</p>
-<p>If this is successfull, you can shutdown and unplug the ethernet cable</p>
-<p>After restart, connect from a mobile client to the hotspot and connect to raspiCamSrv from a browser window.</p>
+<p>If this is successfull, you can shutdown and unplug the ethernet cable.</p>
+<p>After restart, connect from a mobile client to the hotspot and connect to raspiCamSrv from a browser window.  <br />
+<strong>NOTE</strong>, that for the <a href="../bp_Hotspot_Trixie/">Trixie setup</a>, you need to use <code>&lt;hostname&gt;.local</code> instead of <code>hostname</code>.</p>
+<h2 id="updating-a-stanalone-raspicamsrv-system">Updating a Stanalone RaspiCamSrv System</h2>
+<p>Since the standalone system has no internet connection, you will not be notified on new <strong>raspiCamSrv</strong> versions (see <a href="../UserGuide/#title-bar">Update notification through coloured version number</a>).</p>
+<p>When you are aware of an update, you need to connect the standalone Raspberry Pi to a network with internet access using an ethernet cable.</p>
+<p>Then, you can use the <a href="../SettingsUpdate/">Update function</a> to check for updates and for updating <strong>raspiCamSrv</strong>.</p>
 
 
 
