@@ -78,7 +78,7 @@ The color with which the error is shown, (green, yellow, red) indicates the qual
 
 - < 0.5 px : excellent
 - 0.5 - 1 px : acceptable
-- > 1 px : poor
+- &gt; 1 px : poor
 
 ## Calibration Data Storage
 

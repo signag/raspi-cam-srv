@@ -6,7 +6,7 @@ This section describes how to configure a Raspberry Pi as hotspot if the OS is *
 
 In the following description, you will need to replace
 
-- ```<SSID>``` with the intended hotspot SSID, e.g. "RaspCamSrv01"
+- ```<SSID>``` with the intended hotspot SSID, e.g. "RaspiCamSrv01"
 - ```<passphrase>``` with the passphrase to protect hotspot access
 
 The connection ID, used in [NetworkManager](https://networkmanager.dev/docs/api/latest/nmcli.html) commands is chosen as "RaspiCamSrv"

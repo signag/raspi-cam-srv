@@ -64,7 +64,7 @@ Closing all windows of a browser kills the session.
 
 ## Activating and Deactivating Stereo Vision
 
-If your system has 2 non-USB cameras of the seme model connected, you can use these as [stereo camera system](https://en.wikipedia.org/wiki/Computer_stereo_vision).
+If your system has 2 non-USB cameras of the same model connected, you can use these as [stereo camera system](https://en.wikipedia.org/wiki/Computer_stereo_vision).
 
 **raspiCamSrv** supports basic stereo features such as [3D Videos and Depth Maps](./CamStereo.md) as well as [Calibration and Rectification](./CamCalibration.md).
 

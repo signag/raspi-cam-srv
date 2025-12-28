@@ -19,8 +19,9 @@ nav:
           - Running raspiCamSrv as Docker container: SetupDocker.md
           - Setup of Raspberry Pi Zero as Standalone System: bp_PiZero_Standalone.md
           - Configuring as Hotspot:
+              - Hotspot Setup for Trixie: bp_Hotspot_Trixie.md
+              - Hotspot Setup for Boookworm: bp_Hotspot_Bookworm.md
               - Hotspot Setup for Bullseye: bp_Hotspot_Bullseye.md
-              - Hotspot Setup for Boookworm and Trixie: bp_Hotspot_Bookworm.md
       - Trouble Shooting Guide: Troubelshooting.md
   - Features: features.md
   - References:

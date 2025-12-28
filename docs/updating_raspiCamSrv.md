@@ -11,7 +11,8 @@ Before updating, make sure that
 
 The [Settings/Update](./SettingsUpdate.md) dialog is the easiest way for updating. 
 
-Alternatively, you can configure [Versatile Buttons](./ConsoleVButtons.md) for the commands described in the following, so that update and server restart can be initiated directly from the Web UI.
+Alternatively, you can configure [Versatile Buttons](./ConsoleVButtons.md) with similar commands as described in the following, so that update and server restart can be initiated directly from the Web UI.  
+(Note that commands issued through Versatile Buttons execute from the root directory in the virtual environment)
 
 For update, proceed as follows:    
 (If running a Docker container see [Update Procedure for Docker Container](./SetupDocker.md#update-procedure))
