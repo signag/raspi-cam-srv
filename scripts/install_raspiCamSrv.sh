@@ -69,6 +69,21 @@ else
 fi
 
 ############################################
+# Ask user about imx500 Camera support
+############################################
+echo
+read -rp "Do you intend to use the Raspberry Pi AI Camera (imx500)? [y/N]: " AI_CHOICE
+echo
+
+AI_CHOICE=${AI_CHOICE,,}   # normalize to lowercase
+
+if [[ "$AI_CHOICE" == "y" ]]; then
+    ENABLE_AI=true
+else
+    ENABLE_AI=false
+fi
+
+############################################
 # Check that ffmpeg is installed
 ############################################
 echo
@@ -204,6 +219,26 @@ if [ "$IS_LITE" = true ]; then
     echo 
     echo "Step 11.5: Installing psutil ..."
     pip install --ignore-installed psutil
+fi
+
+if [ "$ENABLE_AI" = true ]; then
+    echo 
+    PACKAGE="imx500-all"
+    echo "Step 11.6: Installing $PACKAGE ..."
+
+    if dpkg -s "$PACKAGE" >/dev/null 2>&1; then
+        echo "Package '$PACKAGE' is already installed."
+    else
+        echo "Package '$PACKAGE' is not installed. Installing..."
+        sudo apt update
+        sudo apt install -y "$PACKAGE"
+    fi
+fi
+
+if [ "$ENABLE_AI" = true ]; then
+    echo 
+    echo "Step 11.7: Installing munkres ..."
+    pip install --break-system-packages munkres
 fi
 
 ############################################
