@@ -74,6 +74,19 @@ See [Camera Status and Number of Threads](#camera-status-and-number-of-threads)
 Under *Tuning File*, you can see whether the Default or a custom tuning file are currently in use.    
 See [raspiCamSrv Camera Tuning](./Tuning.md).
 
+#### AI Features
+
+This shows whether AI Features of a camera are available and active.    
+Currently, this applies only to the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html) with Sony IMX500 sensor.
+
+- Not Available
+<br>Indicates that the camera has no AI capabilities
+- Available
+<br>Indicates that the camera has AI capabilities and that AI features are enabled in the [Settings](./Settings.md#activating-and-deactivating-the-use-of-camera-ai-features).
+<br>Whether or not the camera is currently running a neural network model can be controlled in the [Camera AI Configuration](./Configuration_AI.md)
+- Disabled in Settings
+<br>Indicates that the camera has AI capabilities. However AI features are disabled in the [Settings](./Settings.md#activating-and-deactivating-the-use-of-camera-ai-features)
+
 #### Camera connected but not in the list?
 
 If you have a USB camera connected which does not show up in the list, you may have plugged in the camera while **raspiCamSrv** was running.   

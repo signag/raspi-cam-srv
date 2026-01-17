@@ -10,7 +10,7 @@ from flask import (
 )
 from werkzeug.exceptions import abort
 from raspiCamSrv.camera_pi import Camera
-from raspiCamSrv.camCfg import CameraCfg, TuningConfig, StereoConfig, ServerConfig
+from raspiCamSrv.camCfg import CameraCfg, TuningConfig, StereoConfig, ServerConfig, AiConfig
 from raspiCamSrv.version import version
 from raspiCamSrv.home import generateHistogram
 from _thread import get_ident
@@ -167,6 +167,7 @@ def store_streaming_config():
         scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
         scfg["controls"] = copy.deepcopy(cfg.controls)
         scfg["triggercamera"] = copy.deepcopy(tc.cameraSettings)
+        scfg["aiconfig"] = copy.deepcopy(cfg.aiConfig)
         sc.unsavedChanges = True
         sc.addChangeLogEntry(
             f"Camera settings for {sc.activeCameraInfo} saved for camera switch and streaming"
@@ -212,6 +213,7 @@ def sync_settings():
             scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
             scfg["controls"] = copy.deepcopy(cfg.controls)
             scfg["triggercamera"] = copy.deepcopy(tc.cameraSettings)
+            scfg["aiconfig"] = copy.deepcopy(cfg.aiConfig)
             Camera().restartLiveStream2()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(
@@ -256,6 +258,7 @@ def switch_cameras():
                     newCamModel = cm.model
                     newCamIsUsb = cm.isUsb
                     newCamUsbDev = cm.usbDev
+                    newCamHasAi = cm.hasAi
                     break
         else:
             newCam = sc.secondCamera
@@ -263,6 +266,7 @@ def switch_cameras():
             newCamModel = sc.secondCameraModel
             newCamIsUsb = sc.secondCameraIsUsb
             newCamUsbDev = sc.secondCameraUsbDev
+            newCamHasAi = sc.secondCameraHasAi
 
         if newCam != sc.activeCamera:
             if sc.isTriggerRecording:
@@ -277,11 +281,13 @@ def switch_cameras():
                 sc.secondCameraModel = sc.activeCameraModel
                 sc.secondCameraIsUsb = sc.activeCameraIsUsb
                 sc.secondCameraUsbDev = sc.activeCameraUsbDev
+                sc.secondCameraHasAi = sc.activeCameraHasAi
                 sc.activeCamera = newCam
                 sc.activeCameraInfo = newCamInfo
                 sc.activeCameraModel = newCamModel
                 sc.activeCameraIsUsb = newCamIsUsb
                 sc.activeCameraUsbDev = newCamUsbDev
+                sc.activeCameraHasAi = newCamHasAi
                 cfg.liveViewConfig.stream_size = None
                 cfg.photoConfig.stream_size = None
                 cfg.rawConfig.stream_size = None
@@ -294,9 +300,15 @@ def switch_cameras():
                         cfg.tuningConfig = ncfg["tuningconfig"]
                     else:
                         cfg.tuningConfig = TuningConfig()
+                        
+                    if "aiconfig" in ncfg:
+                        cfg.aiConfig = copy.deepcopy(ncfg["aiconfig"])
+                    else:
+                        cfg.aiConfig = AiConfig()
                 else:
                     cfg.tuningConfig = TuningConfig()
-                Camera.switchCamera()
+                    cfg.aiConfig = AiConfig()
+                Camera().switchCamera()
                 if sc.isLiveStream2:
                     str2 = cfg.streamingCfg[str(Camera().camNum2)]
                 logger.debug(
@@ -346,6 +358,7 @@ def change_active_camera():
                 newCamModel = cm.model
                 newCamIsUsb = cm.isUsb
                 newCamUsbDev = cm.usbDev
+                newCamHasAi = cm.hasAi
                 break
 
         if newCam != sc.activeCamera:
@@ -363,6 +376,7 @@ def change_active_camera():
                 sc.activeCameraModel = newCamModel
                 sc.activeCameraIsUsb = newCamIsUsb
                 sc.activeCameraUsbDev = newCamUsbDev
+                sc.activeCameraHasAi = newCamHasAi
                 cfg.liveViewConfig.stream_size = None
                 cfg.photoConfig.stream_size = None
                 cfg.rawConfig.stream_size = None
@@ -377,7 +391,7 @@ def change_active_camera():
                         cfg.tuningConfig = TuningConfig()
                 else:
                     cfg.tuningConfig = TuningConfig()
-                Camera.switchCamera()
+                Camera().switchCamera()
                 if sc.isLiveStream2:
                     str2 = cfg.streamingCfg[str(Camera().camNum2)]
                 logger.debug(
@@ -425,6 +439,7 @@ def change_second_camera():
                 newCamModel = cm.model
                 newCamIsUsb = cm.isUsb
                 newCamUsbDev = cm.usbDev
+                newCamHasAi = cm.hasAi
                 break
 
         if newCam != sc.secondCamera:
@@ -442,7 +457,8 @@ def change_second_camera():
                 sc.secondCameraModel = newCamModel
                 sc.secondCameraIsUsb = newCamIsUsb
                 sc.secondCameraUsbDev = newCamUsbDev
-                Camera.switchCamera()
+                sc.secondCameraHasAi = newCamHasAi
+                Camera().switchCamera()
                 if sc.isLiveStream2:
                     str2 = cfg.streamingCfg[str(Camera().camNum2)]
                 logger.debug(
@@ -615,7 +631,7 @@ def cam_record_video():
                     if sc.displayPhoto:
                         generateHistogram(sc)
             # Check whether video is being recorded
-            if Camera.isVideoRecording():
+            if Camera().isVideoRecording():
                 logger.debug("Video recording started")
                 sc.isVideoRecording = True
                 if sc.recordAudio:
@@ -782,7 +798,7 @@ def cam_record_video2():
         time.sleep(4)
         if not sc.errorc2:
             # Check whether video is being recorded
-            if Camera.isVideoRecording2():
+            if Camera().isVideoRecording2():
                 logger.debug("Video recording started")
                 sc.isVideoRecording2 = True
                 msg = "Video saved as " + fp
@@ -974,7 +990,7 @@ def cam_record_video_both():
         msg2 = ""
         if not sc.error:
             # Check whether video is being recorded
-            if Camera.isVideoRecording():
+            if Camera().isVideoRecording():
                 logger.debug("Video recording 1 started")
                 sc.isVideoRecording = True
                 if sc.recordAudio:
@@ -993,7 +1009,7 @@ def cam_record_video_both():
             msg1 = "Error in " + sc.errorSource + ": " + sc.error
         if not sc.errorc2:
             # Check whether video is being recorded
-            if Camera.isVideoRecording2():
+            if Camera().isVideoRecording2():
                 logger.debug("Video recording 2 started")
                 sc.isVideoRecording2 = True
                 msg2 = f"Video saved as {fp2}"

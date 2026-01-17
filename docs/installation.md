@@ -23,6 +23,11 @@ At the beginning, you will be asked if you need to record audio along with video
 If you answer "y", the installer will install raspiCamSrv as user service, otherwise as system service.    
 (See [Recording Audio along with Video](./Settings.md#recording-audio-along-with-video)).
 
+Except on Bullseye systems, you will also be asked if you intend to use a [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html).    
+If you answer "y", the installer will install additional packages required for using AI features of the imx500 camera.    
+If you currently do not own such a camera, you can answer "n" now and rerun the installer once you have it.    
+(See [AI Camera Support](./AiCameraSupport.md)).
+
 The steps shown in the installer protocol correspond to the steps of [manual installation](./installation_man.md).
 
 You can run the installer multiple times without any risk.    

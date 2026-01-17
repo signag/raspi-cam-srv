@@ -1,6 +1,6 @@
 from flask import Blueprint, Response, flash, g, render_template, request, current_app
 from werkzeug.exceptions import abort
-from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig, vButton, ActionButton
+from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig, vButton, ActionButton, AiConfig
 from raspiCamSrv.camCfg import GPIODevice
 from raspiCamSrv.camera_pi import Camera, CameraEvent
 from raspiCamSrv.photoseriesCfg import PhotoSeriesCfg
@@ -19,6 +19,7 @@ from pathlib import Path
 import psutil
 import subprocess
 import json
+import copy
 from raspiCamSrv.auth import login_required
 import logging
 
@@ -101,6 +102,15 @@ def serverconfig():
                 sc.audioSync = audioSync
                 useStereo = not request.form.get("usestereo") is None
                 sc.useStereo = useStereo
+                useCameraAi = not request.form.get("usecameraai") is None
+                sc.useCameraAi = useCameraAi
+                if sc.useCameraAi == False:
+                    ai = cfg.aiConfig
+                    ai.enable = False
+                    for key, scfg in cfg.streamingCfg.items():
+                        if "aiconfig" in scfg:
+                            ai = scfg["aiconfig"]
+                            ai.enable = False
                 useHist = not request.form.get("showhistograms") is None
                 if not useHist:
                     sc.displayContent = "meta"
@@ -119,6 +129,7 @@ def serverconfig():
                             sc.activeCameraModel = cm.model
                             sc.activeCameraIsUsb = cm.isUsb
                             sc.activeCameraUsbDev = cm.usbDev
+                            sc.activeCameraHasAi = cm.hasAi
                             break
                     strCfg = cfg.streamingCfg
                     newCamStr = str(activeCam)
@@ -128,8 +139,13 @@ def serverconfig():
                             cfg.tuningConfig = ncfg["tuningconfig"]
                         else:
                             cfg.tuningConfig = TuningConfig()
+                        if "aiconfig" in ncfg:
+                            cfg.aiConfig = copy.deepcopy(ncfg["aiconfig"])
+                        else:
+                            cfg.aiConfig = AiConfig()
                     else:
                         cfg.tuningConfig = TuningConfig()
+                        cfg.aiConfig = AiConfig()
                     Camera.switchCamera()
                     msg = "Camera switched to " + sc.activeCameraInfo
                     logger.debug("serverconfig - active camera set to %s", sc.activeCamera)

@@ -6,3 +6,4 @@ matplotlib<3.8
 flask-jwt-extended
 psutil
 requests
+munkres

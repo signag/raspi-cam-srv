@@ -5,12 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Aktuelle Datei",
-            "type": "python",
+            "name": "Python-Debugger: Aktuelle Datei",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false
+            "console": "integratedTerminal"
         }
     ]
 }

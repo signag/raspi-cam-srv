@@ -1,5 +1,5 @@
 
-# Features V4.5.x
+# Features V4.6.x
 
 [![Up](img/goup.gif)](./index.md)
 
@@ -18,14 +18,15 @@ For more details, see the [User Guide](./UserGuide.md).
 
 ### Camera Support
 
-- raspiCamSrv supports the currently available [Raspberry Pi Cameras](https://www.raspberrypi.com/documentation/accessories/camera.html), however AI features for the [AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html) are currently not yet supported.
+- raspiCamSrv supports the currently available [Raspberry Pi Cameras](https://www.raspberrypi.com/documentation/accessories/camera.html).
+- **NEW**: With the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html) (imx500), you can study inference of neural network models for specific tasks (Classification, Object Detection, Pose Estimation, Segmentation) within the Web UI of **raspiCamSrv** (see [AI Camera Support](./AiCameraSupport.md)).
 - CSI Cameras from other providers can be used as long as they are supported by Picamera2.
 - USB cameras connected through the Pi's USB ports are seamlessly integrated, however control options are limited, depending on their capabilities.
 
 ### Camera Management
 
 - raspiCamSrv can detect and use all **CSI** and **USB** cameras connected to a Raspberry Pi, as long as they are identified by Picamera2, which is usually the case.
-- One of these camaras must be selected as *Active Camera*.    
+- One of these cameras must be selected as *Active Camera*.    
 [Camera configuration](./Configuration.md) (e.g. stream size colour space or flipping) as well as [controls](./CameraControls.md) (e.g. focus, zoom/pan/tilt, exposure- and image-control) can be actively modified only for the *Active Camera*.
 - Another camera, if available, can be selected as *Second Camera* by [Multi Camera Control](./CamMulticam.md).
 - All settings for the *Active Camera* can be preserved before it is replaced by another camera (e.g. by switching cameras). They will be restored/applied when this camera is set as *Active Camera* or as *Second Camera*.
@@ -47,8 +48,8 @@ For more details, see the [User Guide](./UserGuide.md).
 - [Pan / Tilt / Zoom](./ZoomPan.md) for CSI as well as for USB cameras.
 - [Auto Exposure Control](./CameraControls_AutoExposure.md) for CSI cameras.
 - [Exposure Control](./CameraControls_Exposure.md) for CSI cameras.
-- [Image Control](./CameraControls_Image.md) for CSI cameras as well as for USB camaras (if supported by the camera).
-- **NEW**: Panel for [Direct Control](./LiveDirectControl.md) of numeric control parameters.
+- [Image Control](./CameraControls_Image.md) for CSI cameras as well as for USB cameras (if supported by the camera).
+- Panel for [Direct Control](./LiveDirectControl.md) of numeric control parameters.
 
 ### Photo Taking / Video Recording
 
@@ -67,7 +68,7 @@ For more details, see the [User Guide](./UserGuide.md).
 - Endpoint for [streaming](./CamWebcam.md) (MJPEG) the active camera.
 - Endpoint for [streaming](./CamWebcam.md) the second camera.
 - Endpoints for photo snapshots of active and second camera with low resolution.
-- **NEW**: Endpoints for photo snapshots of active and second camera with high resolution.
+- Endpoints for photo snapshots of active and second camera with high resolution.
 - Option for activating / deactivating authentication for streaming and snapshots.
 
 ### Multi-Camera Features

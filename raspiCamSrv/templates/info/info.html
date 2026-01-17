@@ -57,7 +57,7 @@
             </div>
         </div>
     </div>
-    <div id="cameras" class="infogroup">
+    <div id="cameras" class="infogroup" style="height:calc(100vh - 120px); overflow: auto">
         <h4>Raspberry Pi</h4>
         <table class="w3-table-all">
             <tr>
@@ -133,6 +133,16 @@
             <tr>
                 <td>flask_jwt_extended</td>
                 <td>{{sc.flask_jwt_extended}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>imx500-all</td>
+                <td>{{sc.imx500Info}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>munkres</td>
+                <td>{{sc.munkresInfo}}</td>
                 <td></td>
             </tr>
         </table>
@@ -219,6 +229,25 @@
                 </td>
                 <td>
                     Current status of the camera
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    AI Features
+                </td>
+                <td>
+                    {% if cam.hasAi %}
+                    {% if sc.useCameraAi == True %}
+                    Available
+                    {% else %}
+                    Disabled in settings
+                    {% endif %}
+                    {% else %}
+                    Not Available
+                    {% endif %}
+                </td>
+                <td>
+                    AI features support
                 </td>
             </tr>
             <tr>

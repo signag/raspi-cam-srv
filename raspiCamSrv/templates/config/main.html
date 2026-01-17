@@ -21,6 +21,7 @@
 {% block content %}
     <div class="w3-bar w3-green">
         <!-- Config menue -->
+        {% set ignoreLastConfigTab = False %}
         {% if sc.activeCameraIsUsb == False %}
         {% if sc.lastConfigTab == "cfgtuning" %}
         <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgtuningbtn"
@@ -29,8 +30,25 @@
         <button class="w3-bar-item w3-button configmenu" id="cfgtuningbtn" 
             onclick="openCfgTab('cfgtuning', 'cfgtuningbtn')">Tuning</button>
         {% endif %}
+        {% if sc.activeCameraHasAi == True and sc.useCameraAi == True %}
+        {% if sc.lastConfigTab == "cfgai" %}
+        <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfgaibtn"
+            onclick="openCfgTab('cfgai', 'cfgaibtn')">AI Configuration</button>
+        {% else %}
+        <button class="w3-bar-item w3-button configmenu" id="cfgaibtn"
+            onclick="openCfgTab('cfgai', 'cfgaibtn')">AI Configuration</button>
         {% endif %}
-        {% if sc.lastConfigTab == "cfglive" %}
+        {% else %}
+        {% if sc.lastConfigTab == "cfgai" %}
+        {% set ignoreLastConfigTab = True %}
+        {% endif %}
+        {% endif %}
+        {% else %}
+        {% if sc.lastConfigTab == "cfgai" or sc.lastConfigTab == "cfgtuning" %}
+        {% set ignoreLastConfigTab = True %}
+        {% endif %}
+        {% endif %}
+        {% if (sc.lastConfigTab == "cfglive") or (ignoreLastConfigTab == True) %}
         <button class="w3-bar-item w3-button configmenu w3-light-green" id="cfglivebtn" 
             onclick="openCfgTab('cfglive', 'cfglivebtn')">Live View</button>
         {% else %}
@@ -232,8 +250,271 @@
         </div>
     </div>
 
+    <!-- AI configuration -->
+    {% if sc.lastConfigTab == "cfgai" and sc.activeCameraHasAi == True %}
+    <div id="cfgai" class="cfggroup">
+    {% else %}
+    <div id="cfgai" class="cfggroup" style="display:none">
+    {% endif %}
+        <h4>Configuration for AI</h4>
+        <p>To change the model, wait until Active Camera is no longer streaming!</p>
+        <div>
+            <table class="w3-table-all">
+                <form id="getaimodelfiles" method="post" action="{{ url_for('config.getAiModelFiles') }}">
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Path to folder where model files are located.<br>
+                                Leave empty for default.
+                            </span>
+                            <label for="modelfolder">Full Path to Folder with model Files:</label>
+                        </td>
+                        <td style="width:65%">
+                            {% if ai.modelFolder == None %}
+                            <input style="width:100%" id="modelfolder" name="modelfolder" onchange="confirmModelBase('getaimodelfiles')" value=""{% if sc. isLiveStream == True %} disabled{% endif %}>
+                            {% else %}
+                            <input style="width:100%" id="modelfolder" name="modelfolder" onchange="confirmModelBase('getaimodelfiles')" value="{{ ai.modelFolder }}"{% if sc. isLiveStream == True %} disabled{% endif %}>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Intended task for the AI model.
+                            </span>
+                            <label for="aitask">Task:</label>
+                        </td>
+                        <td style="width:20%" colspan="2">
+                            <select name="aitask" id="aitask" onchange="confirmModelBase('getaimodelfiles')"{% if sc. isLiveStream == True %} disabled{% endif %}>
+                                {% if ai.task is none %}
+                                <option value="" selected></option>
+                                {% endif %}
+                                {% for task in ai.tasks %}
+                                {% if ai.task == task|lower() %}
+                                <option value="{{ task }}" selected>{{ task }}</option>
+                                {% else %}
+                                <option value="{{ task }}">{{ task }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                </form>
+                <form id="setaimodelfile" method="post" action="{{ url_for('config.setAiModelFile') }}">
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                AI Model File to be uploaded to the camera.
+                            </span>
+                            <label for="aimodelfile">AI Model File:</label>
+                        </td>
+                        <td style="width:20%" colspan="2">
+                            <select name="aimodelfile" id="aimodelfile" onchange="doSubmit('setaimodelfile')"{% if sc. isLiveStream == True %} disabled{% endif %}>
+                                {% if ai.modelFile == "" %}
+                                <option value="" selected></option>
+                                {% endif %}
+                                {% for modelfile in ai.modelFiles %}
+                                {% if ai.modelFile == modelfile %}
+                                <option value="{{ modelfile }}" selected>{{ modelfile }}</option>
+                                {% else %}
+                                <option value="{{ modelfile }}">{{ modelfile }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                </form>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:30%">
+                        Intrinsics:
+                    </td>
+                    <td style="width:65%">
+                    </td>
+                </tr>
+                {% if ai.modelIntrinsics is not none %}
+                {% for key, value in ai.modelIntrinsics.items() %}
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:30%">
+                        &nbsp;&nbsp;&nbsp;{{ key }}: 
+                    </td>
+                    <td style="width:65%">
+                        {{ value }}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:30%">
+                        <p>&nbsp;</p>
+                    </td>
+                    <td style="width:65%">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:35%" colspan="2">
+                        <h4 style="margin-top: 0; margin-bottom: 0">Settings</h4>
+                    </td>
+                    <td style="width:65%">
+                    </td>
+                </tr>
+                <form id="aisettingsfrm" method="post" action="{{ url_for('config.ai_settings') }}">
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Defines the number of top-scored indices to be returned by the AI model.
+                            </span>
+                            <label for="topk">Top K Indices:</label>
+                        </td>
+                        <td style="width:65%">
+                            <input type="number" id="topk" name="topk" aria-label="topk" min=1 max=99 step=1 value="{{ ai.topK }}"
+                            {% if ai.task != "classification" %}
+                                disabled
+                            {% endif %}
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Defines the detection threshold for AI Object Detection models.
+                            </span>
+                            <label for="detectionthreshold">Detection Threshold:</label>
+                        </td>
+                        <td style="width:65%">
+                            <input type="number" id="detectionthreshold" name="detectionthreshold" aria-label="detectionThreshold" min=0.1 max=1.0 step=0.1 value="{{ ai.detectionThreshold }}"
+                            {% if (ai.task != "object detection") and (ai.task != "pose estimation") %}
+                                disabled
+                            {% endif %}
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Defines the IOU (Intersection over Union) threshold for AI Object detection models.
+                            </span>
+                            <label for="iouthreshold">IOU Threshold:</label>
+                        </td>
+                        <td style="width:65%">
+                            <input type="number" id="iouthreshold" name="iouthreshold" aria-label="iouThreshold" min=0.01 max=1.0 step=0.01 value="{{ ai.iouThreshold }}"
+                            {% if ai.task != "object detection" %}
+                                disabled
+                            {% endif %}
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Defines the maximum number of detections for AI Object detection models.
+                            </span>
+                            <label for="maxdetections">Max Detections:</label>
+                        </td>
+                        <td style="width:65%">
+                            <input type="number" id="maxdetections" name="maxdetections" aria-label="maxDetections" min=1 max=100 step=1 value="{{ ai.maxDetections }}"
+                            {% if ai.task != "object detection" %}
+                                disabled
+                            {% endif %}
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Draw AI Results on each frame of the lores stream, typically used for Live View.
+                            </span>
+                            <label for="drawonlores">Draw Results on Stream <i>lores</i>:</label>
+                        </td>
+                        <td style="width:65%">
+                            {% if ai.drawOnLores == True %}
+                            <input type="checkbox" id="drawonlores" name="drawonlores" aria-label="drawonlores" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="drawonlores" name="drawonlores" aria-label="drawonlores" value="0">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Draw AI Results on each frame of the main stream, typically used for Photo and Video.
+                            </span>
+                            <label for="drawonmain">Draw Results on Stream <i>main</i>:</label>
+                        </td>
+                        <td style="width:65%">
+                            {% if ai.drawOnMain == True %}
+                            <input type="checkbox" id="drawonmain" name="drawonmain" aria-label="drawonmain" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="drawonmain" name="drawonmain" aria-label="drawonmain" value="0">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:35%" colspan="2">
+                            <input class="w3-button w3-black" style="width: 30ch" type="submit" value="Submit">
+                        </td>
+                        <td style="width:65%">
+                        </td>
+                    </tr>
+                </form>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:30%">
+                        <p>&nbsp;</p>
+                    </td>
+                    <td style="width:65%">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:5%">
+                    </td>
+                    <td style="width:30%" class="w3-tooltip">
+                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                            Check to enable AI for the active camera
+                        </span>
+                        <label for="enableai">Enable AI:</label>
+                    </td>
+                    <td style="width:65%">
+                        <form id="enableaifrm" method="post" action="{{ url_for('config.enableAi') }}">
+                            {% if ai.enable == True %}
+                            <input type="checkbox" id="enableai" name="enableai" onchange="enableAi('enableai', 'enableaifrm')" aria-label="enableai" value="1" checked>
+                            {% else %}
+                            <input type="checkbox" id="enableai" name="enableai" onchange="enableAi('enableai', 'enableaifrm')" aria-label="enableai" value="0">
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+
     <!-- Live View configuration -->
-    {% if sc.lastConfigTab == "cfglive" %}
+    {% if sc.lastConfigTab == "cfglive" or ignoreLastConfigTab == True %}
     <div id="cfglive" class="cfggroup">
     {% else %}
     <div id="cfglive" class="cfggroup" style="display:none">
@@ -353,7 +634,7 @@
                             <label for="LIVE_buffer_count">Buffer Count:</label>
                         </td>
                         <td style="width:20%" colspan="2">
-                            <input type="number" id="LIVE_buffer_count" name="LIVE_buffer_count" min="1" max="6" value="{{ cfg.buffer_count }}">
+                            <input type="number" id="LIVE_buffer_count" name="LIVE_buffer_count" min="1" max="12" value="{{ cfg.buffer_count }}">
                         </td>
                         <td style="width:45%">
                         </td>
@@ -751,7 +1032,7 @@
                             <label for="{{ cfgId }}_buffer_count">Buffer Count:</label>
                         </td>
                         <td style="width:20%" colspan="2">
-                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="6"
+                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="12"
                                 value="{{ cfg.buffer_count }}">
                         </td>
                         <td style="width:45%">
@@ -1151,7 +1432,7 @@
                             <label for="{{ cfgId }}_buffer_count">Buffer Count:</label>
                         </td>
                         <td style="width:20%" colspan="2">
-                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="6"
+                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="12"
                                 value="{{ cfg.buffer_count }}">
                         </td>
                         <td style="width:45%">
@@ -1524,7 +1805,7 @@
                             <label for="{{ cfgId }}_buffer_count">Buffer Count:</label>
                         </td>
                         <td style="width:20%" colspan="2">
-                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="6"
+                            <input type="number" id="{{ cfgId }}_buffer_count" name="{{ cfgId }}_buffer_count" min="1" max="12"
                                 value="{{ cfg.buffer_count }}">
                         </td>
                         <td style="width:45%">
@@ -1883,6 +2164,35 @@
             else
                 upldlbl.innerHTML = labelVal;
         })
+
+        function enableAi(elmt, form) {
+            var chk = document.getElementById(elmt);
+            if (chk.checked) {
+                var msg = "Do you want to enable AI processing for the active camera?\nThe camera will work with the selected model file";
+            } else {
+                var msg = "Do you want to disable AI processing for the active camera?\n\nBe aware: To reset the camera to work without AI,\nraspiCamSrv will stop and restart the camera system for the Active Camera.";
+            }
+            if (confirm(msg)) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+
+        function confirmModelBase(form) {
+            if (confirm("Do you want to continue with the given model location and task?\nThe system will now look for suitable models.")) {
+                document.getElementById(form).method = "post";
+                document.getElementById(form).submit();
+            } else {
+                document.getElementById(form).method = "get";
+            }
+        }
+
+        function doSubmit(form) {
+            document.getElementById(form).submit();
+        }
+
         function onlineHelp() {
             window.open("{{ sc.getBaseHelpUrl() }}/Configuration/");
         }

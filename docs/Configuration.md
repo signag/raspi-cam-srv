@@ -1,5 +1,10 @@
 # raspiCamSrv Camera Configuration
 
+Related Topics:
+
+- [AI Camera Configuration](./Configuration_AI.md)
+- [Camera Tuning](./Tuning.md)
+
 [![Up](img/goup.gif)](./UserGuide.md)
 
 Configuration parameters are so basic that they need to be applied before the camera is started.

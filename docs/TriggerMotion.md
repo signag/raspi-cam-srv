@@ -8,6 +8,7 @@ With Motion Capturing, you may trigger actions in case that **raspiCamSrv** has 
 Sensitivity of detection is strongly dependent on the algorithm used for detection.
 
 **raspiCamSrv** currently supports 4 different algorithms:
+
 - *Mean Square Difference* between pixel color levels of successive frames.
 - *Frame Differencing*
 - *Optical Flow*
@@ -62,6 +63,8 @@ Changes will be effective after the Motion Capturing Process has been started th
 For example, trees or leaves moving in the wind are normally not of interest.
 
 ## Regions of Interest and Regions of NO Interest
+
+**NOTE**: This feature is only supported if OpenCV is installed.
 
 In many cases, it is desirable to restrict the motion-sensitive region of the camera view to specific areas.
 

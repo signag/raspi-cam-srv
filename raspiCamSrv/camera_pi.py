@@ -9,10 +9,14 @@ from raspiCamSrv.camCfg import (
     SensorMode,
     CameraConfig,
     TuningConfig,
+    AiConfig,
 )
+from typing import List
 from raspiCamSrv.photoseriesCfg import Series
 from picamera2 import Picamera2, CameraConfiguration, StreamConfiguration, Controls
+from picamera2 import CompletedRequest, MappedArray
 from libcamera import Transform, Size, ColorSpace, controls
+from libcamera import Rectangle
 from picamera2.encoders import JpegEncoder, MJPEGEncoder
 from picamera2.outputs import FileOutput, FfmpegOutput, CircularOutput
 from picamera2.encoders import H264Encoder
@@ -25,6 +29,8 @@ import gc
 import math
 import subprocess
 from subprocess import CalledProcessError
+from functools import lru_cache
+from typing import Dict
 
 
 # Try to import SensorConfiguration, which is missing in Bullseye Picamera2 distributions
@@ -40,6 +46,26 @@ try:
     cv2Available = True
 except ImportError:
     cv2Available = False
+
+# Try to import numpy
+try:
+    import numpy as np
+    numpyAvailable = True
+except ImportError:
+    numpyAvailable = False
+
+# Try to import imx500 modules
+try:
+    from picamera2.devices.imx500.postprocess import softmax
+    from picamera2.devices.imx500.postprocess import COCODrawer
+    from picamera2.devices.imx500.postprocess_highernet import \
+        postprocess_higherhrnet
+    from picamera2.devices.imx500 import (NetworkIntrinsics,
+                                        postprocess_nanodet_detection)
+    imx500Available = True
+except ImportError:
+    imx500Available = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +92,51 @@ class UsbCameraNoFrameReceivedError(RuntimeError):
     # TODO: Clarify under which conditions this exception is raised
     pass
 
+class Classification:
+    def __init__(self, idx: int, score: float):
+        """Create a Classification object, recording the idx and score."""
+        self.idx = idx
+        self.score = score
+
+
+class Detection:
+    def __init__(self, coords, category, conf, metadata):
+        """Create a Detection object, recording the bounding box, category and confidence."""
+        # logger.debug("Thread %s: Detection.__init__ - coords: %s category: %s conf: %s", get_ident(), coords, category, conf)
+        self.category = category
+        self.conf = conf
+        coords = (coords[0][0], coords[1][0], coords[2][0], coords[3][0])
+        config = Camera.cam.camera_configuration()
+        # logger.debug("Thread %s: Detection.__init__ - camera_configuration: %s", get_ident(), config)
+        if "lores" in config and config["lores"] is not None:
+            # logger.debug("Thread %s: Detection.__init__ - converting coords for lores stream", get_ident())
+            self.box = Camera.cam_imx500.convert_inference_coords(coords, metadata, Camera.cam, stream="lores")
+        else:
+            self.box = None
+        if "main" in config and config["main"] is not None:
+            # logger.debug("Thread %s: Detection.__init__ - converting coords for lores stream", get_ident())
+            self.box_main = Camera.cam_imx500.convert_inference_coords(coords, metadata, Camera.cam, stream="main")
+        else:
+            self.box_main = None
+        # logger.debug("Thread %s: Detection.__init__ - box: %s box_main: %s", get_ident(), self.box, self.box_main)
+
+class Cam2Detection:
+    def __init__(self, coords, category, conf, metadata):
+        """Create a Detection object, recording the bounding box, category and confidence."""
+        self.category = category
+        self.conf = conf
+        coords = (coords[0][0], coords[1][0], coords[2][0], coords[3][0])
+        config = Camera.cam2.camera_configuration()
+        if "lores" in config and config["lores"] is not None:
+            self.box = Camera.cam2_imx500.convert_inference_coords(coords, metadata, Camera.cam2, stream="lores")
+        else:
+            self.box = None
+        if "main" in config and config["main"] is not None:
+            self.box_main = Camera.cam2_imx500.convert_inference_coords(coords, metadata, Camera.cam2, stream="main")
+        else:
+            self.box_main = None
+
+
 class StreamingOutput(io.BufferedIOBase):
     def __init__(self):
         # logger.debug("Thread %s: StreamingOutput.__init__", get_ident())
@@ -86,9 +157,9 @@ class StreamingOutput(io.BufferedIOBase):
 class CameraController:
     """The class controls status change actions for the camera"""
 
-    def __init__(self, isUsb: bool = False, usbDev: str = None):
+    def __init__(self, isUsb: bool = False, usbDev: str = None, forActiveCamera: bool =True):
         logger.debug(
-            "Thread %s: CameraController.__init__ isUsb: %s", get_ident(), isUsb
+            "Thread %s: CameraController.__init__ - isUsb: %s, usbDev: %s, forActiveCamera: %s", get_ident(), isUsb, usbDev, forActiveCamera
         )
         if not useSensorConfiguration:
             logger.info(
@@ -99,8 +170,9 @@ class CameraController:
         self._activeEncoders = {}
         self._isUsb = isUsb
         self._usbDev = usbDev
+        self._forActiveCamera = forActiveCamera
         logger.debug(
-            "Thread %s: CameraController.__init__ isUsb: requestedCfg: %s",
+            "Thread %s: CameraController.__init__ - requestedCfg: %s",
             get_ident(),
             self._requestedCfg,
         )
@@ -143,6 +215,7 @@ class CameraController:
         Return:
         True  if start is exclusive for the requested configuration
         False if the active configuration is used
+        imx500 IMX500 device if used, else None
         """
         if cfg:
             logger.debug(
@@ -185,11 +258,12 @@ class CameraController:
         )
 
         exclusive = False
+        imx500 = None
 
         if cfg:
             self.requestConfig(cfg, cfgPhoto=cfgPhoto)
         if forceExclusive == False:
-            cam, started = self.requestStart(
+            cam, started, imx500 = self.requestStart(
                 cam, camNum, self.isUsb, self.usbDev, forActiveCamera
             )
         else:
@@ -221,14 +295,14 @@ class CameraController:
                 "Thread %s: CameraController.requestCameraForConfig: Live stream stopped",
                 get_ident(),
             )
-            cam, stopped = self.requestStop(cam)
+            cam, stopped = self.requestStop(cam, forCam2=not forActiveCamera)
             if stopped:
                 if forActiveCamera == True:
-                    cam, started = Camera.ctrl.requestStart(
+                    cam, started, imx500 = Camera.ctrl.requestStart(
                         cam, camNum, self.isUsb, self.usbDev, forActiveCamera
                     )
                 else:
-                    cam, started = Camera.ctrl2.requestStart(
+                    cam, started, imx500 = Camera.ctrl2.requestStart(
                         cam, camNum, self.isUsb, self.usbDev, forActiveCamera
                     )
                 if started:
@@ -253,7 +327,7 @@ class CameraController:
                     "CameraController.requestCameraForConfig - Camera did not stop"
                 )
             exclusive = True
-        return cam, exclusive
+        return cam, exclusive, imx500
 
     def restoreLivestream(self, cam, exclusive: bool):
         """Restart the live stream after exclusive camera use by other task"""
@@ -352,6 +426,8 @@ class CameraController:
             camUsbDev,
         )
         res = False
+        imx500 = None
+
         if isUsb == False:
             logger.debug(
                 "Thread %s: CameraController.requestStart - cam.started: %s",
@@ -360,10 +436,16 @@ class CameraController:
             )
             if cam.started == False:
                 try:
+                    logger.debug(
+                        "Thread %s: CameraController.requestStart - cam.is_open: %s",
+                        get_ident(),
+                        cam.is_open,
+                    )
                     if cam.is_open == False:
                         cfg = CameraCfg()
                         if forActiveCamera == True:
                             tc = cfg.tuningConfig
+                            ai = cfg.aiConfig
                         else:
                             strc = cfg.streamingCfg
                             camNumStr = str(camNum)
@@ -373,8 +455,13 @@ class CameraController:
                                     tc = scfg["tuningconfig"]
                                 else:
                                     tc = TuningConfig()
+                                if "aiconfig" in scfg:
+                                    ai = scfg["aiconfig"]
+                                else:
+                                    ai = AiConfig()
                             else:
                                 tc = TuningConfig()
+                                ai = AiConfig()
                         if tc.loadTuningFile == False:
                             cam = Picamera2(camNum)
                             prgLogger.debug("picam2 = Picamera2(%s)", camNum)
@@ -402,6 +489,35 @@ class CameraController:
                             prgLogger.debug(
                                 "picam2 = Picamera2(%s, tuning=tuning)", camNum
                             )
+                        # Set model for AI Camera
+                        if ai.enable:
+                            # Try to import IMX500
+                            try:
+                                from picamera2.devices import IMX500
+                                logger.debug(
+                                    "Thread %s: CameraController.requestStart - import IMX500 successful",
+                                    get_ident(),
+                                )
+                            except ImportError:
+                                logger.error(
+                                    "CameraController.requestStart - Could not import IMX500 from picamera2.devices",
+                                )
+                                ai.enable = False
+                        if ai.enable:
+                            modelPath = os.path.join(ai.modelFolder, ai.modelFile)
+                            imx500 = IMX500(modelPath)
+                            logger.debug(
+                                "Thread %s: CameraController.requestStart - IMX500 instantiated with model: %s",
+                                get_ident(),
+                                modelPath,
+                            )
+                    else:
+                        logger.debug(
+                            "Thread %s: CameraController.requestStart - Camera is already open",
+                            get_ident(),
+                        )
+                        imx500 = Camera.cam_imx500
+
                     self._activeCfg = self.copyConfig(self._requestedCfg)
                     logger.debug(
                         "Thread %s: CameraController.requestStart - activeCfg b: %s",
@@ -461,6 +577,7 @@ class CameraController:
                         get_ident(),
                         dif,
                     )
+                imx500 = Camera.cam_imx500
         else:
             logger.debug(
                 "Thread %s: CameraController.requestStart - cam.isOpened: %s",
@@ -509,7 +626,7 @@ class CameraController:
                 )
 
         logger.debug("Thread %s: CameraController.requestStart: %s", get_ident(), res)
-        return cam, res
+        return cam, res, imx500
 
     def requestStop(self, cam, close=False):
         """Request to stop the camera
@@ -638,6 +755,13 @@ class CameraController:
                 get_ident(),
             )
         logger.debug("Thread %s: CameraController.requestStop: %s", get_ident(), res)
+
+        if self._forActiveCamera == True:
+            Camera.camWaitingForFirstFrame = True
+            Camera.camProgressCounter = 0
+        else:
+            Camera.cam2WaitingForFirstFrame = True
+            Camera.cam2ProgressCounter = 0
         return cam, res
 
     def requestConfig(
@@ -1385,10 +1509,36 @@ class Camera:
     cam = None
     camIsUsb = False
     camUsbDev = ""
+    camHasAi = False
+    camWaitingForFirstFrame = True
+    camProgressCounter = 0
+    cam_imx500 = None
+    cam_imx500_last_detections = []
+    cam_imx500_last_results = None
+    cam_imx500_labels = None
+    cam_imx500_last_boxes = None
+    cam_imx500_last_scores = None
+    cam_imx500_last_keypoints = None
+    cam_imx500_WINDOW_SIZE_H_W = (480, 640)
+    cam_imx500_last_overlay = None
+    cam_drawer = None
     camNum = -1
     cam2 = None
     cam2IsUsb = False
     cam2UsbDev = ""
+    cam2HasAi = False
+    cam2WaitingForFirstFrame = True
+    cam2ProgressCounter = 0
+    cam2_imx500 = None
+    cam2_imx500_last_detections = []
+    cam2_imx500_last_results = None
+    cam2_imx500_labels = None
+    cam2_imx500_last_boxes = None
+    cam2_imx500_last_scores = None
+    cam2_imx500_last_keypoints = None
+    cam2_imx500_WINDOW_SIZE_H_W = (480, 640)
+    cam2_imx500_last_overlay = None
+    cam2_drawer = None
     camNum2 = -1
     ctrl: CameraController = None
     ctrl2: CameraController = None
@@ -1444,6 +1594,31 @@ class Camera:
     when_streaming_2_starts = None
     when_streaming_2_stops = None
 
+    COLOURS = np.array([ \
+        [128.0, 0.0, 0.0, 255.0], \
+        [0.0, 128.0, 0.0, 255.0], \
+        [128.0, 128.0, 0.0, 255.0], \
+        [0.0, 0.0, 128.0, 255.0], \
+        [128.0, 0.0, 128.0, 255.0], \
+        [0.0, 128.0, 128.0, 255.0], \
+        [128.0, 128.0, 128.0, 255.0], \
+        [64.0, 0.0, 0.0, 255.0], \
+        [192.0, 0.0, 0.0, 255.0], \
+        [64.0, 128.0, 0.0, 255.0], \
+        [192.0, 128.0, 0.0, 255.0], \
+        [64.0, 0.0, 128.0, 255.0], \
+        [192.0, 0.0, 128.0, 255.0], \
+        [64.0, 128.0, 128.0, 255.0], \
+        [192.0, 128.0, 128.0, 255.0], \
+        [0.0, 64.0, 0.0, 255.0], \
+        [128.0, 64.0, 0.0, 255.0], \
+        [0.0, 192.0, 0.0, 255.0], \
+        [128.0, 192.0, 0.0, 255.0], \
+        [0.0, 64.0, 128.0, 255.0], \
+        [0.0, 0.0, 0.0, 255.0] \
+    ])
+
+
     def __new__(cls):
         logger.debug("Thread %s: Camera.__new__", get_ident())
         if cls._instance is None:
@@ -1454,10 +1629,36 @@ class Camera:
             cls.cam = None
             cls.camIsUsb = False
             cls.camUsbDev = ""
+            cls.camHasAi = False
+            cls.camWaitingForFirstFrame = True
+            cls.camProgressCounter = 0
+            cls.cam_imx500 = None
+            cls.cam_imx500_last_detections = []
+            cls.cam_imx500_last_results = None
+            cls.cam_imx500_labels = None
+            cls.cam_imx500_last_boxes = None
+            cls.cam_imx500_last_scores = None
+            cls.cam_imx500_last_keypoints = None
+            cls.cam_imx500_WINDOW_SIZE_H_W = (480, 640)
+            cls.cam_imx500_last_overlay = None
+            cls.cam_drawer = None
             cls.camNum = -1
             cls.cam2 = None
             cls.cam2IsUsb = False
             cls.cam2UsbDev = ""
+            cls.cam2HasAi = False
+            cls.cam2WaitingForFirstFrame = True
+            cls.cam2ProgressCounter = 0
+            cls.cam2_imx500 = None
+            cls.cam2_imx500_last_detections = []
+            cls.cam2_imx500_last_results = None
+            cls.cam2_imx500_labels = None
+            cls.cam2_imx500_last_boxes = None
+            cls.cam2_imx500_last_scores = None
+            cls.cam2_imx500_last_keypoints = None
+            cls.cam2_imx500_WINDOW_SIZE_H_W = (480, 640)
+            cls.cam2_imx500_last_overlay = None
+            cls.cam2_drawer = None
             cls.camNum2 = -1
             cls.ctrl: CameraController = None
             cls.ctrl2: CameraController = None
@@ -1564,7 +1765,7 @@ class Camera:
         sc = cfg.serverConfig
         sc.error = None
         # Before all, load the global camera info to get the installed cameras and the active cam
-        activeCam, activeCamIsUsb, activeCamUsbDev = cls.getActiveCamera()
+        activeCam, activeCamIsUsb, activeCamUsbDev, activeCamHasAi = cls.getActiveCamera()
         if sc.noCamera == True:
             return
 
@@ -1581,6 +1782,7 @@ class Camera:
                 )
                 cls.camIsUsb = False
                 cls.camUsbDev = activeCamUsbDev
+                cls.camHasAi = activeCamHasAi
                 try:
                     tc = cfg.tuningConfig
                     if tc.loadTuningFile == False:
@@ -1623,6 +1825,7 @@ class Camera:
                 )
                 cls.camIsUsb = True
                 cls.camUsbDev = activeCamUsbDev
+                cls.camHasAi = activeCamHasAi
                 cls.cam = cv2.VideoCapture(cls.camUsbDev, cv2.CAP_V4L2)
                 if not cls.cam or not cls.cam.isOpened():
                     logger.error(
@@ -1681,6 +1884,7 @@ class Camera:
                         cls.camNum = activeCam
                         cls.camIsUsb = False
                         cls.camUsbDev = ""
+                        cls.camHasAi = activeCamHasAi
                         cls.ctrl = CameraController(cls.camIsUsb, cls.camUsbDev)
                         logger.debug(
                             "Thread %s: Camera.initCamera: Switch camera to %s successful",
@@ -1702,6 +1906,7 @@ class Camera:
                         cls.camNum = activeCam
                         cls.camIsUsb = True
                         cls.camUsbDev = activeCamUsbDev
+                        cls.camHasAi = activeCamHasAi
                         cls.ctrl = CameraController(cls.camIsUsb, cls.camUsbDev)
                         logger.debug(
                             "Thread %s: Camera.initCamera: Switch camera to %s successful",
@@ -1775,7 +1980,8 @@ class Camera:
         Returns:
             tuple: (active camera number (int),
                     is USB (bool),
-                    USB device path (str)
+                    USB device path (str),
+                    has AI capabilities (bool)
                     )
         """
         logger.debug("Thread %s: Camera.getActiveCamera", get_ident())
@@ -1796,6 +2002,8 @@ class Camera:
                 cfgCam = CameraInfo()
                 if "Model" in camera:
                     cfgCam.model = camera["Model"]
+                    if cfgCam.model == "imx500":
+                        cfgCam.hasAi = True
                 if "Location" in camera:
                     cfgCam.location = camera["Location"]
                 if "Rotation" in camera:
@@ -1833,13 +2041,14 @@ class Camera:
 
         # Check that active camera is within the list of cameras
         logger.debug(
-            "Thread %s: Camera.getActiveCamera - Checking active camera %s (model: %s, isUsb: %s, usbDev: %s) against %s found cameras",
+            "Thread %s: Camera.getActiveCamera - Checking active camera %s (model: %s, isUsb: %s, usbDev: %s, hasAi: %s) against %s found cameras",
             get_ident(),
             sc.activeCamera,
             sc.activeCameraModel,
             sc.activeCameraIsUsb,
             sc.activeCameraUsbDev,
-            len(cfg.cameras),
+            sc.activeCameraHasAi,
+            len(cfg.cameras)
         )
         activeCamOK = False
         if sc.activeCameraModel != "":
@@ -1849,6 +2058,7 @@ class Camera:
                     and cfgCam.model == sc.activeCameraModel
                     and cfgCam.isUsb == sc.activeCameraIsUsb
                     and cfgCam.usbDev == sc.activeCameraUsbDev
+                    and cfgCam.hasAi == sc.activeCameraHasAi
                 ):
                     activeCamOK = True
                     break
@@ -1873,6 +2083,7 @@ class Camera:
                 )
                 sc.activeCameraModel = cfgCam.model
                 sc.activeCameraIsUsb = cfgCam.isUsb
+                sc.activeCameraHasAi = cfgCam.hasAi
                 sc.activeCameraUsbDev = cfgCam.usbDev
                 break
             logger.debug(
@@ -1882,6 +2093,7 @@ class Camera:
             )
             # Reset the active camera configuration
             cfg.resetActiveCameraSettings()
+            cfg.aiConfig=AiConfig()
             trc.setCameraSettingsToDefault()
             sc.unsavedChanges = True
             sc.addChangeLogEntry(
@@ -1900,13 +2112,14 @@ class Camera:
             )
 
         logger.debug(
-            "Thread %s: Camera.getActiveCamera - activeCamera: %s - isUsb: %s - usbDev: %s",
+            "Thread %s: Camera.getActiveCamera - activeCamera: %s - isUsb: %s - usbDev: %s - hasAi: %s",
             get_ident(),
             sc.activeCamera,
             sc.activeCameraIsUsb,
             sc.activeCameraUsbDev,
+            sc.activeCameraHasAi
         )
-        return sc.activeCamera, sc.activeCameraIsUsb, sc.activeCameraUsbDev
+        return sc.activeCamera, sc.activeCameraIsUsb, sc.activeCameraUsbDev, sc.activeCameraHasAi
 
     @classmethod
     def switchCamera(cls):
@@ -1928,12 +2141,16 @@ class Camera:
 
         time.sleep(1)
 
-        activeCam, activeCamIsUsb, activeCamUsbDev = Camera.getActiveCamera()
+        activeCam, activeCamIsUsb, activeCamUsbDev, activeCamHasAi = Camera.getActiveCamera()
         cfg = CameraCfg()
         sc = cfg.serverConfig
         trc = cfg.triggerConfig
         if sc.noCamera == True:
             return
+
+        logger.debug(
+            "Thread %s: Camera.switchCamera - cfg.aiConfig 1: %s", get_ident(), cfg.aiConfig.__dict__
+        )
 
         if Camera.cam is None:
             if activeCamIsUsb == False:
@@ -1944,7 +2161,9 @@ class Camera:
                 )
                 cls.camIsUsb = False
                 cls.camUsbDev = ""
+                cls.camHasAi = activeCamHasAi
                 tc = cfg.tuningConfig
+                ai = cfg.aiConfig
                 if tc.loadTuningFile == False:
                     cls.cam = Picamera2(activeCam)
                     prgLogger.debug("picam2 = Picamera2(%s)", activeCam)
@@ -1963,6 +2182,29 @@ class Camera:
                         tc.tuningFolder,
                     )
                     prgLogger.debug("picam2 = Picamera2(%s, tuning=tuning)", activeCam)
+
+                # Set model for AI Camera
+                if ai.enable:
+                    # Try to import IMX500
+                    try:
+                        from picamera2.devices import IMX500
+                        logger.debug(
+                            "Thread %s: Camera.switchCamera - import IMX500 successful",
+                            get_ident(),
+                        )
+                    except ImportError:
+                        logger.error(
+                            "Camera.switchCamera - Could not import IMX500 from picamera2.devices",
+                        )
+                        ai.enable = False
+                if ai.enable:
+                    modelPath = os.path.join(ai.modelFolder, ai.modelFile)
+                    Camera.cam_imx500 = IMX500(modelPath)
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera - IMX500 instantiated with model: %s",
+                        get_ident(),
+                        modelPath,
+                    )
             else:
                 logger.debug(
                     "Thread %s: Camera.switchCamera: Instantiating USB camera %s",
@@ -1971,6 +2213,7 @@ class Camera:
                 )
                 cls.camIsUsb = True
                 cls.camUsbDev = activeCamUsbDev
+                cls.camHasAi = activeCamHasAi
                 cls.cam = cv2.VideoCapture(cls.camUsbDev, cv2.CAP_V4L2)
                 if not cls.cam or not cls.cam.isOpened():
                     logger.error(
@@ -1980,6 +2223,7 @@ class Camera:
             Camera.camNum = activeCam
             Camera.camIsUsb = activeCamIsUsb
             Camera.camUsbDev = activeCamUsbDev
+            Camera.camHasAi = activeCamHasAi
             Camera.ctrl = CameraController(Camera.camIsUsb, Camera.camUsbDev)
         else:
             if activeCam != Camera.camNum:
@@ -1989,9 +2233,17 @@ class Camera:
                     Camera.camNum,
                     activeCam,
                 )
+
+                logger.debug(
+                    "Thread %s: Camera.switchCamera - cfg.aiConfig 2: %s", get_ident(), cfg.aiConfig.__dict__
+                )
                 Camera.stopCameraSystem()
+                logger.debug(
+                    "Thread %s: Camera.switchCamera - cfg.aiConfig 3: %s", get_ident(), cfg.aiConfig.__dict__
+                )
                 if activeCamIsUsb == False:
                     tc = cfg.tuningConfig
+                    ai = cfg.aiConfig
                     logger.debug(
                         "Thread %s: Camera.switchCamera: tc.loadTuningFile=%s",
                         get_ident(),
@@ -2019,9 +2271,38 @@ class Camera:
                         prgLogger.debug(
                             "picam2 = Picamera2(%s, tuning=tuning)", activeCam
                         )
+                    
+                    # Set model for AI Camera
+                    logger.debug(
+                        "Thread %s: Camera.switchCamera: ai.enable=%s",
+                        get_ident(),
+                        ai.enable,
+                    )
+                    if ai.enable:
+                        # Try to import IMX500
+                        try:
+                            from picamera2.devices import IMX500
+                            logger.debug(
+                                "Thread %s: Camera.switchCamera - import IMX500 successful",
+                                get_ident(),
+                            )
+                        except ImportError:
+                            logger.error(
+                                "Camera.switchCamera - Could not import IMX500 from picamera2.devices",
+                            )
+                            ai.enable = False
+                    if ai.enable:
+                        modelPath = os.path.join(ai.modelFolder, ai.modelFile)
+                        Camera.cam_imx500 = IMX500(modelPath)
+                        logger.debug(
+                            "Thread %s: Camera.switchCamera - IMX500 instantiated with model: %s",
+                            get_ident(),
+                            modelPath,
+                        )
                     Camera.camNum = activeCam
                     Camera.camIsUsb = False
                     Camera.camUsbDev = ""
+                    Camera.camHasAi = activeCamHasAi
                     Camera.ctrl = CameraController(Camera.camIsUsb, Camera.camUsbDev)
                     logger.debug(
                         "Thread %s: Camera.switchCamera: Switch camera to %s successful",
@@ -2048,6 +2329,7 @@ class Camera:
                     Camera.camNum = activeCam
                     Camera.camIsUsb = True
                     Camera.camUsbDev = activeCamUsbDev
+                    Camera.camHasAi = activeCamHasAi
                     Camera.ctrl = CameraController(Camera.camIsUsb, Camera.camUsbDev)
                     logger.debug(
                         "Thread %s: Camera.switchCamera: Switch camera to %s successful",
@@ -2136,7 +2418,9 @@ class Camera:
                         "Thread %s: Camera.startLiveStream - waiting for frame",
                         get_ident(),
                     )
-                    Camera.event.wait()
+                    # Waiting not necessary if camera-start animation is shown
+                    if cv2Available == False:
+                        Camera.event.wait()
                     if not CameraCfg().serverConfig.error:
                         CameraCfg().serverConfig.isLiveStream = True
                 else:
@@ -2191,7 +2475,9 @@ class Camera:
                             "Thread %s: Camera.startLiveStream2 - waiting for frame",
                             get_ident(),
                         )
-                        Camera.event2.wait()
+                        # Waiting not necessary if camera-start animation is shown
+                        if cv2Available == False:
+                            Camera.event2.wait()
                         if not CameraCfg().serverConfig.errorc2:
                             CameraCfg().serverConfig.isLiveStream2 = True
                     else:
@@ -2373,11 +2659,108 @@ class Camera:
             frame, frameRaw = self.get_frame2()
             return frameRaw
 
+    def startAnimation(self):
+        """Create animation while camera is starting"""
+        canvas = np.ones((480, 640, 3), dtype="uint8") * 255 
+
+        cv2.putText(
+            canvas,
+            "Camera Starting",
+            (65, 300),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            2,
+            (0, 0, 0),
+            3,
+            cv2.LINE_AA,
+        )
+        if Camera.camHasAi:
+            cv2.putText(
+                canvas,
+                "imx500 loading model",
+                (140, 350),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 0),
+                1,
+                cv2.LINE_AA,
+            )
+            cv2.putText(
+                canvas,
+                "This may take a while",
+                (150, 400),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 0),
+                1,
+                cv2.LINE_AA,
+            )
+
+            angle = Camera.camProgressCounter * math.pi / 60.0
+            x = int(320 + 60 * math.cos(angle))
+            y = int(140 + 60 * math.sin(angle))
+            cv2.circle(canvas, (x, y), 15, (0, 0, 0), -1)
+            Camera.camProgressCounter += 1
+            time.sleep(0.05)
+        return canvas
+
+    def startAnimation2(self):
+        """Create animation while camera 2 is starting"""
+        canvas = np.ones((480, 640, 3), dtype="uint8") * 255 
+
+        cv2.putText(
+            canvas,
+            "Camera Starting",
+            (65, 300),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            2,
+            (0, 0, 0),
+            3,
+            cv2.LINE_AA,
+        )
+        if Camera.cam2HasAi:
+            cv2.putText(
+                canvas,
+                "imx500 loading model",
+                (140, 350),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 0),
+                1,
+                cv2.LINE_AA,
+            )
+            cv2.putText(
+                canvas,
+                "This may take a while",
+                (150, 400),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 0),
+                1,
+                cv2.LINE_AA,
+            )
+
+            angle = Camera.cam2ProgressCounter * math.pi / 60.0
+            x = int(320 + 60 * math.cos(angle))
+            y = int(140 + 60 * math.sin(angle))
+            cv2.circle(canvas, (x, y), 15, (0, 0, 0), -1)
+            Camera.cam2ProgressCounter += 1
+            time.sleep(0.05)
+        return canvas
+
     def get_frame(self):
         """Return the current camera frame."""
         # logger.debug("Thread %s: Camera.get_frame", get_ident())
+        
         with Camera.threadLock:
             Camera.last_access = time.time()
+        
+        if cv2Available == True:
+            if Camera.camWaitingForFirstFrame == True:
+                frame = self.startAnimation()
+                stat, frame_jpg = cv2.imencode(".jpg", frame)
+                if stat:
+                    return frame_jpg.tobytes(), None
+                return None, None
 
         # wait for a signal from the camera thread
         # logger.debug("Thread %s: Camera.get_frame - waiting for frame", get_ident())
@@ -2394,6 +2777,14 @@ class Camera:
         if Camera.cam2:
             with Camera.thread2Lock:
                 Camera.last_access2 = time.time()
+
+            if cv2Available == True:
+                if Camera.cam2WaitingForFirstFrame == True:
+                    frame = self.startAnimation2()
+                    stat, frame_jpg = cv2.imencode(".jpg", frame)
+                    if stat:
+                        return frame_jpg.tobytes(), None
+                    return None, None
 
             # wait for a signal from the camera thread
             # logger.debug("Thread %s: Camera.get_frame2 - waiting for frame", get_ident())
@@ -2748,6 +3139,7 @@ class Camera:
         camNum2 = None
         secondCamIsUsb = False
         secondCamUsbDev = ""
+        secondCamHasAi = False
         secondCamModel = ""
 
         # Check camera list for registered second camera
@@ -2760,6 +3152,7 @@ class Camera:
                     camNum2 = cfgCam.num
                     secondCamIsUsb = cfgCam.isUsb
                     secondCamUsbDev = cfgCam.usbDev
+                    secondCamHasAi = cfgCam.hasAi
                     secondCamModel = cfgCam.model
                     break
             if secondCam is None:
@@ -2783,6 +3176,7 @@ class Camera:
                         camNum2 = cfgCam.num
                         secondCamIsUsb = cfgCam.isUsb
                         secondCamUsbDev = cfgCam.usbDev
+                        secondCamHasAi = cfgCam.hasAi
                         secondCamModel = cfgCam.model
                         break
         logger.debug(
@@ -2796,9 +3190,11 @@ class Camera:
                 cls.camNum2 = camNum2
                 cls.cam2IsUsb = secondCamIsUsb
                 cls.cam2UsbDev = secondCamUsbDev
+                cls.cam2HasAi = secondCamHasAi
                 sc.secondCamera = camNum2
                 sc.secondCameraIsUsb = secondCamIsUsb
                 sc.secondCameraUsbDev = secondCamUsbDev
+                sc.secondCameraHasAi = secondCamHasAi
                 sc.secondCameraModel = secondCamModel
                 sc.secondCameraInfo = (
                     "Camera " + str(camNum2) + " (" + secondCamModel + ")"
@@ -2842,7 +3238,7 @@ class Camera:
                     cls.cam2 = cv2.VideoCapture(cls.cam2UsbDev, cv2.CAP_V4L2)
                     if not cls.cam2 or not cls.cam2.isOpened():
                         raise RuntimeError("USB camera not opened")
-                cls.ctrl2 = CameraController(cls.cam2IsUsb, cls.cam2UsbDev)
+                cls.ctrl2 = CameraController(cls.cam2IsUsb, cls.cam2UsbDev, forActiveCamera=False)
                 cls.event2 = CameraEvent()
                 logger.debug(
                     "Thread %s: Camera.setSecondCamera - second camera initialized %s",
@@ -2982,6 +3378,17 @@ class Camera:
                     sc.addChangeLogEntry(
                         f"Streaming configuration for {sc.activeCameraInfo} was extended with trigger camera settings"
                     )
+                if not "aiconfig" in scfg:
+                    resetActive = True
+                    logger.debug(
+                        "Thread %s: Camera.setStreamingConfigs - StreamingConfig for active camera %s does not have aiconfig",
+                        get_ident(),
+                        cn,
+                    )
+                    sc.unsavedChanges = True
+                    sc.addChangeLogEntry(
+                        f"Streaming configuration for {sc.activeCameraInfo} was extended with AI settings"
+                    )
             else:
                 logger.debug(
                     "Thread %s: Camera.setStreamingConfigs - not found in strc.",
@@ -3009,6 +3416,7 @@ class Camera:
             scfg["videoconfig"] = copy.deepcopy(cfg.videoConfig)
             scfg["controls"] = copy.deepcopy(cfg.controls)
             scfg["triggercamera"] = copy.deepcopy(trc.cameraSettings)
+            scfg["aiconfig"] = copy.deepcopy(cfg.aiConfig)
             strc[cn] = scfg
             logger.debug(
                 "Thread %s: Camera.setStreamingConfigs - created  entry for active camera %s",
@@ -3913,6 +4321,29 @@ class Camera:
                     get_ident(),
                     Camera.cam.controls,
                 )
+
+                ai = cfg.aiConfig
+                if ai.enable == True:
+                    # Register the callback to parse and draw classification results for AI camera
+                    if ai.task == "classification":
+                        if Camera.cam_imx500.network_intrinsics.preserve_aspect_ratio:
+                            Camera.cam_imx500.set_auto_aspect_ratio()
+                        Camera.cam.pre_callback = Camera.parse_and_draw_classification_results
+                    elif ai.task == "object detection":
+                        if Camera.cam_imx500.network_intrinsics.preserve_aspect_ratio:
+                            Camera.cam_imx500.set_auto_aspect_ratio()
+                        Camera.cam.pre_callback = Camera.draw_detections
+                    elif ai.task == "pose estimation":
+                        Camera.set_drawer()
+                        Camera.cam_imx500.set_auto_aspect_ratio()
+                        Camera.cam.pre_callback = Camera.picamera2_pre_callback
+                    elif ai.task == "segmentation":
+                        Camera.cam.pre_callback = Camera.create_and_draw_masks
+                    logger.debug(
+                        "Thread %s: Camera.applyControls - Registered pre_callback for AI camera",
+                        get_ident(),
+                    )
+
             else:
                 camCtrls = ctrls
                 Camera.applyControlsToUsbCamera(ctrls)
@@ -3926,6 +4357,29 @@ class Camera:
                     get_ident(),
                     Camera.cam2.controls,
                 )
+                scfg = cfg.streamingCfg[str(Camera.camNum2)]
+                if "aiconfig" in scfg:
+                    ai = scfg["aiconfig"]
+                    if ai.enable == True:
+                        # Register the callback to parse and draw classification results for AI camera
+                        if ai.task == "classification":
+                            if Camera.cam2_imx500.network_intrinsics.preserve_aspect_ratio:
+                                Camera.cam2_imx500.set_auto_aspect_ratio()
+                            Camera.cam2.pre_callback = Camera.cam2_parse_and_draw_classification_results
+                        elif ai.task == "object detection":
+                            if Camera.cam2_imx500.network_intrinsics.preserve_aspect_ratio:
+                                Camera.cam2_imx500.set_auto_aspect_ratio()
+                            Camera.cam2.pre_callback = Camera.cam2_draw_detections
+                        elif ai.task == "pose estimation":
+                            Camera.cam2_set_drawer()
+                            Camera.cam2_imx500.set_auto_aspect_ratio()
+                            Camera.cam2.pre_callback = Camera.cam2_picamera2_pre_callback
+                        elif ai.task == "segmentation":
+                            Camera.cam2.pre_callback = Camera.cam2_create_and_draw_masks
+                        logger.debug(
+                            "Thread %s: Camera.applyControls - Registered pre_callback for AI camera",
+                            get_ident(),
+                        )
             else:
                 camCtrls = ctrls
                 Camera.applyControlsToUsbCamera(ctrls, toCam2=True)
@@ -4126,6 +4580,11 @@ class Camera:
         if Camera().when_streaming_1_starts:
             Camera().when_streaming_1_starts()
 
+        ai = CameraCfg().aiConfig
+        if ai.enable == True:
+            if ai.task == "object detection":
+                Camera.cam_imx500_last_results = None
+
         try:
             if Camera.camIsUsb == False:
                 frames_iterator = cls.frames()
@@ -4139,7 +4598,12 @@ class Camera:
                 Camera.frameRaw = frameRaw
                 # logger.debug("Thread %s: Camera._thread - received frame from camera -> notifying clients", get_ident())
                 Camera.event.set()  # send signal to clients
+                Camera.camWaitingForFirstFrame = False
                 time.sleep(0)
+
+                if ai.enable == True:
+                    if ai.task == "object detection":
+                        Camera.cam_imx500_last_results = Camera.parse_detections(Camera.cam.capture_metadata())
 
                 Camera.threadLock.acquire()
 
@@ -4174,12 +4638,14 @@ class Camera:
             if frames_iterator:
                 frames_iterator.close()
             Camera.event.set()
+            Camera.camWaitingForFirstFrame = False
             Camera.event.clear()
         except UsbCameraOpenError as ue:
             Camera.threadLock.acquire()
             if frames_iterator:
                 frames_iterator.close()
             Camera.event.set()
+            Camera.camWaitingForFirstFrame = False
             Camera.event.clear()
         except Exception as e:
             Camera.threadLock.acquire()
@@ -4187,6 +4653,7 @@ class Camera:
             if frames_iterator:
                 frames_iterator.close()
             Camera.event.set()
+            Camera.camWaitingForFirstFrame = False
             Camera.event.clear()
             CameraCfg().serverConfig.error = "Error in live view: " + str(e)
             CameraCfg().serverConfig.error2 = (
@@ -4246,6 +4713,16 @@ class Camera:
         if Camera().when_streaming_2_starts:
             Camera().when_streaming_2_starts()
 
+        cfg = CameraCfg()
+        scfg = cfg.streamingCfg[str(Camera.camNum2)]
+        if "aiconfig" in scfg:
+            ai = scfg["aiconfig"]
+        else:
+            ai = AiConfig()
+        if ai.enable == True:
+            if ai.task == "object detection":
+                Camera.cam2_imx500_last_results = None
+
         try:
             if Camera.cam2IsUsb == False:
                 frames_iterator = cls.frames2()
@@ -4259,7 +4736,12 @@ class Camera:
                 Camera.frame2Raw = frameRaw
                 # logger.debug("Thread %s: Camera._thread2 - received frame from camera -> notifying clients", get_ident())
                 Camera.event2.set()  # send signal to clients
+                Camera.cam2WaitingForFirstFrame = False
                 time.sleep(0)
+
+                if ai.enable == True:
+                    if ai.task == "object detection":
+                        Camera.cam2_imx500_last_results = Camera.cam2_parse_detections(Camera.cam2.capture_metadata())
 
                 # Acquire lock to avoid clients accessing the stream while it is closing down
                 # logger.debug("Thread %s: Camera._thread2 - About to acquire Lock: thread2Lock=%s.", get_ident(), Camera.thread2Lock.locked())
@@ -4298,6 +4780,7 @@ class Camera:
             if frames_iterator:
                 frames_iterator.close()
             Camera.event2.set()
+            Camera.cam2WaitingForFirstFrame = False
             Camera.event2.clear()
             CameraCfg().serverConfig.errorc2 = "Error in camera 2 stream: " + str(e)
             CameraCfg().serverConfig.errorc22 = (
@@ -4327,6 +4810,7 @@ class Camera:
     def framesUsb():
         logger.debug("Thread %s: Camera.framesUsb", get_ident())
         srvCam = CameraCfg()
+        imx500 = None
 
         try:
             cc, cr = Camera.ctrl.requestConfig(srvCam.photoConfig)
@@ -4336,7 +4820,7 @@ class Camera:
                 Camera.ctrl.requestConfig(srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.rawConfig, cfgPhoto=srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.liveViewConfig)
-            Camera.cam, started = Camera.ctrl.requestStart(
+            Camera.cam, started, imx500 = Camera.ctrl.requestStart(
                 Camera.cam,
                 Camera.camNum,
                 Camera.camIsUsb,
@@ -4344,7 +4828,7 @@ class Camera:
                 forActiveCamera=True,
             )
             if not started:
-                Camera.cam, excl = Camera.ctrl.requestCameraForConfig(
+                Camera.cam, excl, imx500 = Camera.ctrl.requestCameraForConfig(
                     Camera.cam, Camera.camNum, cfg=None, forLiveStream=True
                 )
             else:
@@ -4358,6 +4842,7 @@ class Camera:
                     )
                     raise RuntimeError("USB camera could not be opened")
 
+            Camera.cam_imx500 = imx500
             # Camera.applyControls(Camera.ctrl.configuration)
             # logger.debug("Thread %s: Camera.framesUsb - controls applied", get_ident())
             # time.sleep(0.5)
@@ -4429,6 +4914,7 @@ class Camera:
         logger.debug("Thread %s: Camera.frames", get_ident())
         srvCam = CameraCfg()
         piModelLower5 = srvCam.serverConfig.raspiModelLower5
+        imx500 = None
         try:
             cc, cr = Camera.ctrl.requestConfig(srvCam.photoConfig)
             if cc:
@@ -4438,7 +4924,7 @@ class Camera:
             if piModelLower5 == False:
                 Camera.ctrl.requestConfig(srvCam.rawConfig, cfgPhoto=srvCam.photoConfig)
             Camera.ctrl.requestConfig(srvCam.liveViewConfig)
-            Camera.cam, started = Camera.ctrl.requestStart(
+            Camera.cam, started, imx500 = Camera.ctrl.requestStart(
                 Camera.cam,
                 Camera.camNum,
                 Camera.camIsUsb,
@@ -4446,7 +4932,7 @@ class Camera:
                 forActiveCamera=True,
             )
             if not started:
-                Camera.cam, excl = Camera.ctrl.requestCameraForConfig(
+                Camera.cam, excl, imx500 = Camera.ctrl.requestCameraForConfig(
                     Camera.cam, Camera.camNum, cfg=None, forLiveStream=True
                 )
             else:
@@ -4455,6 +4941,7 @@ class Camera:
             if Camera.resetScalerCropRequested == True:
                 Camera.resetScalerCrop()
 
+            Camera.cam_imx500 = imx500
             Camera.applyControls(Camera.ctrl.configuration)
             logger.debug("Thread %s: Camera.frames - controls applied", get_ident())
             time.sleep(0.5)
@@ -4501,6 +4988,7 @@ class Camera:
     def frames2Usb():
         logger.debug("Thread %s: Camera.frames2Usb", get_ident())
         srvCam = CameraCfg()
+        imx500 = None
 
         Camera.ctrl2.requestConfig(
             srvCam.streamingCfg[str(Camera.camNum2)]["videoconfig"]
@@ -4508,7 +4996,7 @@ class Camera:
         Camera.ctrl2.requestConfig(
             srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"]
         )
-        Camera.cam2, started = Camera.ctrl2.requestStart(
+        Camera.cam2, started, imx500 = Camera.ctrl2.requestStart(
             Camera.cam2,
             Camera.camNum2,
             Camera.cam2IsUsb,
@@ -4520,6 +5008,7 @@ class Camera:
             raise RuntimeError("Second camera did not start")
         else:
             logger.debug("Thread %s: Camera.frames2Usb - camera started", get_ident())
+            Camera.cam2_imx500 = imx500
 
         cfg = Camera.ctrl2.configuration
         hflip = cfg.transform.hflip
@@ -4552,6 +5041,7 @@ class Camera:
     def frames2():
         logger.debug("Thread %s: Camera.frames2", get_ident())
         srvCam = CameraCfg()
+        imx500 = None
 
         Camera.ctrl2.requestConfig(
             srvCam.streamingCfg[str(Camera.camNum2)]["videoconfig"]
@@ -4560,7 +5050,7 @@ class Camera:
             srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"]
         )
 
-        Camera.cam2, started = Camera.ctrl2.requestStart(
+        Camera.cam2, started, imx500 = Camera.ctrl2.requestStart(
             Camera.cam2,
             Camera.camNum2,
             Camera.cam2IsUsb,
@@ -4572,6 +5062,7 @@ class Camera:
             raise RuntimeError("Second camera did not start")
         else:
             logger.debug("Thread %s: Camera.frames2 - camera started", get_ident())
+            Camera.cam2_imx500 = imx500
 
         Camera.applyControls(Camera.ctrl2.configuration, toCam2=True)
         logger.debug("Thread %s: Camera.frames2 - controls applied", get_ident())
@@ -4768,7 +5259,7 @@ class Camera:
                 "Thread %s: Camera.takeImage Requesting camera for photoConfig",
                 get_ident(),
             )
-            Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+            Camera.cam, exclusive, Camera.cam_imx500 = Camera.ctrl.requestCameraForConfig(
                 Camera.cam, Camera.camNum, cfg.photoConfig, forceExclusive=forceExclusive
             )
             logger.debug(
@@ -4908,7 +5399,7 @@ class Camera:
                 "Thread %s: Camera.takeImage2 Requesting camera for photoConfig",
                 get_ident(),
             )
-            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+            Camera.cam2, exclusive, Camera.cam2_imx500 = Camera.ctrl2.requestCameraForConfig(
                 Camera.cam2, Camera.camNum2, photoConfig, forActiveCamera=False, forceExclusive=forceExclusive
             )
             logger.debug(
@@ -5320,7 +5811,7 @@ class Camera:
                 "Thread %s: Camera.takeRawImage Requesting camera for rawConfig",
                 get_ident(),
             )
-            Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+            Camera.cam, exclusive, Camera.cam_imx500 = Camera.ctrl.requestCameraForConfig(
                 Camera.cam, Camera.camNum, cfg.rawConfig, cfg.photoConfig, forceExclusive=forceExclusive
             )
             logger.debug(
@@ -5456,7 +5947,7 @@ class Camera:
                 "Thread %s: Camera.takeRawImage2 Requesting camera for rawConfig",
                 get_ident(),
             )
-            Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+            Camera.cam2, exclusive, Camera.cam2_imx500 = Camera.ctrl2.requestCameraForConfig(
                 Camera.cam2,
                 Camera.camNum2,
                 rawConfig,
@@ -5548,7 +6039,7 @@ class Camera:
             "Thread %s: Camera._videoThreadUsb - Requesting camera for videoConfig",
             get_ident(),
         )
-        Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+        Camera.cam, exclusive, Camera.cam_imx500 = Camera.ctrl.requestCameraForConfig(
             Camera.cam, Camera.camNum, cfg.videoConfig, forceExclusive=True
         )
         logger.debug(
@@ -5665,7 +6156,7 @@ class Camera:
             "Thread %s: Camera._videoThread - Requesting camera for videoConfig",
             get_ident(),
         )
-        Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+        Camera.cam, exclusive, Camera.cam_imx500 = Camera.ctrl.requestCameraForConfig(
             Camera.cam, Camera.camNum, cfg.videoConfig
         )
         logger.debug(
@@ -5797,7 +6288,7 @@ class Camera:
             get_ident(),
         )
         videoConfig = cfg.streamingCfg[str(Camera.camNum2)]["videoconfig"]
-        Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+        Camera.cam2, exclusive, Camera.cam2_imx500 = Camera.ctrl2.requestCameraForConfig(
             Camera.cam2, Camera.camNum2, videoConfig, forActiveCamera=False, forceExclusive=True
         )
         logger.debug(
@@ -5922,7 +6413,7 @@ class Camera:
             get_ident(),
         )
         videoConfig = cfg.streamingCfg[str(Camera.camNum2)]["videoconfig"]
-        Camera.cam2, exclusive = Camera.ctrl2.requestCameraForConfig(
+        Camera.cam2, exclusive, Camera.cam2_imx500 = Camera.ctrl2.requestCameraForConfig(
             Camera.cam2, Camera.camNum2, videoConfig
         )
         logger.debug(
@@ -6258,11 +6749,11 @@ class Camera:
             else:
                 forceExclusive = True
             if ser.type == "jpg":
-                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+                Camera.cam, exclusive, Camera.cam_imx500 = Camera.ctrl.requestCameraForConfig(
                     Camera.cam, Camera.camNum, cfg.photoConfig, forceExclusive=forceExclusive
                 )
             else:
-                Camera.cam, exclusive = Camera.ctrl.requestCameraForConfig(
+                Camera.cam, exclusive, Camera.cam_imx500 = Camera.ctrl.requestCameraForConfig(
                     Camera.cam, Camera.camNum, cfg.rawConfig, cfg.photoConfig, forceExclusive=forceExclusive
                 )
             logger.debug(
@@ -6444,13 +6935,13 @@ class Camera:
                                 get_ident(),
                             )
                             if ser.type == "jpg":
-                                Camera.cam, exclusive = (
+                                Camera.cam, exclusive, Camera.cam_imx500 = (
                                     Camera.ctrl.requestCameraForConfig(
                                         Camera.cam, Camera.camNum, cfg.photoConfig, forceExclusive=forceExclusive
                                     )
                                 )
                             else:
-                                Camera.cam, exclusive = (
+                                Camera.cam, exclusive, Camera.cam_imx500 = (
                                     Camera.ctrl.requestCameraForConfig(
                                         Camera.cam,
                                         Camera.camNum,
@@ -6799,3 +7290,665 @@ class Camera:
         else:
             cc.include_scalerCrop = False
         cls.resetScalerCropRequested = False
+
+    @staticmethod
+    def resetAiCache():
+        logger.debug("Thread %s: Camera.resetAiCache", get_ident())
+        Camera.cam_imx500 = None
+        Camera.cam_imx500_last_detections = []
+        Camera.cam_imx500_last_results = None
+        Camera.cam_imx500_labels = None
+        Camera.cam_imx500_last_boxes = None
+        Camera.cam_imx500_last_scores = None
+        Camera.cam_imx500_last_keypoints = None
+        Camera.cam_imx500_WINDOW_SIZE_H_W = (480, 640)
+        Camera.cam_drawer = None
+
+    @staticmethod
+    def resetAiCache2():
+        logger.debug("Thread %s: Camera.resetAiCache2", get_ident())
+        Camera.cam2_imx500 = None
+        Camera.cam2_imx500_last_detections = []
+        Camera.cam2_imx500_last_results = None
+        Camera.cam2_imx500_labels = None
+        Camera.cam2_imx500_last_boxes = None
+        Camera.cam2_imx500_last_scores = None
+        Camera.cam2_imx500_last_keypoints = None
+        Camera.cam2_imx500_WINDOW_SIZE_H_W = (480, 640)
+        Camera.cam2_drawer = None
+
+
+    @staticmethod
+    def get_label(request: CompletedRequest, idx: int) -> str:
+        """Classification: Retrieve the label corresponding to the classification index."""
+        if Camera.cam_imx500_labels is None:
+            Camera.cam_imx500_labels = Camera.cam_imx500.network_intrinsics.labels
+            output_tensor_size = Camera.cam_imx500.get_output_shapes(request.get_metadata())[0][0]
+            if output_tensor_size == 1000:
+                Camera.cam_imx500_labels = Camera.cam_imx500_labels[1:]  # Ignore the background label if present
+        return Camera.cam_imx500_labels[idx]
+
+
+    @staticmethod
+    def parse_and_draw_classification_results(request: CompletedRequest):
+        """Classification: Analyse and draw the classification results in the output tensor."""
+        results = Camera.parse_classification_results(request)
+        Camera.draw_classification_results(request, results)
+
+    @staticmethod
+    def parse_classification_results(request: CompletedRequest) -> List[Classification]:
+        """Classification: Parse the output tensor into the classification results above the threshold."""
+        cfg = CameraCfg()
+        ai = cfg.aiConfig
+        np_outputs = Camera.cam_imx500.get_outputs(request.get_metadata())
+        if np_outputs is None:
+            return Camera.cam_imx500_last_detections
+        np_output = np_outputs[0]
+        if Camera.cam_imx500.network_intrinsics.softmax:
+            np_output = softmax(np_output)
+        top_indices = np.argpartition(-np_output, ai.topK)[:ai.topK]  # Get top K indices with the highest scores
+        top_indices = top_indices[np.argsort(-np_output[top_indices])]  # Sort the top K indices by their scores
+        Camera.cam_imx500_last_detections = [Classification(index, np_output[index]) for index in top_indices]
+        return Camera.cam_imx500_last_detections
+
+
+    @staticmethod
+    def draw_classification_results(request: CompletedRequest, results: List[Classification], stream: str = "lores"):
+        """Classification: Draw the classification results for this request onto the ISP output."""
+        cfg = CameraCfg()
+        ai = cfg.aiConfig
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                with MappedArray(request, stream) as m:
+                    if Camera.cam_imx500.network_intrinsics.preserve_aspect_ratio:
+                        # Drawing ROI box
+                        b_x, b_y, b_w, b_h = Camera.cam_imx500.get_roi_scaled(request, stream)
+                        color = (255, 0, 0)  # red
+                        cv2.putText(m.array, "ROI", (b_x + 5, b_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                        cv2.rectangle(m.array, (b_x, b_y), (b_x + b_w, b_y + b_h), (255, 0, 0, 0))
+                        text_left, text_top = b_x, b_y + 20
+                    else:
+                        text_left, text_top = 0, 0
+                    # Drawing labels (in the ROI box if it exists)
+                    for index, result in enumerate(results):
+                        label = Camera.get_label(request, idx=result.idx)
+                        text = f"{label}: {result.score:.3f}"
+
+                        # Calculate text size and position
+                        (text_width, text_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                        text_x = text_left + 5
+                        text_y = text_top + 15 + index * 20
+
+                        # Create a copy of the array to draw the background with opacity
+                        overlay = m.array.copy()
+
+                        # Draw the background rectangle on the overlay
+                        cv2.rectangle(overlay,
+                                    (text_x, text_y - text_height),
+                                    (text_x + text_width, text_y + baseline),
+                                    (255, 255, 255),  # Background color (white)
+                                    cv2.FILLED)
+
+                        alpha = 0.3
+                        cv2.addWeighted(overlay, alpha, m.array, 1 - alpha, 0, m.array)
+
+                        # Draw text on top of the background
+                        cv2.putText(m.array, text, (text_x, text_y),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+
+    @staticmethod
+    def ai_output_tensor_parse(metadata: dict):
+        """Pose Estimation: Parse the output tensor into a number of detected objects, scaled to the ISP output."""
+        np_outputs = Camera.cam_imx500.get_outputs(metadata=metadata, add_batch=True)
+        if np_outputs is not None:
+            keypoints, scores, boxes = postprocess_higherhrnet(outputs=np_outputs,
+                                                            img_size=Camera.cam_imx500_WINDOW_SIZE_H_W,
+                                                            img_w_pad=(0, 0),
+                                                            img_h_pad=(0, 0),
+                                                            detection_threshold=CameraCfg().aiConfig.detectionThreshold,
+                                                            network_postprocess=True)
+
+            if scores is not None and len(scores) > 0:
+                Camera.cam_imx500_last_keypoints = np.reshape(np.stack(keypoints, axis=0), (len(scores), 17, 3))
+                Camera.cam_imx500_last_boxes = [np.array(b) for b in boxes]
+                Camera.cam_imx500_last_scores = np.array(scores)
+        return Camera.cam_imx500_last_boxes, Camera.cam_imx500_last_scores, Camera.cam_imx500_last_keypoints
+
+
+    @staticmethod
+    def ai_output_tensor_draw(request: CompletedRequest, boxes, scores, keypoints, stream='lores'):
+        """Pose Estimation: Draw the detections for this request onto the ISP output."""
+        cfg = CameraCfg()
+        ai = cfg.aiConfig
+        detection_threshold = ai.detectionThreshold
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                with MappedArray(request, stream) as m:
+                    if boxes is not None and len(boxes) > 0:
+                        Camera.cam_imx500_drawer.annotate_image(m.array, boxes, scores,
+                                            np.zeros(scores.shape), keypoints, detection_threshold,
+                                            detection_threshold, request.get_metadata(), Camera.cam, stream)
+
+
+    @staticmethod
+    def picamera2_pre_callback(request: CompletedRequest):
+        """Pose Estimation: Analyse the detected objects in the output tensor and draw them on the main output image."""
+        boxes, scores, keypoints = Camera.ai_output_tensor_parse(request.get_metadata())
+        Camera.ai_output_tensor_draw(request, boxes, scores, keypoints)
+
+
+    @staticmethod
+    def set_drawer():
+        """Pose Estimation: Set up the drawer for IMX500 pose estimation."""
+        categories = Camera.cam_imx500.network_intrinsics.labels
+        categories = [c for c in categories if c and c != "-"]
+        Camera.cam_imx500_drawer = COCODrawer(categories, Camera.cam_imx500, needs_rescale_coords=False)
+
+
+    @staticmethod
+    def parse_detections(metadata: dict):
+        # logger.debug("Thread %s: Camera.parse_detections", get_ident())
+        """Object Detection: Parse the output tensor into a number of detected objects, scaled to the ISP output."""
+        cfg = CameraCfg()
+        ai = cfg.aiConfig
+        bbox_normalization = Camera.cam_imx500.network_intrinsics.bbox_normalization
+        bbox_order = Camera.cam_imx500.network_intrinsics.bbox_order
+        threshold = ai.detectionThreshold
+        iou = ai.iouThreshold
+        max_detections = ai.maxDetections
+
+        np_outputs = Camera.cam_imx500.get_outputs(metadata, add_batch=True)
+        input_w, input_h = Camera.cam_imx500.get_input_size()
+        # logger.debug("Thread %s: Camera.parse_detections - got input_size", get_ident())
+        if np_outputs is None:
+            # logger.debug("Thread %s: Camera.parse_detections - np_outputs is None", get_ident())
+            return Camera.cam_imx500_last_detections
+        if Camera.cam_imx500.network_intrinsics.postprocess == "nanodet":
+            # logger.debug("Thread %s: Camera.parse_detections - postprocess == nanodet", get_ident())
+            boxes, scores, classes = \
+                postprocess_nanodet_detection(outputs=np_outputs[0], conf=threshold, iou_thres=iou,
+                                            max_out_dets=max_detections)[0]
+            from picamera2.devices.imx500.postprocess import scale_boxes
+            boxes = scale_boxes(boxes, 1, 1, input_h, input_w, False, False)
+        else:
+            # logger.debug("Thread %s: Camera.parse_detections - postprocess != nanodet", get_ident())
+            boxes, scores, classes = np_outputs[0][0], np_outputs[1][0], np_outputs[2][0]
+            if bbox_normalization:
+                boxes = boxes / input_h
+
+            if bbox_order == "xy":
+                boxes = boxes[:, [1, 0, 3, 2]]
+            boxes = np.array_split(boxes, 4, axis=1)
+            boxes = zip(*boxes)
+
+        # logger.debug("Thread %s: Camera.parse_detections - Registring last detections", get_ident())
+        Camera.cam_imx500_last_detections = [
+            Detection(box, category, score, metadata)
+            for box, score, category in zip(boxes, scores, classes)
+            if score > threshold
+        ]
+        # logger.debug("Thread %s: Camera.parse_detections - found %s detections", get_ident(), len(Camera.cam_imx500_last_detections))
+        return Camera.cam_imx500_last_detections
+
+
+    @staticmethod
+    @lru_cache
+    def get_labels():
+        """Object Detection: get labels."""
+        labels = Camera.cam_imx500.network_intrinsics.labels
+
+        if Camera.cam_imx500.network_intrinsics.ignore_dash_labels:
+            labels = [label for label in labels if label and label != "-"]
+        return labels
+
+
+    @staticmethod
+    def draw_detections(request, stream="main"):
+        """Object Detection: Draw the detections for this request onto the ISP output."""
+        # logger.debug("Thread %s: Camera.draw_detections", get_ident())
+        detections = Camera.cam_imx500_last_results
+        if detections is None:
+            return
+        if len(detections) == 0:
+            return
+        labels = Camera.get_labels()
+        cfg = CameraCfg()
+        ai = cfg.aiConfig
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                # logger.debug("Thread %s: Camera.draw_detections - drawing on %s", get_ident(), stream)
+                with MappedArray(request, stream) as m:
+                    for detection in detections:
+                        detectionOK = False
+                        if stream == "lores":
+                            if detection.box is not None:
+                                detectionOK = True
+                                x, y, w, h = detection.box
+                        else:
+                            if detection.box_main is not None:
+                                detectionOK = True
+                                x, y, w, h = detection.box_main
+                        if detectionOK:
+                            label = f"{labels[int(detection.category)]} ({detection.conf:.2f})"
+
+                            # Calculate text size and position
+                            (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                            text_x = x + 5
+                            text_y = y + 15
+
+                            # Create a copy of the array to draw the background with opacity
+                            overlay = m.array.copy()
+
+                            # Draw the background rectangle on the overlay
+                            cv2.rectangle(overlay,
+                                        (text_x, text_y - text_height),
+                                        (text_x + text_width, text_y + baseline),
+                                        (255, 255, 255),  # Background color (white)
+                                        cv2.FILLED)
+
+                            alpha = 0.30
+                            cv2.addWeighted(overlay, alpha, m.array, 1 - alpha, 0, m.array)
+
+                            # Draw text on top of the background
+                            cv2.putText(m.array, label, (text_x, text_y),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                            # Draw detection box
+                            cv2.rectangle(m.array, (x, y), (x + w, y + h), (0, 255, 0, 0), thickness=2)
+
+                    if Camera.cam_imx500.network_intrinsics.preserve_aspect_ratio:
+                        b_x, b_y, b_w, b_h = Camera.cam_imx500.get_roi_scaled(request, stream)
+                        color = (255, 0, 0)  # red
+                        cv2.putText(m.array, "ROI", (b_x + 5, b_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                        cv2.rectangle(m.array, (b_x, b_y), (b_x + b_w, b_y + b_h), (255, 0, 0, 0))
+
+
+    @staticmethod
+    def create_and_draw_masks(request: CompletedRequest):
+        """Segmentation: Create masks from the output tensor and draw them on the main output image."""
+        masks = Camera.create_masks(request)
+        if masks:
+            Camera.cam_imx500_last_overlay = Camera.compose_overlay(masks)
+        if Camera.cam_imx500_last_overlay is not None:
+            Camera.draw_masks(request, Camera.cam_imx500_last_overlay)
+
+
+    @staticmethod
+    def create_masks(request: CompletedRequest) -> Dict[int, np.ndarray]:
+        """Segmentation: Create masks from the output tensor, scaled to the ISP output."""
+        res = {}
+        np_outputs = Camera.cam_imx500.get_outputs(metadata=request.get_metadata())
+        input_w, input_h = Camera.cam_imx500.get_input_size()
+        if np_outputs is None:
+            return res
+        mask = np_outputs[0]
+        found_indices = np.unique(mask)
+
+        for i in found_indices:
+            if i == 0:
+                continue
+            output_shape = [input_h, input_w, 4]
+            colour = [(0, 0, 0, 0), Camera.COLOURS[int(i)]]
+            colour[1][3] = 150  # update the alpha value here, to save setting it later
+            overlay = np.array(mask == i, dtype=np.uint8)
+            overlay = np.array(colour)[overlay].reshape(output_shape).astype(np.uint8)
+            # No need to resize the overlay, it will be stretched to the output window.
+            res[i] = overlay
+        return res
+
+
+    @staticmethod
+    def compose_overlay(masks):
+        """Segmentation: Compose overlay from masks."""
+        input_w, input_h = Camera.cam_imx500.get_input_size()
+        overlay = np.zeros((input_h, input_w, 4), dtype=np.uint8)
+        for v in masks.values():
+            overlay += v
+        return overlay
+
+
+    @staticmethod
+    def draw_masks(request: CompletedRequest, overlay: np.ndarray):
+        """Segmentation: Draw masks."""
+        alpha = overlay[:, :, 3:4] / 255.0
+        overlay_rgb = overlay[:, :, :3]
+
+        cfg = CameraCfg()
+        ai = cfg.aiConfig
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                with MappedArray(request, stream) as m:
+                    frame = m.array  # HxWx3 RGB
+                    h, w, _ = frame.shape
+
+                    ov = cv2.resize(overlay_rgb, (w, h), interpolation=cv2.INTER_NEAREST)
+                    a = cv2.resize(alpha, (w, h), interpolation=cv2.INTER_NEAREST)[:, :, np.newaxis]
+
+                    frame[:] = (a * ov + (1.0 - a) * frame).astype(np.uint8)
+
+
+    @staticmethod
+    def cam2_get_label(request: CompletedRequest, idx: int) -> str:
+        """Classification: Retrieve the label corresponding to the classification index."""
+        if Camera.cam2_imx500_labels is None:
+            Camera.cam2_imx500_labels = Camera.cam2_imx500.network_intrinsics.labels
+            output_tensor_size = Camera.cam2_imx500.get_output_shapes(request.get_metadata())[0][0]
+            if output_tensor_size == 1000:
+                Camera.cam2_imx500_labels = Camera.cam2_imx500_labels[1:]  # Ignore the background label if present
+        return Camera.cam2_imx500_labels[idx]
+
+
+    @staticmethod
+    def cam2_parse_and_draw_classification_results(request: CompletedRequest):
+        """Classification: Analyse and draw the classification results in the output tensor."""
+        results = Camera.cam2_parse_classification_results(request)
+        Camera.cam2_draw_classification_results(request, results)
+
+    @staticmethod
+    def cam2_parse_classification_results(request: CompletedRequest) -> List[Classification]:
+        """Classification: Parse the output tensor into the classification results above the threshold."""
+        cfg = CameraCfg()
+        scfg = cfg.streamingCfg[str(Camera.camNum2)]
+        if "aiconfig" in scfg:
+            ai = scfg["aiconfig"]
+        else:
+            ai = AiConfig()
+        np_outputs = Camera.cam2_imx500.get_outputs(request.get_metadata())
+        if np_outputs is None:
+            return Camera.cam2_imx500_last_detections
+        np_output = np_outputs[0]
+        if Camera.cam2_imx500.network_intrinsics.softmax:
+            np_output = softmax(np_output)
+        top_indices = np.argpartition(-np_output, ai.topK)[:ai.topK]  # Get top 3 indices with the highest scores
+        top_indices = top_indices[np.argsort(-np_output[top_indices])]  # Sort the top 3 indices by their scores
+        Camera.cam2_imx500_last_detections = [Classification(index, np_output[index]) for index in top_indices]
+        return Camera.cam2_imx500_last_detections
+
+
+    @staticmethod
+    def cam2_draw_classification_results(request: CompletedRequest, results: List[Classification], stream: str = "lores"):
+        """Classification: Draw the classification results for this request onto the ISP output."""
+        cfg = CameraCfg()
+        scfg = cfg.streamingCfg[str(Camera.camNum2)]
+        if "aiconfig" in scfg:
+            ai = scfg["aiconfig"]
+        else:
+            ai = AiConfig()
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                with MappedArray(request, stream) as m:
+                    if Camera.cam2_imx500.network_intrinsics.preserve_aspect_ratio:
+                        # Drawing ROI box
+                        b_x, b_y, b_w, b_h = Camera.cam2_imx500.get_roi_scaled(request, stream)
+                        color = (255, 0, 0)  # red
+                        cv2.putText(m.array, "ROI", (b_x + 5, b_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                        cv2.rectangle(m.array, (b_x, b_y), (b_x + b_w, b_y + b_h), (255, 0, 0, 0))
+                        text_left, text_top = b_x, b_y + 20
+                    else:
+                        text_left, text_top = 0, 0
+                    # Drawing labels (in the ROI box if it exists)
+                    for index, result in enumerate(results):
+                        label = Camera.cam2_get_label(request, idx=result.idx)
+                        text = f"{label}: {result.score:.3f}"
+
+                        # Calculate text size and position
+                        (text_width, text_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                        text_x = text_left + 5
+                        text_y = text_top + 15 + index * 20
+
+                        # Create a copy of the array to draw the background with opacity
+                        overlay = m.array.copy()
+
+                        # Draw the background rectangle on the overlay
+                        cv2.rectangle(overlay,
+                                    (text_x, text_y - text_height),
+                                    (text_x + text_width, text_y + baseline),
+                                    (255, 255, 255),  # Background color (white)
+                                    cv2.FILLED)
+
+                        alpha = 0.3
+                        cv2.addWeighted(overlay, alpha, m.array, 1 - alpha, 0, m.array)
+
+                        # Draw text on top of the background
+                        cv2.putText(m.array, text, (text_x, text_y),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+
+    @staticmethod
+    def cam2_ai_output_tensor_parse(metadata: dict):
+        """Pose Estimation: Parse the output tensor into a number of detected objects, scaled to the ISP output."""
+        np_outputs = Camera.cam2_imx500.get_outputs(metadata=metadata, add_batch=True)
+        if np_outputs is not None:
+            cfg = CameraCfg()
+            scfg = cfg.streamingCfg[str(Camera.camNum2)]
+            if "aiconfig" in scfg:
+                ai = scfg["aiconfig"]
+            else:
+                ai = AiConfig()
+            keypoints, scores, boxes = postprocess_higherhrnet(outputs=np_outputs,
+                                                            img_size=Camera.cam2_imx500_WINDOW_SIZE_H_W,
+                                                            img_w_pad=(0, 0),
+                                                            img_h_pad=(0, 0),
+                                                            detection_threshold=ai.detectionThreshold,
+                                                            network_postprocess=True)
+
+            if scores is not None and len(scores) > 0:
+                Camera.cam2_imx500_last_keypoints = np.reshape(np.stack(keypoints, axis=0), (len(scores), 17, 3))
+                Camera.cam2_imx500_last_boxes = [np.array(b) for b in boxes]
+                Camera.cam2_imx500_last_scores = np.array(scores)
+        return Camera.cam2_imx500_last_boxes, Camera.cam2_imx500_last_scores, Camera.cam2_imx500_last_keypoints
+
+    @staticmethod
+    def cam2_ai_output_tensor_draw(request: CompletedRequest, boxes, scores, keypoints, stream='lores'):
+        """Pose Estimation: Draw the detections for this request onto the ISP output."""
+        cfg = CameraCfg()
+        scfg = cfg.streamingCfg[str(Camera.camNum2)]
+        if "aiconfig" in scfg:
+            ai = scfg["aiconfig"]
+        else:
+            ai = AiConfig()
+        detection_threshold = ai.detectionThreshold
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                with MappedArray(request, stream) as m:
+                    if boxes is not None and len(boxes) > 0:
+                        Camera.cam2_imx500_drawer.annotate_image(m.array, boxes, scores,
+                                            np.zeros(scores.shape), keypoints, detection_threshold,
+                                            detection_threshold, request.get_metadata(), Camera.cam2, stream)
+
+
+    @staticmethod
+    def cam2_picamera2_pre_callback(request: CompletedRequest):
+        """Pose Estimation: Analyse the detected objects in the output tensor and draw them on the main output image."""
+        boxes, scores, keypoints = Camera.cam2_ai_output_tensor_parse(request.get_metadata())
+        Camera.cam2_ai_output_tensor_draw(request, boxes, scores, keypoints)
+
+
+    @staticmethod
+    def cam2_set_drawer():
+        """Pose Estimation: Set up the drawer for IMX500 pose estimation."""
+        categories = Camera.cam2_imx500.network_intrinsics.labels
+        categories = [c for c in categories if c and c != "-"]
+        Camera.cam2_imx500_drawer = COCODrawer(categories, Camera.cam2_imx500, needs_rescale_coords=False)
+
+
+    @staticmethod
+    def cam2_parse_detections(metadata: dict):
+        """Object Detection: Parse the output tensor into a number of detected objects, scaled to the ISP output."""
+        cfg = CameraCfg()
+        scfg = cfg.streamingCfg[str(Camera.camNum2)]
+        if "aiconfig" in scfg:
+            ai = scfg["aiconfig"]
+        else:
+            ai = AiConfig()
+        bbox_normalization = Camera.cam2_imx500.network_intrinsics.bbox_normalization
+        bbox_order = Camera.cam2_imx500.network_intrinsics.bbox_order
+        threshold = ai.detectionThreshold
+        iou = ai.iouThreshold
+        max_detections = ai.maxDetections
+
+        np_outputs = Camera.cam2_imx500.get_outputs(metadata, add_batch=True)
+        input_w, input_h = Camera.cam2_imx500.get_input_size()
+        if np_outputs is None:
+            return Camera.cam2_imx500_last_detections
+        if Camera.cam2_imx500.network_intrinsics.postprocess == "nanodet":
+            boxes, scores, classes = \
+                postprocess_nanodet_detection(outputs=np_outputs[0], conf=threshold, iou_thres=iou,
+                                            max_out_dets=max_detections)[0]
+            from picamera2.devices.imx500.postprocess import scale_boxes
+            boxes = scale_boxes(boxes, 1, 1, input_h, input_w, False, False)
+        else:
+            boxes, scores, classes = np_outputs[0][0], np_outputs[1][0], np_outputs[2][0]
+            if bbox_normalization:
+                boxes = boxes / input_h
+
+            if bbox_order == "xy":
+                boxes = boxes[:, [1, 0, 3, 2]]
+            boxes = np.array_split(boxes, 4, axis=1)
+            boxes = zip(*boxes)
+
+        Camera.cam2_imx500_last_detections = [
+            Cam2Detection(box, category, score, metadata)
+            for box, score, category in zip(boxes, scores, classes)
+            if score > threshold
+        ]
+        return Camera.cam2_imx500_last_detections
+
+
+    @staticmethod
+    @lru_cache
+    def cam2_get_labels():
+        """Object Detection: get labels."""
+        labels = Camera.cam2_imx500.network_intrinsics.labels
+
+        if Camera.cam2_imx500.network_intrinsics.ignore_dash_labels:
+            labels = [label for label in labels if label and label != "-"]
+        return labels
+
+
+    @staticmethod
+    def cam2_draw_detections(request, stream="main"):
+        """Object Detection: Draw the detections for this request onto the ISP output."""
+        detections = Camera.cam2_imx500_last_results
+        if detections is None:
+            return
+        if len(detections) == 0:
+            return
+        labels = Camera.cam2_get_labels()
+        cfg = CameraCfg()
+        scfg = cfg.streamingCfg[str(Camera.camNum2)]
+        if "aiconfig" in scfg:
+            ai = scfg["aiconfig"]
+        else:
+            ai = AiConfig()
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                with MappedArray(request, stream) as m:
+                    for detection in detections:
+                        if stream == "lores":
+                            x, y, w, h = detection.box
+                        else:
+                            x, y, w, h = detection.box_main
+                        label = f"{labels[int(detection.category)]} ({detection.conf:.2f})"
+
+                        # Calculate text size and position
+                        (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                        text_x = x + 5
+                        text_y = y + 15
+
+                        # Create a copy of the array to draw the background with opacity
+                        overlay = m.array.copy()
+
+                        # Draw the background rectangle on the overlay
+                        cv2.rectangle(overlay,
+                                    (text_x, text_y - text_height),
+                                    (text_x + text_width, text_y + baseline),
+                                    (255, 255, 255),  # Background color (white)
+                                    cv2.FILLED)
+
+                        alpha = 0.30
+                        cv2.addWeighted(overlay, alpha, m.array, 1 - alpha, 0, m.array)
+
+                        # Draw text on top of the background
+                        cv2.putText(m.array, label, (text_x, text_y),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+                        # Draw detection box
+                        cv2.rectangle(m.array, (x, y), (x + w, y + h), (0, 255, 0, 0), thickness=2)
+
+                    if Camera.cam2_imx500.network_intrinsics.preserve_aspect_ratio:
+                        b_x, b_y, b_w, b_h = Camera.cam2_imx500.get_roi_scaled(request, stream)
+                        color = (255, 0, 0)  # red
+                        cv2.putText(m.array, "ROI", (b_x + 5, b_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                        cv2.rectangle(m.array, (b_x, b_y), (b_x + b_w, b_y + b_h), (255, 0, 0, 0))
+
+
+
+    @staticmethod
+    def cam2_create_and_draw_masks(request: CompletedRequest):
+        """Segmentation: Create masks from the output tensor and draw them on the main output image."""
+        masks = Camera.cam2_create_masks(request)
+        if masks:
+            Camera.cam2_imx500_last_overlay = Camera.cam2_compose_overlay(masks)
+        if Camera.cam2_imx500_last_overlay is not None:
+            Camera.cam2_draw_masks(request, Camera.cam2_imx500_last_overlay)
+
+
+    @staticmethod
+    def cam2_create_masks(request: CompletedRequest) -> Dict[int, np.ndarray]:
+        """Segmentation: Create masks from the output tensor, scaled to the ISP output."""
+        res = {}
+        np_outputs = Camera.cam2_imx500.get_outputs(metadata=request.get_metadata())
+        input_w, input_h = Camera.cam2_imx500.get_input_size()
+        if np_outputs is None:
+            return res
+        mask = np_outputs[0]
+        found_indices = np.unique(mask)
+
+        for i in found_indices:
+            if i == 0:
+                continue
+            output_shape = [input_h, input_w, 4]
+            colour = [(0, 0, 0, 0), Camera.COLOURS[int(i)]]
+            colour[1][3] = 150  # update the alpha value here, to save setting it later
+            overlay = np.array(mask == i, dtype=np.uint8)
+            overlay = np.array(colour)[overlay].reshape(output_shape).astype(np.uint8)
+            # No need to resize the overlay, it will be stretched to the output window.
+            res[i] = overlay
+        return res
+
+
+    @staticmethod
+    def cam2_compose_overlay(masks):
+        """Segmentation: Compose overlay from masks."""
+        input_w, input_h = Camera.cam2_imx500.get_input_size()
+        overlay = np.zeros((input_h, input_w, 4), dtype=np.uint8)
+        for v in masks.values():
+            overlay += v
+        return overlay
+
+
+
+    @staticmethod
+    def cam2_draw_masks(request: CompletedRequest, overlay: np.ndarray):
+        """Segmentation: Draw masks."""
+        alpha = overlay[:, :, 3:4] / 255.0
+        overlay_rgb = overlay[:, :, :3]
+
+        cfg = CameraCfg()
+        scfg = cfg.streamingCfg[str(Camera.camNum2)]
+        if "aiconfig" in scfg:
+            ai = scfg["aiconfig"]
+        else:
+            ai = AiConfig()
+        for stream in ["lores", "main"]:
+            if (stream == "lores" and ai.drawOnLores == True) or (stream == "main" and ai.drawOnMain == True):
+                with MappedArray(request, stream) as m:
+                    frame = m.array  # HxWx3 RGB
+                    h, w, _ = frame.shape
+
+                    ov = cv2.resize(overlay_rgb, (w, h), interpolation=cv2.INTER_NEAREST)
+                    a = cv2.resize(alpha, (w, h), interpolation=cv2.INTER_NEAREST)[:, :, np.newaxis]
+
+                    frame[:] = (a * ov + (1.0 - a) * frame).astype(np.uint8)
+

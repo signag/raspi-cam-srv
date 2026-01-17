@@ -22,6 +22,10 @@ In addition to CSI cameras (2 for Pi 5), you can connect as many USB cameras as 
 However, at a time, **raspiCamSrv** will only operate two of them simultaneously.   
 Related to usability in the UI, you will almost see no difference between CSI and USB cameras. Where they are important, they are handled in the UI and described in their context.
 
+#### AI Camera
+
+**raspiCamSrv** supports AI features with the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html). See [AI Camera Support](./AiCameraSupport.md).
+
 ## Application Screen
 ![Main Screen](img/Live_start.jpg)
 
@@ -179,3 +183,25 @@ The Media Viewer browser tab will include its own set of controls:
 
 The live stream, available in dialogs [Live](./LiveScreen.md), [Cam](./Cam.md) and [Trigger/Motion](./TriggerMotion.md) are not enabled for Media Viewer activation. Instead, the live stream can be directly opened in a separate window using the [Streaming URL](./CamWebcam.md).
 
+
+### Live Stream at Camera Start
+
+When a camera starts up, there is usually a short delay of a few seconds until the first frames are delivered by the camera.   
+This time is required by different algorithms (e.g. auto exposure or automatic white balance) to collect information on the scene.
+
+For the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html), if AI features are enabled (see [Camera AI Configuration](./Configuration_AI.md)), the camera needs to load the specified neural network model. This can take significantly more time compared to the start of normal cameras and may lead to irritation when waiting for the live stream to start.
+
+The Picamera2 IMX500 package therefore issues a warning note about long startup times or a progress bar when running the [imx500 demo programs](https://github.com/raspberrypi/picamera2/tree/main/examples/imx500) on the Debian UI.
+
+![imx500 Start](./img/Live_imx500_start_journal.jpg)
+
+**raspiCamSrv** shows an animation while the camera is starting up until the first frames are delivered for the Live stream:
+
+![Live animation](./img/Live_Animation.gif)
+
+This animation is also shown for other cameras.
+
+Only for systems where OpenCV is not installed, the system will wait for the first frames until the Live stream is shown.
+
+For the imx500 camera, the system log will show activities while the model is being loaded to the camera.   
+Experience has shown that, especially when the model is changed, the process may take a long time, even on a Raspberry Pi 5.

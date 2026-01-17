@@ -79,6 +79,22 @@ If any of these conditions is not met, the reason will be indicated:
 
 ![Stereo](img/Pi_Camera_3_Case_Stereo_front.JPG)
 
+## Activating and Deactivating the use of Camera AI Features
+
+AI features are currently only supported with the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html) which uses the Sony IMX500 imaging sensor to provide low-latency, high-performance AI capabilities.
+
+The camera can be used like any other Raspberry Pi CSI camera.    
+However to exploit the AI capablities of the camera, specific packages need to be installed.
+
+If any of the required packagas is missing or if no AI camera is connected, this will be indicated and the checkbox is deactivated:
+
+![NoAI](img/Settings_no_AI.jpg)
+
+In order to enable AI features for an active AI camera, activate the checkbox.
+
+Then, an additional dialog [Camera AI Configuration](./Configuration_AI.md) will be available where specific AI features can be configured and activated.
+
+If *Use Camera AI* is deactivated and a specific AI model is currently enabled for the Active Camera or/and for the Second Camera, this will be disabled automatically.
 
 
 ## Activating and Deactivating Histograms
@@ -94,7 +110,7 @@ The default on first server start is to show histograms.
 It may be necessary on smaller systems (Raspberry Pi Zero W, Raspberry Pi Zero 2 W) to deactivate this option because of memory restrictions.   
 If the option is deactivated, the modules are not loaded and histograms will not be displayed, even if all packages are installed.
 
-The system will automatically detect whether or not the required packages are installed and accessible. If this is not the case, this will be indicated:
+The system will automatically detect whether or not the required packages are installed and accessible. If this is not the case, this will be indicated and the checkbox will be disabled:
 
 ![NoHistograms](img/Settings_noHistogram.jpg)
 

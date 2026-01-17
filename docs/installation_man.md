@@ -23,7 +23,41 @@ In case of problems during installation and usage, see [Troubleshooting](./Troub
 8. Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt.<br>(If you need to leave the virtual environment at some time, use ```deactivate```)
 9. **Trixie**: Skip this step!<br>Make sure that picamera2 is available on the system:<br>```python```<br>```>>>import picamera2```<br>```>>>quit()```<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
 10. Install Flask 3.x **with the virtual environment activated (Step 8)**.<br>Raspberry Pi OS distributions come with Flask preinstalled, however we need to run Flask from the virtual environment in order to see other packages which will be located there.<br>```pip install --ignore-installed "Flask>=3,<4"```<br><br>Make sure that Flask is really installed in the virtual environment:<br>```which flask``` should output<br>```/home/<user>/prg/raspi-cam-srv/.venv/bin/flask```
-11. **Optional** installations:<br>The following installations are only required if you need to visualize histograms of photos or if you are interested in using [Extended Motion Capturing Algorithms](./TriggerMotion.md) or [Stereo Vision](./CamStereo.md).<br>For use of USB cameras, OpenCV is required.<br><br>All installations must be done with the virtual environment activated (Step 8)<br><br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV): <br>```sudo apt-get install python3-opencv```<br><br>Install [numpy](https://numpy.org/): <br>```pip install --ignore-installed numpy```<br>(There may be errors, which normally can be ignored)<br><br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib): <br>**Trixie**:```pip install --ignore-installed matplotlib```<br>(There may be errors, which normally can be ignored) <br>**Bookworm**: ```pip install --ignore-installed "matplotlib<3.8"```<br>(The version restriction assures compatibility with numpy 1.x which is [required for Picamera2](https://github.com/raspberrypi/picamera2/issues/1211))<br><br>The following installation is required for enabling the [raspiCamSrv API](./API.md)<br>Install [flask-jwt-extended](https://flask-jwt-extended.readthedocs.io/en/stable/): <br>```pip install --ignore-installed flask-jwt-extended```<br>(There may be errors, which normally can be ignored)
+11. **Optional** installations:
+<br>The following installations are only required if you need to visualize histograms of photos or if you are interested in using [Extended Motion Capturing Algorithms](./TriggerMotion.md) or [Stereo Vision](./CamStereo.md).<br>For use of USB cameras, OpenCV is required.
+<br>
+<br>All installations must be done with the virtual environment activated (Step 8)
+<br>
+<br>Install [OpenCV](https://de.wikipedia.org/wiki/OpenCV):
+<br>```sudo apt-get install python3-opencv```
+<br>
+<br>Install [numpy](https://numpy.org/):
+<br>```pip install --ignore-installed numpy```
+<br>(There may be errors, which normally can be ignored)
+<br>
+<br>Install [matplotlib](https://de.wikipedia.org/wiki/Matplotlib):
+<br>**Trixie**:```pip install --ignore-installed matplotlib```
+<br>(There may be errors, which normally can be ignored)
+<br>**Bookworm**: ```pip install --ignore-installed "matplotlib<3.8"```
+<br>(The version restriction assures compatibility with numpy 1.x which is [required for Picamera2](https://github.com/raspberrypi/picamera2/issues/1211))
+<br>
+<br>The following installation is required for enabling the [raspiCamSrv API](./API.md)
+<br>Install [flask-jwt-extended](https://flask-jwt-extended.readthedocs.io/en/stable/)
+<br>```pip install --ignore-installed flask-jwt-extended```
+<br>(There may be errors, which normally can be ignored)
+<br>
+<br>The following installation is only required if you are using a Lite variant of the Debian OS:
+<br>```pip install --ignore-installed psutil```
+<br>
+<br>The following installations are only required if you intend to use a Raspberry Pi AI Camera:
+<br>
+<br>Install the imx500-all package:
+<br>```sudo apt install imx500-all```
+<br>
+<br>Install [munkres](https://pypi.org/project/munkres/)
+<br>```pip install --break-system-packages munkres```
+<br>(There may be errors, which normally can be ignored)
+<br><br>
 12. Initialize the database for Flask <br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 8):<br>```python -m flask --app raspiCamSrv init-db```
 13. Check that the Flask default port 5000 is available<br>```sudo netstat -nlp | grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
 14. Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 8):<br>```python -m flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```

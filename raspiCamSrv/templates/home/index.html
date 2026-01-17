@@ -1548,215 +1548,221 @@ RaspiCamSrv's Live page
             {% if sc.isDisplayHidden == false and sc.displayMeta != None %}
             {% if sc.displayContent == "meta" %}
             <h4 style="min-height: 36px; padding-left: 17px">Metadata</h4>
-            <table class="w3-table-all">
-                <tr>
-                    <th>Property</th>
-                    <th>Value</th>
-                </tr>
-                {% for prop in sc.displayMeta %}
-                {% if loop.index >= sc.displayMetaFirst and loop.index < sc.displayMetaLast and prop !="PispStatsOutput" %}
-                <tr>
-                    <td class="w3-tooltip">
-                        {% if prop|string() == "Camera" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Camera by which the photo was taken.<br>
-                            This information is not contained in the metadata provided by Picamera2.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "SensorTimestamp" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The time this frame was produced by the
-                            sensor, measured in nanoseconds since the
-                            system booted. The time is sampled on the
-                            camera start of frame interrupt, which occurs
-                            as the first pixel of the new frame is written
-                            out by the sensor. This control appears only in
-                            captured image metadata and is read-only.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "ColourCorrectionMatrix" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The 3×3 matrix used within the image signal
-                            processor (ISP) to convert the raw camera
-                            colours to sRGB. This control appears only in
-                            captured image metadata and is read-only.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "FocusFoM" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Reports a Figure of Merit (FoM) to indicate how in-focus the frame is. A larger FocusFoM value indicates a more in-focus
-                            frame. This singular value may be based on a combination of statistics gathered from multiple focus regions within an
-                            image. The number of focus regions and method of combination is platform dependent. In this respect, it is not
-                            necessarily aimed at providing a way to implement a focus algorithm by the application, rather an indication of how
-                            in-focus a frame is.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "ColourTemperature" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            An estimate of the colour temperature (in
-                            Kelvin) of the current image. It is only available
-                            in captured image metadata, and is read-only
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "ColourGains" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Pair of numbers where the first is the red gain
-                            (the gain applied to red pixels by the AWB
-                            algorithm) and the second is the blue gain.
-                            Setting these numbers disables AWB.<br>
-                            Range: [0.0,32.0]
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "AeLocked" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Report the lock status of a running AE algorithm.<br>
-                            If the AE algorithm is locked the value shall be set to true, 
-                            if it's converging it shall be set to false. 
-                            If the AE algorithm is not running the control shall 
-                            not be present in the metadata control list.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "Lux" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            An estimate of the brightness (in lux) of the
-                            scene. It is available only in captured image
-                            metadata and is read-only.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "FrameDuration" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The amount of time (in microseconds) since
-                            the previous camera frame. This value is only
-                            available in captured image metadata and is
-                            read-only. To change the camera’s framerate,
-                            the "FrameDurationLimits" control should be
-                            used.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "SensorBlackLevels" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The black levels of the raw sensor image. This
-                            control appears only in captured image
-                            metadata and is read-only. One value is
-                            reported for each of the four Bayer channels,
-                            scaled up as if the full pixel range were 16 bits
-                            (so 4096 represents a black level of 16 in 10-
-                            bit raw data).
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "DigitalGain" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The amount of digital gain applied to an
-                            image. Digital gain is used automatically when
-                            the sensor’s analogue gain control cannot go
-                            high enough, and so this value is only reported
-                            in captured image metadata. It cannot be set
-                            directly - users should set the AnalogueGain
-                            instead and digital gain will be used when
-                            needed.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "AnalogueGain" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Analogue gain applied by the sensor.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "ScalerCrop" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            The scaler crop rectangle determines which
-                            part of the image received from the sensor is
-                            cropped and then scaled to produce an output
-                            image of the correct size. It can be used to
-                            implement digital pan and zoom. The
-                            coordinates are always given from within the
-                            full sensor resolution.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "ExposureTime" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Exposure time used for the sensor, measured
-                            in microseconds.<br>
-                            In brackets for exposure times < 1s: rounded reciprocal value
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "AfState" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Reports the current state of the Autofocus (AF) algorithm in conjunction 
-                            with the reported AfMode value and (in continuous AF mode) the AfPauseState value.<br> 
-                            If the AfMode is set to AfModeManual, then the AfState will always report 
-                            AfStateIdle (0) (even if the lens is subsequently moved). 
-                            Changing to the AfModeManual state does not initiate any lens movement.<br>
-                            If the AfMode is set to AfModeAuto then the AfState will report AfStateIdle (0). 
-                            However, if AfModeAuto and AfTriggerStart are sent together 
-                            then AfState will omit AfStateIdle (0) and move straight to AfStateScanning (1) (and start a scan).<br>
-                            If the AfMode is set to AfModeContinuous then the AfState will initially report AfStateScanning (1).
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "AfPauseState" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Only applicable in continuous (AfModeContinuous) mode, 
-                            this reports whether the algorithm is currently running (0), paused (2)
-                            or pausing (1) (that is, will pause as soon as any in-progress scan completes).<br>
-                            Any change to AfMode will cause AfPauseStateRunning (0) to be reported.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "SensorTemperature" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Temperature measure from the camera sensor in Celsius. 
-                            This is typically obtained by a thermal sensor present on-die or
-                            in the camera module. The range of reported temperatures is device dependent.<br>
-                            The SensorTemperature control will only be returned in metadata if a themal sensor is present.
-                        </span>
-                        {% endif %}
-                        {% if prop|string() == "LensPosition" %}
-                        <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                            Position of the lens. The units are dioptres
-                            (reciprocal of the distance in metres).<br>
-                            In brackets: focal distance in m.
-                        </span>
-                        {% endif %}
-                        {{ prop|string() }}
-                    </td>
-                    {% if prop|string() == "AfState" %}
-                        {% if sc.displayMeta[prop]|string() == "0" %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (Idle)</td>
-                        {% elif sc.displayMeta[prop]|string() == "1" %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (Scanning)</td>
-                        {% elif sc.displayMeta[prop]|string() == "2" %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (Focused)</td>
-                        {% elif sc.displayMeta[prop]|string() == "3" %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (Failed)</td>
-                        {% else %}
+            <div style="max-height:45vh;overflow-y:auto">
+                <table class="w3-table-all">
+                    <thead>
+                        <tr>
+                            <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">Property</th>
+                            <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prop in sc.displayMeta %}
+                        {% if loop.index >= sc.displayMetaFirst and loop.index < sc.displayMetaLast and prop !="PispStatsOutput" %}
+                        <tr>
+                            <td class="w3-tooltip">
+                                {% if prop|string() == "Camera" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Camera by which the photo was taken.<br>
+                                    This information is not contained in the metadata provided by Picamera2.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "SensorTimestamp" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    The time this frame was produced by the
+                                    sensor, measured in nanoseconds since the
+                                    system booted. The time is sampled on the
+                                    camera start of frame interrupt, which occurs
+                                    as the first pixel of the new frame is written
+                                    out by the sensor. This control appears only in
+                                    captured image metadata and is read-only.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "ColourCorrectionMatrix" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    The 3×3 matrix used within the image signal
+                                    processor (ISP) to convert the raw camera
+                                    colours to sRGB. This control appears only in
+                                    captured image metadata and is read-only.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "FocusFoM" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Reports a Figure of Merit (FoM) to indicate how in-focus the frame is. A larger FocusFoM value indicates a more in-focus
+                                    frame. This singular value may be based on a combination of statistics gathered from multiple focus regions within an
+                                    image. The number of focus regions and method of combination is platform dependent. In this respect, it is not
+                                    necessarily aimed at providing a way to implement a focus algorithm by the application, rather an indication of how
+                                    in-focus a frame is.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "ColourTemperature" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    An estimate of the colour temperature (in
+                                    Kelvin) of the current image. It is only available
+                                    in captured image metadata, and is read-only
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "ColourGains" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Pair of numbers where the first is the red gain
+                                    (the gain applied to red pixels by the AWB
+                                    algorithm) and the second is the blue gain.
+                                    Setting these numbers disables AWB.<br>
+                                    Range: [0.0,32.0]
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "AeLocked" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Report the lock status of a running AE algorithm.<br>
+                                    If the AE algorithm is locked the value shall be set to true, 
+                                    if it's converging it shall be set to false. 
+                                    If the AE algorithm is not running the control shall 
+                                    not be present in the metadata control list.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "Lux" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    An estimate of the brightness (in lux) of the
+                                    scene. It is available only in captured image
+                                    metadata and is read-only.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "FrameDuration" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    The amount of time (in microseconds) since
+                                    the previous camera frame. This value is only
+                                    available in captured image metadata and is
+                                    read-only. To change the camera’s framerate,
+                                    the "FrameDurationLimits" control should be
+                                    used.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "SensorBlackLevels" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    The black levels of the raw sensor image. This
+                                    control appears only in captured image
+                                    metadata and is read-only. One value is
+                                    reported for each of the four Bayer channels,
+                                    scaled up as if the full pixel range were 16 bits
+                                    (so 4096 represents a black level of 16 in 10-
+                                    bit raw data).
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "DigitalGain" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    The amount of digital gain applied to an
+                                    image. Digital gain is used automatically when
+                                    the sensor’s analogue gain control cannot go
+                                    high enough, and so this value is only reported
+                                    in captured image metadata. It cannot be set
+                                    directly - users should set the AnalogueGain
+                                    instead and digital gain will be used when
+                                    needed.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "AnalogueGain" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Analogue gain applied by the sensor.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "ScalerCrop" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    The scaler crop rectangle determines which
+                                    part of the image received from the sensor is
+                                    cropped and then scaled to produce an output
+                                    image of the correct size. It can be used to
+                                    implement digital pan and zoom. The
+                                    coordinates are always given from within the
+                                    full sensor resolution.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "ExposureTime" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Exposure time used for the sensor, measured
+                                    in microseconds.<br>
+                                    In brackets for exposure times < 1s: rounded reciprocal value
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "AfState" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Reports the current state of the Autofocus (AF) algorithm in conjunction 
+                                    with the reported AfMode value and (in continuous AF mode) the AfPauseState value.<br> 
+                                    If the AfMode is set to AfModeManual, then the AfState will always report 
+                                    AfStateIdle (0) (even if the lens is subsequently moved). 
+                                    Changing to the AfModeManual state does not initiate any lens movement.<br>
+                                    If the AfMode is set to AfModeAuto then the AfState will report AfStateIdle (0). 
+                                    However, if AfModeAuto and AfTriggerStart are sent together 
+                                    then AfState will omit AfStateIdle (0) and move straight to AfStateScanning (1) (and start a scan).<br>
+                                    If the AfMode is set to AfModeContinuous then the AfState will initially report AfStateScanning (1).
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "AfPauseState" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Only applicable in continuous (AfModeContinuous) mode, 
+                                    this reports whether the algorithm is currently running (0), paused (2)
+                                    or pausing (1) (that is, will pause as soon as any in-progress scan completes).<br>
+                                    Any change to AfMode will cause AfPauseStateRunning (0) to be reported.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "SensorTemperature" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Temperature measure from the camera sensor in Celsius. 
+                                    This is typically obtained by a thermal sensor present on-die or
+                                    in the camera module. The range of reported temperatures is device dependent.<br>
+                                    The SensorTemperature control will only be returned in metadata if a themal sensor is present.
+                                </span>
+                                {% endif %}
+                                {% if prop|string() == "LensPosition" %}
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Position of the lens. The units are dioptres
+                                    (reciprocal of the distance in metres).<br>
+                                    In brackets: focal distance in m.
+                                </span>
+                                {% endif %}
+                                {{ prop|string() }}
+                            </td>
+                            {% if prop|string() == "AfState" %}
+                                {% if sc.displayMeta[prop]|string() == "0" %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (Idle)</td>
+                                {% elif sc.displayMeta[prop]|string() == "1" %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (Scanning)</td>
+                                {% elif sc.displayMeta[prop]|string() == "2" %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (Focused)</td>
+                                {% elif sc.displayMeta[prop]|string() == "3" %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (Failed)</td>
+                                {% else %}
+                                    <td>{{ sc.displayMeta[prop]|string() }}</td>
+                                {% endif %}
+                            {% elif prop|string() == "AfPauseState" %}
+                                {% if sc.displayMeta[prop]|string() == "0" %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (Running)</td>
+                                {% elif sc.displayMeta[prop]|string() == "1" %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (Pausing)</td>
+                                {% elif sc.displayMeta[prop]|string() == "2" %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (Paused)</td>
+                                {% else %}
+                                    <td>{{ sc.displayMeta[prop]|string() }}</td>
+                                {% endif %}
+                            {% elif prop|string() == "LensPosition" %}
+                                {% set fdr = (1000.0/sc.displayMeta[prop])|int() %}
+                                {% set fd = fdr/1000.0 %}
+                                <td>{{ sc.displayMeta[prop]|string() }} ({{ fd|string() }} m)</td>
+                            {% elif prop|string() == "ExposureTime" %}
+                                {% if sc.displayMeta[prop] < 1000000 %}
+                                    {% set rt = (1000000/sc.displayMeta[prop])|int() %}
+                                    <td>{{ sc.displayMeta[prop]|string() }} (1/{{ rt|string() }} s)</td>
+                                {% else %}
+                                    <td>{{ sc.displayMeta[prop]|string() }}</td>
+                                {% endif %}
+                            {% else %}
                             <td>{{ sc.displayMeta[prop]|string() }}</td>
-                        {% endif %}
-                    {% elif prop|string() == "AfPauseState" %}
-                        {% if sc.displayMeta[prop]|string() == "0" %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (Running)</td>
-                        {% elif sc.displayMeta[prop]|string() == "1" %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (Pausing)</td>
-                        {% elif sc.displayMeta[prop]|string() == "2" %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (Paused)</td>
-                        {% else %}
-                            <td>{{ sc.displayMeta[prop]|string() }}</td>
-                        {% endif %}
-                    {% elif prop|string() == "LensPosition" %}
-                        {% set fdr = (1000.0/sc.displayMeta[prop])|int() %}
-                        {% set fd = fdr/1000.0 %}
-                        <td>{{ sc.displayMeta[prop]|string() }} ({{ fd|string() }} m)</td>
-                    {% elif prop|string() == "ExposureTime" %}
-                        {% if sc.displayMeta[prop] < 1000000 %}
-                            {% set rt = (1000000/sc.displayMeta[prop])|int() %}
-                            <td>{{ sc.displayMeta[prop]|string() }} (1/{{ rt|string() }} s)</td>
-                        {% else %}
-                            <td>{{ sc.displayMeta[prop]|string() }}</td>
-                        {% endif %}
-                    {% else %}
-                    <td>{{ sc.displayMeta[prop]|string() }}</td>
-                    {% endif %}
-                </tr>
-                {% endif%}
-                {% endfor %}
-            </table>
+                            {% endif %}
+                        </tr>
+                        {% endif%}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
             <table>
                 <tr>

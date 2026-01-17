@@ -2,6 +2,19 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.6.0
+
+### New Features
+
+- Support of AI features for the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html):
+<br>You can specify the neural network model to be used by the camera (see [Camera AI Configuration](./Configuration_AI.md)) and see inference information visualized in the Live stream or on photos or videos.    
+See [AI Camera Support](./AiCameraSupport.md)
+
+### Changes
+
+- The behavior of the Live view at camera start has been changed. Especially, in order to avoid irritation about long startup times for the imx500 [AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html), **raspiCamSrv** shows an [animation while the camera is starting](./UserGuide.md#live-stream-at-camera-start).
+- Maximum for [Buffer Count](./Configuration.md#buffer-count) in [Camera Configurations](./Configuration.md#configuration-tab) is increased from 6 to 12. The larger value has been used in the [imx500 examples of Picamera2](https://github.com/raspberrypi/picamera2/tree/main/examples/imx500)
+
 ## V4.5.0
 
 ### New Features

@@ -1,4 +1,4 @@
-site_name: raspiCamSrv V4.5.x Documentation
+site_name: raspiCamSrv V4.6.x Documentation
 plugins:
     - search
     - mike
@@ -45,8 +45,9 @@ nav:
                - Cropping: ScalerCrop.md
           - Direct Control Panel: LiveDirectControl.md
       - Photo / Video Taking: Phototaking.md
-      - Config Manu:
+      - Config Menu:
           - raspiCamSrv Camera Configuration: Configuration.md
+          - raspiCamSrv Camera AI Configuration: Configuration_AI.md
           - Tuning: Tuning.md
       - Info Menu:
           - System and Camera Information: Information.md
@@ -88,6 +89,7 @@ nav:
           - GPIO Devices:
               - Stepper Motor: gpioDevices/StepperMotor.md
           - Update: SettingsUpdate.md
+      - AI Camera Support: AiCameraSupport.md
       - Background Processes: Background Processes.md
   - No Camera Mode:
       - User Guide: UserGuide_NoCam.md

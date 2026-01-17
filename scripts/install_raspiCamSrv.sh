@@ -71,14 +71,18 @@ fi
 ############################################
 # Ask user about imx500 Camera support
 ############################################
-echo
-read -rp "Do you intend to use the Raspberry Pi AI Camera (imx500)? [y/N]: " AI_CHOICE
-echo
+if [ "$OS_CODENAME" != "bullseye" ]; then
+    echo
+    read -rp "Do you intend to use the Raspberry Pi AI Camera (imx500)? [y/N]: " AI_CHOICE
+    echo
 
-AI_CHOICE=${AI_CHOICE,,}   # normalize to lowercase
+    AI_CHOICE=${AI_CHOICE,,}   # normalize to lowercase
 
-if [[ "$AI_CHOICE" == "y" ]]; then
-    ENABLE_AI=true
+    if [[ "$AI_CHOICE" == "y" ]]; then
+        ENABLE_AI=true
+    else
+        ENABLE_AI=false
+    fi
 else
     ENABLE_AI=false
 fi

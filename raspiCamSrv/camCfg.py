@@ -16,7 +16,6 @@ from raspiCamSrv.gpioDeviceTypes import gpioDeviceTypes
 from raspiCamSrv import versionDoc
 from raspiCamSrv.version import version as currentVersion
 import smtplib
-from pathlib import Path
 import zoneinfo
 from secrets import token_urlsafe
 import threading
@@ -1961,6 +1960,7 @@ class CameraInfo():
         self._model = ""
         self._isUsb = False
         self._usbDev = ""
+        self._hasAi = False
         self._location = 0
         self._rotation = 0
         self._id = ""
@@ -1982,6 +1982,14 @@ class CameraInfo():
     @isUsb.setter
     def isUsb(self, value: bool):
         self._isUsb = value
+
+    @property
+    def hasAi(self) -> bool:
+        return self._hasAi
+
+    @hasAi.setter
+    def hasAi(self, value: bool):
+        self._hasAi = value
 
     @property
     def usbDev(self) -> str:
@@ -2906,6 +2914,129 @@ class TuningConfig():
     @classmethod                
     def initFromDict(cls, dict:dict):
         cc = TuningConfig()
+        for key, value in dict.items():
+            if value is None:
+                setattr(cc, key, value)
+            else:
+                setattr(cc, key, value)
+        return cc
+
+class AiConfig():
+    def __init__(self):
+        self._enable = False
+        self._modelFolderDef = "/usr/share/imx500-models"
+        self.tasks = ["Classification", "Object Detection", "Pose Estimation", "Segmentation"]
+        self._task = None
+        self._modelFolder = "/usr/share/imx500-models"
+        self._modelFiles = []
+        self._modelFile = ""
+        self._modelIntrinsics = None
+        self._drawOnLores = True
+        self._drawOnMain = False
+        self._topK = 3
+        self._detectionThreshold = 0.6
+        self._iouThreshold = 0.6
+        self._maxDetections = 10
+
+    @property
+    def enable(self) -> bool:
+        return self._enable
+
+    @enable.setter
+    def enable(self, value: bool):
+        self._enable = value
+
+    @property
+    def task(self) -> str:
+        return self._task
+
+    @task.setter
+    def task(self, value: str):
+        self._task = value
+
+    @property
+    def modelFolder(self) -> str:
+        return self._modelFolder
+
+    @modelFolder.setter
+    def modelFolder(self, value: str):
+        self._modelFolder = value
+
+    @property
+    def modelFiles(self) -> list[str]:
+        return self._modelFiles
+
+    @modelFiles.setter
+    def modelFiles(self, value: list[str]):
+        self._modelFiles = value
+
+    @property
+    def modelFile(self) -> str:
+        return self._modelFile
+
+    @modelFile.setter
+    def modelFile(self, value: str):
+        self._modelFile = value
+
+    @property
+    def modelIntrinsics(self) -> dict:
+        return self._modelIntrinsics
+
+    @modelIntrinsics.setter
+    def modelIntrinsics(self, value: dict):
+        self._modelIntrinsics = value
+
+    @property
+    def drawOnLores(self) -> bool:
+        return self._drawOnLores
+
+    @drawOnLores.setter
+    def drawOnLores(self, value: bool):
+        self._drawOnLores = value
+
+    @property
+    def drawOnMain(self) -> bool:
+        return self._drawOnMain
+
+    @drawOnMain.setter
+    def drawOnMain(self, value: bool):
+        self._drawOnMain = value
+
+    @property
+    def topK(self) -> int:
+        return self._topK
+
+    @topK.setter
+    def topK(self, value: int):
+        self._topK = value
+
+    @property
+    def detectionThreshold(self) -> float:
+        return self._detectionThreshold
+
+    @detectionThreshold.setter
+    def detectionThreshold(self, value: float):
+        self._detectionThreshold = value
+
+    @property
+    def iouThreshold(self) -> float:
+        return self._iouThreshold
+
+    @iouThreshold.setter
+    def iouThreshold(self, value: float):
+        self._iouThreshold = value
+
+    @property
+    def maxDetections(self) -> int:
+        return self._maxDetections
+
+    @maxDetections.setter
+    def maxDetections(self, value: int):
+        self._maxDetections = value
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        cc = AiConfig()
         for key, value in dict.items():
             if value is None:
                 setattr(cc, key, value)
@@ -4121,14 +4252,17 @@ class ServerConfig():
         self._noCamera = False
         self._supportedCameras = []
         self._usbCamAvailable = False
+        self._aiCamAvailable = False
         self._piCameras = []
         self._activeCamera = 0
         self._activeCameraIsUsb = False
+        self._activeCameraHasAi = False
         self._activeCameraUsbDev = ""
         self._activeCameraInfo = ""
         self._activeCameraModel = ""
         self._secondCamera = None
         self._secondCameraIsUsb = False
+        self._secondCameraHasAi = False
         self._secondCameraUsbDev = ""
         self._secondCameraInfo = ""
         self._secondCameraModel = ""
@@ -4186,9 +4320,12 @@ class ServerConfig():
         self._numpyAvailable = False
         self._matplotlibAvailable = False
         self._flaskJwtLibAvailable = False
+        self._imx500Available = False
+        self._munkresAvailable = False
         self._useUsbCameras = True
         self._useStereo = False
         self._useHistograms = False
+        self._useCameraAi = False
         self._requireAuthForStreaming = False
         self._locLongitude = 0.0
         self._locLatitude = 0.0
@@ -4437,6 +4574,14 @@ class ServerConfig():
     def usbCamAvailable(self, value: bool):
         self._usbCamAvailable = value
 
+    @property
+    def aiCamAvailable(self) -> bool:
+        return self._aiCamAvailable
+
+    @aiCamAvailable.setter
+    def aiCamAvailable(self, value: bool):
+        self._aiCamAvailable = value
+
     @noCamera.setter
     def noCamera(self, value: bool):
         self._noCamera = value
@@ -4464,6 +4609,14 @@ class ServerConfig():
     @activeCameraIsUsb.setter
     def activeCameraIsUsb(self, value: bool):
         self._activeCameraIsUsb = value
+
+    @property
+    def activeCameraHasAi(self) -> bool:
+        return self._activeCameraHasAi
+
+    @activeCameraHasAi.setter
+    def activeCameraHasAi(self, value: bool):
+        self._activeCameraHasAi = value
 
     @property
     def activeCameraUsbDev(self) -> str:
@@ -4504,6 +4657,14 @@ class ServerConfig():
     @secondCameraIsUsb.setter
     def secondCameraIsUsb(self, value: bool):
         self._secondCameraIsUsb = value
+
+    @property
+    def secondCameraHasAi(self) -> bool:
+        return self._secondCameraHasAi
+
+    @secondCameraHasAi.setter
+    def secondCameraHasAi(self, value: bool):
+        self._secondCameraHasAi = value
 
     @property
     def secondCameraUsbDev(self) -> str:
@@ -4996,6 +5157,22 @@ class ServerConfig():
         self._flaskJwtLibAvailable = value
 
     @property
+    def imx500Available(self) -> bool:
+        return self._imx500Available
+
+    @imx500Available.setter
+    def imx500Available(self, value: bool):
+        self._imx500Available = value
+
+    @property
+    def munkresAvailable(self) -> bool:
+        return self._munkresAvailable
+
+    @munkresAvailable.setter
+    def munkresAvailable(self, value: bool):
+        self._munkresAvailable = value
+
+    @property
     def useUsbCameras(self) -> bool:
         if self.supportsUsbCamera == False:
             self._useUsbCameras = False
@@ -5022,6 +5199,14 @@ class ServerConfig():
     @useHistograms.setter
     def useHistograms(self, value: bool):
         self._useHistograms = value
+
+    @property
+    def useCameraAi(self) -> bool:
+        return self._useCameraAi
+
+    @useCameraAi.setter
+    def useCameraAi(self, value: bool):
+        self._useCameraAi = value
 
     @property
     def supportsExtMotionDetection(self) -> bool:
@@ -5112,6 +5297,28 @@ class ServerConfig():
             why = "USB Camera support is not available because"
             if not self.cv2Available:
                 why = why + "<br>module cv2 is not available"
+        return why
+
+    @property
+    def whyNotSupportsAiCamera(self) -> str:
+        why = ""
+        if self.aiCamAvailable == False \
+        or self.imx500Available == False \
+        or self.cv2Available == False:
+            why = "Camera AI features are not available because"
+        else:
+            if self.munkresAvailable == False:
+                why = "Some Camera AI features are not available because"
+                why = why + "<br>module munkres is not available"
+                why = why + "<br>Install in venv with 'pip install --break-system-packages munkres'"
+
+        if self.aiCamAvailable == False:
+            why = why + "<br>No AI camera (imx500) is currently connected"
+        if self.imx500Available == False:
+            why = why + "<br>Package imx500-all is not installed."
+            why = why + "<br>Install with: 'sudo apt install imx500-all'"
+        if self.cv2Available == False:
+            why = why + "<br>Module cv2 is not available"
         return why
 
     @property
@@ -5876,6 +6083,43 @@ class ServerConfig():
 
         return info
 
+    @property
+    def imx500Info(self) -> str:
+        """Get version and location of imx500-all package
+        """
+        info = ""
+        res = self._get_dpkg_info("imx500-all")
+
+        if res["installed"] == False:
+            info = "Package not installed"
+        else:
+            version = res["version"]
+            files = res["files"]
+            path = "N/A"
+            info = f"Ver: {version} - Loc: {path}"
+
+        return info
+
+    @property
+    def munkresInfo(self) -> str:
+        """Get version and location of munkres module
+        """
+        info = ""
+        try:
+            import munkres
+            version = importlib.metadata.version("munkres")
+            ex = os.path.dirname(munkres.__file__)
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
+
     def _checkModule(self, moduleName: str):
         logger.debug("_checkModule for module: %s", moduleName)
         module = None
@@ -5901,12 +6145,17 @@ class ServerConfig():
             - cv2
             - numpy
             - matplotlib
+            - flask_jwt_extended
+            - imx500 (for Sony IMX500/IMX501 camera support)
+            - munkres (for Hungarian Algorithm support used in pose estimation)
         """
         logger.debug("checkEnvironment")
         self.cv2Available = self._checkModule("cv2") is not None
         self.numpyAvailable = self._checkModule("numpy") is not None
         self.matplotlibAvailable = self._checkModule("matplotlib") is not None
         self.flaskJwtLibAvailable = self._checkModule("flask_jwt_extended") is not None
+        self.imx500Available = self._get_dpkg_info("imx500-all")["installed"]
+        self.munkresAvailable = self._checkModule("munkres") is not None
         if self.supportsHistograms:
             self.useHistograms = True
         else:
@@ -5916,6 +6165,43 @@ class ServerConfig():
         else:
             self.useAPI = False
         logger.debug("cv2Available: %s numpyAvailable: %s matplotlibAvailable: %s flaskJwtLibAvailable: %s", self. cv2Available, self.numpyAvailable, self.matplotlibAvailable, self.flaskJwtLibAvailable)
+
+
+    def _get_dpkg_info(self, package: str) -> dict:
+        """ Get information about a Debian package using dpkg-query"""
+        # Check whether the package is installed
+        check = subprocess.run(
+            ["dpkg-query", "-W", "-f=${Status}", package],
+            capture_output=True,
+            text=True
+        )
+
+        if check.returncode != 0 or "installed" not in check.stdout:
+            return {
+                "installed": False,
+                "version": None,
+                "files": []
+            }
+
+        # Package is installed → get version
+        version = subprocess.run(
+            ["dpkg-query", "-W", "-f=${Version}", package],
+            capture_output=True,
+            text=True
+        ).stdout.strip()
+
+        # Get installed file list
+        files = subprocess.run(
+            ["dpkg", "-L", package],
+            capture_output=True,
+            text=True
+        ).stdout.splitlines()
+
+        return {
+            "installed": True,
+            "version": version,
+            "files": files
+        }
 
     def is_time_synchronized(self) -> tuple[bool, bool]:
         """ Check if the system time is synchronized with NTP server
@@ -6901,6 +7187,7 @@ class CameraCfg():
             cls._sensorModes = []
             cls._rawFormats = []
             cls._tuningConfig = TuningConfig()
+            cls._aiConfig = AiConfig()
             cls._controls = CameraControls()
             cls._controlsBackup: CameraControls = None
             cls._cameraProperties = CameraProperties()
@@ -6973,6 +7260,14 @@ class CameraCfg():
     @tuningConfig.setter
     def tuningConfig(self, value: TuningConfig):
         self._tuningConfig = value
+
+    @property
+    def aiConfig(self) -> AiConfig:
+        return self._aiConfig
+
+    @aiConfig.setter
+    def aiConfig(self, value: AiConfig):
+        self._aiConfig = value
 
     @property
     def controlsBackup(self) -> CameraControls:
@@ -7102,10 +7397,13 @@ class CameraCfg():
         """ Set up the list of supported cameras
         """
         self.serverConfig.usbCamAvailable = False
+        self.serverConfig.aiCamAvailable = False
         supCams = []
         for cam in self.cameras:
             if cam.isUsb == False:
                 supCams.append(cam)
+                if cam.model == "imx500":
+                    self.serverConfig.aiCamAvailable = True
             else:
                 if cam.usbDev != "UNKNOWN":
                     self.serverConfig.usbCamAvailable = True
@@ -7136,7 +7434,8 @@ class CameraCfg():
     def resetActiveCameraSettings(self):
         """ Reset configuration and controls for the active camera
         """
-        self._tuningConfig = TuningConfig()
+        # self._tuningConfig = TuningConfig()
+        # self._aiConfig = AiConfig()
         self._controls = CameraControls()
         self._controlsBackup: CameraControls = None
         self._cameraProperties = CameraProperties()
@@ -7196,6 +7495,7 @@ class CameraCfg():
                 os.makedirs(cfgPath, exist_ok=True)
             self._persistCl(self.cameras, "cameras.json", cfgPath)
             self._persistCl(self.tuningConfig, "tuningConfig.json", cfgPath)
+            self._persistCl(self.aiConfig, "aiConfig.json", cfgPath)
             self._persistCl(self.sensorModes, "sensorModes.json", cfgPath)
             self._persistCl(self.rawFormats, "rawFormats.json", cfgPath)
             self._persistCl(self.cameraProperties, "cameraProperties.json", cfgPath)
@@ -7257,6 +7557,8 @@ class CameraCfg():
                         scfg["controls"] = CameraControls.initFromDict(value)
                     elif key == "tuningconfig":
                         scfg["tuningconfig"] = TuningConfig.initFromDict(value)
+                    elif key == "aiconfig":
+                        scfg["aiconfig"] = AiConfig.initFromDict(value)
                     elif key == "cameraproperties":
                         scfg["cameraproperties"] = CameraProperties.initFromDict(value)
                     else:
@@ -7289,6 +7591,7 @@ class CameraCfg():
         if cfgPath:
             if os.path.exists(cfgPath):
                 self.tuningConfig = self._loadConfigCl(TuningConfig, "tuningConfig.json", cfgPath)
+                self.aiConfig = self._loadConfigCl(AiConfig, "aiConfig.json", cfgPath)
                 self.serverConfig = self._loadConfigCl(ServerConfig, "serverConfig.json", cfgPath)
                 self.liveViewConfig = self._loadConfigCl(CameraConfig, "liveViewConfig.json", cfgPath)
                 self.photoConfig = self._loadConfigCl(CameraConfig, "photoConfig.json", cfgPath)
