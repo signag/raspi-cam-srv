@@ -1996,7 +1996,7 @@ class Camera:
                 logger.debug(
                     "Thread %s: Camera.getActiveCamera - no cameras found", get_ident()
                 )
-                return 0, False, ""
+                return 0, False, "", False
             camNum = 0
             for camera in cams:
                 cfgCam = CameraInfo()
