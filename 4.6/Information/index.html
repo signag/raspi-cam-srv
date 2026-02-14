@@ -3660,7 +3660,9 @@ When the device is booted and raspiCamSrv is automatically started, the time syn
 In this case, in order to avoid timing issues, raspiCamSrv will wait at startup until time synchronization is completed. <br />
 The time shown here is the system time at the moment when the check for time synchronization was successful. <br />
 raspiCamSrv analyzes the output of command <code>timedatectl</code> to check the system clock synchronization status.  <br />
-If this check fails or times out (60 sec), raspiCamSrv will start nevertheless. In this case, the information "System time not synced at raspiCamSrv start" will be shown here.</p>
+If this check fails or times out (60 sec), raspiCamSrv will start nevertheless. In this case, the information "System time not synced at raspiCamSrv start" will be shown here.   <br />
+If the server is running in a Docker container (see <a href="../SetupDocker/">Running raspiCamSrv as Docker Container</a>), the time is assumed to be synchronized and the check will be skipped. This is indicated through   <br />
+<img alt="Container" src="../img/Info-Container.jpg" /></p>
 <p><em>Software Stack</em> shows information on installed packages with Version (<em>Ver</em>) and the path from which the packages were loaded (<em>Loc</em>).</p>
 <h3 id="camera-x">Camera x</h3>
 <p>The tab lists all cameras currently connected to the system.</p>
