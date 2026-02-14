@@ -78,6 +78,7 @@ def serverconfig():
     sc.lastSettingsTab = "settingsparams"
     if request.method == "POST":
         msg = None
+        restartLiveStream = False
         activeCam = int(request.form["activecamera"])
         if sc.isTriggerRecording:
             msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
@@ -103,14 +104,16 @@ def serverconfig():
                 useStereo = not request.form.get("usestereo") is None
                 sc.useStereo = useStereo
                 useCameraAi = not request.form.get("usecameraai") is None
-                sc.useCameraAi = useCameraAi
-                if sc.useCameraAi == False:
+                if useCameraAi == False:
                     ai = cfg.aiConfig
+                    if ai.enable == True:
+                        restartLiveStream = True
                     ai.enable = False
                     for key, scfg in cfg.streamingCfg.items():
                         if "aiconfig" in scfg:
                             ai = scfg["aiconfig"]
                             ai.enable = False
+                sc.useCameraAi = useCameraAi
                 useHist = not request.form.get("showhistograms") is None
                 if not useHist:
                     sc.displayContent = "meta"
@@ -184,6 +187,12 @@ def serverconfig():
             sc.addChangeLogEntry(f"Settings/General Parameters changed")
             if reloadCamInfoNeeded:
                 reloadCameraSystem()
+            else:
+                if sc.isLiveStream == True and restartLiveStream:
+                    Camera().restartLiveStream()
+                if sc.isLiveStream2 == True and restartLiveStream:
+                    if sc.secondCameraHasAi == True:
+                        Camera().restartLiveStream2()
         if msg:
             flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)

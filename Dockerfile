@@ -18,7 +18,9 @@ RUN apt update && apt install -y \
     python3-lgpio \
     ffmpeg \
     python3-picamera2 --no-install-recommends \
-    imx500-all
+    imx500-all \
+    dpkg-dev \
+    v4l-utils
 
 
 RUN ln -s /usr/bin/python3 /usr/bin/python

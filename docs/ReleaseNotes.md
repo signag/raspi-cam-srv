@@ -2,6 +2,21 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.6.1
+
+### Bugfixes
+
+- Fixed deactivation of [Settings / *Use Camera AI*](./Settings.md#activating-and-deactivating-the-use-of-camera-ai-features):    
+If a live stream is active with activated AI, the live stream is now restarted without AI.
+- Fixed [Config](./Configuration.md) for the case when the last active tab was *AI Configuration* and *Use Camera AI* was deactivated in [Settings](./Settings.md). In this case, the [Configuration for AI](./Configuration_AI.md) section was erronously visible. 
+- Fixed errors which occurred during Docker container startup in case of [Running raspiCamSrv as Docker Container](./SetupDocker.md) (resolves [raspi-cam-srv Issue #83](https://github.com/signag/raspi-cam-srv/issues/83)):    
+.. Added ```dpkg-dev``` to the ```Dockerfile```    
+.. Skipping check of time sync in case raspiCamSrv is running in a container (see hint in [Info dialog](./Information.md#raspberry-pi))
+- Fixed support of USB WebCams when [Running raspiCamSrv as Docker Container](./SetupDocker.md).     
+.. Added ```v4l-utils``` to the ```Dockerfile```
+- Fixed error ```FileNotFoundError: [Errno 2] No such file or directory: '/sys/kernel/debug/imx500-fw:11-001a/fw_progress'``` for [AI Camera Support](./AiCameraSupport.md) in the case when [Running raspiCamSrv as Docker Container](./SetupDocker.md).    
+.. Extended ```docker-compose.yml``` to expose ```/sys/kernel/debug/imx500-fw``` to the container.
+
 ## V4.6.0
 
 ### New Features

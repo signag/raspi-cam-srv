@@ -11,6 +11,8 @@ services:
       - /dev/video0:/dev/video0
       - /dev/gpiochip0:/dev/gpiochip0
     volumes:
+      - /dev:/dev
+      - /sys:/sys    
       - /run/udev/:/run/udev:ro
       - /run/systemd:/run/systemd:ro
       - /etc/timezone:/etc/timezone:ro

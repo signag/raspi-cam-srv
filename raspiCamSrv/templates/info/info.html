@@ -92,7 +92,11 @@
             </tr>
             <tr>
                 <td>raspiCamSrv Start</td>
+                {% if sc.runningInContainer() == False %}
                 <td>{{sc.serverStartTimeStr}}</td>
+                {% else %}
+                <td>{{sc.serverStartTimeStr}} (Running in Container)</td>
+                {% endif %}
                 <td></td>
             </tr>
             <tr>

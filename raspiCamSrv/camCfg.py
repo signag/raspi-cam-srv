@@ -6209,6 +6209,9 @@ class ServerConfig():
         """
         err = False
         sync = False
+        if self.runningInContainer():
+            logger.debug("Running in container - assuming time is synchronized")
+            return (err, True)
         try:
             output = subprocess.check_output(["timedatectl"], text=True)
             for line in output.splitlines():
@@ -6219,6 +6222,16 @@ class ServerConfig():
             logger.error(f"Error checking time sync: {e}")
             err = True
         return (err, sync)
+
+    def runningInContainer(self):
+        if os.path.exists("/.dockerenv"):
+            return True
+        try:
+            with open("/proc/1/cgroup", "rt") as f:
+                content = f.read()
+                return "docker" in content or "containerd" in content or "kubepods" in content
+        except FileNotFoundError:
+            return False
 
     def wait_for_time_sync(self, timeout:int=60, interval:int=2) -> bool:
         """ Wait for time synchronization with NTP server
