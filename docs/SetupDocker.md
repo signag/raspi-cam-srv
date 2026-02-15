@@ -2,9 +2,9 @@
 
 [![Up](img/goup.gif)](./getting_started_overview.md)
 
-A container image is available for **raspiCamSrv** at [https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general](https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general)
+A container image is available for **raspiCamSrv** at [https://hub.docker.com/repository/docker/signag/raspi-cam-srv](https://hub.docker.com/repository/docker/signag/raspi-cam-srv)
 
-**ATTENTION**: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~475 MB).
+**ATTENTION**: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~840 MB).
 
 **1. Preconditions**
 
@@ -52,7 +52,7 @@ services:
     privileged: true
 ```
 
-The *volumes* attribute includes prepared mappings of resource folders for database, [configuration](./SettingsConfiguration.md), [events](./TriggerActive.md), [photos](./PhotoViewer.md), [photoseries](./PhotoSeries.md#photo-series-in-the-file-system) and [tuning](./Tuning.md), which can/should be mapped to container-external folders in order to allow easy access and preserve the data also in case the container is removed or reset after a new image version has been pulled.<br>**NOTE**: For a quick test, the container can also be run without these mappings.
+The *volumes* attribute includes prepared mappings of resource folders for database, [camera calibration](./CamCalibration.md), [configuration](./SettingsConfiguration.md), [events](./TriggerActive.md), [photos](./PhotoViewer.md), [photoseries](./PhotoSeries.md#photo-series-in-the-file-system) and [tuning](./Tuning.md), which can/should be mapped to container-external folders in order to allow easy access and preserve the data also in case the container is removed or reset after a new image version has been pulled.<br>**NOTE**: For a quick test, the container can also be run without these mappings.
 
 Consider that the database holds [user data](./Authentication.md) as well as [event data](./TriggerActive.md) which will be lost if the database exists only within the container and if the container is removed.
 

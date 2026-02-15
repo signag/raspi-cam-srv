@@ -4,7 +4,7 @@
 
 1. [Check requirements](requirements.md)
 2. [Setup the system](./system_setup.md) for raspiCamSrv
-3. [Install raspiCamSrv](./installation.md)
+3. [Install raspiCamSrv](./installation.md)<br>or [run raspiCamSrv as Docker Container](./SetupDocker.md)
 
 ## Manual Step-by-Step Installation
 
