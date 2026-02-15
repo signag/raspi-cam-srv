@@ -33,14 +33,21 @@ services:
       # Uncomment resource mappings, if required
       # Configure and prepare container-external folders
       #- ./resources/database/:/app/instance/
+      #- ./resources/calib_data/:/app/raspiCamSrv/static/calib_data/
+      #- ./resources/calib_photos/:/app/raspiCamSrv/static/calib_photos/
       #- ./resources/config/:/app/raspiCamSrv/static/config/
       #- ./resources/events/:/app/raspiCamSrv/static/events/
       #- ./resources/photos/:/app/raspiCamSrv/static/photos/
       #- ./resources/photoseries/:/app/raspiCamSrv/static/photoseries/
       #- ./resources/tuning/:/app/raspiCamSrv/static/tuning/
+      - /dev:/dev
+      - /sys:/sys
       - /run/udev/:/run/udev:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    environment:
+      - GPIOZERO_PIN_FACTORY=lgpio
+      - SYSTEMD_BUS_ADDRESS=unix:path=/run/systemd/private
     restart: unless-stopped
     privileged: true
 ```
@@ -90,13 +97,19 @@ For usage of **raspiCamSrv** see the [User Guide](./UserGuide.md)
 
 See [Docker Reference](https://docs.docker.com/reference/cli/docker/compose/)
 
-- Stop Container<br>```docker compose stop raspi-cam-srv```
-- Start Container<br>```docker compose start raspi-cam-srv```
+- Pull latest image<br>```docker compose pull raspi-cam-srv```
+- Start container<br>```docker compose start raspi-cam-srv```
 - Show server logs<br>```docker compose logs raspi-cam-srv```
 - Open shell for interactive prompt<br>```docker compose exec raspi-cam-srv sh```
-- List Containers<br>```docker container ls```
-- List images<br>```docker compose images```
-- Pull latest image<br>```docker compose pull raspi-cam-srv```
+- List containers<br>```docker container ls```
+- List images used by the created containers<br>```docker compose images```
+- Stop container<br>```docker compose stop raspi-cam-srv```
+- Remove container<br>```docker compose rm raspi-cam-srv```
+- List images<br>```docker image ls```
+- Remove an image with a given ID<br>```docker image rm IMAGE_ID```
+- Show docker disk usage<br>```docker system df```
+- Remove unused data<br>```docker system prune```
+
 
 ## Update Procedure
 
