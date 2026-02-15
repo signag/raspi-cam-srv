@@ -3418,14 +3418,21 @@
       # Uncomment resource mappings, if required
       # Configure and prepare container-external folders
       #- ./resources/database/:/app/instance/
+      #- ./resources/calib_data/:/app/raspiCamSrv/static/calib_data/
+      #- ./resources/calib_photos/:/app/raspiCamSrv/static/calib_photos/
       #- ./resources/config/:/app/raspiCamSrv/static/config/
       #- ./resources/events/:/app/raspiCamSrv/static/events/
       #- ./resources/photos/:/app/raspiCamSrv/static/photos/
       #- ./resources/photoseries/:/app/raspiCamSrv/static/photoseries/
       #- ./resources/tuning/:/app/raspiCamSrv/static/tuning/
+      - /dev:/dev
+      - /sys:/sys
       - /run/udev/:/run/udev:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    environment:
+      - GPIOZERO_PIN_FACTORY=lgpio
+      - SYSTEMD_BUS_ADDRESS=unix:path=/run/systemd/private
     restart: unless-stopped
     privileged: true
 </code></pre>
@@ -3452,13 +3459,18 @@
 <h2 id="useful-docker-commands">Useful Docker commands</h2>
 <p>See <a href="https://docs.docker.com/reference/cli/docker/compose/">Docker Reference</a></p>
 <ul>
-<li>Stop Container<br><code>docker compose stop raspi-cam-srv</code></li>
-<li>Start Container<br><code>docker compose start raspi-cam-srv</code></li>
+<li>Pull latest image<br><code>docker compose pull raspi-cam-srv</code></li>
+<li>Start container<br><code>docker compose start raspi-cam-srv</code></li>
 <li>Show server logs<br><code>docker compose logs raspi-cam-srv</code></li>
 <li>Open shell for interactive prompt<br><code>docker compose exec raspi-cam-srv sh</code></li>
-<li>List Containers<br><code>docker container ls</code></li>
-<li>List images<br><code>docker compose images</code></li>
-<li>Pull latest image<br><code>docker compose pull raspi-cam-srv</code></li>
+<li>List containers<br><code>docker container ls</code></li>
+<li>List images used by the created containers<br><code>docker compose images</code></li>
+<li>Stop container<br><code>docker compose stop raspi-cam-srv</code></li>
+<li>Remove container<br><code>docker compose rm raspi-cam-srv</code></li>
+<li>List images<br><code>docker image ls</code></li>
+<li>Remove an image with a given ID<br><code>docker image rm IMAGE_ID</code></li>
+<li>Show docker disk usage<br><code>docker system df</code></li>
+<li>Remove unused data<br><code>docker system prune</code></li>
 </ul>
 <h2 id="update-procedure">Update Procedure</h2>
 <p>Changes in the <a href="https://github.com/signag/raspi-cam-srv">raspi-cam-srv Git repository</a> will automatically trigger a new build of the <a href="https://hub.docker.com/repository/docker/signag/raspi-cam-srv">raspi-cam-srv Docker Image</a>.</p>
