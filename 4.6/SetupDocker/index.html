@@ -3393,8 +3393,8 @@
 
 <h1 id="running-raspicamsrv-as-docker-container">Running <strong>raspiCamSrv</strong> as Docker Container</h1>
 <p><a href="../getting_started_overview/"><img alt="Up" src="../img/goup.gif" /></a></p>
-<p>A container image is available for <strong>raspiCamSrv</strong> at <a href="https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general">https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general</a></p>
-<p><strong>ATTENTION</strong>: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~475 MB).</p>
+<p>A container image is available for <strong>raspiCamSrv</strong> at <a href="https://hub.docker.com/repository/docker/signag/raspi-cam-srv">https://hub.docker.com/repository/docker/signag/raspi-cam-srv</a></p>
+<p><strong>ATTENTION</strong>: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~840 MB).</p>
 <p><strong>1. Preconditions</strong></p>
 <ul>
 <li><a href="#installation-of-docker-on-a-raspberry-pi">Installation of Docker on a Raspberry Pi</a></li>
@@ -3436,7 +3436,7 @@
     restart: unless-stopped
     privileged: true
 </code></pre>
-<p>The <em>volumes</em> attribute includes prepared mappings of resource folders for database, <a href="../SettingsConfiguration/">configuration</a>, <a href="../TriggerActive/">events</a>, <a href="../PhotoViewer/">photos</a>, <a href="../PhotoSeries/#photo-series-in-the-file-system">photoseries</a> and <a href="../Tuning/">tuning</a>, which can/should be mapped to container-external folders in order to allow easy access and preserve the data also in case the container is removed or reset after a new image version has been pulled.<br><strong>NOTE</strong>: For a quick test, the container can also be run without these mappings.</p>
+<p>The <em>volumes</em> attribute includes prepared mappings of resource folders for database, <a href="../CamCalibration/">camera calibration</a>, <a href="../SettingsConfiguration/">configuration</a>, <a href="../TriggerActive/">events</a>, <a href="../PhotoViewer/">photos</a>, <a href="../PhotoSeries/#photo-series-in-the-file-system">photoseries</a> and <a href="../Tuning/">tuning</a>, which can/should be mapped to container-external folders in order to allow easy access and preserve the data also in case the container is removed or reset after a new image version has been pulled.<br><strong>NOTE</strong>: For a quick test, the container can also be run without these mappings.</p>
 <p>Consider that the database holds <a href="../Authentication/">user data</a> as well as <a href="../TriggerActive/">event data</a> which will be lost if the database exists only within the container and if the container is removed.</p>
 <p><strong>3. Pull raspi-cam-srv Image</strong></p>
 <p><code>docker compose pull raspi-cam-srv</code></p>
