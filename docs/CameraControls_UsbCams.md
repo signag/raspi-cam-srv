@@ -18,7 +18,7 @@
 Whereas zoom/pan/tilt, as well as horizontal and vertical flipping, is controlled through OpenCV by modifying each individual frame delivered by the camera, the other controls are affected through the V4l2 (Video for Linux) interface to the camera.
 
 Every camera advertises the supported controls along with the related range of valid values.   
-This information is [queried from the USB camera](./Information.md#determining-supported-controls) while **raspiCamSrv** initializes the camera information.
+This information is [queried from the USB camera](./Information_Cam.md#determining-supported-controls) while **raspiCamSrv** initializes the camera information.
 
 The list of supported controls as well as their minimum, maximum, step and default values are used tho customize the individual controls screens to the currently active camera.
 

@@ -1,10 +1,15 @@
-site_name: raspiCamSrv V4.6.x Documentation
+site_name: raspiCamSrv V4.7.x Documentation
 plugins:
     - search
     - mike
 theme:
   name: material
   favicon: img/favicon.ico
+  features:
+    - content.code.copy
+
+not_in_nav: |
+  Z_Legacy*.md
 
 nav:
   - Home: index.md
@@ -50,7 +55,11 @@ nav:
           - raspiCamSrv Camera AI Configuration: Configuration_AI.md
           - Tuning: Tuning.md
       - Info Menu:
-          - System and Camera Information: Information.md
+          - Overview: Information.md
+          - System Information: Information_Sys.md
+          - Installed Cameras: Information_Cam.md
+          - Active Camera Properties: Information_CamPrp.md
+          - Active Camera Sensor Modes: Information_Sensor.md
       - Photos Menu:
           - Photo Viewer: PhotoViewer.md
       - Photo Series Menu:
@@ -93,7 +102,7 @@ nav:
       - Background Processes: Background Processes.md
   - No Camera Mode:
       - User Guide: UserGuide_NoCam.md
-      - System Information: Information_NoCam.md
+      - System Information: Information_Sys.md
       - Settings: Settings_NoCam.md
       - Configuration Management: SettingsConfiguration_NoCam.md
 

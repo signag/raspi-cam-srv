@@ -295,7 +295,7 @@ class CameraController:
                 "Thread %s: CameraController.requestCameraForConfig: Live stream stopped",
                 get_ident(),
             )
-            cam, stopped = self.requestStop(cam, forCam2=not forActiveCamera)
+            cam, stopped = self.requestStop(cam)
             if stopped:
                 if forActiveCamera == True:
                     cam, started, imx500 = Camera.ctrl.requestStart(
@@ -587,11 +587,12 @@ class CameraController:
             # For USB cameras, just open the camera if not already opened
             if cam.isOpened() == False:
                 cam = cv2.VideoCapture(camUsbDev, cv2.CAP_V4L2)
-                if not cam or not cam.isOpened():
+                if (not cam) or (cam.isOpened() == False):
                     logger.error(
                         "Thread %s: CameraController.requestStart - Error: USB camera not opened",
                         get_ident(),
                     )
+                    cfg = CameraCfg()
                     sc = cfg.serverConfig
                     sc.error = "Error while initializing camera: USB camera not opened"
                     sc.errorSource = "CV2"

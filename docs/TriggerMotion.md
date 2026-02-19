@@ -48,10 +48,10 @@ If selected (and submitted) it will be possible to specify a set of rectangular 
 For *Regions of Interest* (RoI), motion will only be detected when occurring within these regions (see [below](#regions-of-interest-and-regions-of-no-interest)).    
 *Regions of NO Interest* (RoNI) will be generally excluded from motion detection.
 - *Regions of Interest*   
-This field holds the *Regions of Interest* as a tuple of tuples where each tuple represents one region with (x offset, y offset, width, height). The values refer to the [Pixel Array Size](./Information.md#camera-properties) of the sensor.    
+This field holds the *Regions of Interest* as a tuple of tuples where each tuple represents one region with (x offset, y offset, width, height). The values refer to the [Pixel Array Size](./Information_CamPrp.md) of the sensor.    
 The field is not editable; it is populated when *Regions of Interest* are drawn.
 - *Regions of No Interest*   
-This field holds the *Regions of No Interest* as a tuple of tuples where each tuple represents one region with (x offset, y offset, width, height). The values refer to the [Pixel Array Size](./Information.md#camera-properties) of the sensor.    
+This field holds the *Regions of No Interest* as a tuple of tuples where each tuple represents one region with (x offset, y offset, width, height). The values refer to the [Pixel Array Size](./Information_CamPrp.md) of the sensor.    
 The field is not editable; it is populated when *Regions of No Interest* are drawn.
 - *Photos/Videos with RoI/RoNI*    
 This switch decides whether or not *Regions of Interest* and/or *Regions of NO Interest* are drawn on photos or videos captured while *Motion Detection* is active.   

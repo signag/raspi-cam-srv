@@ -8,7 +8,8 @@
     <div class="w3-bar w3-green">
         <!-- Info menue -->
         {% if sc.noCamera == False %}
-        <button class="w3-bar-item w3-button infomenu w3-light-green" id="camerasbtn" onclick="openInfoTab('cameras', 'camerasbtn')">Installed Cameras</button>
+        <button class="w3-bar-item w3-button infomenu w3-light-green" id="systembtn" onclick="openInfoTab('system', 'systembtn')">System</button>
+        <button class="w3-bar-item w3-button infomenu" id="camerasbtn" onclick="openInfoTab('cameras', 'camerasbtn')">Cameras</button>
         <button class="w3-bar-item w3-button infomenu" id="campropbtn" onclick="openInfoTab('camprops', 'campropbtn')">Camera Properties</button>
         {% if sm|length <= 5 %}
         {% set btnWidth = 100 // (sm|length) %}
@@ -40,7 +41,10 @@
         </select>
         {% endif %}
         {% else %}
-        <button class="w3-bar-item w3-button infomenu w3-light-green" id="camerasbtn" onclick="openInfoTab('cameras', 'camerasbtn')">System (No Camera available)</button>
+        <button class="w3-bar-item w3-button infomenu w3-light-green" id="systembtn" onclick="openInfoTab('system', 'systembtn')">System (No Camera available)</button>
+        {% if cs|length() > 0 %}
+        <button class="w3-bar-item w3-button infomenu" id="camerasbtn" onclick="openInfoTab('cameras', 'camerasbtn')">Cameras</button>
+        {% endif %}
         {% endif %}
         <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
             <div class="w3-tooltip">
@@ -57,8 +61,8 @@
             </div>
         </div>
     </div>
-    <div id="cameras" class="infogroup" style="height:calc(100vh - 120px); overflow: auto">
-        <h4>Raspberry Pi</h4>
+    <div id="system" class="infogroup" style="height:calc(100vh - 120px); overflow: auto">
+        <h4>Hardware and OS</h4>
         <table class="w3-table-all">
             <tr>
                 <td style="width:15%">Model</td>
@@ -80,6 +84,24 @@
                 <td>{{sc.debianVersion}}</td>
                 <td></td>
             </tr>
+        </table>
+        <h4>Processes</h4>
+        <table class="w3-table-all">
+            <tr>
+                <td style="width:15%">Environment</td>
+                <td style="width:55%">{{sc.environmentInfo}}</td>
+                <td style="width:30%"></td>
+            </tr>
+            <tr>
+                <td style="width:15%">Server Process</td>
+                <td style="width:55%">{{sc.startupInfo}}</td>
+                <td style="width:30%"></td>
+            </tr>
+            <tr>
+                <td style="width:15%">WSGI Server</td>
+                <td style="width:55%">{{sc.wsgiInfo}}</td>
+                <td style="width:30%"></td>
+            </tr>
             <tr>
                 <td>Process Info</td>
                 <td>{{sc.processInfo}}</td>
@@ -92,22 +114,16 @@
             </tr>
             <tr>
                 <td>raspiCamSrv Start</td>
-                {% if sc.runningInContainer() == False %}
                 <td>{{sc.serverStartTimeStr}}</td>
-                {% else %}
-                <td>{{sc.serverStartTimeStr}} (Running in Container)</td>
-                {% endif %}
                 <td></td>
             </tr>
+        </table>
+        <h4>Software Stack</h4>
+        <table class="w3-table-all">
             <tr>
-                <td>Software Stack:</td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Python</td>
-                <td>{{sc.pythonInfo}}</td>
-                <td></td>
+                <td style="width:15%">Python</td>
+                <td style="width:55%">{{sc.pythonInfo}}</td>
+                <td style="width:30%"></td>
             </tr>
             <tr>
                 <td>Flask</td>
@@ -149,7 +165,40 @@
                 <td>{{sc.munkresInfo}}</td>
                 <td></td>
             </tr>
+            <tr>
+                <td>gunicorn</td>
+                <td>{{sc.gunicornInfo}}</td>
+                <td></td>
+            </tr>
         </table>
+        {% if sc.noCamera == False %}
+        <h4>Streaming Clients</h4>
+        <table class="w3-table-all">
+            <tr>
+                <th style="width:15%">IP Address</th>
+                <th style="width:55%">Streams</th>
+                <th style="width:30%"></th>
+            </tr>
+            {% for cli in sc.streamingClients %}
+            {% set ip = cli["ipaddr"] %}
+            <tr>
+                <td>{{ ip }}</td>
+                <td>{{ sc.streamingClientStreams(ip) }}</td>
+                <td></td>
+            </tr>
+            {% endfor %}
+            {% if sc.streamingClients|length == 0 %}
+            <tr>
+                <td>None</td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endif %}
+        </table>
+        {% endif %}
+    </div>
+    <div id="cameras" class="infogroup" style="height:calc(100vh - 120px); overflow: auto; display:none">
+        <h4>Installed Cameras</h4>
         {% for cam in cs %}
         {% if cam.num == sc.activeCamera %}
         {% if cam.isUsb == true %}
@@ -271,31 +320,6 @@
             </tr>
         </table>
         {% endfor %}
-        {% if sc.noCamera == False %}
-        <h4>Streaming Clients</h4>
-        <table class="w3-table-all">
-            <tr>
-                <th style="width:15%">IP Address</th>
-                <th style="width:55%">Streams</th>
-                <th style="width:30%"></th>
-            </tr>
-            {% for cli in sc.streamingClients %}
-            {% set ip = cli["ipaddr"] %}
-            <tr>
-                <td>{{ ip }}</td>
-                <td>{{ sc.streamingClientStreams(ip) }}</td>
-                <td></td>
-            </tr>
-            {% endfor %}
-            {% if sc.streamingClients|length == 0 %}
-            <tr>
-                <td>None</td>
-                <td></td>
-                <td></td>
-            </tr>
-            {% endif %}
-        </table>
-        {% endif %}
     </div>
     <div id="camprops" class="infogroup" style="display:none">
         <h4>Camera Properties</h4>

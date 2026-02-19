@@ -2,6 +2,25 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.7.0
+
+### New Features
+
+- As an alternative to the Flask buil-in WSGI server (werkzeug), for publicly accessible systems, now [Gunicorn](https://gunicorn.org/) ('Green Unicorn') is supported.     
+Gunicorn is now default for the [Automatic Installer](./installation.md) as well as for the [Docker Image](./SetupDocker.md).    
+If you want to switch your existing installation to run with Gunicorn, just run the [Installer](./installation.md#installer) over your existing installation and confirm to use Gunicorn.
+- [Info/System](./Information_Sys.md) now includes information on the [WSGI server running](./Information_Sys.md#wsgi-server)
+
+### Changes
+
+- The [Info](./Information.md) screens were restructured. [System](./Information_Sys.md) and [Cameras](./Information_Cam.md) are now separated.
+
+### Bugfixes
+
+- Fixed error ```TypeError: CameraController.requestStop() got an unexpected keyword argument 'forCam2'``` which could occur in specific cases when a video was recorded.
+- Fixed error ```Camera.framesUsb - Exception: cannot access local variable 'cfg' where it is not associated with a value``` which could occur in specific situations if a USB camera could not be opened.
+- Fixed issue in [Settings (No Camera)](./Settings_NoCam.md) where an error occurred when *Use USB Camera* is activated.
+
 ## V4.6.1
 
 ### Bugfixes
@@ -11,7 +30,7 @@ If a live stream is active with activated AI, the live stream is now restarted w
 - Fixed [Config](./Configuration.md) for the case when the last active tab was *AI Configuration* and *Use Camera AI* was deactivated in [Settings](./Settings.md). In this case, the [Configuration for AI](./Configuration_AI.md) section was erronously visible. 
 - Fixed errors which occurred during Docker container startup in case of [Running raspiCamSrv as Docker Container](./SetupDocker.md) (resolves [raspi-cam-srv Issue #83](https://github.com/signag/raspi-cam-srv/issues/83)):    
 .. Added ```dpkg-dev``` to the ```Dockerfile```    
-.. Skipping check of time sync in case raspiCamSrv is running in a container (see hint in [Info dialog](./Information.md#raspberry-pi))
+.. Skipping check of time sync in case raspiCamSrv is running in a container (see hint in [Info dialog](./Z_Legacy_Information.md#raspberry-pi))
 - Fixed support of USB WebCams when [Running raspiCamSrv as Docker Container](./SetupDocker.md).     
 .. Added ```v4l-utils``` to the ```Dockerfile```
 - Fixed error ```FileNotFoundError: [Errno 2] No such file or directory: '/sys/kernel/debug/imx500-fw:11-001a/fw_progress'``` for [AI Camera Support](./AiCameraSupport.md) in the case when [Running raspiCamSrv as Docker Container](./SetupDocker.md).    
@@ -121,7 +140,7 @@ This is especially important when regions of interest are used for motion detect
 
 ### Extension
 
-- In the [Info](./Information.md) dialog, the section [Raspberry Pi](./Information.md#installed-cameras) was extended with information on the software stack, which can be helpful analyzing errors which could occur with specific versions or installation details.
+- In the [Info](./Z_Legacy_Information.md) dialog, the section [Raspberry Pi](./Z_Legacy_Information.md#installed-cameras) was extended with information on the software stack, which can be helpful analyzing errors which could occur with specific versions or installation details.
 
 ## V4.0.2
 
@@ -142,7 +161,7 @@ This covers part of [raspi-cam-srv Discussion #77](https://github.com/signag/ras
 
 ### New Features
 
-- Seamless integration of **USB cameras** with CSI cameras (see [Info](./Information.md) and [Multi Cam](./CamMulticam.md))<br>USB cameras are accessed through OpenCV which must have been installed (see [Installation](./installation.md) Step 11.).<br>The use of USB cameras can be activated or deactivated in the [Settings](./Settings.md).<br>USB cameras are handled in exactly the same way as CSI cameras and they can be used in all operational functions, except [Focus Stacks](./PhotoSeriesFocus.md) and [Exposure Series](./PhotoSeriesExp.md).<br>**NOTE**: Currently [Controls](./CameraControls.md) (Focus, Zooming, Ecposure and Image control) cannot be used with USB cameras. However, images can be flipped and resolution can be adjusted with [Configuration](./Configuration.md).
+- Seamless integration of **USB cameras** with CSI cameras (see [Info](./Z_Legacy_Information.md) and [Multi Cam](./CamMulticam.md))<br>USB cameras are accessed through OpenCV which must have been installed (see [Installation](./installation.md) Step 11.).<br>The use of USB cameras can be activated or deactivated in the [Settings](./Settings.md).<br>USB cameras are handled in exactly the same way as CSI cameras and they can be used in all operational functions, except [Focus Stacks](./PhotoSeriesFocus.md) and [Exposure Series](./PhotoSeriesExp.md).<br>**NOTE**: Currently [Controls](./CameraControls.md) (Focus, Zooming, Ecposure and Image control) cannot be used with USB cameras. However, images can be flipped and resolution can be adjusted with [Configuration](./Configuration.md).
 - Hot-Plug of USB cameras is supported. See button **Reload Cameras** in [Settings / Configuration](./SettingsConfiguration.md).
 - **No-Camera** Mode is supported.<br>Before, when no cameras were installed, **raspiCamSrv** could not be started.<br>Now, it is possible to use **raspiCamSrv** also without cameras, for example in order to control [GPIO Devices](./SettingsDevices.md) through the [Action Buttons](./ConsoleActionButtons.md) or through the [Event Handling Infrastructure](./Trigger.md) or in order to use the [Versatile Buttons](./ConsoleVButtons.md) Console to issue freely configurable OS commands and see their output.
 - [Switching Cameras](./CamMulticam.md#switch-cameras) in the [Multi Cam](./CamMulticam.md) dialog now requires confirmation when Camera [Confoguration](./Configuration.md) and/or [Controls](./CameraControls.md) were changed and not yet saved for camera switch. This shall avoid unintended loss of configuration work when switching the cameras.
@@ -259,13 +278,13 @@ This could occur in particular when taking photos or taking [Photo Snapshots](./
 Now, access to the time of last stream access has been made thread-safe by holding locks while a process is evaluating or changing this value and, in cases where inactivity is detected by the server, the lock is only released after the server has completely shut down.    
 (Fixes [raspi-cam-srv issue #61](https://github.com/signag/raspi-cam-srv/issues/61))
 
-- After an OS upgrade, *Kernel Version* and *Debian Version* in the [Info/Installed Cameras screen](./Information.md) did not show the correct values if the server was configured to [start with the stored configuration](./SettingsConfiguration.md). Instead, the values from the stored configuration were shown.   
+- After an OS upgrade, *Kernel Version* and *Debian Version* in the [Info/Installed Cameras screen](./Z_Legacy_Information.md) did not show the correct values if the server was configured to [start with the stored configuration](./SettingsConfiguration.md). Instead, the values from the stored configuration were shown.   
 This has been fixed.   
 The entry in the [server configuration storage file](./SettingsConfiguration.md#server-configuration-storage) will have the old value until the configuration has been stored.
 
 ### Changes
 
-- Information on the *Debian Version* in the [Info/Installed Cameras screen](./Information.md) now includes information on the system architecture (32-/64-bit) of the installed OS.
+- Information on the *Debian Version* in the [Info/Installed Cameras screen](./Z_Legacy_Information.md) now includes information on the system architecture (32-/64-bit) of the installed OS.
 
 ### New Features
 
@@ -300,7 +319,7 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 
 ### New Feature
 
-- The [Info](./Information.md) screen now shows the time when **raspiCamSrv** has recognized time synchronization, which can be considered as the server start time.
+- The [Info](./Z_Legacy_Information.md) screen now shows the time when **raspiCamSrv** has recognized time synchronization, which can be considered as the server start time.
 
 ## V3.5.1
 
@@ -397,7 +416,7 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 
 ### New Features
 
-- The [Info Screen](./Information.md) has been extended by a section [Streaming Clients](./Information.md#streaming-clients) which shows a list of clients which are currently using any of the camera streams. 
+- The [Info Screen](./Z_Legacy_Information.md) has been extended by a section [Streaming Clients](./Z_Legacy_Information.md#streaming-clients) which shows a list of clients which are currently using any of the camera streams. 
 
 ### Bugfixes
 
@@ -481,7 +500,7 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 
 ### New Features
 
-- Added kernel version and Debian version to [Info](./Information.md) screen.
+- Added kernel version and Debian version to [Info](./Z_Legacy_Information.md) screen.
 
 ## V2.10.1
 
@@ -617,7 +636,7 @@ This allows full control of image areas also for cases with extreme aspect ratio
 - The [Config](./Configuration.md) screen now has an option to synchronize aspect reatios of *Stream Size*s across all configurations.    
 If this is activated and a non-standard aspect ratio is configured, for example, for the *Live View*, the *Stream Size*s for the other configurations will be adjusted to the same aspect ratio.    
 Then the Live Stream will no longer be distorted because the camera system will select a *ScalerCrop* with the same aspect ratio.
-- The [Info](./Information.md) screen in section [Camera x](./Information.md#camera-x) now shows the Sensor Mode in which the camera is currently operating if the camera is currently started.
+- The [Info](./Z_Legacy_Information.md) screen in section [Camera x](./Z_Legacy_Information.md#camera-x) now shows the Sensor Mode in which the camera is currently operating if the camera is currently started.
 
 ### Changes
 
@@ -697,13 +716,13 @@ If, for example, the interval for the Photo Series would have been 1 hour and if
 
 ### New Features
 
-- Process information for the Flask server process and its threads has been added to the [Info screen](./Information.md) 
-- Camera status information has been added to the [Info screen](./Information.md)
+- Process information for the Flask server process and its threads has been added to the [Info screen](./Z_Legacy_Information.md) 
+- Camera status information has been added to the [Info screen](./Z_Legacy_Information.md)
 
 ### Improvements
 - Cameras are now stopped and closed in times when they are not active.   
 As a consequence, the number of active threads and CPU utilization is reduced in phases when cameras are not streaming and no other background processes (video recording, photo series, motion capturing) are active.    
-For more details, see [Camera Status and Number of Threads](./Information.md#camera-status-and-number-of-threads)
+For more details, see [Camera Status and Number of Threads](./Z_Legacy_Information.md#camera-status-and-number-of-threads)
 
 
 ### Bugfixes
@@ -849,7 +868,7 @@ Probably, this feature needs to be deactivated on these platforms. Need to study
 
 ### New Features
 
-- The Camera [Information](./Information.md) screen now shows also information on the Raspberry Pi version and board version.
+- The Camera [Information](./Z_Legacy_Information.md) screen now shows also information on the Raspberry Pi version and board version.
 
 ### Bugfix
 

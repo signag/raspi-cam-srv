@@ -7,3 +7,4 @@ flask-jwt-extended
 psutil
 requests
 munkres
+gunicorn

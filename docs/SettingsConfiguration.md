@@ -37,11 +37,11 @@ When the configuration is stored with the *Store Configuration* button, a set of
 
 - _loadConfigOnStart.txt<br>This is just an empty marker file. If the file exists, the server will initiate its configuration with configuration data stored in the other files.<br>Otherwise, default configuration settings will be applied.
 - cameraConfigs.json<br>This is currently not used
-- cameraProperties.json<br>This file contains the camera properties of the actice camera, which are shown in [Camera Properties](./Information.md#camera-properties).<br>Camera properties are always read directly from the camera.
-- cameras.json<br>This file contains the installed cameras with information shown in [Installed Cameras](./Information.md#installed-cameras)<br>Installed cameras are always directly queried from the camera system.
+- cameraProperties.json<br>This file contains the camera properties of the actice camera, which are shown in [Camera Properties](./Information_CamPrp.md).<br>Camera properties are always read directly from the camera.
+- cameras.json<br>This file contains the installed cameras with information shown in [Installed Cameras](./Information_Cam.md)<br>Installed cameras are always directly queried from the camera system.
 - controls.json<br>This file includes all the camera configuration settings as shown in the upper right part of the Live screen [Camera Controls](./LiveScreen.md#top-right-quarter)
 - LiveViewConfig.json, photoConfig.json, rawConfig.json, videoConfig.json<br>contain the camera configuration settings for the different use cases as shown in the [Config screen](./Configuration.md)
-- rawFormats.json<br>contain a list of formats which can be used for raw photos.<br>This information is extracted from the different [Sensor Modes](./Information.md#sensor-modes) and is always directly obtained from the camera system.
+- rawFormats.json<br>contain a list of formats which can be used for raw photos.<br>This information is extracted from the different [Sensor Modes](./Information_Sensor.md and is always directly obtained from the camera system.
 - serverConfig.json<br>This file includes configuration settings for the **raspiCamSrv** dialog system, such as information included in the [Settings](./Settings.md) dialog, or the configuration of the [Display Buffer](./LiveScreen.md#bottom-left-quarter) and some navigation details.
 - streamingCfg.json contains, for each camera, the [Tuning](./Tuning.md) configuration, the [Live View Configuration](./Configuration.md) settings and the [Camera Controls](./CameraControls.md) which will be used for streaming. The included Video Configuration is stored because Picamera2 always requires the *main* stream to be configured. This will not be used for streaming.
 - triggerConfig.json contains the configuration settings for triggered capture of videos and photos (motion capture)
@@ -51,9 +51,9 @@ When the configuration is stored with the *Store Configuration* button, a set of
 
 When the function **Reload Cameras** is applied, the system will 
 
-1. [Detect](./Information.md#detection-of-cameras) the currently connected cameras
-2. [Identify](./Information.md#identification-of-usb-cameras) USB cameras, if connected 
-3. Then determine Camera Properties (e.g. model) and Sensor Modes for CSI and [USB](./Information.md#determining-camera-properties-for-usb-cameras) cameras.
+1. [Detect](./Information_Cam.md#detection-of-cameras) the currently connected cameras
+2. [Identify](./Information_Cam.md#identification-of-usb-cameras) USB cameras, if connected 
+3. Then determine Camera Properties (e.g. model) and Sensor Modes for CSI and [USB](./Information_Cam.md#determining-camera-properties-for-usb-cameras) cameras.
 4. Create a list of supported cameras, considering whether [Use of USB cameras is disabled](./Settings.md#disabling-use-of-usb-cameras).
 
 Before applying the function the list of supported cameras may look like

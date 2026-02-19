@@ -22,6 +22,7 @@ import threading
 from time import sleep
 import importlib
 import requests
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -6030,7 +6031,7 @@ class ServerConfig():
         info = ""
         try:
             import numpy
-            version = importlib.metadata.version("numpy")
+            version = numpy.__version__
             ex = os.path.dirname(numpy.__file__)
             pex = Path(ex)
             path = pex.parent
@@ -6050,7 +6051,7 @@ class ServerConfig():
         info = ""
         try:
             import matplotlib
-            version = importlib.metadata.version("matplotlib")
+            version = matplotlib.__version__
             ex = os.path.dirname(matplotlib.__file__)
             pex = Path(ex)
             path = pex.parent
@@ -6118,6 +6119,70 @@ class ServerConfig():
         except Exception as e:
             info = f"Error: {e}"
 
+        return info
+
+    @property
+    def gunicornInfo(self) -> str:
+        """Get version and location of gunicorn module
+        """
+        info = ""
+        try:
+            import gunicorn
+            version = importlib.metadata.version("gunicorn")
+            ex = os.path.dirname(gunicorn.__file__)
+            pex = Path(ex)
+            path = pex.parent
+            info = f"Ver: {version} - Loc: {path}"
+
+        except ModuleNotFoundError as e:
+            info = "Module not found"
+        except Exception as e:
+            info = f"Error: {e}"
+
+        return info
+
+    @property
+    def wsgiInfo(self) -> str:
+        """Get WSGI server
+        """
+        from flask import request
+
+        software = request.environ.get("SERVER_SOFTWARE", "").lower()
+
+        if "gunicorn" in software:
+            threads = os.getenv("GUNICORN_THREADS", "?")
+            return f"gunicorn (worker with {threads} threads)"
+        elif "werkzeug" in software:
+            return "werkzeug (Flask built-in development server)"
+        elif "waitress" in software:
+            return "waitress"
+        elif "uwsgi" in software:
+            return "uwsgi"
+        else:
+            return "unknown"
+
+    @property
+    def startupInfo(self) -> str:
+        """Return info how server is started
+        """
+        info = "Unknown"
+        if self.detect_startup_source() == 1:
+            info = "Server started via systemd system service"
+        if self.detect_startup_source() == 2:
+            info = "Server started via systemd user service"
+        if self.detect_startup_source() == 3:
+            info = "Server started via command line"
+        return info
+
+    @property
+    def environmentInfo(self) -> str:
+        """Return info whether or not server is running in a container
+        """
+        info = "Unknown"
+        if self.runningInContainer():
+            info = "Docker Container"
+        else:
+            info = "Host System"
         return info
 
     def _checkModule(self, moduleName: str):
@@ -6802,6 +6867,38 @@ class ServerConfig():
         logger.debug("ServerConfig.checkJwtSettings - jwtAuthenticationActive = %s", self.jwtAuthenticationActive)
         return (jwtSecretKey, err, msg)
 
+    def detect_startup_source(self) -> int:
+        """Detect the source from which the application was started.
+
+        Returns:
+            int: Type of the startup source.
+                1: systemd system unit
+                2: systemd user unit
+                3: command line
+                0: unknown
+        """
+        logger.debug("ServerConfig.detect_startup_source")
+        ret = 0
+
+        # Check parent
+        parent = psutil.Process(os.getpid()).parent().name()
+
+        # Check cgroup
+        cgroup = Path("/proc/self/cgroup").read_text()
+
+        # systemd user or system unit
+        if "system.slice" in cgroup:
+            ret = 1
+        if "user.slice" in cgroup and ".service" in cgroup:
+            ret = 2
+
+        # Command line terminal
+        if parent in ("bash", "zsh", "fish") or "session-" in cgroup:
+            ret = 3
+
+        logger.debug("ServerConfig.detect_startup_source - ret=%s", ret)
+        return ret
+
     @staticmethod
     def _lineGen(s):
         """Generator to yield lines of a text
@@ -6826,11 +6923,14 @@ class ServerConfig():
         cntAll = -1
         cntReq = 0
         prcPid = 0
+        prcPids = ""
         prcStime = ""
         prcNlwp = 0
         prcTime = ""
         thrTime = ""
         thrTimed = timedelta(0)
+        prcCnt = 1
+        prcIdx = 0
 
         try:
             result = subprocess.run(["ps", "-e", "-L", "-f"], capture_output=True, text=True, check=True).stdout
@@ -6849,12 +6949,25 @@ class ServerConfig():
                     cmd = line[sCMD:].strip()
                     if not process is None:
                         if cmd.find(process) >= 0:
+                            if cmd.find("gunicorn") >= 0:
+                                prcCnt = 2
                             if pid == lwp:
                                 cntReq += 1
+                                prcIdx += 1
+                                if prcCnt > 1:
+                                    if prcPids == "":
+                                        prcPids = f"{pid}"
+                                    else:
+                                        prcPids += f", {pid}"
                                 prcPid = pid
                                 prcStime = stime
-                                prcNlwp = nlwp
-                                prcTime = time
+                                prcNlwp += nlwp
+                                t = datetime.strptime(time, "%H:%M:%S")
+                                td = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+                                if prcTime == "":
+                                    prcTime = td
+                                else:
+                                    prcTime += td
                             else:
                                 if pid == prcPid:
                                     cntReq += 1
@@ -6862,7 +6975,8 @@ class ServerConfig():
                                     td = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
                                     thrTimed += td
                             if cntReq >= prcNlwp:
-                                break
+                                if prcIdx >= prcCnt:
+                                    break
                 else:
                     p = 0
                     p = line.find("UID", p)
@@ -6904,6 +7018,9 @@ class ServerConfig():
             return (cntAll,)
         else:
             thrTime = str(thrTimed)
+            if prcCnt > 1:
+                prcTime = str(prcTime)
+                prcPid = prcPids
             return (prcPid, prcStime, prcNlwp, prcTime, thrTime)
     
     def getBaseHelpUrl(self) -> str:

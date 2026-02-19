@@ -5,7 +5,7 @@
 
 ## Pixel Array Size and Sensor Modes
 
-Raspberry Pi cameras have sensors with various Pixel Array Sizes which are shown in the [Camera Properies](./Information.md#camera-properties) section of the [Info](./Information.md) screen.
+Raspberry Pi cameras have sensors with various Pixel Array Sizes which are shown in the [Camera Properies](./Information_CamPrp.md) section of the [Info](./Information.md) screen.
 
 For example, the V3 camera (Imx708) has a PixelArraySize of 4608 x 2592 pixels.
 
@@ -13,7 +13,7 @@ For example, the V3 camera (Imx708) has a PixelArraySize of 4608 x 2592 pixels.
 
 A camera can operate in a limited number of **Sensor Modes** (e.g. Sensor Modes 0, 1, 2 for the Imx708).
 
-Information on Sensor Modes is shown in the [Sensor Mode x](./Information.md#sensor-modes) section of the [Info](./Information.md) screen.
+Information on Sensor Modes is shown in the [Sensor Mode x](./Information_Sensor.md) section of the [Info](./Information.md) screen.
 
 Each Sensor Mode is characterized by (among others) 
 
@@ -58,7 +58,7 @@ However, systematic experiments with the relevant parameters show the following 
 The most 'relevant' configuration seems to be the **raw** stream.    
 A special option (*Sync Aspect Ratio*) assures consistent aspect ratios for all configurations.
 - Depending on the 'relevant' Stream Size, the camera will automatically choose a suitable Sensor Mode.    
-The active Sensor Mode can be seen in the [Installed Cameras](./Information.md#camera-x) section of the [Info](./Information.md) screen for the active camera if it is currently open and started.    
+The active Sensor Mode can be seen in the [Installed Cameras](./Information_Cam.md) screen for the active camera if it is currently open and started.    
 **NOTE**: **raspiCamSrv** will normally use configurations where all 3 streams (raw, main, lores) are configured in order to allow simultaneous camera access with different intents.
 - From the Crop Limits of the Sensor Mode the ScalerCrop Maximum rectangle is determined. 
 - The ScalerCrop Default is the largest rectangle,    

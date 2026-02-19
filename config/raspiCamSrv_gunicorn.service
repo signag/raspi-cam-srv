@@ -1,0 +1,16 @@
+[Unit]
+Description=raspiCamSrv
+After=network.target
+
+[Service]
+ExecStart=/home/<user>/prg/raspi-cam-srv/.venv/bin/gunicorn -b 0.0.0.0:5000 -w 1 -k gthread --threads 6 --timeout 0 --log-level info 'raspiCamSrv:create_app()'
+Environment="PATH=/home/<user>/prg/raspi-cam-srv/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="GUNICORN_THREADS=6"
+WorkingDirectory=/home/<user>/prg/raspi-cam-srv
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=<user>
+
+[Install]
+WantedBy=multi-user.target

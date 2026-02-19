@@ -52,4 +52,4 @@ EXPOSE 5000
 RUN flask --app raspiCamSrv init-db
 
 # Run the application.
-CMD flask --app raspiCamSrv run --port 5000 --host=0.0.0.0
+CMD gunicorn -b 0.0.0.0:5000 -w 1 -k gthread --threads 6 --timeout 0 --log-level info 'raspiCamSrv:create_app()'

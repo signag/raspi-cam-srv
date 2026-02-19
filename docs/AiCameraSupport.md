@@ -26,7 +26,7 @@ It will recognize components which are already installed and only install new co
 
 ## Activation
 
-If an imx500 camera is connected to one of the CSI ports, this will be recognized by the raspiCamSrv Flask server at startup and is shown in the [Information](./Information.md#ai-features) dialog.
+If an imx500 camera is connected to one of the CSI ports, this will be recognized by the raspiCamSrv Flask server at startup and is shown in the [Info/Cameras](./Information_Cam.md#ai-features) dialog.
 
 By default, the imx500 camera is handled like a normal CSI camera.
 

@@ -14,12 +14,21 @@ For more details, see the [User Guide](./UserGuide.md).
 - raspiCamSrv can be run on all currenly known Raspberry Pi **hardware platforms** (except microcontroller boards) from Raspberry [Pi Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/) to [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)
 - Supported **Operating Systems** are the **Raspberry Pi** OS versions Bullseye, Bookworm and Trixie.
 - The recommended variant for all of these is the full 64-Bit variant recommended by [**Raspberry Pi** Imager](https://www.raspberrypi.com/software/)
+- Setup can be done alternatively using an [automatic installer](./installation.md) or by [deployment as Docker Container](./SetupDocker.md)
 
+
+### WSGI Server Support
+
+- raspiCamSrv is based on [Flask](https://flask.palletsprojects.com/) and, as such, a [WSGI](https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface) (Web Server Gateway Interface) application.   
+It requires a [WSGI Server](https://www.fullstackpython.com/wsgi-servers.html) as middleware between the WSGI application and a Web Server.
+- raspiCamSrv can run with the [Werkzeug](https://werkzeug.palletsprojects.com/) WSGI server built-in in Flask. This is usually used for development and testing purposes, but it is also fine for private environments.
+- **NEW**: For publicly accessible systems, raspiamSrv can be run with [Gunicorn](https://gunicorn.org/) ('Green Unicorn') with [specific settings](./installation_man.md#gunicorn-settings).    
+The [automatic installer](./installation.md) as well as the [Docker Image](https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general) use this as default.
 
 ### Camera Support
 
 - raspiCamSrv supports the currently available [Raspberry Pi Cameras](https://www.raspberrypi.com/documentation/accessories/camera.html).
-- **NEW**: With the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html) (imx500), you can study inference of neural network models for specific tasks (Classification, Object Detection, Pose Estimation, Segmentation) within the Web UI of **raspiCamSrv** (see [AI Camera Support](./AiCameraSupport.md)).
+- With the [Raspberry Pi AI Camera](https://www.raspberrypi.com/documentation/accessories/ai-camera.html) (imx500), you can study inference of neural network models for specific tasks (Classification, Object Detection, Pose Estimation, Segmentation) within the Web UI of **raspiCamSrv** (see [AI Camera Support](./AiCameraSupport.md)).
 - CSI Cameras from other providers can be used as long as they are supported by Picamera2.
 - USB cameras connected through the Pi's USB ports are seamlessly integrated, however control options are limited, depending on their capabilities.
 
@@ -163,9 +172,10 @@ For more details, see the [User Guide](./UserGuide.md).
 
 ### System Information
 
-- Information on the Raspberry Pi System, the raspiCamSrv software stack and the connected cameras is shown on the [Info / Installed Cameras](./Information.md#installed-cameras) screen.
-- [Properties of the Active Camera](./Information.md#camera-properties) are also shown.
-- In addition, the Info Menu provides also details for the individual [Sensor Modes](./Information.md#sensor-modes) of the *Active Camera*.
+- Information on the Raspberry Pi System, the raspiCamSrv software stack as well as the active processes is shown on the [Info / System](./Information_Sys.md) screen.
+- Information on the connected cameras is shown on the [Info / Cameras](./Information_Cam.md) screen.
+- [Properties of the Active Camera](./Information_CamPrp.md) are also shown.
+- In addition, the Info Menu provides also details for the individual [Sensor Modes](./Information_Sensor.md) of the *Active Camera*.
 
 ### No Camera
 

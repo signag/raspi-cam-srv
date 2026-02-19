@@ -16,7 +16,6 @@ import shutil
 import ast
 import time
 from pathlib import Path
-import psutil
 import subprocess
 import json
 import copy
@@ -79,16 +78,17 @@ def serverconfig():
     if request.method == "POST":
         msg = None
         restartLiveStream = False
-        activeCam = int(request.form["activecamera"])
         if sc.isTriggerRecording:
             msg = "Please go to 'Trigger' and stop the active process before changing the configuration"
         if sc.isVideoRecording == True:
             msg = "Please stop video recording before changing the tuning configuration"
         if sc.isPhotoSeriesRecording:
             msg = "Please go to 'Photo Series' and stop the active process before changing the tuning configuration"
-        if not sc.secondCamera is None:
-            if activeCam == sc.secondCamera:
-                msg = "Active camera must be different from second camera. Use 'Switch Cameras in Cam/Multi-Cam' to swap the cameras."
+        if sc.noCamera == False:
+            activeCam = int(request.form["activecamera"])
+            if not sc.secondCamera is None:
+                if activeCam == sc.secondCamera:
+                    msg = "Active camera must be different from second camera. Use 'Switch Cameras in Cam/Multi-Cam' to swap the cameras."
         if not msg:
             if sc.noCamera == False:
                 photoType = request.form["phototype"]
@@ -709,7 +709,7 @@ def serverRestart():
     sc.lastSettingsTab = "settingsconfig"
     if request.method == "POST":
         msg = ""
-        startup_source = detect_startup_source()
+        startup_source = sc.detect_startup_source()
         logger.debug("Startup source detected: %s", startup_source)
 
         try:
@@ -736,43 +736,10 @@ def serverRestart():
             logger.error("serverRestart - Exception: %s", e)
             msg = "Error restarting server: " + str(e)
 
-        if msg == "":
-            msg = "Configuration backup created under " +  backupPath
-        flash(msg)
+        if msg != "":
+            flash(msg)
         los = getLoadConfigOnStart(cfgPath)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
-
-def detect_startup_source():
-    """Detect the source from which the application was started.
-
-    Returns:
-        int: Type of the startup source.
-             1: systemd system unit
-             2: systemd user unit
-             3: command line
-             0: unknown
-    """
-    logger.debug("detect_startup_source")
-    ret = 0
-
-    # Check parent
-    parent = psutil.Process(os.getpid()).parent().name()
-
-    # Check cgroup
-    cgroup = Path("/proc/self/cgroup").read_text()
-
-    # systemd user or system unit
-    if "system.slice" in cgroup:
-        ret = 1
-    if "user.slice" in cgroup and ".service" in cgroup:
-        ret = 2
-
-    # Command line terminal
-    if parent in ("bash", "zsh", "fish") or "session-" in cgroup:
-        ret = 3
-
-    logger.debug("detect_startup_source - ret=%s", ret)
-    return ret
 
 @bp.route("/remove_users", methods=("GET", "POST"))
 @login_required

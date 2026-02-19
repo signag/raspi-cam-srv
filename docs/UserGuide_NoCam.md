@@ -7,11 +7,11 @@ This is a special variant of the general **raspiCamSrv** [User Interface](./User
 This applies to the following situations:
 
 - There is currently no camera at all connected to the Raspberry Pi, neither CSI camera nor USB camera.
-- Currently, only one or more USB cameras are connected and have been recognized by the system (see [Info](./Information_NoCam.md)) but usage of USB cameras has been deactivated in [Settings](./Settings_NoCam.md).
+- Currently, only one or more USB cameras are connected and have been recognized by the system (see [Info/Cameras](./Information_Cam.md)) but usage of USB cameras has been deactivated in [Settings](./Settings_NoCam.md).
 
 ## Application Screen
 
-Initailly, the system starts up with the [Info](./Information_NoCam.md) dialog activated:
+Initailly, the system starts up with the [Info/System](./Information_Sys.md) dialog activated:
 ![Main Screen](img/Live_start_no_cam.jpg)
 
 ### Elements

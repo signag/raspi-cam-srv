@@ -4,7 +4,8 @@
 
 A container image is available for **raspiCamSrv** at [https://hub.docker.com/repository/docker/signag/raspi-cam-srv](https://hub.docker.com/repository/docker/signag/raspi-cam-srv)
 
-**ATTENTION**: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~840 MB).
+**ATTENTION**: Running raspiCamSrv in Docker is still somehow 'experimental'. Successful tests have been done only on Pi 4 and Pi 5. However, not all functions have so far been systematically tested. On Pi Zero W and Pi Zero 2 W, deployment of the image was not successful, probably because of its size (~840 MB).     
+Limited memory may force using lower resolutions, especially with two CSI cameras on a Pi 5.
 
 **1. Preconditions**
 

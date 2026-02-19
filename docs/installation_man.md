@@ -12,6 +12,7 @@ In case of problems during installation and usage, see [Troubleshooting](./Troub
 
 **NOTE**: For Debian-**Trixie**, some of the required packages are already preinstalled. To ensure everything is consistently installed in and run from the **raspiCamSrv** virtual environment, the respective ```pip install``` commands, below, have been extended with a ```--ignore-installed``` clause and the Flask server is started with ```python -m flask ...```
 
+## Step by Step
 
 1. Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with <user> and <host> as specified during setup with Imager.
 2. Update the system<br>```sudo apt update``` <br>```sudo apt full-upgrade```
@@ -57,10 +58,14 @@ In case of problems during installation and usage, see [Troubleshooting](./Troub
 <br>Install [munkres](https://pypi.org/project/munkres/)
 <br>```pip install --break-system-packages munkres```
 <br>(There may be errors, which normally can be ignored)
+<br>
+<br>If you intend to use the [Gunicorn](https://gunicorn.org/) WSGI server instead of the development WSGI server integrated in Flask ([Werkzeug](https://werkzeug.palletsprojects.com/en/stable/)), you need to install Gunicorn:
+<br>```pip install --break-system-packages gunicorn```
+<br>(There may be errors, which normally can be ignored)
 <br><br>
 12. Initialize the database for Flask <br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 8):<br>```python -m flask --app raspiCamSrv init-db```
 13. Check that the Flask default port 5000 is available<br>```sudo netstat -nlp | grep 5000```<br>If an entry is shown, find another free port (e.g. 5001) <br>and replace ```port 5000``` by your port in all ```flask``` commands, below and also in the URL in step 12.
-14. Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 8):<br>```python -m flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```
+14. Start the server<br>(with ```raspi-cam-srv``` as active directory and the virual environment activated - see step 8):<br>Either use the Flask built-in development server:<br>```python -m flask --app raspiCamSrv run --port 5000 --host=0.0.0.0```<br>or use [Gunicorn](https://gunicorn.org/) as productive server:<br>```gunicorn -b 0.0.0.0:5000 -w 1 -k gthread --threads 6 --timeout 0 --log-level info 'raspiCamSrv:create_app()'```
 15. Connect to the server from a browser:<br>```http://<raspi_host>:5000```<br>This will open the [Login](./Authentication.md) screen.
 16. Before you can login, you first need to [register](./Authentication.md).<br>The first user will automatically be SuperUser who can later register other users ([User Management](./Authentication.md#user-management))
 17. After successful log-in, the [Live screen](./LiveScreen.md) will be shown, if at least one camera is connected, otherwise the [Info](./Information.md) screen.
@@ -70,4 +75,85 @@ In case of problems during installation and usage, see [Troubleshooting](./Troub
 
 When the Flask server starts up, it will show a warning that this is a development server.   
 This is, in general, fine for private environments.   
-How to deploy with a production WSGI server, is described in the [Flask documentation](https://flask.palletsprojects.com/en/stable/deploying/)
+How to deploy with an alternative production WSGI server, is described in the [Flask documentation](https://flask.palletsprojects.com/en/stable/deploying/)
+
+## Gunicorn Settings
+
+When using the [Gunicorn](https://gunicorn.org/) WSGI server, specific settings must be used with the raspiCamSrv Flask application.
+
+### Number of Workers
+
+**Command line**: ```-w 1```
+
+Only a single worker must be configured.
+
+Each worker will be a separate process. Multiple workers would run multiple raspiCamSrv Flask processes in parallel.    
+This would cause conflicts when accessing Raspberry Pi resources, such as cameras and GPIO devices.    
+
+### Port Binding
+
+By default, Gunicorn binds to ```127.0.0.1:8080```
+
+It is recommended using the same port as the Flask-internal WSGI server (5000).
+
+**Command line**: ```-b 0.0.0.0:5000```
+
+### Worker Type
+
+Gunicorn supports different [Worker Types](https://gunicorn.org/design/?h=design#worker-types) to be used.   
+From these, only ```gthread``` works for raspiCamSrv, because
+
+- keep-alive connections are supported, which is essential for MJPEG streaming
+- it uses real OS threads which is essential for multi-threading in raspiCamSrv, Picamera2 and OpenCV
+
+**Command line**: ```-k gthread```
+
+### Numer of Threads
+
+With the ```gthread``` worker type, it is necessary to specify the number of threads which can be simultaneously active, because each request will be handled by an own worker thread.
+
+Therefore, the number of threads limits the number of simultaneous MJPEG streams.
+
+On the other hand, when a worker is started, the worker process will pre-create the specified number of threads, regardless of how many clients are connected.
+
+**Command line**: ```--threads 6```
+
+Every MJPEG stream uses one thread, for example:
+
+- [Live screen](./LiveScreen.md): 1 thread
+- [Web Cam screen](./CamWebcam.md) with 2 cameras: 2 threads
+- [Stereo Cam screen](./CamStereo.md): 3 threads
+- Every client streaming from a ```video_feed``` endpoint uses 1 thread
+
+So, with ```--threads 4``` and 2 clients showing the [Web Cam screen](./CamWebcam.md), the 4 threads are used up and another client, trying to stream from a ```video_feed``` endpoint, would wait.
+
+### Timeout
+
+Gunicorn kills and restarts worker threads which are silent for more than the number of seconds specified in the ```timeout``` option.
+
+The default is 30 seconds.
+
+For raspiCamSrv, timout should be avoided.
+
+**Command line**: ```--timeout 0```
+
+### Logging
+
+**Command line**: ```--log-level info```
+
+'info' is the default log level.
+
+Other valid level names are:
+
+- debug
+- warning
+- error
+- critical
+
+### WSGI APP
+
+raspiCamSrv uses a factory pattern to create the Flask application.
+
+Therefore, the raspiCamSrv WSGI app needs to be ecposed to Gunicorn in the form
+
+**Command Line**: ```'raspiCamSrv:create_app()'```
