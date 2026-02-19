@@ -1,0 +1,5003 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../SettingsUpdate/">
+      
+      
+        <link rel="next" href="../Background%20Processes/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>AI Camera Support - raspiCamSrv V4.7.x Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#raspicamsrv-ai-camera-support" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="raspiCamSrv V4.7.x Documentation" class="md-header__button md-logo" aria-label="raspiCamSrv V4.7.x Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            raspiCamSrv V4.7.x Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AI Camera Support
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="raspiCamSrv V4.7.x Documentation" class="md-nav__button md-logo" aria-label="raspiCamSrv V4.7.x Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    raspiCamSrv V4.7.x Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started_overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../requirements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alternatives
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Alternatives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_man/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual Step by Step Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SetupDocker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running raspiCamSrv as Docker container
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bp_PiZero_Standalone/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup of Raspberry Pi Zero as Standalone System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_5" id="__nav_2_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuring as Hotspot
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuring as Hotspot
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bp_Hotspot_Trixie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hotspot Setup for Trixie
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bp_Hotspot_Bookworm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hotspot Setup for Boookworm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bp_Hotspot_Bullseye/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hotspot Setup for Bullseye
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubelshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trouble Shooting Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    References
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../picamera2_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Picamera2 Manual
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Releases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ReleaseNotes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../updating_raspiCamSrv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating a raspiCamSrv Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../UserGuide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Authentication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Live Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LiveScreen/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Screen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_2" id="__nav_6_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Camera Controls
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Camera Controls
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CameraControls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FocusHandling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Focus Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ZoomPan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zoom/Pan/Tilt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CameraControls_AutoExposure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auto-Exposure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CameraControls_Exposure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exposure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CameraControls_Image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Image
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CameraControls_UsbCams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Camera Controls for USB Cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ScalerCrop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cropping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LiveDirectControl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Direct Control Panel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Phototaking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Photo / Video Taking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Config Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    raspiCamSrv Camera Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration_AI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    raspiCamSrv Camera AI Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tuning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Info Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Info Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Information/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Information_Sys/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Information_Cam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installed Cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Information_CamPrp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Camera Properties
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Information_Sensor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Camera Sensor Modes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Photos Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Photos Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PhotoViewer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Photo Viewer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Photo Series Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Photo Series Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PhotoSeries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Photo Series
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PhotoSeriesTimelapse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Timelapse Series
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PhotoSeriesExp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exposure Series
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PhotoSeriesFocus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Focus Stack Series
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_9" id="__nav_6_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trigger Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Trigger Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Trigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerTriggers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trigger Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerActions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Action Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerTriggerActions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trigger/Action Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerMotion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Motion Detection Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerCameraActions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Camera Action Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerNotification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notification Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerActive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Motion Capturing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TriggerEventViewer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Event Viewer and Calendar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cam Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cam Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Cam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CamWebcam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Cam Dialog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CamMulticam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Cam Dialog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CamCalibration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Camera Calibration Dialog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CamStereo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stereo Camera Dialog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Console Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ConsoleVButtons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versatile Buttons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ConsoleActionButtons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Action Buttons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings Menu
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Settings Menu
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsConfiguration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsUsers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsVButtons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings for Versatile Buttons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsAButtons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings for Action Buttons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsDevices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GPIO Device Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_12_8" id="__nav_6_12_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GPIO Devices
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_12_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_12_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    GPIO Devices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gpioDevices/StepperMotor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stepper Motor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsUpdate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Camera Support
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Camera Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-from-previous-raspicamsrv-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update from previous raspiCamSrv Versions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Activation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#neural-network-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Network Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-a-neural-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling a Neural Network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neural-network-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Network Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameter Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raspberry-models-4-and-lower-and-raspberry-pi-zero" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raspberry Models 4 and lower and Raspberry Pi Zero
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-for-raspberry-pi-zero-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case for Raspberry Pi Zero 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-journal-at-camera-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Journal at Camera Startup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#live-stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live Stream
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Live Stream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Object Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Segmentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-camera-as-second-camera" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI Camera as Second Camera
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Background%20Processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Background Processes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No Camera Mode
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    No Camera Mode
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../UserGuide_NoCam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Information_Sys/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Information
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Settings_NoCam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SettingsConfiguration_NoCam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-from-previous-raspicamsrv-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update from previous raspiCamSrv Versions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Activation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#neural-network-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Network Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-a-neural-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling a Neural Network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neural-network-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Network Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameter Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raspberry-models-4-and-lower-and-raspberry-pi-zero" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raspberry Models 4 and lower and Raspberry Pi Zero
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-for-raspberry-pi-zero-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case for Raspberry Pi Zero 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-journal-at-camera-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Journal at Camera Startup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#live-stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live Stream
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Live Stream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Object Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Segmentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-camera-as-second-camera" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI Camera as Second Camera
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="raspicamsrv-ai-camera-support">raspiCamSrv AI Camera Support</h1>
+<p><a href="../UserGuide/"><img alt="Up" src="../img/goup.gif" /></a></p>
+<p>The <a href="https://www.raspberrypi.com/documentation/accessories/ai-camera.html">Raspberry Pi AI Camera</a> has an integrated AI accelerator which can process Input Tensor data delivered by the camera ISP directly within the camera system. <br />
+Output Tensor data with inference information are delivered to the Raspberry Pi host system in the context of image meta data.</p>
+<p>Therefore, the main computational effort for the neural network is on the camera system while the host system is left with analysis and visualization of inference from the meta data.</p>
+<p>This makes it possible to see Neural Networks at work even on low cost system such as Raspberry Pi Zero 2 (See <a href="#raspberry-models-4-and-lower-and-raspberry-pi-zero">Raspberry Models lower 5 and Raspberry Pi Zero</a>).</p>
+<p><strong>raspiCamSrv</strong> from V4.6 supports AI features for the imx500 on the basis of published <a href="https://github.com/raspberrypi/imx500-models">neural network models</a> which are deployed together with the imx500-all package and for which Picamera2 provides <a href="https://github.com/raspberrypi/picamera2/tree/main/examples/imx500">demo implemetations</a>.</p>
+<p>These implementations have been integrated in <strong>raspiCamSrv</strong> with minor modifications for visualization on different camera streams.</p>
+<p><strong>NOTE</strong>: Currently, Visualization of inference data always scales to the <a href="../Configuration/#stream-size-width-height">Stream Size</a> and does not consider cropping. Therefore you should avoid <a href="../ZoomPan/">zoom and pan</a>.</p>
+<h2 id="installation">Installation</h2>
+<p>All required packages are installed with the <a href="../installation/#installer">automatic installer</a> if you confirm to use the AI Camera.</p>
+<h2 id="update-from-previous-raspicamsrv-versions">Update from previous raspiCamSrv Versions</h2>
+<p>If you update from a previous <strong>raspiCamSrv</strong> version (V4.5 and earlier), you can just run the <a href="../installation/">automatic installer</a> again. <br />
+It will recognize components which are already installed and only install new components or update existing ones to the latest version.</p>
+<h2 id="activation">Activation</h2>
+<p>If an imx500 camera is connected to one of the CSI ports, this will be recognized by the raspiCamSrv Flask server at startup and is shown in the <a href="../Information_Cam/#ai-features">Info/Cameras</a> dialog.</p>
+<p>By default, the imx500 camera is handled like a normal CSI camera.</p>
+<p>To activate Camera AI support, you need to check <em>Use Camera AI</em> in the <a href="../Settings/#activating-and-deactivating-the-use-of-camera-ai-features">Settings</a> dialog.</p>
+<h2 id="neural-network-configuration">Neural Network Configuration</h2>
+<p>If <em>Use Camera AI</em> is activated, the <a href="../Configuration/">Config</a> menu will show an additional submenu <a href="../Configuration_AI/">AI Configuration</a></p>
+<p>Here you can choose a Task to be executed by the model and, subsequently, one of the models which implements the chosen task.</p>
+<p>In addition, you can choose a set of parameters which allow restricting detections by specific threshold values or by number.</p>
+<p>By default, inference results are visualized on the <em>lores</em> camera stream which is usually used for the Live View.</p>
+<p>If you need this visualization also on photos and/or videos, you need to activate visualization on the <em>main</em> stream.</p>
+<p><strong>NOTE</strong> For Fotos and Videos, the <a href="../Configuration/#stream-size-width-height">Stream Size</a> for the <em>main</em> stream should be set to values similar to those of the <em>lores</em> stream.  <br />
+The reson is that currently text sizes and line width of the visualization do not scale with the stream size.</p>
+<h2 id="enabling-a-neural-network">Enabling a Neural Network</h2>
+<p>Once the configuration is done, you can enable the selected network model in the <a href="../Configuration_AI/#enable-ai">AI Configuration</a> dialog.</p>
+<p>Now, when the camera is started, the network model will be loaded onto the camera system.</p>
+<p>This may take a while, depending on the platform used.</p>
+<p>In order to avoid irritations about long camera startup times, <strong>raspiCamSrv</strong> shows an <a href="../UserGuide/#live-stream-at-camera-start">animation</a> when the camera is started until the first frame is delevered by the camera.</p>
+<h2 id="recommendations">Recommendations</h2>
+<p>The current implementation of imx500 AI support is initial and not all combinations of network models and other configuration settings have been tested.</p>
+<p>The following recommendations may serve as a starting point for gaining experience with this subject.</p>
+<h3 id="configuration-settings">Configuration Settings</h3>
+<p>It is recommended setting the <a href="../Configuration/#stream-size-width-height">Stream Size</a> for <em>Photo</em> and <em>Video</em> to the same low value as for the <em>Live View</em> (e.g. <strong>640 x 480</strong>).  <br />
+This assures better representation of inference results on photos and videos, if these are activated.</p>
+<p><a href="../Configuration/#buffer-count">Buffer Count</a> should be set to <strong>12</strong>, which is also used by the Picamera2 <a href="https://github.com/raspberrypi/picamera2/tree/main/examples/imx500">demo implemetations</a></p>
+<h3 id="neural-network-models">Neural Network Models</h3>
+<p>The following models have been successfully tested within <strong>raspiCamSrv</strong></p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Classification</td>
+<td>imx500_network_mobilenet_v2.rpk</td>
+</tr>
+<tr>
+<td>Object Detection</td>
+<td>imx500_network_ssd_mobilenetv2_fpnlite_320x320_pp.rpk</td>
+</tr>
+<tr>
+<td>Pose Estimation</td>
+<td>imx500_network_higherhrnet_coco.rpk</td>
+</tr>
+<tr>
+<td>Segmentation</td>
+<td>imx500_network_deeplabv3plus.rpk</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameter-settings">Parameter Settings</h3>
+<p>For performance reasons, you should enable <em>Draw Results on Stream main</em> only if needed for photos and videos.</p>
+<p>If you do not see any results, you may need to:</p>
+<ul>
+<li>Decrease <em>Detection Threshold</em></li>
+</ul>
+<p>If performance is low, for example on a Raspberry Pi Zero, you may need to:</p>
+<ul>
+<li>Increase <em>Detection Threshold</em> in order to reduce the number of detections to be handled.</li>
+</ul>
+<h3 id="raspberry-models-4-and-lower-and-raspberry-pi-zero">Raspberry Models 4 and lower and Raspberry Pi Zero</h3>
+<p>For these models, the <em>lores</em> stream needs to be in YUV format according to te <a href="https://pip-assets.raspberrypi.com/categories/652-raspberry-pi-camera-module-2/documents/RP-008156-DS-2-picamera2-manual.pdf">Picamera2 Manual</a> ch. 4.2.</p>
+<p>The YUV format is not supported by all AI postprocessing pipelines.</p>
+<p>It is, therefore, recommended using the following <a href="../Configuration/">Configuration</a> settingss for <strong>all</strong> use cases except <em>Raw Photo</em>, :</p>
+<ul>
+<li>Buffer Count: 12</li>
+<li>Sensor Mode: Custom</li>
+<li>Stream: main</li>
+<li>Stream Size:  640 x 480</li>
+<li>Stream Format: XBGR8888</li>
+</ul>
+<p>For <a href="../Configuration_AI/">AI Configuration</a>:</p>
+<ul>
+<li>Disable: <em>Draw Results on Stream lores</em></li>
+<li>Enable: <em>Draw Results on Stream main</em></li>
+</ul>
+<h3 id="case-for-raspberry-pi-zero-2">Case for Raspberry Pi Zero 2</h3>
+<p>The official case for the Raspberry Pi Zero models is not suitable for the AI Camera.</p>
+<p>As alternatives, there are 3D-printed cases, e.g. <a href="https://makerworld.com/en/models/1804527-case-for-raspberry-pi-zero-models-with-camera">Case for Raspberry Pi Zero Models with Camera</a>:</p>
+<p><img alt="Pi Zero Cover" src="../img/PI_zero_cover_3dp_ai.jpg" /></p>
+<h2 id="system-journal-at-camera-startup">System Journal at Camera Startup</h2>
+<p>Before the camera is actually started, Picamera2 issues a message to stdout with a hint about long starting times:</p>
+<p><img alt="imx500 Start" src="../img/Config_AI_log.jpg" /></p>
+<p>Depending on whether a model is initially loaded or whether a previously loaded model is replaced, there will be kernel messages accompanying the loading process:</p>
+<p><img alt="imx500 Log" src="../img/Config_AI_log2.jpg" /></p>
+<h2 id="live-stream">Live Stream</h2>
+<p>Depending on the task of the neural network model, different types of visualizations will be used.</p>
+<p>Resulting information is drawn on the individual frames in a pre_callback which is executed by Picamera2 before the frames are supplied to applications.</p>
+<h3 id="classification">Classification</h3>
+<p><img alt="Classification" src="../img/imx500_object_classification.jpg" /></p>
+<p>With the <em>Classification</em> task, the neural network will identify individual classes out of a set of about 1000 classes (see <a href="#classes">below</a>)</p>
+<p>When photos are taken, the Metadata include on the input and output tensors used by the neural network.</p>
+<h3 id="object-detection">Object Detection</h3>
+<p><img alt="Object Detection" src="../img/imx500_object_detection.jpg" /></p>
+<p>With the <em>Object Detection</em> task, the neural network will track and frame individual objects out of a set of about 1000 classes (see <a href="#classes">below</a>)</p>
+<h3 id="segmentation">Segmentation</h3>
+<p><img alt="Segmentation" src="../img/imx500_segmentation.jpg" /></p>
+<p>With the <em>Segmentation</em> task, the neural network will track and mask individual objects.</p>
+<p>The implementation in <strong>raspiCamSrv</strong> differs from the <a href="https://github.com/raspberrypi/picamera2/blob/main/examples/imx500/imx500_segmentation_demo.py">demo implementation</a>, in which masks are burned on the GPU preview only.  <br />
+These overlays are, therefore, not available in the <em>lores</em> and <em>main</em> streams used by <strong>raspiCamSrv</strong> for Live view and Photo/Video.</p>
+<p>Since the inference rate of 19 of the neural network is significantly lower than the framerate (30), a larger part of frames is not processed by the neural network.
+To avoid flickering, overlays are cached and the last overlay is used for frames which have bypassed AI processing.</p>
+<p>As a consequence, when photos are taken, there will be photos for which the <em>Metadata</em> do not show tensor information, although a mask is visible on the photo.</p>
+<h2 id="ai-camera-as-second-camera">AI Camera as Second Camera</h2>
+<p>You can also use an AI camera as Second Camera or, on a Pi 5, you can work with two AI cameras.</p>
+<p><a href="../Configuration_AI/">AI configuration</a> is treated like any other <a href="../Configuration/">Camera Configuration</a>.</p>
+<p>This means that, in order to preserve any configuration changes for a camera switch, you need to apply the <a href="../CamMulticam/#save-active-camera-settings-for-camera-switch">Save Active Camera Settings for Camera Switch</a> button before you replace the active camera with another camera or before you switch cameras.</p>
+<h2 id="classes">Classes</h2>
+<p>The following classes are used in tasks <em>Classification</em> and <em>Object Detection</em>:</p>
+<pre><code>
+        &quot;classes&quot;: {
+            &quot;labels&quot;: [
+                &quot;0:background&quot;,
+                &quot;1:tench, Tinca tinca&quot;,
+                &quot;2:goldfish, Carassius auratus&quot;,
+                &quot;3:great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias&quot;,
+                &quot;4:tiger shark, Galeocerdo cuvieri&quot;,
+                &quot;5:hammerhead, hammerhead shark&quot;,
+                &quot;6:electric ray, crampfish, numbfish, torpedo&quot;,
+                &quot;7:stingray&quot;,
+                &quot;8:cock&quot;,
+                &quot;9:hen&quot;,
+                &quot;10:ostrich, Struthio camelus&quot;,
+                &quot;11:brambling, Fringilla montifringilla&quot;,
+                &quot;12:goldfinch, Carduelis carduelis&quot;,
+                &quot;13:house finch, linnet, Carpodacus mexicanus&quot;,
+                &quot;14:junco, snowbird&quot;,
+                &quot;15:indigo bunting, indigo finch, indigo bird, Passerina cyanea&quot;,
+                &quot;16:robin, American robin, Turdus migratorius&quot;,
+                &quot;17:bulbul&quot;,
+                &quot;18:jay&quot;,
+                &quot;19:magpie&quot;,
+                &quot;20:chickadee&quot;,
+                &quot;21:water ouzel, dipper&quot;,
+                &quot;22:kite&quot;,
+                &quot;23:bald eagle, American eagle, Haliaeetus leucocephalus&quot;,
+                &quot;24:vulture&quot;,
+                &quot;25:great grey owl, great gray owl, Strix nebulosa&quot;,
+                &quot;26:European fire salamander, Salamandra salamandra&quot;,
+                &quot;27:common newt, Triturus vulgaris&quot;,
+                &quot;28:eft&quot;,
+                &quot;29:spotted salamander, Ambystoma maculatum&quot;,
+                &quot;30:axolotl, mud puppy, Ambystoma mexicanum&quot;,
+                &quot;31:bullfrog, Rana catesbeiana&quot;,
+                &quot;32:tree frog, tree-frog&quot;,
+                &quot;33:tailed frog, bell toad, ribbed toad, tailed toad, Ascaphus trui&quot;,
+                &quot;34:loggerhead, loggerhead turtle, Caretta caretta&quot;,
+                &quot;35:leatherback turtle, leatherback, leathery turtle, Dermochelys coriacea&quot;,
+                &quot;36:mud turtle&quot;,
+                &quot;37:terrapin&quot;,
+                &quot;38:box turtle, box tortoise&quot;,
+                &quot;39:banded gecko&quot;,
+                &quot;40:common iguana, iguana, Iguana iguana&quot;,
+                &quot;41:American chameleon, anole, Anolis carolinensis&quot;,
+                &quot;42:whiptail, whiptail lizard&quot;,
+                &quot;43:agama&quot;,
+                &quot;44:frilled lizard, Chlamydosaurus kingi&quot;,
+                &quot;45:alligator lizard&quot;,
+                &quot;46:Gila monster, Heloderma suspectum&quot;,
+                &quot;47:green lizard, Lacerta viridis&quot;,
+                &quot;48:African chameleon, Chamaeleo chamaeleon&quot;,
+                &quot;49:Komodo dragon, Komodo lizard, dragon lizard, giant lizard, Varanus komodoensis&quot;,
+                &quot;50:African crocodile, Nile crocodile, Crocodylus niloticus&quot;,
+                &quot;51:American alligator, Alligator mississipiensis&quot;,
+                &quot;52:triceratops&quot;,
+                &quot;53:thunder snake, worm snake, Carphophis amoenus&quot;,
+                &quot;54:ringneck snake, ring-necked snake, ring snake&quot;,
+                &quot;55:hognose snake, puff adder, sand viper&quot;,
+                &quot;56:green snake, grass snake&quot;,
+                &quot;57:king snake, kingsnake&quot;,
+                &quot;58:garter snake, grass snake&quot;,
+                &quot;59:water snake&quot;,
+                &quot;60:vine snake&quot;,
+                &quot;61:night snake, Hypsiglena torquata&quot;,
+                &quot;62:boa constrictor, Constrictor constrictor&quot;,
+                &quot;63:rock python, rock snake, Python sebae&quot;,
+                &quot;64:Indian cobra, Naja naja&quot;,
+                &quot;65:green mamba&quot;,
+                &quot;66:sea snake&quot;,
+                &quot;67:horned viper, cerastes, sand viper, horned asp, Cerastes cornutus&quot;,
+                &quot;68:diamondback, diamondback rattlesnake, Crotalus adamanteus&quot;,
+                &quot;69:sidewinder, horned rattlesnake, Crotalus cerastes&quot;,
+                &quot;70:trilobite&quot;,
+                &quot;71:harvestman, daddy longlegs, Phalangium opilio&quot;,
+                &quot;72:scorpion&quot;,
+                &quot;73:black and gold garden spider, Argiope aurantia&quot;,
+                &quot;74:barn spider, Araneus cavaticus&quot;,
+                &quot;75:garden spider, Aranea diademata&quot;,
+                &quot;76:black widow, Latrodectus mactans&quot;,
+                &quot;77:tarantula&quot;,
+                &quot;78:wolf spider, hunting spider&quot;,
+                &quot;79:tick&quot;,
+                &quot;80:centipede&quot;,
+                &quot;81:black grouse&quot;,
+                &quot;82:ptarmigan&quot;,
+                &quot;83:ruffed grouse, partridge, Bonasa umbellus&quot;,
+                &quot;84:prairie chicken, prairie grouse, prairie fowl&quot;,
+                &quot;85:peacock&quot;,
+                &quot;86:quail&quot;,
+                &quot;87:partridge&quot;,
+                &quot;88:African grey, African gray, Psittacus erithacus&quot;,
+                &quot;89:macaw&quot;,
+                &quot;90:sulphur-crested cockatoo, Kakatoe galerita, Cacatua galerita&quot;,
+                &quot;91:lorikeet&quot;,
+                &quot;92:coucal&quot;,
+                &quot;93:bee eater&quot;,
+                &quot;94:hornbill&quot;,
+                &quot;95:hummingbird&quot;,
+                &quot;96:jacamar&quot;,
+                &quot;97:toucan&quot;,
+                &quot;98:drake&quot;,
+                &quot;99:red-breasted merganser, Mergus serrator&quot;,
+                &quot;100:goose&quot;,
+                &quot;101:black swan, Cygnus atratus&quot;,
+                &quot;102:tusker&quot;,
+                &quot;103:echidna, spiny anteater, anteater&quot;,
+                &quot;104:platypus, duckbill, duckbilled platypus, duck-billed platypus, Ornithorhynchus anatinus&quot;,
+                &quot;105:wallaby, brush kangaroo&quot;,
+                &quot;106:koala, koala bear, kangaroo bear, native bear, Phascolarctos cinereus&quot;,
+                &quot;107:wombat&quot;,
+                &quot;108:jellyfish&quot;,
+                &quot;109:sea anemone, anemone&quot;,
+                &quot;110:brain coral&quot;,
+                &quot;111:flatworm, platyhelminth&quot;,
+                &quot;112:nematode, nematode worm, roundworm&quot;,
+                &quot;113:conch&quot;,
+                &quot;114:snail&quot;,
+                &quot;115:slug&quot;,
+                &quot;116:sea slug, nudibranch&quot;,
+                &quot;117:chiton, coat-of-mail shell, sea cradle, polyplacophore&quot;,
+                &quot;118:chambered nautilus, pearly nautilus, nautilus&quot;,
+                &quot;119:Dungeness crab, Cancer magister&quot;,
+                &quot;120:rock crab, Cancer irroratus&quot;,
+                &quot;121:fiddler crab&quot;,
+                &quot;122:king crab, Alaska crab, Alaskan king crab, Alaska king crab, Paralithodes camtschatica&quot;,
+                &quot;123:American lobster, Northern lobster, Maine lobster, Homarus americanus&quot;,
+                &quot;124:spiny lobster, langouste, rock lobster, crawfish, crayfish, sea crawfish&quot;,
+                &quot;125:crayfish, crawfish, crawdad, crawdaddy&quot;,
+                &quot;126:hermit crab&quot;,
+                &quot;127:isopod&quot;,
+                &quot;128:white stork, Ciconia ciconia&quot;,
+                &quot;129:black stork, Ciconia nigra&quot;,
+                &quot;130:spoonbill&quot;,
+                &quot;131:flamingo&quot;,
+                &quot;132:little blue heron, Egretta caerulea&quot;,
+                &quot;133:American egret, great white heron, Egretta albus&quot;,
+                &quot;134:bittern&quot;,
+                &quot;135:crane&quot;,
+                &quot;136:limpkin, Aramus pictus&quot;,
+                &quot;137:European gallinule, Porphyrio porphyrio&quot;,
+                &quot;138:American coot, marsh hen, mud hen, water hen, Fulica americana&quot;,
+                &quot;139:bustard&quot;,
+                &quot;140:ruddy turnstone, Arenaria interpres&quot;,
+                &quot;141:red-backed sandpiper, dunlin, Erolia alpina&quot;,
+                &quot;142:redshank, Tringa totanus&quot;,
+                &quot;143:dowitcher&quot;,
+                &quot;144:oystercatcher, oyster catcher&quot;,
+                &quot;145:pelican&quot;,
+                &quot;146:king penguin, Aptenodytes patagonica&quot;,
+                &quot;147:albatross, mollymawk&quot;,
+                &quot;148:grey whale, gray whale, devilfish, Eschrichtius gibbosus, Eschrichtius robustus&quot;,
+                &quot;149:killer whale, killer, orca, grampus, sea wolf, Orcinus orca&quot;,
+                &quot;150:dugong, Dugong dugon&quot;,
+                &quot;151:sea lion&quot;,
+                &quot;152:Chihuahua&quot;,
+                &quot;153:Japanese spaniel&quot;,
+                &quot;154:Maltese dog, Maltese terrier, Maltese&quot;,
+                &quot;155:Pekinese, Pekingese, Peke&quot;,
+                &quot;156:Shih-Tzu&quot;,
+                &quot;157:Blenheim spaniel&quot;,
+                &quot;158:papillon&quot;,
+                &quot;159:toy terrier&quot;,
+                &quot;160:Rhodesian ridgeback&quot;,
+                &quot;161:Afghan hound, Afghan&quot;,
+                &quot;162:basset, basset hound&quot;,
+                &quot;163:beagle&quot;,
+                &quot;164:bloodhound, sleuthhound&quot;,
+                &quot;165:bluetick&quot;,
+                &quot;166:black-and-tan coonhound&quot;,
+                &quot;167:Walker hound, Walker foxhound&quot;,
+                &quot;168:English foxhound&quot;,
+                &quot;169:redbone&quot;,
+                &quot;170:borzoi, Russian wolfhound&quot;,
+                &quot;171:Irish wolfhound&quot;,
+                &quot;172:Italian greyhound&quot;,
+                &quot;173:whippet&quot;,
+                &quot;174:Ibizan hound, Ibizan Podenco&quot;,
+                &quot;175:Norwegian elkhound, elkhound&quot;,
+                &quot;176:otterhound, otter hound&quot;,
+                &quot;177:Saluki, gazelle hound&quot;,
+                &quot;178:Scottish deerhound, deerhound&quot;,
+                &quot;179:Weimaraner&quot;,
+                &quot;180:Staffordshire bullterrier, Staffordshire bull terrier&quot;,
+                &quot;181:American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier&quot;,
+                &quot;182:Bedlington terrier&quot;,
+                &quot;183:Border terrier&quot;,
+                &quot;184:Kerry blue terrier&quot;,
+                &quot;185:Irish terrier&quot;,
+                &quot;186:Norfolk terrier&quot;,
+                &quot;187:Norwich terrier&quot;,
+                &quot;188:Yorkshire terrier&quot;,
+                &quot;189:wire-haired fox terrier&quot;,
+                &quot;190:Lakeland terrier&quot;,
+                &quot;191:Sealyham terrier, Sealyham&quot;,
+                &quot;192:Airedale, Airedale terrier&quot;,
+                &quot;193:cairn, cairn terrier&quot;,
+                &quot;194:Australian terrier&quot;,
+                &quot;195:Dandie Dinmont, Dandie Dinmont terrier&quot;,
+                &quot;196:Boston bull, Boston terrier&quot;,
+                &quot;197:miniature schnauzer&quot;,
+                &quot;198:giant schnauzer&quot;,
+                &quot;199:standard schnauzer&quot;,
+                &quot;200:Scotch terrier, Scottish terrier, Scottie&quot;,
+                &quot;201:Tibetan terrier, chrysanthemum dog&quot;,
+                &quot;202:silky terrier, Sydney silky&quot;,
+                &quot;203:soft-coated wheaten terrier&quot;,
+                &quot;204:West Highland white terrier&quot;,
+                &quot;205:Lhasa, Lhasa apso&quot;,
+                &quot;206:flat-coated retriever&quot;,
+                &quot;207:curly-coated retriever&quot;,
+                &quot;208:golden retriever&quot;,
+                &quot;209:Labrador retriever&quot;,
+                &quot;210:Chesapeake Bay retriever&quot;,
+                &quot;211:German short-haired pointer&quot;,
+                &quot;212:vizsla, Hungarian pointer&quot;,
+                &quot;213:English setter&quot;,
+                &quot;214:Irish setter, red setter&quot;,
+                &quot;215:Gordon setter&quot;,
+                &quot;216:Brittany spaniel&quot;,
+                &quot;217:clumber, clumber spaniel&quot;,
+                &quot;218:English springer, English springer spaniel&quot;,
+                &quot;219:Welsh springer spaniel&quot;,
+                &quot;220:cocker spaniel, English cocker spaniel, cocker&quot;,
+                &quot;221:Sussex spaniel&quot;,
+                &quot;222:Irish water spaniel&quot;,
+                &quot;223:kuvasz&quot;,
+                &quot;224:schipperke&quot;,
+                &quot;225:groenendael&quot;,
+                &quot;226:malinois&quot;,
+                &quot;227:briard&quot;,
+                &quot;228:kelpie&quot;,
+                &quot;229:komondor&quot;,
+                &quot;230:Old English sheepdog, bobtail&quot;,
+                &quot;231:Shetland sheepdog, Shetland sheep dog, Shetland&quot;,
+                &quot;232:collie&quot;,
+                &quot;233:Border collie&quot;,
+                &quot;234:Bouvier des Flandres, Bouviers des Flandres&quot;,
+                &quot;235:Rottweiler&quot;,
+                &quot;236:German shepherd, German shepherd dog, German police dog, alsatian&quot;,
+                &quot;237:Doberman, Doberman pinscher&quot;,
+                &quot;238:miniature pinscher&quot;,
+                &quot;239:Greater Swiss Mountain dog&quot;,
+                &quot;240:Bernese mountain dog&quot;,
+                &quot;241:Appenzeller&quot;,
+                &quot;242:EntleBucher&quot;,
+                &quot;243:boxer&quot;,
+                &quot;244:bull mastiff&quot;,
+                &quot;245:Tibetan mastiff&quot;,
+                &quot;246:French bulldog&quot;,
+                &quot;247:Great Dane&quot;,
+                &quot;248:Saint Bernard, St Bernard&quot;,
+                &quot;249:Eskimo dog, husky&quot;,
+                &quot;250:malamute, malemute, Alaskan malamute&quot;,
+                &quot;251:Siberian husky&quot;,
+                &quot;252:dalmatian, coach dog, carriage dog&quot;,
+                &quot;253:affenpinscher, monkey pinscher, monkey dog&quot;,
+                &quot;254:basenji&quot;,
+                &quot;255:pug, pug-dog&quot;,
+                &quot;256:Leonberg&quot;,
+                &quot;257:Newfoundland, Newfoundland dog&quot;,
+                &quot;258:Great Pyrenees&quot;,
+                &quot;259:Samoyed, Samoyede&quot;,
+                &quot;260:Pomeranian&quot;,
+                &quot;261:chow, chow chow&quot;,
+                &quot;262:keeshond&quot;,
+                &quot;263:Brabancon griffon&quot;,
+                &quot;264:Pembroke, Pembroke Welsh corgi&quot;,
+                &quot;265:Cardigan, Cardigan Welsh corgi&quot;,
+                &quot;266:toy poodle&quot;,
+                &quot;267:miniature poodle&quot;,
+                &quot;268:standard poodle&quot;,
+                &quot;269:Mexican hairless&quot;,
+                &quot;270:timber wolf, grey wolf, gray wolf, Canis lupus&quot;,
+                &quot;271:white wolf, Arctic wolf, Canis lupus tundrarum&quot;,
+                &quot;272:red wolf, maned wolf, Canis rufus, Canis niger&quot;,
+                &quot;273:coyote, prairie wolf, brush wolf, Canis latrans&quot;,
+                &quot;274:dingo, warrigal, warragal, Canis dingo&quot;,
+                &quot;275:dhole, Cuon alpinus&quot;,
+                &quot;276:African hunting dog, hyena dog, Cape hunting dog, Lycaon pictus&quot;,
+                &quot;277:hyena, hyaena&quot;,
+                &quot;278:red fox, Vulpes vulpes&quot;,
+                &quot;279:kit fox, Vulpes macrotis&quot;,
+                &quot;280:Arctic fox, white fox, Alopex lagopus&quot;,
+                &quot;281:grey fox, gray fox, Urocyon cinereoargenteus&quot;,
+                &quot;282:tabby, tabby cat&quot;,
+                &quot;283:tiger cat&quot;,
+                &quot;284:Persian cat&quot;,
+                &quot;285:Siamese cat, Siamese&quot;,
+                &quot;286:Egyptian cat&quot;,
+                &quot;287:cougar, puma, catamount, mountain lion, painter, panther, Felis concolor&quot;,
+                &quot;288:lynx, catamount&quot;,
+                &quot;289:leopard, Panthera pardus&quot;,
+                &quot;290:snow leopard, ounce, Panthera uncia&quot;,
+                &quot;291:jaguar, panther, Panthera onca, Felis onca&quot;,
+                &quot;292:lion, king of beasts, Panthera leo&quot;,
+                &quot;293:tiger, Panthera tigris&quot;,
+                &quot;294:cheetah, chetah, Acinonyx jubatus&quot;,
+                &quot;295:brown bear, bruin, Ursus arctos&quot;,
+                &quot;296:American black bear, black bear, Ursus americanus, Euarctos americanus&quot;,
+                &quot;297:ice bear, polar bear, Ursus Maritimus, Thalarctos maritimus&quot;,
+                &quot;298:sloth bear, Melursus ursinus, Ursus ursinus&quot;,
+                &quot;299:mongoose&quot;,
+                &quot;300:meerkat, mierkat&quot;,
+                &quot;301:tiger beetle&quot;,
+                &quot;302:ladybug, ladybeetle, lady beetle, ladybird, ladybird beetle&quot;,
+                &quot;303:ground beetle, carabid beetle&quot;,
+                &quot;304:long-horned beetle, longicorn, longicorn beetle&quot;,
+                &quot;305:leaf beetle, chrysomelid&quot;,
+                &quot;306:dung beetle&quot;,
+                &quot;307:rhinoceros beetle&quot;,
+                &quot;308:weevil&quot;,
+                &quot;309:fly&quot;,
+                &quot;310:bee&quot;,
+                &quot;311:ant, emmet, pismire&quot;,
+                &quot;312:grasshopper, hopper&quot;,
+                &quot;313:cricket&quot;,
+                &quot;314:walking stick, walkingstick, stick insect&quot;,
+                &quot;315:cockroach, roach&quot;,
+                &quot;316:mantis, mantid&quot;,
+                &quot;317:cicada, cicala&quot;,
+                &quot;318:leafhopper&quot;,
+                &quot;319:lacewing, lacewing fly&quot;,
+                &quot;320:dragonfly, darning needle, devil's darning needle, sewing needle, snake feeder, snake doctor, mosquito hawk, skeeter hawk&quot;,
+                &quot;321:damselfly&quot;,
+                &quot;322:admiral&quot;,
+                &quot;323:ringlet, ringlet butterfly&quot;,
+                &quot;324:monarch, monarch butterfly, milkweed butterfly, Danaus plexippus&quot;,
+                &quot;325:cabbage butterfly&quot;,
+                &quot;326:sulphur butterfly, sulfur butterfly&quot;,
+                &quot;327:lycaenid, lycaenid butterfly&quot;,
+                &quot;328:starfish, sea star&quot;,
+                &quot;329:sea urchin&quot;,
+                &quot;330:sea cucumber, holothurian&quot;,
+                &quot;331:wood rabbit, cottontail, cottontail rabbit&quot;,
+                &quot;332:hare&quot;,
+                &quot;333:Angora, Angora rabbit&quot;,
+                &quot;334:hamster&quot;,
+                &quot;335:porcupine, hedgehog&quot;,
+                &quot;336:fox squirrel, eastern fox squirrel, Sciurus niger&quot;,
+                &quot;337:marmot&quot;,
+                &quot;338:beaver&quot;,
+                &quot;339:guinea pig, Cavia cobaya&quot;,
+                &quot;340:sorrel&quot;,
+                &quot;341:zebra&quot;,
+                &quot;342:hog, pig, grunter, squealer, Sus scrofa&quot;,
+                &quot;343:wild boar, boar, Sus scrofa&quot;,
+                &quot;344:warthog&quot;,
+                &quot;345:hippopotamus, hippo, river horse, Hippopotamus amphibius&quot;,
+                &quot;346:ox&quot;,
+                &quot;347:water buffalo, water ox, Asiatic buffalo, Bubalus bubalis&quot;,
+                &quot;348:bison&quot;,
+                &quot;349:ram, tup&quot;,
+                &quot;350:bighorn, bighorn sheep, cimarron, Rocky Mountain bighorn, Rocky Mountain sheep, Ovis canadensis&quot;,
+                &quot;351:ibex, Capra ibex&quot;,
+                &quot;352:hartebeest&quot;,
+                &quot;353:impala, Aepyceros melampus&quot;,
+                &quot;354:gazelle&quot;,
+                &quot;355:Arabian camel, dromedary, Camelus dromedarius&quot;,
+                &quot;356:llama&quot;,
+                &quot;357:weasel&quot;,
+                &quot;358:mink&quot;,
+                &quot;359:polecat, fitch, foulmart, foumart, Mustela putorius&quot;,
+                &quot;360:black-footed ferret, ferret, Mustela nigripes&quot;,
+                &quot;361:otter&quot;,
+                &quot;362:skunk, polecat, wood pussy&quot;,
+                &quot;363:badger&quot;,
+                &quot;364:armadillo&quot;,
+                &quot;365:three-toed sloth, ai, Bradypus tridactylus&quot;,
+                &quot;366:orangutan, orang, orangutang, Pongo pygmaeus&quot;,
+                &quot;367:gorilla, Gorilla gorilla&quot;,
+                &quot;368:chimpanzee, chimp, Pan troglodytes&quot;,
+                &quot;369:gibbon, Hylobates lar&quot;,
+                &quot;370:siamang, Hylobates syndactylus, Symphalangus syndactylus&quot;,
+                &quot;371:guenon, guenon monkey&quot;,
+                &quot;372:patas, hussar monkey, Erythrocebus patas&quot;,
+                &quot;373:baboon&quot;,
+                &quot;374:macaque&quot;,
+                &quot;375:langur&quot;,
+                &quot;376:colobus, colobus monkey&quot;,
+                &quot;377:proboscis monkey, Nasalis larvatus&quot;,
+                &quot;378:marmoset&quot;,
+                &quot;379:capuchin, ringtail, Cebus capucinus&quot;,
+                &quot;380:howler monkey, howler&quot;,
+                &quot;381:titi, titi monkey&quot;,
+                &quot;382:spider monkey, Ateles geoffroyi&quot;,
+                &quot;383:squirrel monkey, Saimiri sciureus&quot;,
+                &quot;384:Madagascar cat, ring-tailed lemur, Lemur catta&quot;,
+                &quot;385:indri, indris, Indri indri, Indri brevicaudatus&quot;,
+                &quot;386:Indian elephant, Elephas maximus&quot;,
+                &quot;387:African elephant, Loxodonta africana&quot;,
+                &quot;388:lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens&quot;,
+                &quot;389:giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca&quot;,
+                &quot;390:barracouta, snoek&quot;,
+                &quot;391:eel&quot;,
+                &quot;392:coho, cohoe, coho salmon, blue jack, silver salmon, Oncorhynchus kisutch&quot;,
+                &quot;393:rock beauty, Holocanthus tricolor&quot;,
+                &quot;394:anemone fish&quot;,
+                &quot;395:sturgeon&quot;,
+                &quot;396:gar, garfish, garpike, billfish, Lepisosteus osseus&quot;,
+                &quot;397:lionfish&quot;,
+                &quot;398:puffer, pufferfish, blowfish, globefish&quot;,
+                &quot;399:abacus&quot;,
+                &quot;400:abaya&quot;,
+                &quot;401:academic gown, academic robe, judge's robe&quot;,
+                &quot;402:accordion, piano accordion, squeeze box&quot;,
+                &quot;403:acoustic guitar&quot;,
+                &quot;404:aircraft carrier, carrier, flattop, attack aircraft carrier&quot;,
+                &quot;405:airliner&quot;,
+                &quot;406:airship, dirigible&quot;,
+                &quot;407:altar&quot;,
+                &quot;408:ambulance&quot;,
+                &quot;409:amphibian, amphibious vehicle&quot;,
+                &quot;410:analog clock&quot;,
+                &quot;411:apiary, bee house&quot;,
+                &quot;412:apron&quot;,
+                &quot;413:ashcan, trash can, garbage can, wastebin, ash bin, ash-bin, ashbin, dustbin, trash barrel, trash bin&quot;,
+                &quot;414:assault rifle, assault gun&quot;,
+                &quot;415:backpack, back pack, knapsack, packsack, rucksack, haversack&quot;,
+                &quot;416:bakery, bakeshop, bakehouse&quot;,
+                &quot;417:balance beam, beam&quot;,
+                &quot;418:balloon&quot;,
+                &quot;419:ballpoint, ballpoint pen, ballpen, Biro&quot;,
+                &quot;420:Band Aid&quot;,
+                &quot;421:banjo&quot;,
+                &quot;422:bannister, banister, balustrade, balusters, handrail&quot;,
+                &quot;423:barbell&quot;,
+                &quot;424:barber chair&quot;,
+                &quot;425:barbershop&quot;,
+                &quot;426:barn&quot;,
+                &quot;427:barometer&quot;,
+                &quot;428:barrel, cask&quot;,
+                &quot;429:barrow, garden cart, lawn cart, wheelbarrow&quot;,
+                &quot;430:baseball&quot;,
+                &quot;431:basketball&quot;,
+                &quot;432:bassinet&quot;,
+                &quot;433:bassoon&quot;,
+                &quot;434:bathing cap, swimming cap&quot;,
+                &quot;435:bath towel&quot;,
+                &quot;436:bathtub, bathing tub, bath, tub&quot;,
+                &quot;437:beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon&quot;,
+                &quot;438:beacon, lighthouse, beacon light, pharos&quot;,
+                &quot;439:beaker&quot;,
+                &quot;440:bearskin, busby, shako&quot;,
+                &quot;441:beer bottle&quot;,
+                &quot;442:beer glass&quot;,
+                &quot;443:bell cote, bell cot&quot;,
+                &quot;444:bib&quot;,
+                &quot;445:bicycle-built-for-two, tandem bicycle, tandem&quot;,
+                &quot;446:bikini, two-piece&quot;,
+                &quot;447:binder, ring-binder&quot;,
+                &quot;448:binoculars, field glasses, opera glasses&quot;,
+                &quot;449:birdhouse&quot;,
+                &quot;450:boathouse&quot;,
+                &quot;451:bobsled, bobsleigh, bob&quot;,
+                &quot;452:bolo tie, bolo, bola tie, bola&quot;,
+                &quot;453:bonnet, poke bonnet&quot;,
+                &quot;454:bookcase&quot;,
+                &quot;455:bookshop, bookstore, bookstall&quot;,
+                &quot;456:bottlecap&quot;,
+                &quot;457:bow&quot;,
+                &quot;458:bow tie, bow-tie, bowtie&quot;,
+                &quot;459:brass, memorial tablet, plaque&quot;,
+                &quot;460:brassiere, bra, bandeau&quot;,
+                &quot;461:breakwater, groin, groyne, mole, bulwark, seawall, jetty&quot;,
+                &quot;462:breastplate, aegis, egis&quot;,
+                &quot;463:broom&quot;,
+                &quot;464:bucket, pail&quot;,
+                &quot;465:buckle&quot;,
+                &quot;466:bulletproof vest&quot;,
+                &quot;467:bullet train, bullet&quot;,
+                &quot;468:butcher shop, meat market&quot;,
+                &quot;469:cab, hack, taxi, taxicab&quot;,
+                &quot;470:caldron, cauldron&quot;,
+                &quot;471:candle, taper, wax light&quot;,
+                &quot;472:cannon&quot;,
+                &quot;473:canoe&quot;,
+                &quot;474:can opener, tin opener&quot;,
+                &quot;475:cardigan&quot;,
+                &quot;476:car mirror&quot;,
+                &quot;477:carousel, carrousel, merry-go-round, roundabout, whirligig&quot;,
+                &quot;478:carpenter's kit, tool kit&quot;,
+                &quot;479:carton&quot;,
+                &quot;480:car wheel&quot;,
+                &quot;481:cash machine, cash dispenser, automated teller machine, automatic teller machine, automated teller, automatic teller, ATM&quot;,
+                &quot;482:cassette&quot;,
+                &quot;483:cassette player&quot;,
+                &quot;484:castle&quot;,
+                &quot;485:catamaran&quot;,
+                &quot;486:CD player&quot;,
+                &quot;487:cello, violoncello&quot;,
+                &quot;488:cellular telephone, cellular phone, cellphone, cell, mobile phone&quot;,
+                &quot;489:chain&quot;,
+                &quot;490:chainlink fence&quot;,
+                &quot;491:chain mail, ring mail, mail, chain armor, chain armour, ring armor, ring armour&quot;,
+                &quot;492:chain saw, chainsaw&quot;,
+                &quot;493:chest&quot;,
+                &quot;494:chiffonier, commode&quot;,
+                &quot;495:chime, bell, gong&quot;,
+                &quot;496:china cabinet, china closet&quot;,
+                &quot;497:Christmas stocking&quot;,
+                &quot;498:church, church building&quot;,
+                &quot;499:cinema, movie theater, movie theatre, movie house, picture palace&quot;,
+                &quot;500:cleaver, meat cleaver, chopper&quot;,
+                &quot;501:cliff dwelling&quot;,
+                &quot;502:cloak&quot;,
+                &quot;503:clog, geta, patten, sabot&quot;,
+                &quot;504:cocktail shaker&quot;,
+                &quot;505:coffee mug&quot;,
+                &quot;506:coffeepot&quot;,
+                &quot;507:coil, spiral, volute, whorl, helix&quot;,
+                &quot;508:combination lock&quot;,
+                &quot;509:computer keyboard, keypad&quot;,
+                &quot;510:confectionery, confectionary, candy store&quot;,
+                &quot;511:container ship, containership, container vessel&quot;,
+                &quot;512:convertible&quot;,
+                &quot;513:corkscrew, bottle screw&quot;,
+                &quot;514:cornet, horn, trumpet, trump&quot;,
+                &quot;515:cowboy boot&quot;,
+                &quot;516:cowboy hat, ten-gallon hat&quot;,
+                &quot;517:cradle&quot;,
+                &quot;518:crane&quot;,
+                &quot;519:crash helmet&quot;,
+                &quot;520:crate&quot;,
+                &quot;521:crib, cot&quot;,
+                &quot;522:Crock Pot&quot;,
+                &quot;523:croquet ball&quot;,
+                &quot;524:crutch&quot;,
+                &quot;525:cuirass&quot;,
+                &quot;526:dam, dike, dyke&quot;,
+                &quot;527:desk&quot;,
+                &quot;528:desktop computer&quot;,
+                &quot;529:dial telephone, dial phone&quot;,
+                &quot;530:diaper, nappy, napkin&quot;,
+                &quot;531:digital clock&quot;,
+                &quot;532:digital watch&quot;,
+                &quot;533:dining table, board&quot;,
+                &quot;534:dishrag, dishcloth&quot;,
+                &quot;535:dishwasher, dish washer, dishwashing machine&quot;,
+                &quot;536:disk brake, disc brake&quot;,
+                &quot;537:dock, dockage, docking facility&quot;,
+                &quot;538:dogsled, dog sled, dog sleigh&quot;,
+                &quot;539:dome&quot;,
+                &quot;540:doormat, welcome mat&quot;,
+                &quot;541:drilling platform, offshore rig&quot;,
+                &quot;542:drum, membranophone, tympan&quot;,
+                &quot;543:drumstick&quot;,
+                &quot;544:dumbbell&quot;,
+                &quot;545:Dutch oven&quot;,
+                &quot;546:electric fan, blower&quot;,
+                &quot;547:electric guitar&quot;,
+                &quot;548:electric locomotive&quot;,
+                &quot;549:entertainment center&quot;,
+                &quot;550:envelope&quot;,
+                &quot;551:espresso maker&quot;,
+                &quot;552:face powder&quot;,
+                &quot;553:feather boa, boa&quot;,
+                &quot;554:file, file cabinet, filing cabinet&quot;,
+                &quot;555:fireboat&quot;,
+                &quot;556:fire engine, fire truck&quot;,
+                &quot;557:fire screen, fireguard&quot;,
+                &quot;558:flagpole, flagstaff&quot;,
+                &quot;559:flute, transverse flute&quot;,
+                &quot;560:folding chair&quot;,
+                &quot;561:football helmet&quot;,
+                &quot;562:forklift&quot;,
+                &quot;563:fountain&quot;,
+                &quot;564:fountain pen&quot;,
+                &quot;565:four-poster&quot;,
+                &quot;566:freight car&quot;,
+                &quot;567:French horn, horn&quot;,
+                &quot;568:frying pan, frypan, skillet&quot;,
+                &quot;569:fur coat&quot;,
+                &quot;570:garbage truck, dustcart&quot;,
+                &quot;571:gasmask, respirator, gas helmet&quot;,
+                &quot;572:gas pump, gasoline pump, petrol pump, island dispenser&quot;,
+                &quot;573:goblet&quot;,
+                &quot;574:go-kart&quot;,
+                &quot;575:golf ball&quot;,
+                &quot;576:golfcart, golf cart&quot;,
+                &quot;577:gondola&quot;,
+                &quot;578:gong, tam-tam&quot;,
+                &quot;579:gown&quot;,
+                &quot;580:grand piano, grand&quot;,
+                &quot;581:greenhouse, nursery, glasshouse&quot;,
+                &quot;582:grille, radiator grille&quot;,
+                &quot;583:grocery store, grocery, food market, market&quot;,
+                &quot;584:guillotine&quot;,
+                &quot;585:hair slide&quot;,
+                &quot;586:hair spray&quot;,
+                &quot;587:half track&quot;,
+                &quot;588:hammer&quot;,
+                &quot;589:hamper&quot;,
+                &quot;590:hand blower, blow dryer, blow drier, hair dryer, hair drier&quot;,
+                &quot;591:hand-held computer, hand-held microcomputer&quot;,
+                &quot;592:handkerchief, hankie, hanky, hankey&quot;,
+                &quot;593:hard disc, hard disk, fixed disk&quot;,
+                &quot;594:harmonica, mouth organ, harp, mouth harp&quot;,
+                &quot;595:harp&quot;,
+                &quot;596:harvester, reaper&quot;,
+                &quot;597:hatchet&quot;,
+                &quot;598:holster&quot;,
+                &quot;599:home theater, home theatre&quot;,
+                &quot;600:honeycomb&quot;,
+                &quot;601:hook, claw&quot;,
+                &quot;602:hoopskirt, crinoline&quot;,
+                &quot;603:horizontal bar, high bar&quot;,
+                &quot;604:horse cart, horse-cart&quot;,
+                &quot;605:hourglass&quot;,
+                &quot;606:iPod&quot;,
+                &quot;607:iron, smoothing iron&quot;,
+                &quot;608:jack-o'-lantern&quot;,
+                &quot;609:jean, blue jean, denim&quot;,
+                &quot;610:jeep, landrover&quot;,
+                &quot;611:jersey, T-shirt, tee shirt&quot;,
+                &quot;612:jigsaw puzzle&quot;,
+                &quot;613:jinrikisha, ricksha, rickshaw&quot;,
+                &quot;614:joystick&quot;,
+                &quot;615:kimono&quot;,
+                &quot;616:knee pad&quot;,
+                &quot;617:knot&quot;,
+                &quot;618:lab coat, laboratory coat&quot;,
+                &quot;619:ladle&quot;,
+                &quot;620:lampshade, lamp shade&quot;,
+                &quot;621:laptop, laptop computer&quot;,
+                &quot;622:lawn mower, mower&quot;,
+                &quot;623:lens cap, lens cover&quot;,
+                &quot;624:letter opener, paper knife, paperknife&quot;,
+                &quot;625:library&quot;,
+                &quot;626:lifeboat&quot;,
+                &quot;627:lighter, light, igniter, ignitor&quot;,
+                &quot;628:limousine, limo&quot;,
+                &quot;629:liner, ocean liner&quot;,
+                &quot;630:lipstick, lip rouge&quot;,
+                &quot;631:Loafer&quot;,
+                &quot;632:lotion&quot;,
+                &quot;633:loudspeaker, speaker, speaker unit, loudspeaker system, speaker system&quot;,
+                &quot;634:loupe, jeweler's loupe&quot;,
+                &quot;635:lumbermill, sawmill&quot;,
+                &quot;636:magnetic compass&quot;,
+                &quot;637:mailbag, postbag&quot;,
+                &quot;638:mailbox, letter box&quot;,
+                &quot;639:maillot&quot;,
+                &quot;640:maillot, tank suit&quot;,
+                &quot;641:manhole cover&quot;,
+                &quot;642:maraca&quot;,
+                &quot;643:marimba, xylophone&quot;,
+                &quot;644:mask&quot;,
+                &quot;645:matchstick&quot;,
+                &quot;646:maypole&quot;,
+                &quot;647:maze, labyrinth&quot;,
+                &quot;648:measuring cup&quot;,
+                &quot;649:medicine chest, medicine cabinet&quot;,
+                &quot;650:megalith, megalithic structure&quot;,
+                &quot;651:microphone, mike&quot;,
+                &quot;652:microwave, microwave oven&quot;,
+                &quot;653:military uniform&quot;,
+                &quot;654:milk can&quot;,
+                &quot;655:minibus&quot;,
+                &quot;656:miniskirt, mini&quot;,
+                &quot;657:minivan&quot;,
+                &quot;658:missile&quot;,
+                &quot;659:mitten&quot;,
+                &quot;660:mixing bowl&quot;,
+                &quot;661:mobile home, manufactured home&quot;,
+                &quot;662:Model T&quot;,
+                &quot;663:modem&quot;,
+                &quot;664:monastery&quot;,
+                &quot;665:monitor&quot;,
+                &quot;666:moped&quot;,
+                &quot;667:mortar&quot;,
+                &quot;668:mortarboard&quot;,
+                &quot;669:mosque&quot;,
+                &quot;670:mosquito net&quot;,
+                &quot;671:motor scooter, scooter&quot;,
+                &quot;672:mountain bike, all-terrain bike, off-roader&quot;,
+                &quot;673:mountain tent&quot;,
+                &quot;674:mouse, computer mouse&quot;,
+                &quot;675:mousetrap&quot;,
+                &quot;676:moving van&quot;,
+                &quot;677:muzzle&quot;,
+                &quot;678:nail&quot;,
+                &quot;679:neck brace&quot;,
+                &quot;680:necklace&quot;,
+                &quot;681:nipple&quot;,
+                &quot;682:notebook, notebook computer&quot;,
+                &quot;683:obelisk&quot;,
+                &quot;684:oboe, hautboy, hautbois&quot;,
+                &quot;685:ocarina, sweet potato&quot;,
+                &quot;686:odometer, hodometer, mileometer, milometer&quot;,
+                &quot;687:oil filter&quot;,
+                &quot;688:organ, pipe organ&quot;,
+                &quot;689:oscilloscope, scope, cathode-ray oscilloscope, CRO&quot;,
+                &quot;690:overskirt&quot;,
+                &quot;691:oxcart&quot;,
+                &quot;692:oxygen mask&quot;,
+                &quot;693:packet&quot;,
+                &quot;694:paddle, boat paddle&quot;,
+                &quot;695:paddlewheel, paddle wheel&quot;,
+                &quot;696:padlock&quot;,
+                &quot;697:paintbrush&quot;,
+                &quot;698:pajama, pyjama, pj's, jammies&quot;,
+                &quot;699:palace&quot;,
+                &quot;700:panpipe, pandean pipe, syrinx&quot;,
+                &quot;701:paper towel&quot;,
+                &quot;702:parachute, chute&quot;,
+                &quot;703:parallel bars, bars&quot;,
+                &quot;704:park bench&quot;,
+                &quot;705:parking meter&quot;,
+                &quot;706:passenger car, coach, carriage&quot;,
+                &quot;707:patio, terrace&quot;,
+                &quot;708:pay-phone, pay-station&quot;,
+                &quot;709:pedestal, plinth, footstall&quot;,
+                &quot;710:pencil box, pencil case&quot;,
+                &quot;711:pencil sharpener&quot;,
+                &quot;712:perfume, essence&quot;,
+                &quot;713:Petri dish&quot;,
+                &quot;714:photocopier&quot;,
+                &quot;715:pick, plectrum, plectron&quot;,
+                &quot;716:pickelhaube&quot;,
+                &quot;717:picket fence, paling&quot;,
+                &quot;718:pickup, pickup truck&quot;,
+                &quot;719:pier&quot;,
+                &quot;720:piggy bank, penny bank&quot;,
+                &quot;721:pill bottle&quot;,
+                &quot;722:pillow&quot;,
+                &quot;723:ping-pong ball&quot;,
+                &quot;724:pinwheel&quot;,
+                &quot;725:pirate, pirate ship&quot;,
+                &quot;726:pitcher, ewer&quot;,
+                &quot;727:plane, carpenter's plane, woodworking plane&quot;,
+                &quot;728:planetarium&quot;,
+                &quot;729:plastic bag&quot;,
+                &quot;730:plate rack&quot;,
+                &quot;731:plow, plough&quot;,
+                &quot;732:plunger, plumber's helper&quot;,
+                &quot;733:Polaroid camera, Polaroid Land camera&quot;,
+                &quot;734:pole&quot;,
+                &quot;735:police van, police wagon, paddy wagon, patrol wagon, wagon, black Maria&quot;,
+                &quot;736:poncho&quot;,
+                &quot;737:pool table, billiard table, snooker table&quot;,
+                &quot;738:pop bottle, soda bottle&quot;,
+                &quot;739:pot, flowerpot&quot;,
+                &quot;740:potter's wheel&quot;,
+                &quot;741:power drill&quot;,
+                &quot;742:prayer rug, prayer mat&quot;,
+                &quot;743:printer&quot;,
+                &quot;744:prison, prison house&quot;,
+                &quot;745:projectile, missile&quot;,
+                &quot;746:projector&quot;,
+                &quot;747:puck, hockey puck&quot;,
+                &quot;748:punching bag, punch bag, punching ball, punchball&quot;,
+                &quot;749:purse&quot;,
+                &quot;750:quill, quill pen&quot;,
+                &quot;751:quilt, comforter, comfort, puff&quot;,
+                &quot;752:racer, race car, racing car&quot;,
+                &quot;753:racket, racquet&quot;,
+                &quot;754:radiator&quot;,
+                &quot;755:radio, wireless&quot;,
+                &quot;756:radio telescope, radio reflector&quot;,
+                &quot;757:rain barrel&quot;,
+                &quot;758:recreational vehicle, RV, R.V.&quot;,
+                &quot;759:reel&quot;,
+                &quot;760:reflex camera&quot;,
+                &quot;761:refrigerator, icebox&quot;,
+                &quot;762:remote control, remote&quot;,
+                &quot;763:restaurant, eating house, eating place, eatery&quot;,
+                &quot;764:revolver, six-gun, six-shooter&quot;,
+                &quot;765:rifle&quot;,
+                &quot;766:rocking chair, rocker&quot;,
+                &quot;767:rotisserie&quot;,
+                &quot;768:rubber eraser, rubber, pencil eraser&quot;,
+                &quot;769:rugby ball&quot;,
+                &quot;770:rule, ruler&quot;,
+                &quot;771:running shoe&quot;,
+                &quot;772:safe&quot;,
+                &quot;773:safety pin&quot;,
+                &quot;774:saltshaker, salt shaker&quot;,
+                &quot;775:sandal&quot;,
+                &quot;776:sarong&quot;,
+                &quot;777:sax, saxophone&quot;,
+                &quot;778:scabbard&quot;,
+                &quot;779:scale, weighing machine&quot;,
+                &quot;780:school bus&quot;,
+                &quot;781:schooner&quot;,
+                &quot;782:scoreboard&quot;,
+                &quot;783:screen, CRT screen&quot;,
+                &quot;784:screw&quot;,
+                &quot;785:screwdriver&quot;,
+                &quot;786:seat belt, seatbelt&quot;,
+                &quot;787:sewing machine&quot;,
+                &quot;788:shield, buckler&quot;,
+                &quot;789:shoe shop, shoe-shop, shoe store&quot;,
+                &quot;790:shoji&quot;,
+                &quot;791:shopping basket&quot;,
+                &quot;792:shopping cart&quot;,
+                &quot;793:shovel&quot;,
+                &quot;794:shower cap&quot;,
+                &quot;795:shower curtain&quot;,
+                &quot;796:ski&quot;,
+                &quot;797:ski mask&quot;,
+                &quot;798:sleeping bag&quot;,
+                &quot;799:slide rule, slipstick&quot;,
+                &quot;800:sliding door&quot;,
+                &quot;801:slot, one-armed bandit&quot;,
+                &quot;802:snorkel&quot;,
+                &quot;803:snowmobile&quot;,
+                &quot;804:snowplow, snowplough&quot;,
+                &quot;805:soap dispenser&quot;,
+                &quot;806:soccer ball&quot;,
+                &quot;807:sock&quot;,
+                &quot;808:solar dish, solar collector, solar furnace&quot;,
+                &quot;809:sombrero&quot;,
+                &quot;810:soup bowl&quot;,
+                &quot;811:space bar&quot;,
+                &quot;812:space heater&quot;,
+                &quot;813:space shuttle&quot;,
+                &quot;814:spatula&quot;,
+                &quot;815:speedboat&quot;,
+                &quot;816:spider web, spider's web&quot;,
+                &quot;817:spindle&quot;,
+                &quot;818:sports car, sport car&quot;,
+                &quot;819:spotlight, spot&quot;,
+                &quot;820:stage&quot;,
+                &quot;821:steam locomotive&quot;,
+                &quot;822:steel arch bridge&quot;,
+                &quot;823:steel drum&quot;,
+                &quot;824:stethoscope&quot;,
+                &quot;825:stole&quot;,
+                &quot;826:stone wall&quot;,
+                &quot;827:stopwatch, stop watch&quot;,
+                &quot;828:stove&quot;,
+                &quot;829:strainer&quot;,
+                &quot;830:streetcar, tram, tramcar, trolley, trolley car&quot;,
+                &quot;831:stretcher&quot;,
+                &quot;832:studio couch, day bed&quot;,
+                &quot;833:stupa, tope&quot;,
+                &quot;834:submarine, pigboat, sub, U-boat&quot;,
+                &quot;835:suit, suit of clothes&quot;,
+                &quot;836:sundial&quot;,
+                &quot;837:sunglass&quot;,
+                &quot;838:sunglasses, dark glasses, shades&quot;,
+                &quot;839:sunscreen, sunblock, sun blocker&quot;,
+                &quot;840:suspension bridge&quot;,
+                &quot;841:swab, swob, mop&quot;,
+                &quot;842:sweatshirt&quot;,
+                &quot;843:swimming trunks, bathing trunks&quot;,
+                &quot;844:swing&quot;,
+                &quot;845:switch, electric switch, electrical switch&quot;,
+                &quot;846:syringe&quot;,
+                &quot;847:table lamp&quot;,
+                &quot;848:tank, army tank, armored combat vehicle, armoured combat vehicle&quot;,
+                &quot;849:tape player&quot;,
+                &quot;850:teapot&quot;,
+                &quot;851:teddy, teddy bear&quot;,
+                &quot;852:television, television system&quot;,
+                &quot;853:tennis ball&quot;,
+                &quot;854:thatch, thatched roof&quot;,
+                &quot;855:theater curtain, theatre curtain&quot;,
+                &quot;856:thimble&quot;,
+                &quot;857:thresher, thrasher, threshing machine&quot;,
+                &quot;858:throne&quot;,
+                &quot;859:tile roof&quot;,
+                &quot;860:toaster&quot;,
+                &quot;861:tobacco shop, tobacconist shop, tobacconist&quot;,
+                &quot;862:toilet seat&quot;,
+                &quot;863:torch&quot;,
+                &quot;864:totem pole&quot;,
+                &quot;865:tow truck, tow car, wrecker&quot;,
+                &quot;866:toyshop&quot;,
+                &quot;867:tractor&quot;,
+                &quot;868:trailer truck, tractor trailer, trucking rig, rig, articulated lorry, semi&quot;,
+                &quot;869:tray&quot;,
+                &quot;870:trench coat&quot;,
+                &quot;871:tricycle, trike, velocipede&quot;,
+                &quot;872:trimaran&quot;,
+                &quot;873:tripod&quot;,
+                &quot;874:triumphal arch&quot;,
+                &quot;875:trolleybus, trolley coach, trackless trolley&quot;,
+                &quot;876:trombone&quot;,
+                &quot;877:tub, vat&quot;,
+                &quot;878:turnstile&quot;,
+                &quot;879:typewriter keyboard&quot;,
+                &quot;880:umbrella&quot;,
+                &quot;881:unicycle, monocycle&quot;,
+                &quot;882:upright, upright piano&quot;,
+                &quot;883:vacuum, vacuum cleaner&quot;,
+                &quot;884:vase&quot;,
+                &quot;885:vault&quot;,
+                &quot;886:velvet&quot;,
+                &quot;887:vending machine&quot;,
+                &quot;888:vestment&quot;,
+                &quot;889:viaduct&quot;,
+                &quot;890:violin, fiddle&quot;,
+                &quot;891:volleyball&quot;,
+                &quot;892:waffle iron&quot;,
+                &quot;893:wall clock&quot;,
+                &quot;894:wallet, billfold, notecase, pocketbook&quot;,
+                &quot;895:wardrobe, closet, press&quot;,
+                &quot;896:warplane, military plane&quot;,
+                &quot;897:washbasin, handbasin, washbowl, lavabo, wash-hand basin&quot;,
+                &quot;898:washer, automatic washer, washing machine&quot;,
+                &quot;899:water bottle&quot;,
+                &quot;900:water jug&quot;,
+                &quot;901:water tower&quot;,
+                &quot;902:whiskey jug&quot;,
+                &quot;903:whistle&quot;,
+                &quot;904:wig&quot;,
+                &quot;905:window screen&quot;,
+                &quot;906:window shade&quot;,
+                &quot;907:Windsor tie&quot;,
+                &quot;908:wine bottle&quot;,
+                &quot;909:wing&quot;,
+                &quot;910:wok&quot;,
+                &quot;911:wooden spoon&quot;,
+                &quot;912:wool, woolen, woollen&quot;,
+                &quot;913:worm fence, snake fence, snake-rail fence, Virginia fence&quot;,
+                &quot;914:wreck&quot;,
+                &quot;915:yawl&quot;,
+                &quot;916:yurt&quot;,
+                &quot;917:web site, website, internet site, site&quot;,
+                &quot;918:comic book&quot;,
+                &quot;919:crossword puzzle, crossword&quot;,
+                &quot;920:street sign&quot;,
+                &quot;921:traffic light, traffic signal, stoplight&quot;,
+                &quot;922:book jacket, dust cover, dust jacket, dust wrapper&quot;,
+                &quot;923:menu&quot;,
+                &quot;924:plate&quot;,
+                &quot;925:guacamole&quot;,
+                &quot;926:consomme&quot;,
+                &quot;927:hot pot, hotpot&quot;,
+                &quot;928:trifle&quot;,
+                &quot;929:ice cream, icecream&quot;,
+                &quot;930:ice lolly, lolly, lollipop, popsicle&quot;,
+                &quot;931:French loaf&quot;,
+                &quot;932:bagel, beigel&quot;,
+                &quot;933:pretzel&quot;,
+                &quot;934:cheeseburger&quot;,
+                &quot;935:hotdog, hot dog, red hot&quot;,
+                &quot;936:mashed potato&quot;,
+                &quot;937:head cabbage&quot;,
+                &quot;938:broccoli&quot;,
+                &quot;939:cauliflower&quot;,
+                &quot;940:zucchini, courgette&quot;,
+                &quot;941:spaghetti squash&quot;,
+                &quot;942:acorn squash&quot;,
+                &quot;943:butternut squash&quot;,
+                &quot;944:cucumber, cuke&quot;,
+                &quot;945:artichoke, globe artichoke&quot;,
+                &quot;946:bell pepper&quot;,
+                &quot;947:cardoon&quot;,
+                &quot;948:mushroom&quot;,
+                &quot;949:Granny Smith&quot;,
+                &quot;950:strawberry&quot;,
+                &quot;951:orange&quot;,
+                &quot;952:lemon&quot;,
+                &quot;953:fig&quot;,
+                &quot;954:pineapple, ananas&quot;,
+                &quot;955:banana&quot;,
+                &quot;956:jackfruit, jak, jack&quot;,
+                &quot;957:custard apple&quot;,
+                &quot;958:pomegranate&quot;,
+                &quot;959:hay&quot;,
+                &quot;960:carbonara&quot;,
+                &quot;961:chocolate sauce, chocolate syrup&quot;,
+                &quot;962:dough&quot;,
+                &quot;963:meat loaf, meatloaf&quot;,
+                &quot;964:pizza, pizza pie&quot;,
+                &quot;965:potpie&quot;,
+                &quot;966:burrito&quot;,
+                &quot;967:red wine&quot;,
+                &quot;968:espresso&quot;,
+                &quot;969:cup&quot;,
+                &quot;970:eggnog&quot;,
+                &quot;971:alp&quot;,
+                &quot;972:bubble&quot;,
+                &quot;973:cliff, drop, drop-off&quot;,
+                &quot;974:coral reef&quot;,
+                &quot;975:geyser&quot;,
+                &quot;976:lakeside, lakeshore&quot;,
+                &quot;977:promontory, headland, head, foreland&quot;,
+                &quot;978:sandbar, sand bar&quot;,
+                &quot;979:seashore, coast, seacoast, sea-coast&quot;,
+                &quot;980:valley, vale&quot;,
+                &quot;981:volcano&quot;,
+                &quot;982:ballplayer, baseball player&quot;,
+                &quot;983:groom, bridegroom&quot;,
+                &quot;984:scuba diver&quot;,
+                &quot;985:rapeseed&quot;,
+                &quot;986:daisy&quot;,
+                &quot;987:yellow lady's slipper, yellow lady-slipper, Cypripedium calceolus, Cypripedium parviflorum&quot;,
+                &quot;988:corn&quot;,
+                &quot;989:acorn&quot;,
+                &quot;990:hip, rose hip, rosehip&quot;,
+                &quot;991:buckeye, horse chestnut, conker&quot;,
+                &quot;992:coral fungus&quot;,
+                &quot;993:agaric&quot;,
+                &quot;994:gyromitra&quot;,
+                &quot;995:stinkhorn, carrion fungus&quot;,
+                &quot;996:earthstar&quot;,
+                &quot;997:hen-of-the-woods, hen of the woods, Polyporus frondosus, Grifola frondosa&quot;,
+                &quot;998:bolete&quot;,
+                &quot;999:ear, spike, capitulum&quot;,
+                &quot;1000:toilet tissue, toilet paper, bathroom tissue&quot;
+            ]
+        }
+
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
