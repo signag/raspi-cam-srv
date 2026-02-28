@@ -436,6 +436,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Starting the Installer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-fresh-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Fresh Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fresh-installation-with-existing-backup-from-previous-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fresh Installation with existing Backup from previous Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installing-over-existing-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing over existing Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -457,6 +496,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Installation Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-12-initializing-database-for-raspberry-pi-zero-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 12: Initializing database for Raspberry Pi Zero Systems
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -534,6 +590,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Uninstalling raspiCamSrv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uninstaller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uninstaller
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retaining-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retaining Backups
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3517,6 +3601,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Starting the Installer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-fresh-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Fresh Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fresh-installation-with-existing-backup-from-previous-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fresh Installation with existing Backup from previous Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installing-over-existing-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing over existing Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3538,6 +3661,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Installation Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-12-initializing-database-for-raspberry-pi-zero-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 12: Initializing database for Raspberry Pi Zero Systems
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -3616,6 +3756,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Uninstalling raspiCamSrv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uninstaller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uninstaller
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retaining-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retaining Backups
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -3652,59 +3820,155 @@ Follow instructions given by the installer (see <a href="#installer">below</a>)<
 </ol>
 <h2 id="installer">Installer</h2>
 <p><strong>NOTE</strong>: You can run the installer multiple times without any risk, also over an existing installation.</p>
-<p>So, if you want to switch the <a href="../Information_Sys/#wsgi-server">WSGI server</a> or need more <a href="../installation_man/#gunicorn-settings">threads for Gunicorn</a>, just rerun the installer. It will not touch your existing data, but just update the installation to the latest version and adjust the service configuration to your requirements.</p>
+<p>So, if you want to switch the <a href="../Information_Sys/#wsgi-server">WSGI server</a> or need more <a href="../installation_man/#gunicorn-settings">threads for Gunicorn</a>, or if you want to extend the softwarestack with a missing package, just rerun the installer. It will not touch your existing data, but just update the installation to the latest version and adjust the service configuration to your requirements.</p>
 <h3 id="starting-the-installer">Starting the Installer</h3>
-<p>The installer will inform about an existing installation (if available) and request confirmation of default settings:</p>
+<h4 id="for-fresh-installation">For Fresh Installation</h4>
 <pre><code>==========================================
 === raspiCamSrv Automated Installer    ===
+===                                    ===
+=== Exit at any step with Ctrl+C       ===
 ==========================================
 
+RPI Model           : Raspberry Pi 4 Model B Rev 1.1
 Detected OS codename: trixie full
-Hostname            : raspi06
+Hostname            : raspi03
 
 Running as user     : sn
 Installing at       : /home/sn/prg
 
-Service 'raspiCamSrv.service' is already running.
-
-If you continue, the existing service will be stopped and replaced.
-
-Do you want to continue with the installation? [Y/n]:
-
-Stopping running service 'raspiCamSrv.service'...
-
-System service 'raspiCamSrv.service' stopped successfully.
-
-======================
-Installation Defaults:
-======================
-Installation Root : /home/sn/prg/raspi-cam-srv
-WSGI Server       : Gunicorn
-Gunicorn Threads  : 6
-Audio Recording   : Disabled (Installing system service)
-AI Camera Support : Disabled
+=====================
+Installation Defaults
+=====================
+Installation Path   : /home/sn/prg/raspi-cam-srv
+WSGI Server         : Gunicorn
+Gunicorn Threads    : 6
+Service Port        : 5000 (default, will be adjusted if already in use)
+Audio Recording     : Disabled (Installing system service)
+Advanced Features   : Enabled
+                      USB Cams, Histograms, Stereo Vision, extended Motion Detection
+                      (Requires OpenCV, numpy, matplotlib)
+AI Camera Support   : Disabled
 
 Do you want to install with these settings? [Y/n]:
 
+
+No more questions! Ready to start installation? [Y/n]:
 </code></pre>
-<p>If defaults are confirmed, the installer will complete the installation.</p>
+<p>Confirming both times with <code>y</code> or <code>[Enter]</code> will run the installer with the default settings.</p>
+<p>Confirming with <code>n</code> will allow for individual settings.</p>
+<h4 id="fresh-installation-with-existing-backup-from-previous-installation">Fresh Installation with existing Backup from previous Installation</h4>
+<p>If saved backups from a previous installation exist at <code>~/prg/raspi-cam-srv_backups</code> (see <a href="#retaining-backups">Retaining backups when uninstalling</a>), the installer will automatically restore these for the new installation. If they are not required, you can remove them in dialog <a href="../SettingsConfiguration/">Settings/Configuration</a>.</p>
+<pre><code>==========================================
+=== raspiCamSrv Automated Installer    ===
+===                                    ===
+=== Exit at any step with Ctrl+C       ===
+==========================================
+
+RPI Model           : Raspberry Pi Zero 2 W Rev 1.0
+Detected OS codename: bookworm lite
+Hostname            : raspi05
+
+Running as user     : sn
+Installing at       : /home/sn/prg
+
+=====================
+Installation Defaults
+=====================
+Installation Path   : /home/sn/prg/raspi-cam-srv
+Backup              : Restoring backup from a previous installation
+WSGI Server         : Gunicorn
+Gunicorn Threads    : 6
+Service Port        : 5000 (default, will be adjusted if already in use)
+Audio Recording     : Disabled (Installing system service)
+Advanced Features   : Enabled
+                      USB Cams, Histograms, Stereo Vision, extended Motion Detection
+                      (Requires OpenCV, numpy, matplotlib)
+AI Camera Support   : Disabled
+
+Do you want to install with these settings? [Y/n]:
+
+
+</code></pre>
+<h4 id="installing-over-existing-installation">Installing over existing Installation</h4>
+<p>If the installation path <code>~/prg/raspi-cam-srv</code> exists already, it is assumed that a raspiCamSrv installation exists already on the system.</p>
+<pre><code>==========================================
+=== raspiCamSrv Automated Installer    ===
+===                                    ===
+=== Exit at any step with Ctrl+C       ===
+==========================================
+
+RPI Model           : Raspberry Pi Zero 2 W Rev 1.0
+Detected OS codename: bookworm lite
+Hostname            : raspi05
+
+Running as user     : sn
+Installing at       : /home/sn/prg
+
+=====================
+Installation Mode
+=====================
+Installation Path   : /home/sn/prg/raspi-cam-srv (exists)
+Service Status      : raspiCamSrv.service (running, will be stopped)
+
+A raspiCamSrv installation exists already.
+
+Do you want to skip update of raspiCamSrv and software stack and only reconfigure the service[Y/n]:
+
+
+Only installing/replacing service for existing installation
+
+=====================
+Installation Defaults
+=====================
+WSGI Server         : Gunicorn
+Gunicorn Threads    : 6
+Service Port        : 5000 (default, will be adjusted if already in use)
+Audio Recording     : Disabled (Installing system service)
+
+Do you want to install with these settings? [Y/n]:
+
+
+No more questions! Ready to start installation? [Y/n]:
+
+</code></pre>
+<p>Confirming all questions with <code>y</code> or <code>[Enter]</code>  will</p>
+<ul>
+<li>stop a running raspiCamSrv service</li>
+<li>skip updating the raspiCamSrv repository</li>
+<li>skip installation of software packages</li>
+<li>try to initialize the database in case this did not complete in the previous installation run</li>
+<li>reconfigure a system service (no audio recording)</li>
+</ul>
+<p>Alternatively, you can allow updating raspiCamSrv and software stack and/or run a customized installation.</p>
 <h3 id="custom-installation">Custom Installation</h3>
 <p>If a custom installation is required, necessary information is requested step by step:</p>
-<pre><code>Available WSGI servers:
+<pre><code>Do you want to install with these settings? [Y/n]: n
+
+
+Available WSGI servers:
 1) Gunicorn (recommended for publicly accessible systems) - default
 2) Flask built-in server (OK for testing and private networks)
-Choose WSGI server [1/2]: 2
+Choose WSGI server [1/2]:
 
-Using WSGI server: werkzeug
+Using WSGI server: gunicorn
 
-Do you need to record audio along with videos? [y/N]: y
+How many parallel video streams do you require? [default: 6]:
 
-Audio recording enabled: true
+Using 6 threads for Gunicorn worker process
 
-Do you intend to use the Raspberry Pi AI Camera (imx500)? [y/N]:
+Do you need to record audio along with videos? [y/N]:
 
-AI Camera support enabled: false
+Audio recording enabled: false
 
+Do you want to enable advanced features (USB Cams, Histograms, Stereo Vision, extended Motion Detection)? [Y/n]:
+
+Advanced features enabled: true
+
+Do you intend to use the Raspberry Pi AI Camera (imx500)? [y/N]: y
+
+AI Camera support enabled: true
+
+No more questions! Ready to start installation? [Y/n]:
 </code></pre>
 <ul>
 <li>For WSGI server selection, see the <a href="../Information_Sys/#wsgi-server">WSGI Server section</a> of the <a href="../Information_Sys/">Info/System</a> screen.</li>
@@ -3717,6 +3981,72 @@ AI Camera support enabled: false
 <p>The installer will automatically execute the procedure described for <a href="../installation_man/">manual installation</a> as well as <a href="../service_configuration/">service configuration</a>.</p>
 <p>The steps shown in the installer protocol correspond to the steps of <a href="../installation_man/">manual installation</a>.</p>
 <p>In case of problems during installation and usage, see <a href="../Troubelshooting/">Troubleshooting</a> or try the <a href="../installation_man/">manual installation procedure</a>.</p>
+<h4 id="step-12-initializing-database-for-raspberry-pi-zero-systems">Step 12: Initializing database for Raspberry Pi Zero Systems</h4>
+<p>Recent (per ~02/2026) updates of Bookworm and Trixie on Raspberry Pi Zero / Zero 2 devices seem to have an issue with allocation of CMA memory by Picamera2 (see also <a href="../SetupDocker/#checking-contiguous-memory-cma">Checking Contiguous Memory (CMA)</a>). The issue may be due to CMA fragmentation or revious processes not releasing its buffers cleanly or fast enough. This issue does not exist for Bullseye systems on RPI Zero and also not for RPI 1, ... 5.</p>
+<p>When the Flask raspiCamSrv application is created (which is also the case while initializing the database during installation), raspiCamSrv instantiates the active camera through Picamera2. During this process, Picamera2 tries to allocate CMA memory.</p>
+<p>It has been observed on RPI Zero Bookworm and Trixie systems, that this allocation may fail at one time and be successful later.</p>
+<p>Therefore, in this specific setup, the raspiCamSrv installer will try database initialization for up to 5 times with a pause of 5 sec in case of a failure.</p>
+<p>The example, below, shows success in the second attempt:</p>
+<pre><code>Step 12: Initializing database ...
+Attempt 1 of 5...
+Traceback (most recent call last):
+  File &quot;&lt;frozen runpy&gt;&quot;, line 198, in _run_module_as_main
+  File &quot;&lt;frozen runpy&gt;&quot;, line 88, in _run_code
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/flask/__main__.py&quot;, line 3, in &lt;module&gt;
+    main()
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/flask/cli.py&quot;, line 1131, in main
+    cli.main()
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/click/core.py&quot;, line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/click/core.py&quot;, line 1867, in invoke
+    cmd_name, cmd, args = self.resolve_command(ctx, args)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/click/core.py&quot;, line 1914, in resolve_command
+    cmd = self.get_command(ctx, cmd_name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/flask/cli.py&quot;, line 631, in get_command
+    app = info.load_app()
+          ^^^^^^^^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/flask/cli.py&quot;, line 349, in load_app
+    app = locate_app(import_name, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/flask/cli.py&quot;, line 262, in locate_app
+    return find_best_app(module)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/.venv/lib/python3.11/site-packages/flask/cli.py&quot;, line 72, in find_best_app
+    app = app_factory()
+          ^^^^^^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/raspiCamSrv/__init__.py&quot;, line 155, in create_app
+    cam = Camera()
+          ^^^^^^^^
+  File &quot;/home/sn/prg/raspi-cam-srv/raspiCamSrv/camera_pi.py&quot;, line 1713, in __new__
+    cls.initCamera()
+  File &quot;/home/sn/prg/raspi-cam-srv/raspiCamSrv/camera_pi.py&quot;, line 1953, in initCamera
+    cls.loadCameraSpecifics()
+  File &quot;/home/sn/prg/raspi-cam-srv/raspiCamSrv/camera_pi.py&quot;, line 2945, in loadCameraSpecifics
+    sensorModes = Camera.cam.sensor_modes
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+  File &quot;/usr/lib/python3/dist-packages/picamera2/picamera2.py&quot;, line 599, in sensor_modes
+    self.configure(temp_config)
+  File &quot;/usr/lib/python3/dist-packages/picamera2/picamera2.py&quot;, line 1221, in configure
+    self.configure_(&quot;preview&quot; if camera_config is None else camera_config)
+  File &quot;/usr/lib/python3/dist-packages/picamera2/picamera2.py&quot;, line 1193, in configure_
+    self.allocator.allocate(libcamera_config, camera_config.get(&quot;use_case&quot;))
+  File &quot;/usr/lib/python3/dist-packages/picamera2/allocators/dmaallocator.py&quot;, line 43, in allocate
+    fd = self.dmaHeap.alloc(f&quot;picamera2-{i}&quot;, stream_config.frame_size)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &quot;/usr/lib/python3/dist-packages/picamera2/dma_heap.py&quot;, line 98, in alloc
+    ret = fcntl.ioctl(self.__dmaHeapHandle.get(), DMA_HEAP_IOCTL_ALLOC, alloc)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 12] Cannot allocate memory
+Failed. Waiting 5s before retry...
+Attempt 2 of 5...
+Initialized the database.
+
+</code></pre>
+<p>A similar behavior may be observed at server start.  <br />
+However, since the raspiCamSrv service is configured to restart automatically, server start will usually be successful after some time.</p>
 <h3 id="finalization">Finalization</h3>
 <pre><code>Step 13: Checking Flask service port ...
 Trying port 5000 ...
@@ -3785,6 +4115,38 @@ or with the Gunicorn production server:   <br />
 <li>Run the automatic uninstaller with:  <br />
 <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/signag/raspi-cam-srv/main/scripts/uninstall_raspiCamSrv.sh)</code></li>
 </ol>
+<h3 id="uninstaller">Uninstaller</h3>
+<p>The uninstaller will request confirmation:</p>
+<pre><code>==========================================
+=== raspiCamSrv Automated Uninstaller  ===
+===                                    ===
+=== Exit at any step with Ctrl+C       ===
+==========================================
+
+RPI Model           : Raspberry Pi Zero 2 W Rev 1.0
+Detected OS codename: bookworm lite
+Hostname            : raspi05
+
+Running as user     : sn
+Uninstalling from   : /home/sn/prg/raspi-cam-srv
+
+raspiCamSrv will be completely removed from raspi05. Continue? [yes/NO]:
+</code></pre>
+<p>To uninstall, you need to reply with <code>yes</code>.</p>
+<h3 id="retaining-backups">Retaining Backups</h3>
+<p>If you had created <a href="../SettingsConfiguration/#backups">backups</a>, these can be preserved for a possible reuse in a new installation.</p>
+<pre><code>Backups found in /home/sn/prg/raspi-cam-srv/backups:
+total 8
+drwxr-xr-x 4 sn sn 4096 Feb 28 16:50 2026-02-28-16:49
+drwxr-xr-x 4 sn sn 4096 Feb 28 17:05 2026-02-28-17:05
+
+Do you want to keep these backups? [y/N]:y
+
+Backups saved at /home/sn/prg/raspi-cam-srv_backups
+
+Uninstalling raspiCamSrv service ...
+
+</code></pre>
 
 
 

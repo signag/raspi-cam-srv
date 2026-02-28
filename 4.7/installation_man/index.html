@@ -3620,7 +3620,16 @@ For automatic installation, see <a href="../installation/">RaspiCamSrv Installat
 <li>Clone the raspi-cam-srv repository:<br><code>git clone --branch main --single-branch --depth 1 https://github.com/signag/raspi-cam-srv</code></li>
 <li>Create a virtual environment ('.venv') on the 'raspi-cam-srv' folder:<br><code>cd raspi-cam-srv</code><br><code>python -m venv --system-site-packages .venv</code><br>For the reasoning to include system site packages, see the <a href="../picamera2-manual.pdf">picamera2-manual.pdf</a>, chapter 9.5.</li>
 <li>Activate the virtual environment<br><code>cd ~/prg/raspi-cam-srv</code><br><code>source .venv/bin/activate</code><br>The active virtual environment is indicated by <code>(.venv)</code> preceeding the system prompt.<br>(If you need to leave the virtual environment at some time, use <code>deactivate</code>)</li>
-<li><strong>Trixie</strong>: Skip this step!<br>Make sure that picamera2 is available on the system:<br><code>python</code><br><code>&gt;&gt;&gt;import picamera2</code><br><code>&gt;&gt;&gt;quit()</code><br>If you get a 'ModuleNotFoundError', see the <a href="https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf">picamera2 Manual</a>, chapter 2.2, how to install picamera2.<br>For <strong>raspiCamSrv</strong> it would be sufficient to install without GUI dependencies:<br><code>sudo apt install -y python3-picamera2 --no-install-recommends</code></li>
+<li>Make sure that picamera2 is available on the system:
+<br><code>python</code>
+<br><code>&gt;&gt;&gt;import picamera2</code>
+<br><code>&gt;&gt;&gt;quit()</code>
+<br>If you get a 'ModuleNotFoundError', see the <a href="https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf">picamera2 Manual</a>, chapter 2.2, how to install picamera2.
+<br>For <strong>raspiCamSrv</strong> it would be sufficient to install without GUI dependencies:
+<br>For Bullseye and Bookworm:
+<br><code>sudo apt install -y python3-picamera2 --no-install-recommends</code>
+<br>For Trixie:
+<br><code>sudo apt install -y python3-libcamera python3-picamera2 --no-install-recommends</code></li>
 <li>Install Flask 3.x <strong>with the virtual environment activated (Step 8)</strong>.<br>Raspberry Pi OS distributions come with Flask preinstalled, however we need to run Flask from the virtual environment in order to see other packages which will be located there.<br><code>pip install --ignore-installed "Flask&gt;=3,&lt;4"</code><br><br>Make sure that Flask is really installed in the virtual environment:<br><code>which flask</code> should output<br><code>/home/&lt;user&gt;/prg/raspi-cam-srv/.venv/bin/flask</code></li>
 <li><strong>Optional</strong> installations:
 <br>The following installations are only required if you need to visualize histograms of photos or if you are interested in using <a href="../TriggerMotion/">Extended Motion Capturing Algorithms</a> or <a href="../CamStereo/">Stereo Vision</a>.<br>For use of USB cameras, OpenCV is required.
