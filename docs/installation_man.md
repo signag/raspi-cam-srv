@@ -22,7 +22,16 @@ In case of problems during installation and usage, see [Troubleshooting](./Troub
 6. Clone the raspi-cam-srv repository:<br>```git clone --branch main --single-branch --depth 1 https://github.com/signag/raspi-cam-srv```
 7. Create a virtual environment ('.venv') on the 'raspi-cam-srv' folder:<br>```cd raspi-cam-srv```<br>```python -m venv --system-site-packages .venv```<br>For the reasoning to include system site packages, see the [picamera2-manual.pdf](./picamera2-manual.pdf), chapter 9.5.
 8. Activate the virtual environment<br>```cd ~/prg/raspi-cam-srv```<br>```source .venv/bin/activate```<br>The active virtual environment is indicated by ```(.venv)``` preceeding the system prompt.<br>(If you need to leave the virtual environment at some time, use ```deactivate```)
-9. **Trixie**: Skip this step!<br>Make sure that picamera2 is available on the system:<br>```python```<br>```>>>import picamera2```<br>```>>>quit()```<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
+9. Make sure that picamera2 is available on the system:
+<br>```python```
+<br>```>>>import picamera2```
+<br>```>>>quit()```
+<br>If you get a 'ModuleNotFoundError', see the [picamera2 Manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf), chapter 2.2, how to install picamera2.
+<br>For **raspiCamSrv** it would be sufficient to install without GUI dependencies:
+<br>For Bullseye and Bookworm:
+<br>```sudo apt install -y python3-picamera2 --no-install-recommends```
+<br>For Trixie:
+<br>```sudo apt install -y python3-libcamera python3-picamera2 --no-install-recommends```
 10. Install Flask 3.x **with the virtual environment activated (Step 8)**.<br>Raspberry Pi OS distributions come with Flask preinstalled, however we need to run Flask from the virtual environment in order to see other packages which will be located there.<br>```pip install --ignore-installed "Flask>=3,<4"```<br><br>Make sure that Flask is really installed in the virtual environment:<br>```which flask``` should output<br>```/home/<user>/prg/raspi-cam-srv/.venv/bin/flask```
 11. **Optional** installations:
 <br>The following installations are only required if you need to visualize histograms of photos or if you are interested in using [Extended Motion Capturing Algorithms](./TriggerMotion.md) or [Stereo Vision](./CamStereo.md).<br>For use of USB cameras, OpenCV is required.

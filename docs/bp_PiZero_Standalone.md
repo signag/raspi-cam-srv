@@ -34,7 +34,8 @@ Make sure to select the correct model
 raspiCamSrv can be used with all of these systems.<br>
 Unless other reasons force taking one of the older OS, it is recommended to use the officially recommended, which is currently Trixie.
 - **Full or lite system?**<br>
-It is recommended to install the full system although the desktop environment will not be required.
+It is recommended to install the full system although the desktop environment will not be required.    
+However, raspiCamSrv can also be installed on Lite variants.
 - **OS Customisation**<br>
 Make sure to *Configure wireless LAN*, although the Wi-Fi Adapter will later not be run in client mode,<br>
 however this will assure that the *Wireless LAN Country* will be set.
