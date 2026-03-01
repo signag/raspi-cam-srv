@@ -2,6 +2,7 @@
 
 [![Up](img/goup.gif)](./getting_started_overview.md)
 
+## Installation Steps
 
 The following description refers to the initial installation.    
 If you want to update an existing installation to the latest version, see [Update Procedure](./updating_raspiCamSrv.md).
@@ -22,6 +23,9 @@ Follow instructions given by the installer (see [below](#installer))
 **NOTE**: You can run the installer multiple times without any risk, also over an existing installation.
 
 So, if you want to switch the [WSGI server](./Information_Sys.md#wsgi-server) or need more [threads for Gunicorn](./installation_man.md#gunicorn-settings), or if you want to extend the softwarestack with a missing package, just rerun the installer. It will not touch your existing data, but just update the installation to the latest version and adjust the service configuration to your requirements.
+
+Under normal circumstances, the installer will finish successfully.
+You will probably see some red <span style="color: red;">**ERROR**</span> messages (See [Trouble Shooting Guide](./Troubelshooting.md#errors-during-installation)) which you can ignore as long as the installer continues and [finalizes](#finalization).
 
 ### Starting the Installer
 
@@ -209,7 +213,7 @@ In case of problems during installation and usage, see [Troubleshooting](./Troub
 
 #### Step 12: Initializing database for Raspberry Pi Zero Systems
 
-Recent (per ~02/2026) updates of Bookworm and Trixie on Raspberry Pi Zero / Zero 2 devices seem to have an issue with allocation of CMA memory by Picamera2 (see also [Checking Contiguous Memory (CMA)](./SetupDocker.md#checking-contiguous-memory-cma)). The issue may be due to CMA fragmentation or revious processes not releasing its buffers cleanly or fast enough. This issue does not exist for Bullseye systems on RPI Zero and also not for RPI 1, ... 5.
+Recent (per ~02/2026) updates of Bookworm and Trixie on Raspberry Pi Zero / Zero 2 devices seem to have an issue with allocation of CMA memory by Picamera2 (see also [Checking Contiguous Memory (CMA)](./SetupDocker.md#checking-contiguous-memory-cma)). The issue may be due to CMA fragmentation or a previous process not releasing its buffers cleanly or fast enough. This issue has not been found for Bullseye systems on RPI Zero and also not for RPI 1, ... 5.
 
 When the Flask raspiCamSrv application is created (which is also the case while initializing the database during installation), raspiCamSrv instantiates the active camera through Picamera2. During this process, Picamera2 tries to allocate CMA memory.
 

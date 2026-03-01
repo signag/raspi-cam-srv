@@ -36,8 +36,14 @@ WAIT_SEC=5
 RPI_MODEL=$(tr -d '\0' < /proc/device-tree/model)
 if [[ "$RPI_MODEL" == "Raspberry Pi Zero"* ]]; then
     RPI_MODEL_ZERO=true
+    if [[ "$RPI_MODEL" == "Raspberry Pi Zero 2"* ]]; then
+        RPI_MODEL_ZERO_1=false
+    else
+        RPI_MODEL_ZERO_1=true
+    fi
 else
     RPI_MODEL_ZERO=false
+    RPI_MODEL_ZERO_1=false
 fi
 
 ##############################################
@@ -507,7 +513,12 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
     echo "Step 11.2: Installing numpy ..."
     if [[ "$OS_CODENAME" != "bullseye" ]]; then
         if [[ "$ENABLE_ADVANCED" == true ]]; then
-            pip install --ignore-installed numpy
+            if [[ "$RPI_MODEL_ZERO_1" == false ]]; then
+                pip install --ignore-installed numpy
+            else
+                # For RPI Zero use apt instead of pip to avoid issues with numpy on ARMv6 architecture
+                sudo apt-get install -y python3-numpy
+            fi
         else
             echo "Step 11.2: numpy not installed (advanced features disabled)"
         fi
@@ -519,10 +530,15 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
     echo "Step 11.3: Installing matplotlib ..."
     if [[ "$OS_CODENAME" != "bullseye" ]]; then
         if [[ "$ENABLE_ADVANCED" == true ]]; then
-            if [[ "$OS_CODENAME" == "bookworm" ]]; then
-                pip install --ignore-installed "matplotlib<3.8"
+            if [[ "$RPI_MODEL_ZERO_1" == false ]]; then
+                if [[ "$OS_CODENAME" == "bookworm" ]]; then
+                    pip install --ignore-installed "matplotlib<3.8"
+                else
+                    pip install --ignore-installed matplotlib
+                fi
             else
-                pip install --ignore-installed matplotlib
+                # For RPI Zero use apt instead of pip to avoid issues with matplotlib on ARMv6 architecture
+                sudo apt-get install -y python3-matplotlib
             fi
         else
             echo "Step 11.3: matplotlib not installed (advanced features disabled)"
@@ -538,7 +554,12 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
     if [[ "$IS_LITE" == true ]]; then
         echo 
         echo "Step 11.5: Installing psutil ..."
-        pip install --ignore-installed psutil
+        if [[ "$RPI_MODEL_ZERO_1" == false ]]; then
+            pip install --ignore-installed psutil
+        else
+            # For RPI Zero use apt instead of pip to avoid issues with psutil on ARMv6 architecture
+            sudo apt-get install -y python3-psutil
+        fi
     fi
 
     if [[ "$ENABLE_AI" == true ]]; then

@@ -1,8 +1,47 @@
 # raspiCamSrv Troubleshooting
 
+## Errors during Installation
+
+This section deals with errors which may occur while running the [Automated Installer](./installation.md) or while [Installing manually](./installation_man.md)
+
+**ERROR: pip's dependency resolver**     
+```
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+types-flask-migrate 4.0 requires Flask-SQLAlchemy>=3.0.1, which is not installed.    
+```     
+This type of messages, mentioning different missing packages, may occur, for example, in
+<br>- Step 10: Installing Flask ...
+<br>- Step 11.2: Installing numpy ...
+<br>- Step 11.3: Installing matplotlib ...
+<br>- Step 11.4: Installing flask-jwt-extended ...
+<br>These are actually not real errors but just warnings, which say that some other packages have unmet dependencies.
+<br>As long as the installation of the intended package is successful, this can be ignored.
+<br>Successful installation is, for example, confirmed through
+<br>```Successfully installed numpy-2.4.2```
+<br>In case of failing installation, the automated installer will stop at this point.
+
+**OSError: [Errno 12] Cannot allocate memory**
+<br>This error can occur when Picamera2 tries to allocate CMA memory (See also [Checking Contiguos Memory (CMA)](./SetupDocker.md#checking-contiguous-memory-cma)).
+<br>The context is usually
+```
+File "/usr/lib/python3/dist-packages/picamera2/dma_heap.py", line 98, in alloc
+    ret = fcntl.ioctl(self.__dmaHeapHandle.get(), DMA_HEAP_IOCTL_ALLOC, alloc)
+```
+During installation, this error can occur in
+<br>- Step 12: Initializing database ...
+<br>The error has mainly been observed in RPI Zero and RPI Zero 2 systems.
+<br>Experience has shown that this is a temporary issue and that memory allocation can be successful later.
+<br>Therefore the [Automated Installer](./installation.md) uses up to 5 attemts to initialize the database with a pause of 5 sec inbetween.
+<br>Should execution of this step not be successful, the installer will stop.
+<br>You can then try to run the installer again later
+
+
+
+## Errors during Operation
+
 [![Up](img/goup.gif)](./UserGuide.md)
 
-This page intends to collect information on how to deal with errors or problems which may occur while running **raspiCamSrv**.
+This section intends to collect information on how to deal with errors or problems which may occur while running **raspiCamSrv**.
 
 - **Password forgotten**    
 If you have your password forgotten, there are two alternatives:<br>1. Somone else is Superuser:<br>Ask him to remove your user entry and create a new one (See [Settings / Users](./SettingsUsers.md)).<br>2. You are the Superuser.<br>You need to reset the database where user entries are stored.<br>You do this with with ```flask --app raspiCamSrv init-db``` (see [RaspiCamSrv Installation](./installation.md) Step 11).<br>At the next Login, you need to Register as new Superuser (see [Authorization](./Authentication.md))
