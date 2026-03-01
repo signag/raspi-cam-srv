@@ -750,6 +750,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#errors-during-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors during Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors-during-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors during Operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logging" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3458,6 +3480,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#errors-during-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors during Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors-during-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors during Operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logging" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3558,8 +3602,38 @@
 
 
 <h1 id="raspicamsrv-troubleshooting">raspiCamSrv Troubleshooting</h1>
+<h2 id="errors-during-installation">Errors during Installation</h2>
+<p>This section deals with errors which may occur while running the <a href="../installation/">Automated Installer</a> or while <a href="../installation_man/">Installing manually</a></p>
+<p><strong>ERROR: pip's dependency resolver</strong>     </p>
+<pre><code>ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+types-flask-migrate 4.0 requires Flask-SQLAlchemy&gt;=3.0.1, which is not installed.    
+</code></pre>
+<p>This type of messages, mentioning different missing packages, may occur, for example, in
+<br>- Step 10: Installing Flask ...
+<br>- Step 11.2: Installing numpy ...
+<br>- Step 11.3: Installing matplotlib ...
+<br>- Step 11.4: Installing flask-jwt-extended ...
+<br>These are actually not real errors but just warnings, which say that some other packages have unmet dependencies.
+<br>As long as the installation of the intended package is successful, this can be ignored.
+<br>Successful installation is, for example, confirmed through
+<br><code>Successfully installed numpy-2.4.2</code>
+<br>In case of failing installation, the automated installer will stop at this point.</p>
+<p><strong>OSError: [Errno 12] Cannot allocate memory</strong>
+<br>This error can occur when Picamera2 tries to allocate CMA memory (See also <a href="../SetupDocker/#checking-contiguous-memory-cma">Checking Contiguos Memory (CMA)</a>).
+<br>The context is usually</p>
+<pre><code>File &quot;/usr/lib/python3/dist-packages/picamera2/dma_heap.py&quot;, line 98, in alloc
+    ret = fcntl.ioctl(self.__dmaHeapHandle.get(), DMA_HEAP_IOCTL_ALLOC, alloc)
+</code></pre>
+<p>During installation, this error can occur in
+<br>- Step 12: Initializing database ...
+<br>The error has mainly been observed in RPI Zero and RPI Zero 2 systems.
+<br>Experience has shown that this is a temporary issue and that memory allocation can be successful later.
+<br>Therefore the <a href="../installation/">Automated Installer</a> uses up to 5 attemts to initialize the database with a pause of 5 sec inbetween.
+<br>Should execution of this step not be successful, the installer will stop.
+<br>You can then try to run the installer again later</p>
+<h2 id="errors-during-operation">Errors during Operation</h2>
 <p><a href="../UserGuide/"><img alt="Up" src="../img/goup.gif" /></a></p>
-<p>This page intends to collect information on how to deal with errors or problems which may occur while running <strong>raspiCamSrv</strong>.</p>
+<p>This section intends to collect information on how to deal with errors or problems which may occur while running <strong>raspiCamSrv</strong>.</p>
 <ul>
 <li>
 <p><strong>Password forgotten</strong>  <br />

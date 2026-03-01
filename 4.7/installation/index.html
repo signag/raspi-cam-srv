@@ -416,6 +416,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#installation-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3581,6 +3592,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#installation-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3805,6 +3827,7 @@
 
 <h1 id="raspicamsrv-installation">RaspiCamSrv Installation</h1>
 <p><a href="../getting_started_overview/"><img alt="Up" src="../img/goup.gif" /></a></p>
+<h2 id="installation-steps">Installation Steps</h2>
 <p>The following description refers to the initial installation.  <br />
 If you want to update an existing installation to the latest version, see <a href="../updating_raspiCamSrv/">Update Procedure</a>.</p>
 <ol>
@@ -3821,6 +3844,8 @@ Follow instructions given by the installer (see <a href="#installer">below</a>)<
 <h2 id="installer">Installer</h2>
 <p><strong>NOTE</strong>: You can run the installer multiple times without any risk, also over an existing installation.</p>
 <p>So, if you want to switch the <a href="../Information_Sys/#wsgi-server">WSGI server</a> or need more <a href="../installation_man/#gunicorn-settings">threads for Gunicorn</a>, or if you want to extend the softwarestack with a missing package, just rerun the installer. It will not touch your existing data, but just update the installation to the latest version and adjust the service configuration to your requirements.</p>
+<p>Under normal circumstances, the installer will finish successfully.
+You will probably see some red <span style="color: red;"><strong>ERROR</strong></span> messages (See <a href="../Troubelshooting/#errors-during-installation">Trouble Shooting Guide</a>) which you can ignore as long as the installer continues and <a href="#finalization">finalizes</a>.</p>
 <h3 id="starting-the-installer">Starting the Installer</h3>
 <h4 id="for-fresh-installation">For Fresh Installation</h4>
 <pre><code>==========================================
@@ -3982,7 +4007,7 @@ No more questions! Ready to start installation? [Y/n]:
 <p>The steps shown in the installer protocol correspond to the steps of <a href="../installation_man/">manual installation</a>.</p>
 <p>In case of problems during installation and usage, see <a href="../Troubelshooting/">Troubleshooting</a> or try the <a href="../installation_man/">manual installation procedure</a>.</p>
 <h4 id="step-12-initializing-database-for-raspberry-pi-zero-systems">Step 12: Initializing database for Raspberry Pi Zero Systems</h4>
-<p>Recent (per ~02/2026) updates of Bookworm and Trixie on Raspberry Pi Zero / Zero 2 devices seem to have an issue with allocation of CMA memory by Picamera2 (see also <a href="../SetupDocker/#checking-contiguous-memory-cma">Checking Contiguous Memory (CMA)</a>). The issue may be due to CMA fragmentation or revious processes not releasing its buffers cleanly or fast enough. This issue does not exist for Bullseye systems on RPI Zero and also not for RPI 1, ... 5.</p>
+<p>Recent (per ~02/2026) updates of Bookworm and Trixie on Raspberry Pi Zero / Zero 2 devices seem to have an issue with allocation of CMA memory by Picamera2 (see also <a href="../SetupDocker/#checking-contiguous-memory-cma">Checking Contiguous Memory (CMA)</a>). The issue may be due to CMA fragmentation or a previous process not releasing its buffers cleanly or fast enough. This issue has not been found for Bullseye systems on RPI Zero and also not for RPI 1, ... 5.</p>
 <p>When the Flask raspiCamSrv application is created (which is also the case while initializing the database during installation), raspiCamSrv instantiates the active camera through Picamera2. During this process, Picamera2 tries to allocate CMA memory.</p>
 <p>It has been observed on RPI Zero Bookworm and Trixie systems, that this allocation may fail at one time and be successful later.</p>
 <p>Therefore, in this specific setup, the raspiCamSrv installer will try database initialization for up to 5 times with a pause of 5 sec in case of a failure.</p>
