@@ -3640,14 +3640,20 @@ For automatic installation, see <a href="../installation/">RaspiCamSrv Installat
 <br><code>sudo apt-get install python3-opencv</code>
 <br>
 <br>Install <a href="https://numpy.org/">numpy</a>:
+<br>For RPI Zero 2, RPI 1 ... 5:
 <br><code>pip install --ignore-installed numpy</code>
 <br>(There may be errors, which normally can be ignored)
+<br>For RPI Zero W:
+<br><code>sudo apt-get install -y python3-numpy</code>
 <br>
 <br>Install <a href="https://de.wikipedia.org/wiki/Matplotlib">matplotlib</a>:
+<br>For RPI Zero 2, RPI 1 ... 5:
 <br><strong>Trixie</strong>:<code>pip install --ignore-installed matplotlib</code>
 <br>(There may be errors, which normally can be ignored)
 <br><strong>Bookworm</strong>: <code>pip install --ignore-installed "matplotlib&lt;3.8"</code>
 <br>(The version restriction assures compatibility with numpy 1.x which is <a href="https://github.com/raspberrypi/picamera2/issues/1211">required for Picamera2</a>)
+<br>For RPI Zero W:
+<br><code>sudo apt-get install -y python3-matplotlib</code>
 <br>
 <br>The following installation is required for enabling the <a href="../API/">raspiCamSrv API</a>
 <br>Install <a href="https://flask-jwt-extended.readthedocs.io/en/stable/">flask-jwt-extended</a>
@@ -3655,7 +3661,10 @@ For automatic installation, see <a href="../installation/">RaspiCamSrv Installat
 <br>(There may be errors, which normally can be ignored)
 <br>
 <br>The following installation is only required if you are using a Lite variant of the Debian OS:
+<br>For RPI Zero 2, RPI 1 ... 5:
 <br><code>pip install --ignore-installed psutil</code>
+<br>For RPI Zero W:
+<br><code>sudo apt-get install -y python3-psutil</code>
 <br>
 <br>The following installations are only required if you intend to use a Raspberry Pi AI Camera:
 <br>
