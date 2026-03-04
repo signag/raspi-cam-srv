@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.7.1
+
+### Bugfix
+
+- Fixed issue with checkboxes in dialog [Photos](./PhotoViewer.md).
+<br>For images where the descriptive text (filename) was larger than the image width, the checkbox was covered and could not be individually selected.
+<br>Resolves [raspi-cam-srv Issue #86](https://github.com/signag/raspi-cam-srv/issues/86) 
+
 ## V4.7.0
 
 ### New Features
