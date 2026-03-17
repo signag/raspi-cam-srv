@@ -1,4 +1,4 @@
-site_name: raspiCamSrv V4.7.x Documentation
+site_name: raspiCamSrv V4.8.x Documentation
 plugins:
     - search
     - mike
@@ -46,6 +46,7 @@ nav:
                - Auto-Exposure: CameraControls_AutoExposure.md
                - Exposure: CameraControls_Exposure.md
                - Image: CameraControls_Image.md
+               - Ctrl: CameraControls_Ctrl.md
                - Camera Controls for USB Cameras: CameraControls_UsbCams.md
                - Cropping: ScalerCrop.md
           - Direct Control Panel: LiveDirectControl.md
@@ -94,9 +95,11 @@ nav:
           - API Settings: SettingsAPI.md
           - Settings for Versatile Buttons: SettingsVButtons.md
           - Settings for Action Buttons: SettingsAButtons.md
+          - Settings for Live Buttons: SettingsLButtons.md
           - GPIO Device Configuration: SettingsDevices.md
           - GPIO Devices:
               - Stepper Motor: gpioDevices/StepperMotor.md
+              - Servo Motor: gpioDevices/ServoPWM.md
           - Update: SettingsUpdate.md
       - AI Camera Support: AiCameraSupport.md
       - Background Processes: Background Processes.md

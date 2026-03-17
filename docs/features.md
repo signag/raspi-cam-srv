@@ -1,5 +1,5 @@
 
-# Features V4.7.x
+# Features V4.8.x
 
 [![Up](img/goup.gif)](./index.md)
 
@@ -22,7 +22,7 @@ For more details, see the [User Guide](./UserGuide.md).
 - raspiCamSrv is based on [Flask](https://flask.palletsprojects.com/) and, as such, a [WSGI](https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface) (Web Server Gateway Interface) application.   
 It requires a [WSGI Server](https://www.fullstackpython.com/wsgi-servers.html) as middleware between the WSGI application and a Web Server.
 - raspiCamSrv can run with the [Werkzeug](https://werkzeug.palletsprojects.com/) WSGI server built-in in Flask. This is usually used for development and testing purposes, but it is also fine for private environments.
-- **NEW**: For publicly accessible systems, raspiamSrv can be run with [Gunicorn](https://gunicorn.org/) ('Green Unicorn') with [specific settings](./installation_man.md#gunicorn-settings).    
+- For publicly accessible systems, raspiamSrv can be run with [Gunicorn](https://gunicorn.org/) ('Green Unicorn') with [specific settings](./installation_man.md#gunicorn-settings).    
 The [automatic installer](./installation.md) as well as the [Docker Image](https://hub.docker.com/repository/docker/signag/raspi-cam-srv/general) use this as default.
 
 ### Camera Support
@@ -59,6 +59,7 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - [Exposure Control](./CameraControls_Exposure.md) for CSI cameras.
 - [Image Control](./CameraControls_Image.md) for CSI cameras as well as for USB cameras (if supported by the camera).
 - Panel for [Direct Control](./LiveDirectControl.md) of numeric control parameters.
+- **NEW:** Configurable [Live View buttons](./CameraControls_Ctrl.md) to be used for physical pan/tilt, light or control of other devices
 
 ### Photo Taking / Video Recording
 
@@ -120,7 +121,11 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - [Device Calibration](./SettingsDevices.md#calibrating-a-device) for devices which rquire state tracking (e.g. stepper motor)
 - Device control through [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html)
 - All gpiozero device types are supported in raspiCamSrv
-- Own device types can be added by [configuration](./SettingsDevices.md#device-type-configuration) (see [Stepper Motor](./gpioDevices/StepperMotor.md))
+- Own device types can be added by [configuration](./SettingsDevices.md#device-type-configuration)
+
+#### Additional Device Types
+ - [Stepper Motor](./gpioDevices/StepperMotor.md)
+ - **NEW:** [ServoPWM](./gpioDevices/ServoPWM.md) for jitter-free servo control with hardware PWM
 
 ### Event Handling - Triggers and Actions
 

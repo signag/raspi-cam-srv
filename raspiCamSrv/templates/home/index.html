@@ -64,6 +64,11 @@ RaspiCamSrv's Live page
                 {% else %}
                 <button class="w3-bar-item w3-button ctrlmenu" id="imagebtn" onclick="openCtrlTab('image','imagebtn')">Image</button>
                 {% endif %}
+                {% if sc.lastLiveTab == "control" %}
+                <button class="w3-bar-item w3-button ctrlmenu w3-light-green" id="controlbtn" onclick="openCtrlTab('control','controlbtn')">Ctrl</button>
+                {% else %}
+                <button class="w3-bar-item w3-button ctrlmenu" id="controlbtn" onclick="openCtrlTab('control','controlbtn')">Ctrl</button>
+                {% endif %}
                 <div class="w3-bar-item w3-right" style="padding-top:2px; padding-bottom:0">
                     <div class="w3-tooltip">
                         <span style="position:absolute;right:45px;top:5px;width:200px" class="w3-text w3-tag">Online help from
@@ -1410,6 +1415,103 @@ RaspiCamSrv's Live page
                     </form>
                 </div>
             </div>
+            {% if sc.lastLiveTab == "control" %}
+            <div id="control" class="w3-container controlgroup">
+            {% else %}
+            <div id="control" class="w3-container controlgroup" style="display:none">
+            {% endif %}
+                <!-- Control panel -->
+                <h4>Control</h4>
+                <div>
+                    {% if sc.lButtonsRows == 0 %}
+                    <p>There are no live buttons configured.</p>
+                    <p>You can configure buttons for execution of OS commands</p>
+                    <p>and/or actions in Settings/Live Buttons</p>
+                    {% else %}
+                    <div>
+                        {% set nrcols=sc.lButtonsCols %}
+                        {% set cw = 100/nrcols %}
+                        {% set cws = cw|string() %}
+                <!--       
+                        {% set cst = 'style=width:' + cws + '%'%}
+                -->
+                        {% set cst = 'width:' + cws + '%; min-height:38.5px; height:38.5px' %}
+                        <table style="table-layout:fixed; width:100%">
+                            {% for r in sc.lButtons %}
+                            <tr style="height:38.5px">
+                                {% for btn in r %}
+                                {% set shape = btn["buttonShape"] %}
+                                {% set color = btn["buttonColor"] %}
+                                {% if shape == "Circular" %}
+                                <!-- Attantion: Syntax check will not be OK for the following line -->
+                                <td style="{{ cst }}"; align="center">
+                                {% elif shape == "Square" %}
+                                <!-- Attantion: Syntax check will not be OK for the following line -->
+                                <td {{ cst }} align="center">
+                                {% else %}
+                                <td {{ cst }}>
+                                {% endif %}
+                                    {% if btn["isVisible"] == True %}
+
+                                    {% set cls1 = 'w3-button' %}
+                                    {% set cls = cls1 + ' w3-black' %}
+
+                                    {% if shape == "Rectangle" %}
+                                        {% set btnshp = "w3-button" %}
+                                        {% set style = 'width: 100%' %}
+                                    {% elif shape == "Rounded" %}
+                                        {% set btnshp = 'w3-button w3-round-xxlarge' %}
+                                        {% set style = 'width: 100%' %}
+                                    {% elif shape == "Circular" %}
+                                        {% set btnshp = 'w3-button w3-circle' %}
+                                        {% set style = 'text-align:center' %}
+                                    {% elif shape == "Square" %}
+                                        {% set btnshp = 'w3-button w3-large' %}
+                                        {% set style = 'text-align:center' %}
+                                    {% endif %}
+                                    {% if color == "Black" %}
+                                        {% set btnall = btnshp + ' w3-black' %}
+                                    {% elif color == "Red" %}
+                                        {% set btnall = btnshp + ' w3-red' %}
+                                    {% elif color == "Green" %}
+                                        {% set btnall = btnshp + ' w3-green' %}
+                                    {% elif color == "Yellow" %}
+                                        {% set btnall = btnshp + ' w3-yellow' %}
+                                    {% elif color == "Blue" %}
+                                        {% set btnall = btnshp + ' w3-blue' %}
+                                    {% endif %}
+                                    {% set buttonid = "lbtn_" ~ btn['row'] ~ btn['col'] ~ "_form" %}
+                                    {% set isaction = btn['isAction'] %}
+                                    {% set buttonaction = btn['buttonAction'] %}
+                                    {% set buttonexec = btn['buttonExec'] %}
+                                    {% set buttonconf = btn['needsConfirm'] %}
+                                    {% if isaction == True %}
+                                    <form id="{{ buttonid }}" 
+                                        method="post" action="{{ url_for('home.live_do_action', row=btn['row'], col=btn['col']) }}">
+                                        <!-- Attantion: Syntax check will not be OK for the following line-->
+                                        <input class="{{ btnall }}" style="{{ style }}" type="submit" 
+                                            onclick="confirmAction('{{ buttonid }}', '{{ buttonaction }}', '{{ buttonconf }}')"
+                                            value="{{ btn['buttonText'] }}">
+                                    </form>
+                                    {% else %}
+                                    <form id="{{ buttonid }}" 
+                                        method="post" action="{{ url_for('home.live_execute', row=btn['row'], col=btn['col']) }}">
+                                        <!-- Attantion: Syntax check will not be OK for the following line-->
+                                        <input class="{{ btnall }}" style="{{ style }}" type="submit" 
+                                            onclick="confirmExecution('{{ buttonid }}', '{{ buttonexec }}', '{{ buttonconf }}')"
+                                            value="{{ btn['buttonText'] }}">
+                                    </form>
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
     <div class="w3-row w3-border">
@@ -2533,6 +2635,31 @@ RaspiCamSrv's Live page
                 );
             }
         }
+
+        function confirmExecution(form, command, needsConfirm) {
+            // console.log("index.confirmExecution - needsConfirm=", needsConfirm);
+            if (needsConfirm == "True") {
+                if (confirm("Do you want to execute the following command?\n" + command)) {
+                    document.getElementById(form).method = "post";
+                    document.getElementById(form).submit();
+                } else {
+                    document.getElementById(form).method = "get";
+                }
+            }
+        }
+
+        function confirmAction(form, action, needsConfirm) {
+            // console.log("index.confirmAction - needsConfirm=", needsConfirm);
+            if (needsConfirm == "True") {
+                if (confirm("Do you want to execute the following action?\n" + action)) {
+                    document.getElementById(form).method = "post";
+                    document.getElementById(form).submit();
+                } else {
+                    document.getElementById(form).method = "get";
+                }
+            }
+        }
+
     </script>
 
     <style>

@@ -22,6 +22,7 @@ HOSTNAME="$(hostname)"
 IS_LITE=false
 ENABLE_AUDIO=false
 ENABLE_AI=false
+ENABLE_HW_PWM=false
 ENABLE_ADVANCED=true
 UPDATE_INSTALL=true
 
@@ -187,6 +188,8 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
         echo "                      (Requires OpenCV, numpy, matplotlib)"
     fi
     echo "AI Camera Support   : Disabled"
+    echo "Hardware PWM Support: Disabled"
+    echo "                      Hardware PWM is required for jitter-free servo control"
 fi
 echo
 read -rp "Do you want to install with these settings? [Y/n]: " INSTALL_CHOICE
@@ -320,6 +323,28 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
         fi
     else
         ENABLE_AI=false
+    fi
+fi
+
+############################################
+# Ask user about Hardware PWM support
+############################################
+if [[ "$UPDATE_INSTALL" == true ]]; then
+    if [[ "$USE_DEFAULTS" == false ]]; then
+        echo
+        read -rp "Do you intend to use Hardware PWM for jitter-free servo control? [y/N]: " HW_PWM_CHOICE
+        echo
+
+        HW_PWM_CHOICE=${HW_PWM_CHOICE,,}   # normalize to lowercase
+
+        if [[ "$HW_PWM_CHOICE" == "y" ]]; then
+            ENABLE_HW_PWM=true
+        else
+            ENABLE_HW_PWM=false
+        fi
+        echo "Hardware PWM support enabled: $ENABLE_HW_PWM"
+    else
+        ENABLE_HW_PWM=false
     fi
 fi
 
@@ -497,6 +522,9 @@ fi
 # Optional installations
 ############################################
 if [[ "$UPDATE_INSTALL" == true ]]; then
+    ############################################
+    # OpenCV
+    ############################################
     echo 
     echo "Step 11.1: Installing OpenCV ..."
     if [[ "$OS_CODENAME" != "bullseye" ]]; then
@@ -508,7 +536,9 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
     else
         echo "Step 11.1: OpenCV not installed on bullseye system"
     fi
-
+    ############################################
+    # numpy
+    ############################################
     echo 
     echo "Step 11.2: Installing numpy ..."
     if [[ "$OS_CODENAME" != "bullseye" ]]; then
@@ -525,7 +555,9 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
     else
         echo "Step 11.2: numpy not installed on bullseye system"
     fi
-
+    ############################################
+    # matplotlib
+    ############################################
     echo 
     echo "Step 11.3: Installing matplotlib ..."
     if [[ "$OS_CODENAME" != "bullseye" ]]; then
@@ -546,7 +578,9 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
     else
         echo "Step 11.3: matplotlib not installed for bullseye system"
     fi
-
+    ############################################
+    # flask-jwt-extended
+    ############################################
     echo 
     echo "Step 11.4: Installing flask-jwt-extended ..."
     pip install --ignore-installed flask-jwt-extended
@@ -561,7 +595,9 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
             sudo apt-get install -y python3-psutil
         fi
     fi
-
+    ############################################
+    # imx500-all
+    ############################################
     if [[ "$ENABLE_AI" == true ]]; then
         echo 
         PACKAGE="imx500-all"
@@ -575,11 +611,21 @@ if [[ "$UPDATE_INSTALL" == true ]]; then
             sudo apt install -y "$PACKAGE"
         fi
     fi
-
+    ############################################
+    # munkres
+    ############################################
     if [[ "$ENABLE_AI" == true ]]; then
         echo 
         echo "Step 11.7: Installing munkres ..."
         pip install --break-system-packages munkres
+    fi
+    ############################################
+    # rpi-hardware-pwm
+    ############################################
+    if [[ "$ENABLE_HW_PWM" == true ]]; then
+        echo 
+        echo "Step 11.8: Installing rpi-hardware-pwm ..."
+        pip install --ignore-installed rpi-hardware-pwm
     fi
 else
     echo
@@ -589,14 +635,14 @@ fi
 if [[ "$WSGI_SERVER" == "gunicorn" ]]; then
     if [[ "$UPDATE_INSTALL" == true ]]; then
         echo 
-        echo "Step 11.8: Installing gunicorn ..."
+        echo "Step 11.9: Installing gunicorn ..."
         pip install --break-system-packages gunicorn
     else
         if command -v gunicorn >/dev/null 2>&1; then
             : 
         else
             echo 
-            echo "Step 11.8: Installing gunicorn ..."
+            echo "Step 11.9: Installing gunicorn ..."
             pip install --break-system-packages gunicorn
         fi
     fi
@@ -864,6 +910,28 @@ if [ ! -d "$BACKUP_DIR" ] || [ -z "$(find "$BACKUP_DIR" -mindepth 1 -print -quit
         echo "You can activate a backup in dialog Settings/Configuration"
     fi
 fi
+
+############################################
+# Check Hardware PWM support
+############################################
+if [[ "$ENABLE_HW_PWM" == true ]]; then
+    echo
+    echo "============================================================================================================="
+    echo "Checking for Hardware PWM support on GPIO pins 12, 13, 18, 19 ..."
+    echo "pinctrl get 12,13,18,19"
+    pinctrl get 12,13,18,19
+    echo ""
+    echo "If you see 'PWM0' or 'PWM1' in the output above, Hardware PWM support is available for the indicated pins."
+    echo "Otherwise, you need to specify device tree overlays in /boot/firmware/config.txt and reboot your Raspberry Pi."
+    echo "Depending on your RPI model and the required pins, add the following lines to /boot/firmware/config.txt:"
+    echo "[all]"
+    echo "dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4"
+    echo "[pi5]"
+    echo "dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4"
+    echo "dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2"
+    echo "============================================================================================================="
+fi
+
 
 ############################################
 # Finish

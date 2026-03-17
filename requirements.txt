@@ -8,3 +8,4 @@ psutil
 requests
 munkres
 gunicorn
+rpi_hardware_pwm

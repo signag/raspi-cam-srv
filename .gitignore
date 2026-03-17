@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 tests/
+user_code/
 logs/
 output/
 backups

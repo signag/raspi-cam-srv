@@ -1,6 +1,6 @@
 from gpiozero import Button, LineSensor, MotionSensor, LightSensor, DistanceSensor, RotaryEncoder, DigitalInputDevice
 from gpiozero import LED, PWMLED, RGBLED, Buzzer,TonalBuzzer, Motor,PhaseEnableMotor, Servo, AngularServo, DigitalOutputDevice, OutputDevice
-from raspiCamSrv.gpioDevices import StepperMotor
+from raspiCamSrv.gpioDevices import StepperMotor, ServoPWM
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.motionDetector import MotionDetector
 from raspiCamSrv.camCfg import CameraCfg, TriggerConfig, ServerConfig, GPIODevice, Trigger, Action

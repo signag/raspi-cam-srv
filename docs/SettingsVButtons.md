@@ -32,3 +32,15 @@ The checkbox *Interactive Commandline* controls whether [Console](./Console.md) 
 
 Any changes for these settings need to be submitted with the button underneath the table
 
+## User Scripts and Programs
+
+Any scripts or Python programs can be put inside a folder     
+```~/prg/raspi-cam-srv/user_code```    
+or any sudirectory structure.
+
+This folder structure is excluded from Git and will, therefore, not be touched when upgrading or updating.
+
+For addressing these, it is sufficient to use the path relative to the root ```~/prg/raspi-cam-srv```, e.g. ```user_code/my_program.py```
+
+Python programs can use all packages installed in the virtual environment when called out of the Flask server, for example when pressing a [Versatile Button](./ConsoleVButtons.md).
+

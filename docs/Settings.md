@@ -11,6 +11,7 @@ Other sections focus on
 - [API Management](./API.md)
 - [Versatile Buttons](./SettingsVButtons.md)
 - [Action Buttons](./SettingsAButtons.md)
+- [Live Buttons](./SettingsLButtons.md)
 - [Devices](./SettingsDevices.md)
 - [Update](./SettingsUpdate.md)
 

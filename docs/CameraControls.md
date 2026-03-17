@@ -35,9 +35,10 @@ The controls are grouped into
 - [Auto-Exposure](./CameraControls_AutoExposure.md)
 - [Exposure](./CameraControls_Exposure.md)
 - [Image](./CameraControls_Image.md)
+- [Ctrl](./CameraControls_Ctrl.md)
 
 ## Basics
-All Control Parameter tabs (except Zoom and Pan) are structured similarly:
+All Control Parameter tabs (except Zoom and Ctrl) are structured similarly:
 
 - Every tab is a form. This means that all parameters shown can be modified without any effect.   
 Only when the form is submitted through the **Submit** button, the settings are saved in the server configuration and directly applied to the live stream.

@@ -84,6 +84,13 @@ def execCommandline():
     g.version = version
     cfg = CameraCfg()
     sc = cfg.serverConfig
+    sc.curMenu = "console"
+    sc.vButtonCommand = None
+    sc.vButtonArgs = None
+    sc.vButtonReturncode = None
+    sc.vButtonStderr = None
+    sc.vButtonStdout = None
+    sc.lastConsoleTab = "versbuttons"
     if request.method == "POST":
         msg = ""
         cmd = request.form["commandline"]
@@ -129,17 +136,20 @@ def do_action(row:None, col=None):
     sc.lastConsoleTab = "actionbuttons"
     if request.method == "POST":
         msg = ""
-        r = int(row)
-        c = int(col)
-        btn = sc.aButtons[r][c]
-        action = btn.buttonAction
-        
-        msg = "Action successfully executed."
-        result = None
-        if action != "":
-            msg = TriggerHandler.doAction(action)
-        else:
-            msg = "No Action executed"
+#        if sc.isEventhandling == False:
+#            msg = "Event handling is not active. Activate 'Configured Triggers' in Trigger/Control and press Start."
+        if msg == "":
+            r = int(row)
+            c = int(col)
+            btn = sc.aButtons[r][c]
+            action = btn.buttonAction
+            
+            msg = "Action successfully executed."
+            result = None
+            if action != "":
+                msg = TriggerHandler.doAction(action)
+            else:
+                msg = "No Action executed"
         
         if msg != "":
             flash(msg)

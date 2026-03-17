@@ -1,6 +1,6 @@
 from flask import Blueprint, Response, flash, g, render_template, request, current_app
 from werkzeug.exceptions import abort
-from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig, vButton, ActionButton, AiConfig
+from raspiCamSrv.camCfg import CameraCfg, CameraControls, CameraProperties, CameraConfig, ServerConfig, TriggerConfig, TuningConfig, vButton, ActionButton, AiConfig, LiveButton
 from raspiCamSrv.camCfg import GPIODevice
 from raspiCamSrv.camera_pi import Camera, CameraEvent
 from raspiCamSrv.photoseriesCfg import PhotoSeriesCfg
@@ -10,7 +10,7 @@ from raspiCamSrv.version import version
 from raspiCamSrv.db import get_db
 from gpiozero import Button, RotaryEncoder, MotionSensor, DistanceSensor, LightSensor, LineSensor, DigitalInputDevice
 from gpiozero import LED, PWMLED, RGBLED, Buzzer, TonalBuzzer, Servo, AngularServo, Motor, DigitalOutputDevice, OutputDevice
-from raspiCamSrv.gpioDevices import StepperMotor
+from raspiCamSrv.gpioDevices import StepperMotor, ServoPWM
 import os
 import shutil
 import ast
@@ -714,12 +714,12 @@ def serverRestart():
 
         try:
             if startup_source == 1:
-                result = subprocess.run(
+                runresult = subprocess.run(
                     ["sudo", "systemctl", "restart", "raspiCamSrv.service"],
                     capture_output=True, text=True
                 )
             elif startup_source == 2:
-                result = subprocess.run(
+                runresult = subprocess.run(
                     ["systemctl", "--user", "restart", "raspiCamSrv.service"],
                     capture_output=True, text=True
                 )
@@ -1318,6 +1318,118 @@ def abutton_settings():
         sc.addChangeLogEntry(f"Settings/Action Buttons changed")
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
 
+@bp.route('/lbutton_dimensions', methods=("GET", "POST"))
+@login_required
+def lbutton_dimensions():
+    logger.debug("In vbutton_dimensions")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBackupsList()
+
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingslbuttons"
+    if request.method == "POST":
+        msg = ""
+        if request.form["lbuttonsrows"]:
+            lButtonsRows = int(request.form["lbuttonsrows"])
+        else:
+            msg = "Please enter a valid number of rows"
+        if request.form["lbuttonscols"]:
+            lButtonsCols = int(request.form["lbuttonscols"])
+        else:
+            msg = "Please enter a valid number of columns"
+        if msg == "":
+            if lButtonsRows == 0 \
+            or lButtonsCols == 0:
+                sc.lButtonsCols = lButtonsCols
+                sc.lButtonsRows = lButtonsRows
+                sc.lButtons = []
+            else:
+                lButtons = []
+                for r in range(0, lButtonsRows):
+                    row = []
+                    for c in range(0, lButtonsCols):
+                        if r < sc.lButtonsRows and c < sc.lButtonsCols:
+                            btn = sc.lButtons[r][c]
+                        else:
+                            btn = LiveButton()
+                        btn.row = r
+                        btn.col = c
+                        row.append(btn)
+                    lButtons.append(row)
+                sc.lButtonsCols = lButtonsCols
+                sc.lButtonsRows = lButtonsRows
+                sc.lButtons = lButtons
+        if msg != "":
+            flash(msg)
+        sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Live Buttons changed")
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
+@bp.route('/lbutton_settings', methods=("GET", "POST"))
+@login_required
+def lbutton_settings():
+    logger.debug("In lbutton_settings")
+    g.hostname = request.host
+    g.version = version
+    cam = Camera()
+    cfg = CameraCfg()
+    cs = cfg.cameras
+    sc = cfg.serverConfig
+    tc = cfg.triggerConfig
+    cfgPath = current_app.static_folder + "/config"
+    los = getLoadConfigOnStart(cfgPath)
+    result = {}
+    backups = getBackupsList()
+
+    # Check connection and access of microphone
+    sc.checkMicrophone()
+    cp = cfg.cameraProperties
+    sc.curMenu = "settings"
+    sc.lastSettingsTab = "settingslbuttons"
+    if request.method == "POST":
+        msg = ""
+        for r in range(0, sc.lButtonsRows):
+            for c in range(0, sc.lButtonsCols):
+                btn = sc.lButtons[r][c]
+                visibleId = f"lbtn_{btn.row}{ btn.col }_visible"
+                btn.isVisible = not request.form.get(visibleId) is None
+                buttonTextKey = f"lbtn_{btn.row}{btn.col}_buttontext"
+                btn.buttonText = request.form[buttonTextKey]
+                buttonExecKey = f"lbtn_{btn.row}{btn.col}_buttonexec"
+                btn.buttonExec = request.form[buttonExecKey]
+                buttonActionKey = f"lbtn_{btn.row}{btn.col}_action"
+                buttonAction = request.form[buttonActionKey]
+                if buttonAction != "" \
+                and btn.buttonExec != "":
+                    buttonAction = ""
+                    msg = f"Live Button {btn.row + 1}/{btn.col + 1}: Please enter either a command or an action, not both."
+                btn.buttonAction = buttonAction
+                buttonShapeKey = f"lbtn_{btn.row}{btn.col}_shape"
+                btn.buttonShape = request.form[buttonShapeKey]
+                buttonColorKey = f"lbtn_{btn.row}{btn.col}_color"
+                btn.buttonColor = request.form[buttonColorKey]
+                confirmId = f"lbtn_{btn.row}{ btn.col }_confirm"
+                btn.needsConfirm = not request.form.get(confirmId) is None
+                btn.isAction = not btn.buttonAction == ""
+                sc.lButtons[r][c] = btn
+        if msg != "":
+            flash(msg)
+        sc.unsavedChanges = True
+        sc.addChangeLogEntry(f"Settings/Live Buttons changed")
+    return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
+
 @bp.route('/new_device', methods=("GET", "POST"))
 @login_required
 def new_device():
@@ -1690,7 +1802,9 @@ def device_properties():
             sc.curDevice.params = newParams
             sc.curDevice.usedPins = usedPins
             sc.curDevice.isOk = ok
-        else:
+            if sc.isEventhandling == True:
+                msg = "Please restart Event Handling in Trigger/Control for changes to take effect."
+        if msg != "":
             flash(msg)
         if not sc.curDeviceId is None:
             sc.unsavedChanges = True
@@ -1742,90 +1856,93 @@ def test_device():
     sc.lastSettingsTab = "settingsdevices"
     if request.method == "POST":
         msg = ""
-        dev = sc.curDevice
-        devType = sc.curDeviceType
-        devClass = f"{dev.type}"
-        devArgs = dev.params
-        logger.debug("settings.test_device - devClass=%s", devClass)
-        logger.debug("settings.test_device - devArgs=%s", devArgs)
-        if "testMethods" in devType:
-            devTests = devType["testMethods"]
-            logger.debug("settings.test_device - devTests=%s", devTests)
-            try:
-                logger.debug("settings.test_device -instantiating %s(**%s)", devClass, devArgs)
-                devObj = globals()[devClass](**devArgs)
-                dev.setState(devObj)
-            except Exception as e:
-                logger.debug("settings.test_device - Error while instantiating %s:%s, %s", devClass, type(e), e)
-                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+        if sc.isEventhandling == True:
+            msg = "Device test is not possible while Event Handling is active. Go to Trigger/Control and press Stop."
+        if msg == "":
+            dev = sc.curDevice
+            devType = sc.curDeviceType
+            devClass = f"{dev.type}"
+            devArgs = dev.params
+            logger.debug("settings.test_device - devClass=%s", devClass)
+            logger.debug("settings.test_device - devArgs=%s", devArgs)
+            if "testMethods" in devType:
+                devTests = devType["testMethods"]
+                logger.debug("settings.test_device - devTests=%s", devTests)
                 try:
-                    if devObj:
-                        devObj.close()
+                    logger.debug("settings.test_device -instantiating %s(**%s)", devClass, devArgs)
+                    devObj = globals()[devClass](**devArgs)
+                    dev.setState(devObj)
                 except Exception as e:
-                    logger.debug("settings.test_device - Error closing %s:%s", devClass, e)
-            if msg == "":
-                for test in devTests:
-                    testMethod = test
-                    rawTest = test
-                    assignValue = None
-                    if type(test) == dict:
-                        for key,val in test.items():
-                            testMethod = key
-                            assignValue = val
-                            break
-                    elif test.find("=") >= 0:
-                        testmethod, assign = test.split("=")
-                        if assign[0] == "(":
-                            err, assignValue = parseColorTuple(assign)
-                        else:
-                            assignValue = assign
-                        assignValue = castType()
-                        
-                    logger.debug("settings.test_device - Starting test %s", test)
-                    if hasattr(devObj, testMethod):
-                        try:
-                            attr = getattr(devObj, testMethod)
-                            if callable(attr) == True:
-                                if assignValue is None:
-                                    dispTest = f"{devClass}.{testMethod}()"
-                                    logger.debug("settings.test_device - %s", dispTest)
-                                    res = attr()
-                                    result = storeResult(result, dispTest, res)
-                                else:
-                                    dispTest = f"{devClass}.{testMethod}({assignValue})"
-                                    logger.debug("settings.test_device - %s", dispTest)
-                                    res = attr(assignValue)
-                                    result = storeResult(result, dispTest, res)
+                    logger.debug("settings.test_device - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                    msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+                    try:
+                        if devObj:
+                            devObj.close()
+                    except Exception as e:
+                        logger.debug("settings.test_device - Error closing %s:%s", devClass, e)
+                if msg == "":
+                    for test in devTests:
+                        testMethod = test
+                        rawTest = test
+                        assignValue = None
+                        if type(test) == dict:
+                            for key,val in test.items():
+                                testMethod = key
+                                assignValue = val
+                                break
+                        elif test.find("=") >= 0:
+                            testmethod, assign = test.split("=")
+                            if assign[0] == "(":
+                                err, assignValue = parseColorTuple(assign)
                             else:
-                                if assignValue:
-                                    dispTest = f"{devClass}.{testMethod}={assignValue}"
-                                    logger.debug("settings.test_device - %s.%s=%s",devClass, testMethod, assignValue)
-                                    setattr(devObj, testMethod, assignValue)
-                                    result = storeResult(result, dispTest, "OK")
+                                assignValue = assign
+                            assignValue = castType()
+                            
+                        logger.debug("settings.test_device - Starting test %s", test)
+                        if hasattr(devObj, testMethod):
+                            try:
+                                attr = getattr(devObj, testMethod)
+                                if callable(attr) == True:
+                                    if assignValue is None:
+                                        dispTest = f"{devClass}.{testMethod}()"
+                                        logger.debug("settings.test_device - %s", dispTest)
+                                        res = attr()
+                                        result = storeResult(result, dispTest, res)
+                                    else:
+                                        dispTest = f"{devClass}.{testMethod}({assignValue})"
+                                        logger.debug("settings.test_device - %s", dispTest)
+                                        res = attr(assignValue)
+                                        result = storeResult(result, dispTest, res)
                                 else:
-                                    dispTest = f"{devClass}.{testMethod}"
-                                    result = storeResult(result, dispTest, attr)
-                                logger.debug("settings.test_device - %s.%s=%s",devClass, testMethod, result[dispTest])
-                            dev.trackState(devObj)
-                        except Exception as e:
-                            result = storeResult(result, testMethod, f"{type(e)} : {e}")
-                            logger.debug("settings.test_device - Exception %s, %s", type(e), e)
-                    else:
-                        result = storeResult(result, testMethod, f"Class {devClass} has no method {testMethod}")
-                    if "testStepDuration" in devType:
-                        dur = devType["testStepDuration"]
+                                    if assignValue:
+                                        dispTest = f"{devClass}.{testMethod}={assignValue}"
+                                        logger.debug("settings.test_device - %s.%s=%s",devClass, testMethod, assignValue)
+                                        setattr(devObj, testMethod, assignValue)
+                                        result = storeResult(result, dispTest, "OK")
+                                    else:
+                                        dispTest = f"{devClass}.{testMethod}"
+                                        result = storeResult(result, dispTest, attr)
+                                    logger.debug("settings.test_device - %s.%s=%s",devClass, testMethod, result[dispTest])
+                                dev.trackState(devObj)
+                            except Exception as e:
+                                result = storeResult(result, testMethod, f"{type(e)} : {e}")
+                                logger.debug("settings.test_device - Exception %s, %s", type(e), e)
+                        else:
+                            result = storeResult(result, testMethod, f"Class {devClass} has no method {testMethod}")
+                        if "testStepDuration" in devType:
+                            dur = devType["testStepDuration"]
+                            time.sleep(dur)
+                    if "testDuration" in devType:
+                        dur = devType["testDuration"]
                         time.sleep(dur)
-                if "testDuration" in devType:
-                    dur = devType["testDuration"]
-                    time.sleep(dur)
-                try:
-                    if devObj:
-                        devObj.close()
-                        msg = f"Test completed, {devClass} closed."
-                except Exception as e:
-                    logger.debug("settings.test_device - Error closing %s:%s", devClass, e)
-        else:
-            msg = f"No test methods specified for device type {dev.type}"
+                    try:
+                        if devObj:
+                            devObj.close()
+                            msg = f"Test completed, {devClass} closed."
+                    except Exception as e:
+                        logger.debug("settings.test_device - Error closing %s:%s", devClass, e)
+            else:
+                msg = f"No test methods specified for device type {dev.type}"
         if msg != "":
             flash(msg)
     logger.debug("settings.test_device - result %s", result)
@@ -1854,24 +1971,30 @@ def calibrate_device():
     sc.lastSettingsTab = "settingsdevices"
     if request.method == "POST":
         msg = ""
-        dev = sc.curDevice
-        if dev.needsCalibration == True:
-            dev.isCalibrating = True
-            devClass = f"{dev.type}"
-            devArgs = dev.params
-            try:
-                logger.debug("settings.calibrate_device -instantiating %s(**%s)", devClass, devArgs)
-                devObj = globals()[devClass](**devArgs)
-                dev.setState(devObj)
-                if hasattr(devObj, "value"):
-                    result["value"] = getattr(devObj, "value")
+        if sc.isEventhandling == True:
+            msg = "Device calibration is not possible while Event Handling is active. Go to Trigger/Control and press Stop."
+        if msg == "":
+            dev = sc.curDevice
+            if dev.needsCalibration == True:
                 dev.isCalibrating = True
-                sc.unsavedChanges = True
-                sc.addChangeLogEntry(f"Settings/Devices - device calibration started: {sc.curDeviceId}")
-            except Exception as e:
-                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
-        else:
-            msg = f"Device {dev.id} does not need calibration."
+                devClass = f"{dev.type}"
+                devArgs = dev.params
+                try:
+                    logger.debug("settings.calibrate_device -instantiating %s(**%s)", devClass, devArgs)
+                    devObj = globals()[devClass](**devArgs)
+                    dev.setState(devObj)
+                    if hasattr(devObj, "value"):
+                        setattr(devObj,"value", 0.0)
+                        dev.trackState(devObj)
+                        #result["value"] = getattr(devObj, "value")
+                        result = dev.getUncalibratedState()
+                    dev.isCalibrating = True
+                    sc.unsavedChanges = True
+                    sc.addChangeLogEntry(f"Settings/Devices - device calibration started: {sc.curDeviceId}")
+                except Exception as e:
+                    msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+            else:
+                msg = f"Device {dev.id} does not need calibration."
         if msg != "":
             flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
@@ -1899,48 +2022,52 @@ def calibrate_fbwd():
     sc.lastSettingsTab = "settingsdevices"
 
     msg = ""
-    dev = sc.curDevice
-    dev.isCalibrating = True        
-    devType = sc.curDeviceType
-    if "calibration" in devType:
-        logger.debug("settings.calibrate_fbwd - calibrating")
-        calibration = devType["calibration"]
-        method = ""
-        params = ""
-        if "fbwd" in calibration:
-            adjust = calibration["fbwd"]
-            logger.debug("settings.calibrate_fbwd - calibrating method=%s", adjust)
-            if "method" in adjust:
-                method = adjust["method"]
-            if "params" in adjust:
-                params = adjust["params"]
-        if method != "":
-            devClass = f"{dev.type}"
-            devArgs = dev.params
-            try:
-                logger.debug("settings.calibrate_fbwd -instantiating %s(**%s)", devClass, devArgs)
-                devObj = globals()[devClass](**devArgs)
-            except Exception as e:
-                logger.debug("settings.calibrate_fbwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
-                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
-            if msg == "":
-                dev.setState(devObj)
-                if hasattr(devObj, method):
-                    try:
-                        attr = getattr(devObj, method)
-                        if callable(attr) == True:
-                            logger.debug("settings.calibrate_fbwd - calling %s.%s(**%s)", devClass, method, params)
-                            res = attr(**params)
-                        else:
-                            msg = f"{devClass}.{method} is not callable."
-                    except Exception as e:
-                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
-                dev.trackState(devObj)
-                if hasattr(devObj, "value"):
-                    try:
-                        result["value"] = getattr(devObj, "value")
-                    except Exception as e:
-                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if sc.isEventhandling == True:
+        msg = "Device calibration is not possible while Event Handling is active. Go to Trigger/Control and press Stop."
+    if msg == "":
+        dev = sc.curDevice
+        dev.isCalibrating = True        
+        devType = sc.curDeviceType
+        if "calibration" in devType:
+            logger.debug("settings.calibrate_fbwd - calibrating")
+            calibration = devType["calibration"]
+            method = ""
+            params = ""
+            if "fbwd" in calibration:
+                adjust = calibration["fbwd"]
+                logger.debug("settings.calibrate_fbwd - calibrating method=%s", adjust)
+                if "method" in adjust:
+                    method = adjust["method"]
+                if "params" in adjust:
+                    params = adjust["params"]
+            if method != "":
+                devClass = f"{dev.type}"
+                devArgs = dev.params
+                try:
+                    logger.debug("settings.calibrate_fbwd -instantiating %s(**%s)", devClass, devArgs)
+                    devObj = globals()[devClass](**devArgs)
+                except Exception as e:
+                    logger.debug("settings.calibrate_fbwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                    msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+                if msg == "":
+                    dev.setState(devObj)
+                    if hasattr(devObj, method):
+                        try:
+                            attr = getattr(devObj, method)
+                            if callable(attr) == True:
+                                logger.debug("settings.calibrate_fbwd - calling %s.%s(**%s)", devClass, method, params)
+                                res = attr(**params)
+                            else:
+                                msg = f"{devClass}.{method} is not callable."
+                        except Exception as e:
+                            msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                    dev.trackState(devObj)
+                    if hasattr(devObj, "value"):
+                        try:
+                            #result["value"] = getattr(devObj, "value")
+                            result = dev.getUncalibratedState()
+                        except Exception as e:
+                            msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
@@ -1968,48 +2095,52 @@ def calibrate_bwd():
     sc.lastSettingsTab = "settingsdevices"
 
     msg = ""
-    dev = sc.curDevice
-    dev.isCalibrating = True        
-    devType = sc.curDeviceType
-    if "calibration" in devType:
-        logger.debug("settings.calibrate_bwd - calibrating")
-        calibration = devType["calibration"]
-        method = ""
-        params = ""
-        if "bwd" in calibration:
-            adjust = calibration["bwd"]
-            logger.debug("settings.calibrate_bwd - calibrating method=%s", adjust)
-            if "method" in adjust:
-                method = adjust["method"]
-            if "params" in adjust:
-                params = adjust["params"]
-        if method != "":
-            devClass = f"{dev.type}"
-            devArgs = dev.params
-            try:
-                logger.debug("settings.calibrate_bwd -instantiating %s(**%s)", devClass, devArgs)
-                devObj = globals()[devClass](**devArgs)
-            except Exception as e:
-                logger.debug("settings.calibrate_bwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
-                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
-            if msg == "":
-                dev.setState(devObj)
-                if hasattr(devObj, method):
-                    try:
-                        attr = getattr(devObj, method)
-                        if callable(attr) == True:
-                            logger.debug("settings.calibrate_bwd - calling %s.%s(**%s)", devClass, method, params)
-                            res = attr(**params)
-                        else:
-                            msg = f"{devClass}.{method} is not callable."
-                    except Exception as e:
-                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
-                dev.trackState(devObj)
-                if hasattr(devObj, "value"):
-                    try:
-                        result["value"] = getattr(devObj, "value")
-                    except Exception as e:
-                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if sc.isEventhandling == True:
+        msg = "Device calibration is not possible while Event Handling is active. Go to Trigger/Control and press Stop."
+    if msg == "":
+        dev = sc.curDevice
+        dev.isCalibrating = True        
+        devType = sc.curDeviceType
+        if "calibration" in devType:
+            logger.debug("settings.calibrate_bwd - calibrating")
+            calibration = devType["calibration"]
+            method = ""
+            params = ""
+            if "bwd" in calibration:
+                adjust = calibration["bwd"]
+                logger.debug("settings.calibrate_bwd - calibrating method=%s", adjust)
+                if "method" in adjust:
+                    method = adjust["method"]
+                if "params" in adjust:
+                    params = adjust["params"]
+            if method != "":
+                devClass = f"{dev.type}"
+                devArgs = dev.params
+                try:
+                    logger.debug("settings.calibrate_bwd -instantiating %s(**%s)", devClass, devArgs)
+                    devObj = globals()[devClass](**devArgs)
+                except Exception as e:
+                    logger.debug("settings.calibrate_bwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                    msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+                if msg == "":
+                    dev.setState(devObj)
+                    if hasattr(devObj, method):
+                        try:
+                            attr = getattr(devObj, method)
+                            if callable(attr) == True:
+                                logger.debug("settings.calibrate_bwd - calling %s.%s(**%s)", devClass, method, params)
+                                res = attr(**params)
+                            else:
+                                msg = f"{devClass}.{method} is not callable."
+                        except Exception as e:
+                            msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                    dev.trackState(devObj)
+                    if hasattr(devObj, "value"):
+                        try:
+                            #result["value"] = getattr(devObj, "value")
+                            result = dev.getUncalibratedState()
+                        except Exception as e:
+                            msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
@@ -2037,57 +2168,82 @@ def docalibrate():
     sc.lastSettingsTab = "settingsdevices"
 
     msg = ""
-    dev = sc.curDevice
-    dev.isCalibrating = True        
-    devType = sc.curDeviceType
-    if "calibration" in devType:
-        logger.debug("settings.docalibrate - calibrating")
-        calibration = devType["calibration"]
-        method = ""
-        params = ""
-        if "calibrate" in calibration:
-            adjust = calibration["calibrate"]
-            logger.debug("settings.docalibrate - calibrating method=%s", adjust)
-            if "method" in adjust:
-                method = adjust["method"]
-            if "params" in adjust:
-                params = adjust["params"]
-        if method != "":
-            devClass = f"{dev.type}"
-            devArgs = dev.params
-            try:
-                logger.debug("settings.docalibrate -instantiating %s(**%s)", devClass, devArgs)
-                devObj = globals()[devClass](**devArgs)
-            except Exception as e:
-                logger.debug("settings.docalibrate - Error while instantiating %s:%s, %s", devClass, type(e), e)
-                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
-            if msg == "":
-                dev.setState(devObj)
-                if hasattr(devObj, method):
-                    try:
-                        attr = getattr(devObj, method)
-                        if callable(attr) == True:
-                            logger.debug("settings.docalibrate - calling %s.%s(**%s)", devClass, method, params)
-                            res = attr(**params)
-                        else:
-                            if "value" in params:
-                                value = params["value"]
-                                logger.debug("settings.docalibrate - calling %s.%s", devClass, method)
-                                setattr(devObj,"value", value)
+    if sc.isEventhandling == True:
+        msg = "Device calibration is not possible while Event Handling is active. Go to Trigger/Control and press Stop."
+    if msg == "":
+        dev = sc.curDevice
+        dev.isCalibrating = True        
+        devType = sc.curDeviceType
+        if "calibration" in devType:
+            logger.debug("settings.docalibrate - calibrating")
+            calibration = devType["calibration"]
+            method = ""
+            params = ""
+            if "calibrate" in calibration:
+                adjust = calibration["calibrate"]
+                logger.debug("settings.docalibrate - calibrating method=%s", adjust)
+                if "method" in adjust:
+                    # Calibration by calling a method or setting an attribute
+                    method = adjust["method"]
+                    if "params" in adjust:
+                        params = adjust["params"]
+                if "param" in adjust:
+                    # Calibration by setting a parameter to a specific value
+                    param = adjust["param"]
+                    logger.debug("settings.docalibrate - Setting parameter %s to current value", param)
+                    newParams={}
+                    for key, value in sc.curDevice.params.items():
+                        logger.debug("settings.docalibrate - key:%s value:%s", key, value)
+                        val = value
+                        if key == param:
+                           state = sc.curDevice.getUncalibratedState()
+                           if "value" in state:
+                               val = state["value"]
+                        logger.debug("settings.docalibrate - value:%s", val)
+                        newParams[key] = val
+                        logger.debug("settings.docalibrate - newParams:%s", newParams)
+                    sc.curDevice.params = newParams
+                    dev.isCalibrating = False
+                    sc.unsavedChanges = True
+                    sc.addChangeLogEntry(f"Settings/Devices - device calibrated: {sc.curDeviceId}")
+                    method = "value"
+                    params = {}
+                    params["value"] = 0
+            if method != "":
+                devClass = f"{dev.type}"
+                devArgs = dev.params
+                try:
+                    logger.debug("settings.docalibrate -instantiating %s(**%s)", devClass, devArgs)
+                    devObj = globals()[devClass](**devArgs)
+                except Exception as e:
+                    logger.debug("settings.docalibrate - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                    msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+                if msg == "":
+                    dev.setState(devObj)
+                    if hasattr(devObj, method):
+                        try:
+                            attr = getattr(devObj, method)
+                            if callable(attr) == True:
+                                logger.debug("settings.docalibrate - calling %s.%s(**%s)", devClass, method, params)
+                                res = attr(**params)
                             else:
-                                msg = f"'value' not not in {params}."
-                    except Exception as e:
-                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
-                dev.trackState(devObj)
-                if hasattr(devObj, "value"):
-                    try:
-                        result["value"] = getattr(devObj, "value")
-                    except Exception as e:
-                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
-                dev.isCalibrating = False
-                sc.unsavedChanges = True
-                sc.addChangeLogEntry(f"Settings/Devices - device calibrated: {sc.curDeviceId}")
-                
+                                if "value" in params:
+                                    value = params["value"]
+                                    logger.debug("settings.docalibrate - calling %s.%s", devClass, method)
+                                    setattr(devObj,"value", value)
+                                else:
+                                    msg = f"'value' not not in {params}."
+                        except Exception as e:
+                            msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                    dev.trackState(devObj)
+                    if hasattr(devObj, "value"):
+                        try:
+                            result["value"] = getattr(devObj, "value")
+                        except Exception as e:
+                            msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+                    dev.isCalibrating = False
+                    sc.unsavedChanges = True
+                    sc.addChangeLogEntry(f"Settings/Devices - device calibrated: {sc.curDeviceId}")
     if msg != "":
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
@@ -2115,48 +2271,52 @@ def calibrate_fwd():
     sc.lastSettingsTab = "settingsdevices"
 
     msg = ""
-    dev = sc.curDevice
-    dev.isCalibrating = True        
-    devType = sc.curDeviceType
-    if "calibration" in devType:
-        logger.debug("settings.calibrate_fwd - calibrating")
-        calibration = devType["calibration"]
-        method = ""
-        params = ""
-        if "fwd" in calibration:
-            adjust = calibration["fwd"]
-            logger.debug("settings.calibrate_fwd - calibrating method=%s", adjust)
-            if "method" in adjust:
-                method = adjust["method"]
-            if "params" in adjust:
-                params = adjust["params"]
-        if method != "":
-            devClass = f"{dev.type}"
-            devArgs = dev.params
-            try:
-                logger.debug("settings.calibrate_fwd -instantiating %s(**%s)", devClass, devArgs)
-                devObj = globals()[devClass](**devArgs)
-            except Exception as e:
-                logger.debug("settings.calibrate_fwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
-                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
-            if msg == "":
-                dev.setState(devObj)
-                if hasattr(devObj, method):
-                    try:
-                        attr = getattr(devObj, method)
-                        if callable(attr) == True:
-                            logger.debug("settings.calibrate_fwd - calling %s.%s(**%s)", devClass, method, params)
-                            res = attr(**params)
-                        else:
-                            msg = f"{devClass}.{method} is not callable."
-                    except Exception as e:
-                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
-                dev.trackState(devObj)
-                if hasattr(devObj, "value"):
-                    try:
-                        result["value"] = getattr(devObj, "value")
-                    except Exception as e:
-                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if sc.isEventhandling == True:
+        msg = "Device calibration is not possible while Event Handling is active. Go to Trigger/Control and press Stop."
+    if msg == "":
+        dev = sc.curDevice
+        dev.isCalibrating = True        
+        devType = sc.curDeviceType
+        if "calibration" in devType:
+            logger.debug("settings.calibrate_fwd - calibrating")
+            calibration = devType["calibration"]
+            method = ""
+            params = ""
+            if "fwd" in calibration:
+                adjust = calibration["fwd"]
+                logger.debug("settings.calibrate_fwd - calibrating method=%s", adjust)
+                if "method" in adjust:
+                    method = adjust["method"]
+                if "params" in adjust:
+                    params = adjust["params"]
+            if method != "":
+                devClass = f"{dev.type}"
+                devArgs = dev.params
+                try:
+                    logger.debug("settings.calibrate_fwd -instantiating %s(**%s)", devClass, devArgs)
+                    devObj = globals()[devClass](**devArgs)
+                except Exception as e:
+                    logger.debug("settings.calibrate_fwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                    msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+                if msg == "":
+                    dev.setState(devObj)
+                    if hasattr(devObj, method):
+                        try:
+                            attr = getattr(devObj, method)
+                            if callable(attr) == True:
+                                logger.debug("settings.calibrate_fwd - calling %s.%s(**%s)", devClass, method, params)
+                                res = attr(**params)
+                            else:
+                                msg = f"{devClass}.{method} is not callable."
+                        except Exception as e:
+                            msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                    dev.trackState(devObj)
+                    if hasattr(devObj, "value"):
+                        try:
+                            #result["value"] = getattr(devObj, "value")
+                            result = dev.getUncalibratedState()
+                        except Exception as e:
+                            msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)
@@ -2184,48 +2344,52 @@ def calibrate_ffwd():
     sc.lastSettingsTab = "settingsdevices"
 
     msg = ""
-    dev = sc.curDevice
-    dev.isCalibrating = True        
-    devType = sc.curDeviceType
-    if "calibration" in devType:
-        logger.debug("settings.calibrate_ffwd - calibrating")
-        calibration = devType["calibration"]
-        method = ""
-        params = ""
-        if "ffwd" in calibration:
-            adjust = calibration["ffwd"]
-            logger.debug("settings.calibrate_ffwd - calibrating method=%s", adjust)
-            if "method" in adjust:
-                method = adjust["method"]
-            if "params" in adjust:
-                params = adjust["params"]
-        if method != "":
-            devClass = f"{dev.type}"
-            devArgs = dev.params
-            try:
-                logger.debug("settings.calibrate_ffwd -instantiating %s(**%s)", devClass, devArgs)
-                devObj = globals()[devClass](**devArgs)
-            except Exception as e:
-                logger.debug("settings.calibrate_ffwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
-                msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
-            if msg == "":
-                dev.setState(devObj)
-                if hasattr(devObj, method):
-                    try:
-                        attr = getattr(devObj, method)
-                        if callable(attr) == True:
-                            logger.debug("settings.calibrate_ffwd - calling %s.%s(**%s)", devClass, method, params)
-                            res = attr(**params)
-                        else:
-                            msg = f"{devClass}.{method} is not callable."
-                    except Exception as e:
-                        msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
-                dev.trackState(devObj)
-                if hasattr(devObj, "value"):
-                    try:
-                        result["value"] = getattr(devObj, "value")
-                    except Exception as e:
-                        msg = f"Property Error {devClass}.value: {type(e)} : {e}"
+    if sc.isEventhandling == True:
+        msg = "Device calibration is not possible while Event Handling is active. Go to Trigger/Control and press Stop."
+    if msg == "":
+        dev = sc.curDevice
+        dev.isCalibrating = True        
+        devType = sc.curDeviceType
+        if "calibration" in devType:
+            logger.debug("settings.calibrate_ffwd - calibrating")
+            calibration = devType["calibration"]
+            method = ""
+            params = ""
+            if "ffwd" in calibration:
+                adjust = calibration["ffwd"]
+                logger.debug("settings.calibrate_ffwd - calibrating method=%s", adjust)
+                if "method" in adjust:
+                    method = adjust["method"]
+                if "params" in adjust:
+                    params = adjust["params"]
+            if method != "":
+                devClass = f"{dev.type}"
+                devArgs = dev.params
+                try:
+                    logger.debug("settings.calibrate_ffwd -instantiating %s(**%s)", devClass, devArgs)
+                    devObj = globals()[devClass](**devArgs)
+                except Exception as e:
+                    logger.debug("settings.calibrate_ffwd - Error while instantiating %s:%s, %s", devClass, type(e), e)
+                    msg = f"Error while instantiating class {devClass}: {type(e)} {e}"
+                if msg == "":
+                    dev.setState(devObj)
+                    if hasattr(devObj, method):
+                        try:
+                            attr = getattr(devObj, method)
+                            if callable(attr) == True:
+                                logger.debug("settings.calibrate_ffwd - calling %s.%s(**%s)", devClass, method, params)
+                                res = attr(**params)
+                            else:
+                                msg = f"{devClass}.{method} is not callable."
+                        except Exception as e:
+                            msg = f"Error calling {devClass}.{method}: {type(e)} : {e}"
+                    dev.trackState(devObj)
+                    if hasattr(devObj, "value"):
+                        try:
+                            #result["value"] = getattr(devObj, "value")
+                            result = dev.getUncalibratedState()
+                        except Exception as e:
+                            msg = f"Property Error {devClass}.value: {type(e)} : {e}"
     if msg != "":
         flash(msg)
     return render_template("settings/main.html", sc=sc, tc=tc, cp=cp, cs=cs, los=los, result=result, backups=backups)

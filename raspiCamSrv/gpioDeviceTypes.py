@@ -372,7 +372,7 @@ gpioDeviceTypes = [
     {
         "type": "StepperMotor",
         "usage": "Output",
-        "docUrl": "https://github.com/signag/raspi-cam-srv/blob/main/docs/gpioDevices/StepperMotor.md",
+        "docUrl": "https://signag.github.io/raspi-cam-srv/latest/gpioDevices/StepperMotor/",
         "image": "device_StepperMotor.jpg",
         "params": {
             "in1": {"value": "", "type": "int", "min": 0, "max": 27, "isPin": True},
@@ -469,7 +469,7 @@ gpioDeviceTypes = [
             {"method": "rotate", "params": {"angle": -1.0}, "control": {}},
             {"method": "rotate_right", "params": {"angle": 1.0}, "control": {}},
             {"method": "rotate_left", "params": {"angle": 1.0}, "control": {}},
-            {"method": "rotate_to", "params": {"angle": 1.0}, "control": {}},
+            {"method": "rotate_to", "params": {"target": 1.0}, "control": {}},
             {"method": "swing", "params": {}, "control": {}},
             {
                 "method": "wipe",
@@ -481,6 +481,77 @@ gpioDeviceTypes = [
                 "params": {},
                 "control": {}
             },
+        ],
+    },
+    {
+        "type": "ServoPWM",
+        "usage": "Output",
+        "docUrl": "https://signag.github.io/raspi-cam-srv/latest/gpioDevices/ServoPWM/",
+        "image": "device_ServoPWM.jpg",
+        "params": {
+            "pin": {"value": "", "type": "int", "min": 12, "max": 19, "isPin": True},
+            "min_angle": {"value": -90.0, "type": "float", "min": -360.0, "max": 360.0},
+            "max_angle": {"value": 90.0, "type": "float", "min": -360.0, "max": 360.0},
+            "min_pulse_width_us": {
+                "value": 500,
+                "type": "int",
+                "min": 0,
+                "max": 1000000.0,
+            },
+            "max_pulse_width_us": {
+                "value": 2500,
+                "type": "int",
+                "min": 0,
+                "max": 1000000.0,
+            },
+            "frame_width_us": {
+                "value": 20000,
+                "type": "int",
+                "min": 0,
+                "max": 1000000.0,
+            },
+            "speed": {
+                "value": 1.5,
+                "type": "float",
+                "min": 0.0,
+                "max": 10000.0,
+            },
+            "idle_off": {"value": False, "type": "bool"},
+            "calibration": {"value": 0.0, "type": "float", "min": -90.0, "max": 90.0},
+        },
+        "testMethods": ["min", "max", "mid", {"rotate_to": 0.0}],
+        "testStepDuration": 1,
+        "calibration": {
+            "fbwd": {
+                "method": "rotate_by",
+                "params": {"angle": -10.0},
+            },
+            "bwd": {
+                "method": "rotate_by",
+                "params": {"angle": -1.0},
+            },
+            "calibrate": {
+                "param": "calibration",
+            },
+            "fwd": {
+                "method": "rotate_by",
+                "params": {"angle": 1.0},
+            },
+            "ffwd": {
+                "method": "rotate_by",
+                "params": {"angle": 10.0},
+            },
+        },
+        "actionTargets": [
+            {"method": "min", "params": {}, "control": {}},
+            {"method": "max", "params": {}, "control": {}},
+            {"method": "mid", "params": {}, "control": {}},
+            {"method": "rotate_to", "params": {"angle": -1.0}, "control": {}},
+            {"method": "rotate_by", "params": {"angle": -1.0}, "control": {}},
+            {"method": "rotate_right", "params": {"angle": 1.0}, "control": {}},
+            {"method": "rotate_left", "params": {"angle": 1.0}, "control": {}},
+            {"method": "stop", "params": {}, "control": {}},
+            {"method": "close", "params": {}, "control": {}},
         ],
     },
     {

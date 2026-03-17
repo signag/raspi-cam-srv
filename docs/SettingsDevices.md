@@ -72,9 +72,16 @@ For a test either the entire test or the individual steps may have preconfigured
 
 ## Calibrating a Device
 
-Some devices require state tracking and, therefore, calibration.
+Some devices require state tracking and calibration.
 
-This applies currently to the StepperMotor:    
+### Calibration Types
+
+Different devices may require different calibration procedures.
+
+This applies currently to
+
+#### StepperMotor:
+
 The StepperMotor itself does not have knowledge about its current position and when the class is instantiated, the *current_angle* is set to zero.   
 For usage of the StepperMotor it is, however, essential to know the position at any time.
 
@@ -84,14 +91,39 @@ It is, therefore, necessary to
 2. track and memorize any movements
 3. set the last state whenever the device class is instantiated
 
-Devices requiring this procedure have an element ```"calibration"``` in their [Device Type Configuration](#device-type-configuration).
+#### ServoPWM
 
-If such a device is configured, a **Calibrate** button will be shown.
+For Servos, the situation is slightly different. Servos (except 360° Servos) have a limited range of operation
+with a minimum and maximum angle. The actual position is controlled through the pulse width of a PWM signal and the position is kept when the signal is switched off.
 
-Pressing **Calibrate** will show additional buttons for calibration as well as the current state (```current_angle``` for StepperMotor):
+In order to avoid unexpected movements when a servo is activated, we need to keep track of the last position and set this position when the servo is started.
+
+Furthermore, we usually want to have a certain position as reference or "Zero". The exact choice of this position should be adustable by calibration.
+
+The choice of a specific position as "Zero" does not change the range of operarion.
+
+### Calibration Support
+
+raspiCamSrv supports both types of calibration which can be configured for a device type in the [Device Type Configuration](#device-type-configuration).
+
+For device types requiring calibration, a **Calibrate** button will be shown when a device with this type is created or modified.
+
+Pressing **Calibrate** will show additional buttons for calibration as well as the current "internal" state (```current_angle``` for StepperMotor, ```current_angle-calibration``` for ServoPWM):
+
 ![Calibration](./img/Settings_Devices_Calibration.jpg)
+
 You can now change the device status using the arrow buttons until you reach the desired zero.   
-Pushing **OK** will then set the current state as reference and hide the calibration buttons.
+Pushing **OK** will then
+
+- for StepperMotor
+<br>set the current state as reference
+
+- for ServoPWM
+<br>set the parameter *calibration* to the current "internal" state
+
+- in both cases hide the calibration buttons.
+
+## State Tracking
 
 **raspiCamSrv** will track all status changes in a JSON file named after the device ID:     
 ![Status](./img/Settings_Devices_Calibration_State.jpg)
@@ -100,7 +132,7 @@ Pushing **OK** will then set the current state as reference and hide the calibra
 
 ## Device Type Configuration
 
-The *gpiozero* device types, supported by **RaspiCamSrv** are preconfigured in the file ```gpioDeviceTypes.py```.
+The device types, supported by **RaspiCamSrv** are preconfigured in the file ```gpioDeviceTypes.py```.
 
 Below is an example for the ```DistanceSensor```:
 
@@ -173,14 +205,86 @@ The different elements are used for different purposes:
 - *type*<br>identifies the class name for the device type.
 - *usage*<br>distinguishes Input and Output devices
 - *docURL*<br>is the URL for class documentation
+<br>If ```/latest/``` is found in the URL, this will be replaced by the document version for the current software version, encapsulated with "/".
 - *image*<br>identifies the image shown in the dialog
-- *params*<br>characterizes the class constructor interface with parameter name, default value, type (with some non-Python declarations) as well as the valid range.<br>The "isPin" sub-element identifies attributes which correspond to GPIO pins.
+- *params*<br>characterizes the class constructor interface with parameter name, default value, type (with some non-Python declarations) as well as the valid range.<br>The "isPin" sub-element identifies parameters which correspond to GPIO pins.
 - *testMethods*<br> is a list of test methods, if necessary with parameters, which are executed during the test.
 - *testDuration* or *testStepDuration* specify the duration of the entire test or of every test step.
 - *events*<br>occur in Input devices and identify events which are captured by the device class and to which callback routines can be assigned.<br>This will be used in the specification of [Triggers](./TriggerTriggers.md).
 - *eventSettings*<br>is a list of parameter assignments which will be set **before** callbacks are assigned to the event parameters.<br>An example is the ```threshold_distance``` which is required for ```DistanceSensor``` to distinguish between *in_range* and *out_of_range*.
 - *actionTargets*<br>occur in Output devices and identify methods which can be used in [Actions](./TriggerActions.md).<br>Whereas the sub-element "method" identifies the method name (which can be a method or a property which **raspiCamSrv** determines through inspection), the "params" element specifies the parameters which can be configured for the method call or the property assignment.<br>These parameters serve also as 'templates' for type checks which are done during [Action](./TriggerActions.md) configuration.
 - *control* elements<br>which can occur as sub-elements of "actionTarget" for Output devices as well as for Input devices, are not part of the class interface but are used to control specific behavior in **raspiCamSrv**.<br>For input devices it can, for example specify the ```bounce_time``` for software controlled bouncing suppression beyond that what might already be provided by *gpiozero*.<br>For Output devices and a specific action target, it can, for example specify a duration for which the action shall last, for example how long an LED shall be enlighted.
+
+### Calibration Configuration
+
+Devices requiring calibration, have an element ```"calibration"``` in their Device Type Configuration:
+
+```
+        "calibration": {
+            "fbwd": {
+                "method": "rotate_by",
+                "params": {"angle": -10.0},
+            },
+            "bwd": {
+                "method": "rotate_by",
+                "params": {"angle": -1.0},
+            },
+            "calibrate": {
+                "param": "calibration",
+            },
+            "fwd": {
+                "method": "rotate_by",
+                "params": {"angle": 1.0},
+            },
+            "ffwd": {
+                "method": "rotate_by",
+                "params": {"angle": 10.0},
+            },
+        },
+```
+
+Here you find 5 sub-elemnts which control the function of the 5 calibration buttons in the Settings/Devices dialog:
+
+- fbwd
+<br>defines the method to be called (or attribute to be set) for "fast backward" (```<<```)
+- bwd
+<br>defines the method to be called (or attribute to be set) for "backward" (```<```)
+- fwd
+<br>defines the method to be called (or attribute to be set) for "foreward" (```>```)
+- ffwd
+<br>defines the method to be called (or attribute to be set) for "fast foreward" (```>>```)
+- calibrate
+<br>specifies the calibration procedure to be applied when the ```OK``` button is pressed
+
+#### Calibration Procedures
+
+The following alternatives are supported for specifying the calibration procedure:
+
+##### "Servo-like" Calibration
+
+```
+            "calibrate": {
+                "param": "calibration",
+            },
+```
+
+This specifies that a specific class parameter (here ```calibration```) needs to be set to the current (intrinsic) value.
+
+This must be a parameter of the class constructor which cannot be changed for an existing object.
+
+##### "Stepper-motor-like" Calibration
+
+```
+            "calibrate": {
+                "method": "value",
+                "params": {"value": 0.0},
+            },
+```
+
+This specifies that a specific attribute is set to the given value (typically 0.0) or that a specific method is called with the specified parameter signature.
+
+This method (or attribute setter) must not physically change the position (or state) of the device but only change the internal variable, representing this position, to the given value.
+
 
 ## 40-Pin GPIO Header
 

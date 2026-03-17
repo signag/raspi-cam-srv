@@ -1,5 +1,7 @@
 # StepperMotor
 
+## Overview
+
 ```
 class StepperMotor(*args, **kwargs)
 ```
@@ -34,6 +36,8 @@ stepper.close()
 - **swing_direction** - (*int*) current swing direction. 1 (default) clockwise, 0 counter-clockwise.
 - **stride_angle** - (*float*) The angle incremet for a single step after gearing.<br>The default value of 5.625 is the value for the **28BYJ-48** motor.
 - **gear_reduction** (*int*) - The inverse of the transmission ratio of the gear box.<br>The default value of 64 is the value of the 1/64 ratio for the **28BYJ-48** motor.
+
+## Properties and Methods
 
 ### *property* **mode**
 

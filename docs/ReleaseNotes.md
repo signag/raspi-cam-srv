@@ -2,6 +2,27 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.8.0
+
+### New Features
+
+- Added [Ctrl Pane](./CameraControls_Ctrl.md) to [Live Screen](./LiveScreen.md) for which you can [configure buttons](./SettingsLButtons.md) for execution of OS commands or [Actions](./TriggerActions.md) for control of various devices such as servos for Pan/Tilt control.
+- Added [ServoPWM](./gpioDevices/ServoPWM.md) as new [Device Type](./SettingsDevices.md).
+<br>This can be used as alternative to [gpiozero Servo](https://gpiozero.readthedocs.io/en/stable/api_output.html#servo), which uses software PWM (pigpio is currently not available under Trixie) resulting in significant jitter and is, therefore, not suitable to be used as device for camera positioning.
+<br>ServoPWM is based on the [rpi_hardware_pwm](https://github.com/Pioreactor/rpi_hardware_pwm) library and assures jitter-free servo control.
+- The [installation](./installation.md) has been extended with installation of [rpi_hardware_pwm](https://github.com/Pioreactor/rpi_hardware_pwm) required for [ServoPWM](./gpioDevices/ServoPWM.md)
+- Git now ignores a folder ```prg/raspi-cam-srv/user_code``` and any sub-folders.
+<br>This allows putting any bash scripts or python programs in this location for use with [Versatile Buttons](./SettingsVButtons.md) or [Live Buttons](./SettingsLButtons.md).
+
+### Bugfixes
+
+- Fixed ```TypeError: object of type 'CompletedProcess' has no len()``` which could occur when the server was restarted with button *Restart Server* in [Settings / Configuration](./SettingsConfiguration.md)
+- Fixed command execution from [Interactive Commandline](./ConsoleVButtons.md#interactive-commandline): In some situations it could happen that after command execution a different dialog was shown.
+- Created clearer error message in [Settings/Devices](./SettingsDevices.md) when test or calibration was started while [Event Handling](./Trigger.md#control) is active. Active event handling may have exclusive access on devices.
+- If a [Device Configuration](./SettingsDevices.md) has been modified while [Event Handling](./Trigger.md#control) is active, a hint to restart Event Handling is now displayed.
+- Fixed missing values for *Number of Rows* and *Number of Columns* in dialog [Settings/Action Buttons](./SettingsAButtons.md)
+- Fixed error ```Error in None: Error <class 'TypeError'> while executing action STP1-0: StepperMotor.rotate_to() got an unexpected keyword argument 'angle'```
+
 ## V4.7.1
 
 ### Bugfix

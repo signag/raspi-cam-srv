@@ -14,8 +14,11 @@ from raspiCamSrv.auth import login_required, login_for_streaming
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, ServerConfig
 from raspiCamSrv.version import version
+from raspiCamSrv.triggerHandler import TriggerHandler
 from libcamera import controls
 from _thread import get_ident
+import subprocess
+from subprocess import CalledProcessError
 import math
 import os
 import datetime
@@ -1662,3 +1665,72 @@ def dc_set_ZoomFactor():
     if tc.checkRoisAgainstScalerCropLiveView(sc.scalerCropLiveView) == False:
         sc.addChangeLogEntry(f"RoIs or RoNis adjusted for {sc.activeCameraInfo}")
     return '', 204
+
+
+@bp.route("/live_do_action/<row>/<col>", methods=("GET", "POST"))
+@login_required
+def live_do_action(row:None, col=None):
+    logger.debug("In live_do_action - row=%s, col=%s", row, col)
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.lastLiveTab = "control"
+    sc.getLatestVersion(now=True)
+    if request.method == "POST":
+        msg = ""
+        r = int(row)
+        c = int(col)
+        btn = sc.lButtons[r][c]
+        action = btn.buttonAction
+        
+        msg = f"Action successfully executed: {action}."
+        result = None
+        if action != "":
+            msg = TriggerHandler.doAction(action)
+        else:
+            msg = "No Action executed"
+        
+        if msg != "":
+            flash(msg)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)
+
+
+@bp.route("/live_execute/<row>/<col>", methods=("GET", "POST"))
+@login_required
+def live_execute(row:None, col=None):
+    logger.debug("In live_execute - row=%s, col=%s", row, col)
+    g.hostname = request.host
+    g.version = version
+    cfg = CameraCfg()
+    cc = cfg.controls
+    sc = cfg.serverConfig
+    cp = cfg.cameraProperties
+    sc.lastLiveTab = "control"
+    sc.getLatestVersion(now=True)
+    if request.method == "POST":
+        msg = ""
+        r = int(row)
+        c = int(col)
+        btn = sc.lButtons[r][c]
+        cmd = btn.buttonExec
+        args = cmd.rsplit(" ")
+        sc.vButtonArgs = args
+        
+        msg = f"Command successfully executed: {cmd}."
+        result = None
+        if cmd != "":
+            try:
+                result = subprocess.run(args, capture_output=True, text=True, check=True)            
+            except CalledProcessError as e:
+                msg = f"Command executed with error: {e}."
+            except Exception as e:
+                msg = f"Command executed with error: {e}."
+        else:
+            msg = "No command executed"
+        
+        if msg != "":
+            flash(msg)
+    return render_template("home/index.html", cc=cc, sc=sc, cp=cp)

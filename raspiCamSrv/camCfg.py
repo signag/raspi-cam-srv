@@ -95,7 +95,10 @@ class GPIODevice():
 
     @property
     def docUrl(self) -> str:
-        return self._docUrl
+        url = self._docUrl
+        if url.find("/latest/") >= 0:
+            url = url.replace("/latest/", f"/{versionDoc.docversion}/")
+        return url
 
     @docUrl.setter
     def docUrl(self, value: str):
@@ -174,6 +177,64 @@ class GPIODevice():
             except Exception as e:
                 logger.error("GPIODevice.setState: Error %s setting device state: %s", type(e), e)  
         return res
+        
+    def getState(self) -> dict:
+        """ Get the state of a GPIO device for which calibration is required
+
+            The device object is expected to have the following attributes:
+            - value
+            The state is read from file
+
+        Returns:
+            dict: The state of the device
+        """
+        logger.debug("GPIODevice.getState - entry")
+        state = {}
+        if self._needsCalibration:
+            try:
+                with open(self._deviceStateFile, "r") as f:
+                    state = json.load(f)
+                    logger.debug("GPIODevice.getState - read from file %s : %s",self._deviceStateFile, state)
+            except FileNotFoundError:
+                # If state has not yet been persisted, keep default state
+                pass
+            except Exception as e:
+                logger.error("GPIODevice.getState: Error %s getting device state: %s", type(e), e)  
+        return state
+        
+    def getUncalibratedState(self) -> dict:
+        """ Get the uncalibrated state of a GPIO device for which calibration is required
+
+            The device object is expected to have the following attributes:
+            - value
+            The calibrated state is read from file
+            This is then adjusted depending on the calibration type:
+            - For devices having anternal state (e.g. a servo), the calibration velue of the device is added
+            - For devices without internal state (e.g. a stepper motor), the current state is returned
+
+        Returns:
+            dict: The uncalibrated state of the device
+        """
+        logger.debug("GPIODevice.getUncalibratedState - entry")
+        state = {}
+        if self._needsCalibration:
+            try:
+                with open(self._deviceStateFile, "r") as f:
+                    state = json.load(f)
+                    logger.debug("GPIODevice.getUncalibratedState - read from file %s : %s",self._deviceStateFile, state)
+            except FileNotFoundError:
+                # If state has not yet been persisted, keep default state
+                pass
+            except Exception as e:
+                logger.error("GPIODevice.getUncalibratedState: Error %s getting device state: %s", type(e), e)
+
+            if "calibration" in self.params:
+                calibration = self.params["calibration"]
+                logger.debug("GPIODevice.getUncalibratedState - calibration: %s", calibration)
+                if "value" in state:
+                    state["value"] += calibration
+                    logger.debug("GPIODevice.getUncalibratedState - uncalibrated state: %s", state)
+        return state
 
     @classmethod                
     def initFromDict(cls, dict:dict):
@@ -3619,6 +3680,112 @@ class ActionButton():
                 setattr(ab, key, value)
         return ab
 
+class LiveButton():
+    """ Live button
+
+    """
+    def __init__(self) -> None:
+        self._row = 0
+        self._col = 0
+        self._isVisible = False
+        self._needsConfirm = False
+        self._buttonColor = None
+        self._buttonShape = None
+        self._buttonText = ""
+        self._isAction = False
+        self._buttonAction = ""
+        self._buttonExec = ""
+
+    @property
+    def row(self) -> int:
+        return self._row
+
+    @row.setter
+    def row(self, value: int):
+        self._row = value
+
+    @property
+    def col(self) -> int:
+        return self._col
+
+    @col.setter
+    def col(self, value: int):
+        self._col = value
+
+    @property
+    def isVisible(self) -> bool:
+        return self._isVisible
+
+    @isVisible.setter
+    def isVisible(self, value: bool):
+        self._isVisible = value
+
+    @property
+    def needsConfirm(self) -> bool:
+        return self._needsConfirm
+
+    @needsConfirm.setter
+    def needsConfirm(self, value: bool):
+        self._needsConfirm = value
+        
+    @property
+    def buttonColor(self) -> str:
+        return self._buttonColor
+
+    @buttonColor.setter
+    def buttonColor(self, value: str):
+        self._buttonColor = value
+        
+    @property
+    def buttonShape(self) -> str:
+        return self._buttonShape
+
+    @buttonShape.setter
+    def buttonShape(self, value: str):
+        self._buttonShape = value
+
+    @property
+    def buttonText(self) -> str:
+        return self._buttonText
+
+    @buttonText.setter
+    def buttonText(self, value: str):
+        self._buttonText = value
+
+    @property
+    def isAction(self) -> bool:
+        return self._isAction
+
+    @isAction.setter
+    def isAction(self, value: bool):
+        self._isAction = value
+
+    @property
+    def buttonAction(self) -> str:
+        return self._buttonAction
+
+    @buttonAction.setter
+    def buttonAction(self, value: str):
+        self._buttonAction = value
+
+    @property
+    def buttonExec(self) -> str:
+        return self._buttonExec
+
+    @buttonExec.setter
+    def buttonExec(self, value: str):
+        self._buttonExec = value
+
+    @classmethod                
+    def initFromDict(cls, dict:dict):
+        lb = LiveButton()
+        for key, value in dict.items():
+            if value is None:
+                setattr(lb, key, value)
+            else:
+                setattr(lb, key, value)
+        return lb
+
 class StereoConfig():
     intents = ["DepthMap", "3DVideo",]
     intentNames = ["Depth Map", "3D Video",]
@@ -4356,6 +4523,9 @@ class ServerConfig():
         self._aButtonsCols = 0
         self._aButtons = []
         self._aButtonAction = None
+        self._lButtonsRows = 0
+        self._lButtonsCols = 0
+        self._lButtons = []
         self._curDeviceId = ""
         self._curDevice = None
         self._curDeviceType = None
@@ -5644,6 +5814,30 @@ class ServerConfig():
     @aButtonAction.setter
     def aButtonAction(self, value: str):
         self.aButtonAction = value
+
+    @property
+    def lButtonsRows(self) -> int:
+        return self._lButtonsRows
+
+    @lButtonsRows.setter
+    def lButtonsRows(self, value: int):
+        self._lButtonsRows = value
+
+    @property
+    def lButtonsCols(self) -> int:
+        return self._lButtonsCols
+
+    @lButtonsCols.setter
+    def lButtonsCols(self, value: int):
+        self._lButtonsCols = value
+
+    @property
+    def lButtons(self) -> list[list[LiveButton]]:
+        return self._lButtons
+
+    @lButtons.setter
+    def lButtons(self, value: list):
+        self._lButtons = value
 
     @property
     def curDeviceId(self) -> str:
@@ -7159,6 +7353,18 @@ class ServerConfig():
                             aButtonRow.append(button)
                         aButtons.append(aButtonRow)
                     setattr(sc, key, aButtons)
+            elif key == "_lButtons":
+                if value is None:
+                    setattr(sc, key, value)
+                else:
+                    lButtons = []
+                    for row in value:
+                        lButtonRow = []
+                        for btn in row:
+                            button = LiveButton.initFromDict(btn)
+                            lButtonRow.append(button)
+                        lButtons.append(lButtonRow)
+                    setattr(sc, key, lButtons)
             elif key == "_gpioDevices":
                 if value is None:
                     setattr(sc, key, value)

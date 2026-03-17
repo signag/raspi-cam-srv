@@ -57,6 +57,8 @@ Advanced Features   : Enabled
                       USB Cams, Histograms, Stereo Vision, extended Motion Detection
                       (Requires OpenCV, numpy, matplotlib)
 AI Camera Support   : Disabled
+Hardware PWM Support: Disabled
+                      Hardware PWM is required for jitter-free servo control
 
 Do you want to install with these settings? [Y/n]:
 
@@ -99,6 +101,8 @@ Advanced Features   : Enabled
                       USB Cams, Histograms, Stereo Vision, extended Motion Detection
                       (Requires OpenCV, numpy, matplotlib)
 AI Camera Support   : Disabled
+Hardware PWM Support: Disabled
+                      Hardware PWM is required for jitter-free servo control
 
 Do you want to install with these settings? [Y/n]:
 
@@ -192,6 +196,10 @@ Do you intend to use the Raspberry Pi AI Camera (imx500)? [y/N]: y
 
 AI Camera support enabled: true
 
+Do you intend to use Hardware PWM for jitter-free servo control? [y/N]: y
+
+Hardware PWM support enabled: true
+
 No more questions! Ready to start installation? [Y/n]:
 ```
 
@@ -200,6 +208,7 @@ No more questions! Ready to start installation? [Y/n]:
 - For recording audio, see [Recording Audio along with Video](./Settings.md#recording-audio-along-with-video).
 - For support of AI features for the imx500 camera, see [AI Camera Support](./AiCameraSupport.md).    
 (This is not available for Bullseye systems)
+- Hardware PWM support is only required if you intend to use [ServoPWM](./gpioDevices/ServoPWM.md) as [Device](./SettingsDevices.md) for controlling servos through [Actions](./TriggerActions.md).
 
 
 ### Installation Process
@@ -306,6 +315,30 @@ User service installed and started.
 === Access via http://raspi06:5000
 ==========================================
 
+```
+
+#### Check for Hardware PWM Support
+
+If you have selected to enable Hardware PWM support, the following information will be displayed:
+
+```
+=============================================================================================================
+Checking for Hardware PWM support on GPIO pins 12, 13, 18, 19 ...
+pinctrl get 12,13,18,19
+12: a0    pd | lo // GPIO12 = PWM0_CHAN0
+13: ip    -- | lo // GPIO13 = input
+18: ip    -- | lo // GPIO18 = input
+19: ip    -- | lo // GPIO19 = input
+
+If you see 'PWM0' or 'PWM1' in the output above, Hardware PWM support is available for the indicated pins.
+Otherwise, you need to specify device tree overlays in /boot/firmware/config.txt and reboot your Raspberry Pi.
+Depending on your RPI model and the required pins, add the following lines to /boot/firmware/config.txt:
+[all]
+dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
+[pi5]
+dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
+dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2
+=============================================================================================================
 ```
 
 ## Supervision
