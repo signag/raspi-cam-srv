@@ -1,5 +1,5 @@
 
-# Features V4.8.x
+# Features V4.9.x
 
 [![Up](img/goup.gif)](./index.md)
 
@@ -59,7 +59,7 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - [Exposure Control](./CameraControls_Exposure.md) for CSI cameras.
 - [Image Control](./CameraControls_Image.md) for CSI cameras as well as for USB cameras (if supported by the camera).
 - Panel for [Direct Control](./LiveDirectControl.md) of numeric control parameters.
-- **NEW:** Configurable [Live View buttons](./CameraControls_Ctrl.md) to be used for physical pan/tilt, light or control of other devices
+- Configurable [Live View buttons](./CameraControls_Ctrl.md) to be used for physical pan/tilt, light or control of other devices
 
 ### Photo Taking / Video Recording
 
@@ -125,7 +125,7 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 
 #### Additional Device Types
  - [Stepper Motor](./gpioDevices/StepperMotor.md)
- - **NEW:** [ServoPWM](./gpioDevices/ServoPWM.md) for jitter-free servo control with hardware PWM
+ - [ServoPWM](./gpioDevices/ServoPWM.md) for jitter-free servo control with hardware PWM
 
 ### Event Handling - Triggers and Actions
 
@@ -134,14 +134,16 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - Triggering by [Motion Detection](./TriggerMotion.md)
 - Triggering by Camera events (photo taken, video start, video stop)
 - [Configuration of Actions](./TriggerActions.md)
+- **NEW**: [Testing of Actions](./TriggerActions.md#testing-an-action)
 - Actions by [GPIO Output Devices](./SettingsDevices.md) (LED, buzzer, servo, motor)
+- **NEW**: All action methods of all [gpiozero Output Devices](https://gpiozero.readthedocs.io/en/stable/api_output.html#regular-classes) are supported
 - Actions by Camera (take photo, start/stop video)
 - [Camera Actions](./TriggerCameraActions.md) in case of motion detection (video duration, photo burst)
 - [Notification](./TriggerNotification.md) actions (mail, mail attachments)
 - [Action-to-Trigger Association](./TriggerTriggerActions.md)
-- [Event Viewer](./TriggerEventViewer.md#events)
+- [Event Viewer](./TriggerEventViewer.md)
 - [Event Calendar](./TriggerEventViewer.md)
-- [Detailed Event Information](./TriggerEventViewer.md#events)
+- [Detailed Event Information](./TriggerEventViewer.md)
 - Event Photos / Videos with motion detection frame
 - Event Photos / Videos with RoI RoNI
 

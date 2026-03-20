@@ -1,6 +1,6 @@
 # Triggers
 
-[![Up](img/goup.gif)](./Trigger.md)
+[![Up](img/goup.gif)](./TriggerOverview.md)
 
 This page is used for spacification of triggers.     
 Triggers are registered events occurring for the camera system or for GPIO input [devices](./SettingsDevices.md) which can be used to initiate one or multiple [actions](./TriggerActions.md).

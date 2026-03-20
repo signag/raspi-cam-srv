@@ -1,6 +1,6 @@
 # Trigger-Actions
 
-[![Up](img/goup.gif)](./Trigger.md)
+[![Up](img/goup.gif)](./TriggerOverview.md)
 
 On this page, you specify which actions are invoked in case of a specific Trigger event.
 

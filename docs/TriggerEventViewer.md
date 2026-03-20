@@ -1,39 +1,6 @@
-# Triggered Capture of Videos and Photos
+# Trigger / Events
 
-[![Up](img/goup.gif)](./Trigger.md)
-
-## Calendar
-
-The calendar gives an overview on the number of events which have been registered for a specific day:
-
-![EventCalendar](./img/Trigger_Calendar.jpg)
-
-Clicking on a red field navigates to the [Events](#events) display for this specific day.
-
-You can change the active month using the date control and navigation arrows, or return to the current month with the *Now* button.
-
-### Download Log
-
-You can download the [Log file](./TriggerActive.md#log-file) including a timeline of all events and associated actions.<br>
-Note that only those triggers and their associated actions will be included in the log, for which the [control parameter](./TriggerTriggers.md#control) *event_log* has the value "True".
-
-### Cleanup
-
-The *Cleanup* button can be used for removing old events.   
-This requires that the process is stopped.
-
-After pressing the button, a confirmation is required:   
-![CleanupConfirm](./img/Trigger_ConfirmCleanup.jpg)    
-The *Retention Period* for cleanup, shown in this confirmation, has been specified on the [Trigger/Control](./Trigger.md) page.
-
-For all events older than the *Retention Period*, cleanup will
-
-- remove all log file entries
-- delete all photo and video files
-- delete related database entries
-
-
-## Events
+[![Up](img/goup.gif)](./TriggerOverview.md)
 
 Event Details are shown in the Event Viewer for a specific day:
 
@@ -51,6 +18,8 @@ In case of videos, the first photo is always shown instead of the video on the l
 - whether a video or a photo is represented by the small picture can be distinguished by information on the video length.
 
 Selecting a video or photo shows it in the detail area on the right side.
+
+## Event Card
 
 The Event Card for each event     
 ![EventCard](./img/Trigger_EventCard.jpg)    
@@ -75,7 +44,9 @@ IOU_thr : *IOU Threshold*
 Motion_thr : *Motion Threshold*    
 Model : *Background Subtraction Model* (1=MOG2, 2=KNN)
 
-You may use the information to fine tune the algorithm parameters on the [Motion](./TriggerMotion.md#motion-detection-configuration) tab.
+You may use the information to fine tune the algorithm parameters on the [Motion](./TriggerMotion.md) tab.
+
+## Photos/Videos with ROI/RoNI
 
 When [Photos/Videos with RoI/RoNI](./TriggerMotion.md) has been activated, borders of RoIs/RoNIs are shown on photos and videos (for "Mean Square Diff" not no videos):
 

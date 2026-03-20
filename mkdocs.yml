@@ -1,4 +1,4 @@
-site_name: raspiCamSrv V4.8.x Documentation
+site_name: raspiCamSrv V4.9.x Documentation
 plugins:
     - search
     - mike
@@ -69,7 +69,9 @@ nav:
           - Exposure Series: PhotoSeriesExp.md
           - Focus Stack Series: PhotoSeriesFocus.md
       - Trigger Menu:
-          - Overview: Trigger.md
+          - Overview: TriggerOverview.md
+          - Introduction: Trigger.md
+          - Event Handling Control: TriggerControl.md
           - Trigger Configuration: TriggerTriggers.md
           - Action Configuration: TriggerActions.md
           - Trigger/Action Configuration: TriggerTriggerActions.md
@@ -77,7 +79,8 @@ nav:
           - Camera Action Configuration: TriggerCameraActions.md
           - Notification Configuration: TriggerNotification.md
           - Active Motion Capturing: TriggerActive.md
-          - Event Viewer and Calendar: TriggerEventViewer.md
+          - Event Viewer: TriggerEventViewer.md
+          - Event Calendar: TriggerCalendar.md
       - Cam Menu:
           - Overview: Cam.md
           - Web Cam Dialog: CamWebcam.md

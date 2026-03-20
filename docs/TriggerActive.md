@@ -1,6 +1,6 @@
 # Triggered Capture of Videos and Photos
 
-[![Up](img/goup.gif)](./Trigger.md)
+[![Up](img/goup.gif)](./TriggerOverview.md)
 
 # Active Motion Capturing
 

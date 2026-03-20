@@ -1149,8 +1149,72 @@ def castType(val:str, tpl:object) ->tuple[str, object]:
             - Error message
             - type-converted value
     """
+    logger.debug("castType - val=%s, tpl=%s", val, tpl)
     err = ""
     res = val
+    if type(tpl) is dict:
+        if "type" in tpl:
+            typ = tpl["type"]
+            if type(typ) is str:
+                if typ.casefold().endswith("ornone") == True:
+                    if val.casefold() == "none":
+                        res = None
+                        logger.debug("castType - err=%s, res=%s", err, res)
+                        return err, res
+                if typ.casefold().startswith("bool"):
+                    if val == "0":
+                        res = False
+                    elif val == "1":
+                        res = True
+                    elif val.casefold() == "false":
+                        res = False
+                    elif val.casefold() == "true":
+                        res = True
+                    else:
+                        err = "String does not represent boolean."
+                    logger.debug("castType - err=%s, res=%s", err, res)
+                    return err, res
+                if typ.casefold().startswith("int"):
+                    try:
+                        value = int(val)
+                    except Exception as e:
+                        err = f"Error parsing {val} to int: {type(e)}: {e}"
+                        logger.debug("castType - err=%s, res=%s", err, res)
+                        return err, res
+                if typ.casefold().startswith("float"):
+                    try:
+                        value = float(val)
+                    except Exception as e:
+                        err = f"Error parsing {val} to float: {type(e)}: {e}"
+                        logger.debug("castType - err=%s, res=%s", err, res)
+                        return err, res
+                if typ.casefold().startswith("str"):
+                    res = val
+                    logger.debug("castType - err=%s, res=%s", err, res)
+                    return err, res
+                if typ.casefold().startswith("tuple"):
+                    err, res = parseTuple(val)
+                    logger.debug("castType - err=%s, res=%s", err, res)
+                    return err, res
+            else:
+                value = castType(val, typ)
+            if type(value) == int \
+            or type(value) == float:
+                if "min" in tpl:
+                    if value < tpl["min"]:
+                        err = f"Value {val} is smaller than minimum {tpl['min']}"
+                if "max" in tpl:
+                    if value > tpl["max"]:
+                        err = f"Value {val} is greater than maximum {tpl['max']}"
+                if err == "":
+                    res = value
+                logger.debug("castType - err=%s, res=%s", err, res)
+                return err, res
+            else:
+                res = value
+                logger.debug("castType - err=%s, res=%s", err, res)
+                return err, res
+
     if type(val) is str:
         try:
             if type(tpl) is str:
@@ -1190,6 +1254,7 @@ def castType(val:str, tpl:object) ->tuple[str, object]:
             err = f"{type(e)} error for {val}: {e}"
     else:
         err = f"{val} should be a string rather than {type(val)}"
+    logger.debug("castType - err=%s, res=%s", err, res)
     return err, res
 
 @bp.route("/new_action", methods=("GET", "POST"))
@@ -1241,7 +1306,10 @@ def new_action():
                                     elmtId = f"action_{method}_param_{param}_value"
                                     if not request.form.get(elmtId) is None:
                                         value = request.form.get(elmtId)
-                                        err, params[param] = castType(value, paramVal)
+                                        errt, params[param] = castType(value, paramVal)
+                                        if errt != "":
+                                            if err == "":
+                                                err = f"Parameter {param}: {errt}"
                                         tmp["actionTarget"] = ctarget
                                     else:
                                         err = " "
@@ -1256,7 +1324,10 @@ def new_action():
                                         elmtId = f"action_{method}_control_{ctrl}_value"
                                         if not request.form.get(elmtId) is None:
                                             value = request.form.get(elmtId)
-                                            err, control[ctrl] = castType(value, ctrlVal)
+                                            errt, control[ctrl] = castType(value, ctrlVal)
+                                            if errt != "":
+                                                if err == "":
+                                                    err = f"Control {ctrl}: {errt}"
                                             tmp["actionTarget"] = ctarget
                                         else:
                                             err = " "
@@ -1344,14 +1415,22 @@ def action_activation():
     if request.method == "POST":
         err = ""
         cnt = 0
+        activationChanged = False
         newActions = []
+        testaction = None
         for action in tc.actions:
             elmtid = f"action{action.id}_isactive"
-            action.isActive = not request.form.get(elmtid) is None
+            isActive = not request.form.get(elmtid) is None
+            if action.isActive != isActive:
+                activationChanged = True
+            action.isActive = isActive
             elmtiddel = f"action{action.id}_delete"
+            elmtidtest = f"action{action.id}_test"
             delete = not request.form.get(elmtiddel) is None
             if delete == False:
                 newActions.append(action)
+                if not request.form.get(elmtidtest) is None:
+                    testaction = action
             else:
                 use, actionUsage = checkActionUsage(action.id, actionUsage, sc)
                 if use == False:
@@ -1367,10 +1446,15 @@ def action_activation():
         if len(nondelete) > 0:
             err = f"Actions {nondelete} could not be deleted because they are used in action buttons {actionUsage}"
 
+        if err.strip() == "":
+            if not testaction is None:
+                err = TriggerHandler.doAction(testaction.id)
+
         if err.strip() != "":
             flash(err)
-        sc.unsavedChanges = True
-        sc.addChangeLogEntry(f"Action activation changed")
+        if activationChanged:
+            sc.unsavedChanges = True
+            sc.addChangeLogEntry(f"Action activation changed")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/trigger_action", methods=("GET", "POST"))

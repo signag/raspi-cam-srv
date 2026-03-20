@@ -164,6 +164,24 @@ gpioDeviceTypes = [
         "actionTargets": [
             {"method": "on", "params": {}, "control": {"duration": 0.0}},
             {"method": "off", "params": {}, "control": {}},
+            {"method": "toggle", "params": {}, "control": {}},
+            {
+                "method": "blink",
+                "params": {
+                    "on_time": {"value": 1.0, "type": "float", "min": 0.0},
+                    "off_time": {"value": 1.0, "type": "float", "min": 0.0},
+                    "n": {"value": None, "type": "intOrNone", "min": 1},
+                    "background": {"value": True, "type": "bool"}
+                },
+                "control": {"duration": 0.0}
+            },
+            {
+                "method": "value",
+                "params": {
+                    "value": {"value": 1, "type": "int", "min": 0, "max": 1}
+                },
+                "control": {}
+            },
         ],
     },
     {
@@ -182,6 +200,41 @@ gpioDeviceTypes = [
         "actionTargets": [
             {"method": "on", "params": {}, "control": {"duration": 0.0}},
             {"method": "off", "params": {}, "control": {}},
+            {"method": "toggle", "params": {}, "control": {}},
+            {
+                "method": "blink",
+                "params": {
+                    "on_time": {"value": 1.0, "type": "float", "min": 0.0},
+                    "off_time": {"value": 1.0, "type": "float", "min": 0.0},
+                    "fade_in_time": {"value": 0.0, "type": "float", "min": 0.0},
+                    "fade_out_time": {"value": 0.0, "type": "float", "min": 0.0},
+                    "n": {"value": None, "type": "intOrNone", "min": 1},
+                    "background": {"value": True, "type": "bool"}
+                },
+                "control": {"duration": 0.0}
+            },
+            {
+                "method": "pulse", 
+                "params": {
+                    "fade_in_time": 1.0, 
+                    "fade_out_time": 1.0,
+                    "n": {"value": None, "type": "intOrNone", "min": 1},
+                    "background": True
+                }, 
+                "control": {"duration": 0.0}
+            },
+            {
+                "method": "value",
+                "params": {
+                    "value": {
+                        "value": 1.0,
+                        "type": "float",
+                        "min": 0.0,
+                        "max": 1.0,
+                    }
+                },
+                "control": {}
+            },
         ],
     },
     {
@@ -207,12 +260,40 @@ gpioDeviceTypes = [
         ],
         "testStepDuration": 1,
         "actionTargets": [
+            {"method": "on", "params": {}, "control": {"duration": 0.0}},
+            {"method": "off", "params": {}, "control": {}},
+            {"method": "toggle", "params": {}, "control": {}},
+            {
+                "method": "blink",
+                "params": {
+                    "on_time": {"value": 1.0, "type": "float", "min": 0.0},
+                    "off_time": {"value": 1.0, "type": "float", "min": 0.0},
+                    "fade_in_time": {"value": 0.0, "type": "float", "min": 0.0},
+                    "fade_out_time": {"value": 0.0, "type": "float", "min": 0.0},
+                    "on_color": (1.0, 1.0, 1.0),
+                    "off_color": (0.0, 0.0, 0.0),
+                    "n": {"value": None, "type": "intOrNone", "min": 1},
+                    "background": {"value": True, "type": "bool"}
+                },
+                "control": {"duration": 0.0}
+            },
+            {
+                "method": "pulse", 
+                "params": {
+                    "fade_in_time": 1.0, 
+                    "fade_out_time": 1.0,
+                    "on_color": (1.0, 1.0, 1.0),
+                    "off_color": (0.0, 0.0, 0.0),
+                    "n": {"value": None, "type": "intOrNone", "min": 1},
+                    "background": True
+                }, 
+                "control": {"duration": 0.0}
+            },
             {
                 "method": "value",
                 "params": {"value": (0.0, 0.0, 0.0)},
                 "control": {"duration": 0.0},
             },
-            {"method": "off", "params": {}, "control": {}},
         ],
     },
     {
@@ -230,6 +311,22 @@ gpioDeviceTypes = [
         "actionTargets": [
             {"method": "on", "params": {}, "control": {"duration": 0.0}},
             {"method": "off", "params": {}, "control": {}},
+            {"method": "toggle", "params": {}, "control": {}},
+            {
+                "method": "beep",
+                "params": {
+                    "on_time": 1.0, 
+                    "off_time": 1.0, 
+                    "n": {"value": None, "type": "intOrNone", "min": 1},
+                    "background": True
+                },
+                "control": {"duration": 0.0}
+            },
+            {
+                "method": "value",
+                "params": {"value": 1, "type": "int", "min": 0, "max": 1},
+                "control": {"duration": 0.0}
+            },
         ],
     },
     {
@@ -366,6 +463,7 @@ gpioDeviceTypes = [
                 "params": {"speed": 1.0},
                 "control": {"duration": 0.0, "steps": 1},
             },
+            {"method": "reverse", "params": {}, "control": {}},
             {"method": "stop", "params": {}, "control": {}},
         ],
     },

@@ -825,6 +825,20 @@
                     {% endif %}
                     {% if params|length() > 0 %}
                     {% for param, value in params.items() %}
+                    {% if value is mapping %}
+                    {% if "value" in value %}
+                    {% set vval = value.value %}
+                    {% if vval is none %}
+                    {% set val = "None" %}
+                    {% else %}
+                    {% set val = vval %}
+                    {% endif %}
+                    {% else %}
+                    {% set val = "" %}
+                    {% endif %}
+                    {% else %}
+                    {% set val = value %}
+                    {% endif %}
                     <tr>
                         <td class="w3-tooltip" style="width:20%">
                             <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
@@ -837,7 +851,7 @@
                         </td>
                         <td style="width:30%">
                             <input style="width: 100%" type="text" id="action_{{ method }}_param_{{ param }}_value" name="action_{{ method }}_param_{{ param }}_value"
-                                value="{{ value }}">
+                                value="{{ val }}">
                         </td>
                         <td style="width:30%">
                         </td>
@@ -936,7 +950,10 @@
                                     Control
                                 </th>
                                 <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
-                                    Delete
+                                    Del
+                                </th>
+                                <th style="position:sticky;top:0;z-index:10; background-color: #f1f1f1;">
+                                    Test
                                 </th>
                             </tr>
                         </thead>
@@ -984,6 +1001,15 @@
                                     {% else %}
                                     <input type="checkbox" id="action{{ action.id }}_delete" name="action{{ action.id }}_delete" value="0"
                                         onchange="countActionDelete('action{{ action.id }}_delete')">
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if sc.isEventhandling %}
+                                    <input type="checkbox" id="action{{ action.id }}_test" name="action{{ action.id }}_test" value="0"
+                                        onchange="countActionTest('action{{ action.id }}_test')" disabled>
+                                    {% else %}
+                                    <input type="checkbox" id="action{{ action.id }}_test" name="action{{ action.id }}_test" value="0"
+                                        onchange="countActionTest('action{{ action.id }}_test')">
                                     {% endif %}
                                 </td>
                             </tr>
@@ -2038,6 +2064,7 @@
     <script>
         var triggerDelete = 0;
         var actionDelete = 0;
+        var actionTest = 0;
         var activeTab = "";
 
         function openTriggerTab(trgTabName, trgTabButton) {
@@ -2183,7 +2210,7 @@
             }
         }
         function onlineHelp() {
-            window.open("{{ sc.getBaseHelpUrl() }}/Trigger/");
+            window.open("{{ sc.getBaseHelpUrl() }}/TriggerOverview/");
         }
         function dosubmitTriggerSource(){
             td = document.getElementById("triggerdevice");
@@ -2281,6 +2308,15 @@
             }
             //console.log("triggerDelete=", triggerDelete, " checked=", cb.checked);
         }
+        function countActionTest(id){
+            cb = document.getElementById(id);
+            if (cb.checked == true){
+                actionTest += 1;
+            } else {
+                actionTest -= 1;
+            }
+            //console.log("triggerDelete=", triggerDelete, " checked=", cb.checked);
+        }
         function confirmDeleteActions(form) {
             if (actionDelete > 0){
                 if (confirm("Do you want to delete the selected actions?")) {
@@ -2288,6 +2324,16 @@
                     document.getElementById(form).submit();
                 } else {
                     document.getElementById(form).method = "get";
+                }
+            } else {
+                if (actionTest > 0){
+                    if (actionTest > 1){
+                        confirm("Only 1 action can be selected for testing")
+                        document.getElementById(form).method = "get";
+                    } else {
+                        document.getElementById(form).method = "post";
+                        document.getElementById(form).submit();
+                    }
                 }
             }
         }

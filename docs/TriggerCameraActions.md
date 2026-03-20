@@ -1,6 +1,6 @@
 # Camera Actions
 
-[![Up](img/goup.gif)](./Trigger.md)
+[![Up](img/goup.gif)](./TriggerOverview.md)
 
 
 ![Action](./img/Trigger_Action.jpg)

@@ -1,8 +1,10 @@
-# Triggered Capture of Videos and Photos
+# Trigger / Motion Detection Configuration
 
-[![Up](img/goup.gif)](./Trigger.md)
+[![Up](img/goup.gif)](./TriggerOverview.md)
 
-# Motion Capturing
+![Motion](./img/Trigger_Motion.jpg)
+
+## Algorithms
 
 With Motion Capturing, you may trigger actions in case that **raspiCamSrv** has detected changes in the visual area of the active camera.    
 Sensitivity of detection is strongly dependent on the algorithm used for detection.
@@ -18,12 +20,9 @@ The latter 3 variants are implementations of algorithms proposed by Isaac Berrio
 
 Whereas the *Mean Square Difference* is available in general, the other algorithms require [special preconditions for Extended Motion Capturing](./Settings.md#extended-motion-detection-support).
 
+## Configuration
 
-## Motion Detection Configuration
-
-![Motion](./img/Trigger_Motion.jpg)
-
-This section allows specification of motion capturing aspects:
+This screen allows specification of motion capturing aspects:
 
 - *Motion Detection Algorithm*    
 allows selecting the algorithm by which the system will recognize motion through its camera.   
@@ -40,7 +39,7 @@ is the minimum flow threshold for motion used in *Optical Flow* algorithm (see [
 - *Background Subtraction Model*    
 is the model used for generating a background model in *Background Subtraction* algorithm. (see [IB-3](https://medium.com/@itberrios6/introduction-to-motion-detection-part-3-025271f66ef9))
 - *Video with Bounding Boxes*    
-allows selection of the type of video recorded for a motion event, if activated on the [Control](./Trigger.md#control) tab.   
+allows selection of the type of video recorded for a motion event, if activated on the [Control](./TriggerControl.md) tab.   
 If activated, the video will show bounding boxes around areas for which motion has been detected.   
 Otherwise, normal videos will be recorded.
 - *Use Regions of Interest*    
@@ -128,7 +127,7 @@ For a detailed description of this algorithm, see [Introduction to Motion Detect
 This algorithm can normally be expected to give best results.   
 The fact that the shown example has a lower quality compared to *Optical Flow* may be attributed to the 'stationary' movement of the object which 'burns' itself into the background model because each frame contributes to the model.
 
-### Performance
+## Performance
 
 The performance requirements for the different algorithms have an impact on the frame rates which can be achieved during testing and an active Motion Capturing process.    
 
@@ -172,7 +171,7 @@ Motion tracking with different algorithms was run for 30 minutes in the followin
 
 Although there is a significant impact on CPU utilization, especially for the *Optical Flow* algorithm, CPU temperature is within reasonable ranges.
 
-### Recorded Videos
+## Recorded Videos
 
 If the option to record videos with bounding boxes has been chosen, the videos are generated frame by frame within the algorithm.   
 The framerate needs to be specified before frames are added to the video.    

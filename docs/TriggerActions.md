@@ -1,6 +1,6 @@
 # Actions
 
-[![Up](img/goup.gif)](./Trigger.md)
+[![Up](img/goup.gif)](./TriggerOverview.md)
 
 This screen is used to specify actions which can be started by **raspiCamSrv**, either as a reaction on a [Trigger](./TriggerTriggers.md) or manually through an [Action Button](./ConsoleActionButtons.md).
 
@@ -74,13 +74,19 @@ You can activate/deactivate Actions by changing the *Active* check box and submi
 
 ## Deletion of Actions
 
-You can select one or multiple actions for deletion in the *Delete* column and submit the selection.
+You can select one or multiple actions for deletion in the *Del* column and submit the selection.
 
-The *Delete* column will only be accessible for change if the event-handling thread is currently not active.
+The *Del* column will only be accessible for change if the event-handling thread is currently not active.
 
 You cannot delete an action if it is used in an [Action Button](./SettingsAButtons.md).
 
 When an action is deleted, also its reference in the [Trigger-Actions](./TriggerTriggerActions.md) will be removed.
+
+## Testing an Action
+
+It is recommended to test a new action, before it is used in a [Trigger assignment](./TriggerTriggerActions.md) or in an assignment to an [Action Button](./SettingsAButtons.md) or a [Live Button](./SettingsLButtons.md).
+
+For testing, you select a single action in the *Test* column and submit the selection.
 
 ## Changing Actions
 

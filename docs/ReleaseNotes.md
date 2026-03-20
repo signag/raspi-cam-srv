@@ -2,6 +2,18 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.9.0
+
+### New Features
+
+- New [Actions](./TriggerActions.md) can now be immediately [tested](./TriggerActions.md#testing-an-action) before they are used in a [Trigger assignment](./TriggerTriggerActions.md) or in an assignment to an [Action Button](./SettingsAButtons.md) or a [Live Button](./SettingsLButtons.md).
+- [Device Type Configuration](./SettingsDevices.md#device-type-configuration) for [gpiozero Output Devices](https://gpiozero.readthedocs.io/en/stable/api_output.html#regular-classes) has been extended to allow [Action Configuration](./TriggerActions.md) for more action methods:
+<br>LED   : toggle, blink, value
+<br>PWMLED: toggle, blink, pulse, value
+<br>RGBLED: on, off, toggle, blink, pulse
+<br>Buzzer: toggle, beep, value
+<br>Motor : reverse
+
 ## V4.8.0
 
 ### New Features
@@ -18,8 +30,8 @@
 
 - Fixed ```TypeError: object of type 'CompletedProcess' has no len()``` which could occur when the server was restarted with button *Restart Server* in [Settings / Configuration](./SettingsConfiguration.md)
 - Fixed command execution from [Interactive Commandline](./ConsoleVButtons.md#interactive-commandline): In some situations it could happen that after command execution a different dialog was shown.
-- Created clearer error message in [Settings/Devices](./SettingsDevices.md) when test or calibration was started while [Event Handling](./Trigger.md#control) is active. Active event handling may have exclusive access on devices.
-- If a [Device Configuration](./SettingsDevices.md) has been modified while [Event Handling](./Trigger.md#control) is active, a hint to restart Event Handling is now displayed.
+- Created clearer error message in [Settings/Devices](./SettingsDevices.md) when test or calibration was started while [Event Handling](./TriggerControl.md) is active. Active event handling may have exclusive access on devices.
+- If a [Device Configuration](./SettingsDevices.md) has been modified while [Event Handling](./TriggerControl.md) is active, a hint to restart Event Handling is now displayed.
 - Fixed missing values for *Number of Rows* and *Number of Columns* in dialog [Settings/Action Buttons](./SettingsAButtons.md)
 - Fixed error ```Error in None: Error <class 'TypeError'> while executing action STP1-0: StepperMotor.rotate_to() got an unexpected keyword argument 'angle'```
 
@@ -209,7 +221,7 @@ Also, when the server is started with stored configuration, it is checked whethe
 ### Bugfixes
 
 - Fixed [Notification](./TriggerNotification.md) for [Motion Capturing](./TriggerMotion.md).    
-In special cases of parameters for [Trigger Control](./Trigger.md#control), [Camera Actions](./TriggerCameraActions.md) or Video/Photos to be included in the message (see [Notification Settings](./TriggerNotification.md)), notification mails were not sent or images were not included in the mails.   
+In special cases of parameters for [Trigger Control](./TriggerControl.md), [Camera Actions](./TriggerCameraActions.md) or Video/Photos to be included in the message (see [Notification Settings](./TriggerNotification.md)), notification mails were not sent or images were not included in the mails.   
 This fix resolves [raspiCamSrv Issue #76 (Notification email)](https://github.com/signag/raspi-cam-srv/issues/76)
 
 ## V3.7.0
@@ -261,7 +273,7 @@ In this case, scalerCrop is now activated in the controls, so that it will also 
 ### Bugfixes
 
 - Fixes "KeyError: 'GPIO'" which could occur when the [event handling system](./Trigger.md) was stopped without having fired a GPIO trigger during its life time.
-- Fixed an issue where [Test Motion Detection](./TriggerMotion.md#testing-motion-capturing) did not work if it was started within a period where [Trigger Operation](./Trigger.md#control) was not active.
+- Fixed an issue where [Test Motion Detection](./TriggerMotion.md#testing-motion-capturing) did not work if it was started within a period where [Trigger Operation](./TriggerControl.md) was not active.
 
 ## V3.5.6
 
@@ -389,7 +401,7 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 - [Trigger](./TriggerTriggers.md) allow configuring *MotionDetector* trigger for *CAM-1*: *when_motion_detected*.<br>This trigger fires when a motion is detected by the cameras [motion detection](./TriggerMotion.md) algorithms.
 - [Device Types](./SettingsDevices.md#device-type-configuration) for GPIO devices include now additional GPIO base classes which allows integrating more general devices:<br>- DigitalInputDevice<br>- DigitalOutputDevice<br>- OutputDevice
 - An [indicator](./UserGuide.md#title-bar) has been added which indicates unsaved configuration changes.
-- The [event log](./TriggerActive.md#log-file) can now be downloaded from the [Calendar view](./TriggerEventViewer.md#calendar)
+- The [event log](./TriggerActive.md#log-file) can now be downloaded from the [Calendar view](./TriggerCalendar.md)
 
 ### Changes
 
@@ -545,7 +557,7 @@ See [raspi-cam-srv Issue #60](https://github.com/signag/raspi-cam-srv/issues/60)
 
 ### Bugfixes
 
-- Fixed error ```The browser (or proxy) sent a request that this server could not understand.``` which ocurred when pressing *Submit* in the [Control](./Trigger.md#control) tab of the [Trigger](./Trigger.md) menu.<br>Resolves raspi-cam-srv issue #27 [Trigger Control Submit make server error](https://github.com/signag/raspi-cam-srv/issues/27)
+- Fixed error ```The browser (or proxy) sent a request that this server could not understand.``` which ocurred when pressing *Submit* in the [Control](./TriggerControl.md) tab of the [Trigger](./Trigger.md) menu.<br>Resolves raspi-cam-srv issue #27 [Trigger Control Submit make server error](https://github.com/signag/raspi-cam-srv/issues/27)
 
 ## V2.9.2
 
@@ -844,7 +856,7 @@ Previously, the error was only shown in the [events logfile](./TriggerActive.md#
 
 - For Raspberry Pi Zero, use the *lowres* stream (Live View Configuration) for recording videos during motion capture.   
 During motion capture, the *Live View* camera configuration is used because the live stream is required for detecting motion. However, the *Buffer Count* of 2, used for this configuration for Pi Zero (see [V2.1.2](#v212)), is too small for video recording with the resolution of the *Video* configuration.
-- Fixed an error which could occur when [viewing events](./TriggerEventViewer.md#events) when placeholder photos for videos were not yet read from the database.
+- Fixed an error which could occur when [viewing events](./TriggerEventViewer.md) when placeholder photos for videos were not yet read from the database.
 
 ## V2.2.2
 
