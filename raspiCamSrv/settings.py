@@ -1455,10 +1455,13 @@ def new_device():
         msg = ""
         deviceId = request.form["newdeviceid"]
         deviceTypeId = request.form["newdevicetype"]
-        for dev in sc.gpioDevices:
-            if dev.id == deviceId:
-                msg = "Device IDs must be unique! A device with this ID exists already."
-                break
+        if deviceId.strip() == "":
+            msg = "Device ID cannot be empty"
+        else:
+            for dev in sc.gpioDevices:
+                if dev.id == deviceId:
+                    msg = f"Device IDs must be unique! A device with ID {deviceId} exists already."
+                    break
         if msg == "":
             device = GPIODevice()
             device.id = deviceId

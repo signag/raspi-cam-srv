@@ -1,5 +1,5 @@
 
-# Features V4.9.x
+# Features V4.10.x
 
 [![Up](img/goup.gif)](./index.md)
 
@@ -58,6 +58,7 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - [Auto Exposure Control](./CameraControls_AutoExposure.md) for CSI cameras.
 - [Exposure Control](./CameraControls_Exposure.md) for CSI cameras.
 - [Image Control](./CameraControls_Image.md) for CSI cameras as well as for USB cameras (if supported by the camera).
+- **NEW**: Automatic White Balance using Nueral Networks can be activated through [Modification of Tuning Files](./tutorials/AWB_with_neural_networks.md)
 - Panel for [Direct Control](./LiveDirectControl.md) of numeric control parameters.
 - Configurable [Live View buttons](./CameraControls_Ctrl.md) to be used for physical pan/tilt, light or control of other devices
 
@@ -100,6 +101,7 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - [Control of Photo Series](./PhotoSeries.md) (start, stop, pause, resume).
 - [Download of Photo Series](./PhotoSeries.md).
 - [Timelapse Series](./PhotoSeriesTimelapse.md) with optional sunrise/sunset restrictions.
+- **NEW**: [Sun-Controlled Timelapse Series](./PhotoSeriesTimelapse.md#azimuth-mode) with well-defined sun azimuth.
 - [Exposure Series](./PhotoSeriesExp.md) with varying exposure time or gain (ISO).
 - [Exposure Series Result](./PhotoSeriesExp.md#result) showing histograms.
 - [Focus Stack Series](./PhotoSeriesFocus.md) iterating through a range of focus settings.
@@ -134,9 +136,9 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - Triggering by [Motion Detection](./TriggerMotion.md)
 - Triggering by Camera events (photo taken, video start, video stop)
 - [Configuration of Actions](./TriggerActions.md)
-- **NEW**: [Testing of Actions](./TriggerActions.md#testing-an-action)
+- [Testing of Actions](./TriggerActions.md#testing-an-action)
 - Actions by [GPIO Output Devices](./SettingsDevices.md) (LED, buzzer, servo, motor)
-- **NEW**: All action methods of all [gpiozero Output Devices](https://gpiozero.readthedocs.io/en/stable/api_output.html#regular-classes) are supported
+- All action methods of all [gpiozero Output Devices](https://gpiozero.readthedocs.io/en/stable/api_output.html#regular-classes) are supported
 - Actions by Camera (take photo, start/stop video)
 - [Camera Actions](./TriggerCameraActions.md) in case of motion detection (video duration, photo burst)
 - [Notification](./TriggerNotification.md) actions (mail, mail attachments)

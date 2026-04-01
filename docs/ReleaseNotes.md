@@ -2,6 +2,23 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.10.0
+
+### New Features
+
+- [Photo Series of Type "Timelapse"](./PhotoSeriesTimelapse.md) were extended with a new [Azimuth Mode](./PhotoSeriesTimelapse.md#azimuth-mode). This allows taking multi-day photo series where photos are taken at times when the sun position has specific azimuth values.
+- Extended capabilities of ```GET api probe``` [API](./API.md) WebService endpoint:    
+Now, the ```PhotoSeriesCfg``` object and its properties are accessible which represents the settings for photo series.
+- [Information / Software Stack](./Information_Sys.md) now also shows version of libcamera.
+- A tutorial has been added which shows how to enable [Neural Network-based Automatic White Balance](./tutorials/AWB_with_neural_networks.md)
+
+### Bugfixes
+
+- Empty *ID* is no longer possible when creating a new [Device](./SettingsDevices.md)
+- Fixed error ```AttributeError: 'Picamera2' object has no attribute 'allocator'``` which could occur when the Flask server was started or restarted with an active [Photo Series](./PhotoSeries.md) for which *Cont. on Server Start* was active.
+- Fixed errors which could occur when creating Histograms ([Photo Taking on Live screen](./Phototaking.md#histogram) or [Exposure Series](./PhotoSeriesExp.md))
+<br>This resolves [raspi.cam-srv Issue #89](https://github.com/signag/raspi-cam-srv/discussions/89).
+
 ## V4.9.0
 
 ### New Features

@@ -1315,6 +1315,7 @@ def generateHistogram(sc: ServerConfig):
         logger.debug(
             "In generateHistogram - Histogram success: %s", sc.displayHistogram
         )
+        plt.close()
     except Exception as e:
         sc.displayHistogram = "histogramfailed.jpg"
         logger.error("Histogram generation error: %s", e)

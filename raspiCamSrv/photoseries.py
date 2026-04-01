@@ -651,7 +651,8 @@ def calcSunControlledSeries(sr: Series, sun: Sun):
         - sr (Series): The series to be processed
     """
     logger.debug("In calcSunControlledSeries")
-    if sr.isSunControlledSeries == True:
+    if sr.isSunControlledSeries == True \
+    and sr.sunCtrlMode == 1:
         serend = sr.end
         dayStart = sr.start.astimezone(ZoneInfo(sun.sunTimezone()))
         now = datetime.now(tz=ZoneInfo(sun.sunTimezone()))
@@ -713,6 +714,49 @@ def calcSunControlledSeries(sr: Series, sun: Sun):
         sr.nrShots = cnt
         logger.debug("calcSunControlledSeries - sr.end=%s, sr.nrShots=%s", sr.end, sr.nrShots)
 
+def calcSunAzimuthSeries(sr: Series, sun: Sun):
+    """Determine series end and # shots for sun-azimuth-controlled series
+
+    Args:
+        - sr (Series): The series to be processed
+    """
+    logger.debug("In calcSunAzimuthSeries")
+    err = ""
+    if sr.isSunControlledSeries == True \
+    and sr.sunCtrlMode == 2:
+        start = sr.start.astimezone(ZoneInfo(sun.sunTimezone()))
+        now = datetime.now(tz=ZoneInfo(sun.sunTimezone()))
+        if start < now:
+            start = now
+        logger.debug("calcSunAzimuthSeries - Start at %s", start)
+        serend = start
+        day = 1
+        cnt = sr.curShots
+        if not cnt:
+            cnt = 0
+        cur = start
+        while day <= sr.sunCtrlPeriods and err == "":
+            dat = cur.strftime("%Y-%m-%d")
+            tim = datetime.fromisoformat(dat)
+            for a in sr.sunAzimuths:
+                times = sun.find_times_for_azimuth(tim, a)
+                if len(times) == 0:
+                    err = f"Azimuth {a} is not reached at day {day} ({dat})"
+                    break
+                else:
+                    if times[0]["time"] > start:
+                        cnt += 1
+                        serend = times[0]["time"]
+            day += 1
+            cur += timedelta(days=1)
+        if err == "":
+            sr.end = serend
+            sr.nrShots = cnt
+            logger.debug("calcSunAzimuthSeries - sr.end=%s, sr.nrShots=%s", sr.end, sr.nrShots)
+        else:
+            logger.debug("calcSunAzimuthSeries - error: %s", err)
+    return err
+
 @bp.route("/tlseries_properties", methods=("GET", "POST"))
 @login_required
 def tlseries_properties():
@@ -728,105 +772,234 @@ def tlseries_properties():
     sc.curMenu = "photoseries"
     if request.method == "POST":
         ok = True
+        msg = ""
         sc.lastPhotoSeriesTab = "tldetails"
         locked = True
         if sr.status == "NEW" or sr.status == "READY":
             locked = False
-        if request.form.get("issuncontrolled") is None:
-            if sr.isSunControlledSeries == True:
-                if not locked:
-                    sr.isSunControlledSeries = False
-                else:
-                    ok = False
-                    msg="Series Type cannot be changed for a Series with status " + sr.status + "."
-                    flash(msg)
-        else:
-            msg = ""
-            if sr.isFocusStackingSeries or sr.isExposureSeries:
-                ok = False
-                if sr.isFocusStackingSeries:
-                    msg = "The series is already marked as Focus Stack"
-                if sr.isExposureSeries:
-                    msg = "The series is already marked as Exposure Series"
+
+        if locked == False:
+            if request.form.get("issuncontrolled") is None:
+                sr.isSunControlledSeries = False
+                sr.resetSunCtrlData()
             else:
-                if sr.isSunControlledSeries == False:
-                    if locked:
-                        ok = False
-                        msg="Series Type cannot be changed for a Series with status " + sr.status + "."
-                if ok:
-                    if sc.locLatitude == 0.0 \
-                    and sc.locLongitude == 0.0 \
-                    and sc.locElevation == 0.0:
-                        ok = False
-                        msg = "Please go to 'Settings' and set Latitude, Longitude, Elevation and Time Zone"
-                if ok:
+                if sr.isFocusStackingSeries or sr.isExposureSeries:
+                    ok = False
+                    if sr.isFocusStackingSeries:
+                        msg = "The series is already marked as Focus Stack"
+                    if sr.isExposureSeries:
+                        msg = "The series is already marked as Exposure Series"
+                else:
                     sr.isSunControlledSeries = True
-                    interval = float(request.form["serinterval2"])
-                    nrDays = int(request.form["sunctrlperiods"])
-                    
-                    p1StartRef = int(request.form["sunctrlstart1trg"])
-                    p1StartShift = int(request.form["sunctrlstart1shft"])
-                    p1EndRef = int(request.form["sunctrlend1trg"])
-                    p1EndShift = int(request.form["sunctrlend1shft"])
-                    p2StartRef = int(request.form["sunctrlstart2trg"])
-                    p2StartShift = int(request.form["sunctrlstart2shft"])
-                    p2EndRef = int(request.form["sunctrlend2trg"])
-                    p2EndShift = int(request.form["sunctrlend2shft"])
-                    if p1StartRef == 0 or p1EndRef == 0:
-                        ok = False
-                        msg = "Please specify Reference for Start and End for Period 1!"
-                    else:
-                        if p1StartRef == p1EndRef and p1StartShift >= p1EndShift:
-                            ok = False
-                            msg = "The specification for Period 1 is invalid!"
-                    if p2StartRef != 0 or p2EndRef != 0:
-                        if p2StartRef == 0 or p2EndRef == 0:
-                            ok = False
-                            msg = "Please specify Reference for Start and End for Period 2 or set both to Unused!"
-                        else:
-                            if p2StartRef == p2EndRef and p2StartShift >= p2EndShift:
-                                ok = False
-                                msg = "The specification for Period 2 is invalid!"
+                    logger.debug("tlseries_properties - Series marked as Sun-Controlled Series")
+
+                    if sr.isSunControlledSeries == True:
+                        mode = int(request.form["sunctrlmode"])
+                        logger.debug("tlseries_properties - Selected Sun-Control Mode: %s", mode)
+                        sr.sunCtrlMode = mode
+
+        if sr.isSunControlledSeries == True:
+            if sc.locLatitude == 0.0 \
+            and sc.locLongitude == 0.0 \
+            and sc.locElevation == 0.0:
+                ok = False
+                msg = "Please go to 'Settings' and set Latitude, Longitude, Elevation and Time Zone"
             if ok:
-                sr.interval = interval
+                nrDays = int(request.form["sunctrlperiods"])
+                sr.sunCtrlPeriods = nrDays
+
                 sun = Sun(sc.locLatitude, sc.locLongitude, sc.locElevation, sc.locTzKey)
                 now = datetime.now()
                 dat = now.strftime("%Y-%m-%d")
                 tim = datetime.fromisoformat(dat)
-                sr.sunrise, sr.sunset = sun.sunrise_sunset(tim)
-                sr.sunCtrlPeriods = nrDays
-                sr.sunCtrlStart1Trg = p1StartRef
-                sr.sunCtrlStart1Shft = p1StartShift
-                if p1StartRef == 1:
-                    sr.sunCtrlStart1 = sr.sunrise + timedelta(minutes=p1StartShift)
-                if p1StartRef == 2:
-                    sr.sunCtrlStart1 = sr.sunset + timedelta(minutes=p1StartShift)
-                sr.sunCtrlEnd1Trg = p1EndRef
-                sr.sunCtrlEnd1Shft = p1EndShift
-                if p1EndRef == 1:
-                    sr.sunCtrlEnd1 = sr.sunrise + timedelta(minutes=p1EndShift)
-                if p1EndRef == 2:
-                    sr.sunCtrlEnd1 = sr.sunset + timedelta(minutes=p1EndShift)
-                sr.sunCtrlStart2Trg = p2StartRef
-                sr.sunCtrlStart2Shft = p2StartShift
-                if p2StartRef == 1:
-                    sr.sunCtrlStart2 = sr.sunrise + timedelta(minutes=p2StartShift)
-                if p2StartRef == 2:
-                    sr.sunCtrlStart2 = sr.sunset + timedelta(minutes=p2StartShift)
-                sr.sunCtrlEnd2Trg = p2EndRef
-                sr.sunCtrlEnd2Shft = p2EndShift
-                if p2EndRef == 1:
-                    sr.sunCtrlEnd2 = sr.sunrise + timedelta(minutes=p2EndShift)
-                if p2EndRef == 2:
-                    sr.sunCtrlEnd2 = sr.sunset + timedelta(minutes=p2EndShift)
-                    
-                calcSunControlledSeries(sr, sun)
-            else:
-                flash(msg)
+                if sr.sunCtrlMode == 1:
+                    sr.sunrise, sr.sunset = sun.sunrise_sunset(tim)
+                    sr.resetSunAzimuthata()
+                if sr.sunCtrlMode == 2:
+                    sr.resetSunSunriseData()
+                    if request.form.get("sunazimuthtime") is None:
+                        sunAzimuthTime = None
+                    else:
+                        sunAzimuthTimeFormIso = request.form["sunazimuthtime"]
+                        if sunAzimuthTimeFormIso == "":
+                            sunAzimuthTime = None
+                        else:
+                            sunAzimuthTime = datetime.fromisoformat(sunAzimuthTimeFormIso)
+                    logger.debug("tlseries_properties - sunAzimuthTime: %s", sunAzimuthTime)
+                    if sunAzimuthTime is None:
+                        sunAzimuthTime = datetime.now()
+                    if sunAzimuthTime == sr.sunAzimuthTime:
+                        sunAzimuthTime = datetime.now()
+                    sr.sunAzimuthTime = sunAzimuthTime
+                    sr.sunAzimuth = sun.solar_position(sunAzimuthTime)["azimuth"]
+                    sr.sunElevation = sun.solar_position(sunAzimuthTime)["elevation"]
+
+                if locked == False:
+                    interval = float(request.form["serinterval2"])
+                    sr.interval = interval
+                    if sr.sunCtrlMode == 1:
+                        p1StartRef = int(request.form["sunctrlstart1trg"])
+                        p1StartShift = int(request.form["sunctrlstart1shft"])
+                        p1EndRef = int(request.form["sunctrlend1trg"])
+                        p1EndShift = int(request.form["sunctrlend1shft"])
+                        p2StartRef = int(request.form["sunctrlstart2trg"])
+                        p2StartShift = int(request.form["sunctrlstart2shft"])
+                        p2EndRef = int(request.form["sunctrlend2trg"])
+                        p2EndShift = int(request.form["sunctrlend2shft"])
+                        if p1StartRef == 0 or p1EndRef == 0:
+                            ok = False
+                            msg = "Please specify Reference for Start and End for Period 1!"
+                        else:
+                            if p1StartRef == p1EndRef and p1StartShift >= p1EndShift:
+                                ok = False
+                                msg = "The specification for Period 1 is invalid!"
+                        if p2StartRef != 0 or p2EndRef != 0:
+                            if p2StartRef == 0 or p2EndRef == 0:
+                                ok = False
+                                msg = "Please specify Reference for Start and End for Period 2 or set both to Unused!"
+                            else:
+                                if p2StartRef == p2EndRef and p2StartShift >= p2EndShift:
+                                    ok = False
+                                    msg = "The specification for Period 2 is invalid!"
+                        if ok:
+                            if sr.sunCtrlMode == 1:
+                                sr.sunCtrlStart1Trg = p1StartRef
+                                sr.sunCtrlStart1Shft = p1StartShift
+                                if p1StartRef == 1:
+                                    sr.sunCtrlStart1 = sr.sunrise + timedelta(minutes=p1StartShift)
+                                if p1StartRef == 2:
+                                    sr.sunCtrlStart1 = sr.sunset + timedelta(minutes=p1StartShift)
+                                sr.sunCtrlEnd1Trg = p1EndRef
+                                sr.sunCtrlEnd1Shft = p1EndShift
+                                if p1EndRef == 1:
+                                    sr.sunCtrlEnd1 = sr.sunrise + timedelta(minutes=p1EndShift)
+                                if p1EndRef == 2:
+                                    sr.sunCtrlEnd1 = sr.sunset + timedelta(minutes=p1EndShift)
+                                sr.sunCtrlStart2Trg = p2StartRef
+                                sr.sunCtrlStart2Shft = p2StartShift
+                                if p2StartRef == 1:
+                                    sr.sunCtrlStart2 = sr.sunrise + timedelta(minutes=p2StartShift)
+                                if p2StartRef == 2:
+                                    sr.sunCtrlStart2 = sr.sunset + timedelta(minutes=p2StartShift)
+                                sr.sunCtrlEnd2Trg = p2EndRef
+                                sr.sunCtrlEnd2Shft = p2EndShift
+                                if p2EndRef == 1:
+                                    sr.sunCtrlEnd2 = sr.sunrise + timedelta(minutes=p2EndShift)
+                                if p2EndRef == 2:
+                                    sr.sunCtrlEnd2 = sr.sunset + timedelta(minutes=p2EndShift)
+                                    
+                                calcSunControlledSeries(sr, sun)
+
+                    if sr.sunCtrlMode == 2:
+                        sunAzimuths = {}
+                        errAzimuths = []
+                        if request.form.get("sunazimuth1") is not None:
+                            sunAzimuthStr = request.form["sunazimuth1"]
+                            if sunAzimuthStr != "":
+                                sunAzimuth = float(sunAzimuthStr)
+                                times = sun.find_times_for_azimuth(now, sunAzimuth)
+                                if len(times) > 0:
+                                    dt = times[0]["time"]
+                                    dts = dt.strftime("%Y-%m-%d %H:%M")
+                                    sunAzimuths[dts] = sunAzimuth
+                                else:
+                                    errAzimuths.append(sunAzimuth)
+                        if request.form.get("sunazimuth2") is not None:
+                            sunAzimuthStr = request.form["sunazimuth2"]
+                            if sunAzimuthStr != "":
+                                sunAzimuth = float(sunAzimuthStr)
+                                times = sun.find_times_for_azimuth(now, sunAzimuth)
+                                if len(times) > 0:
+                                    dt = times[0]["time"]
+                                    dts = dt.strftime("%Y-%m-%d %H:%M")
+                                    sunAzimuths[dts] = sunAzimuth
+                                else:
+                                    errAzimuths.append(sunAzimuth)
+                        if request.form.get("sunazimuth3") is not None:
+                            sunAzimuthStr = request.form["sunazimuth3"]
+                            if sunAzimuthStr != "":
+                                sunAzimuth = float(sunAzimuthStr)
+                                times = sun.find_times_for_azimuth(now, sunAzimuth)
+                                if len(times) > 0:
+                                    dt = times[0]["time"]
+                                    dts = dt.strftime("%Y-%m-%d %H:%M")
+                                    sunAzimuths[dts] = sunAzimuth
+                                else:
+                                    errAzimuths.append(sunAzimuth)
+                        if request.form.get("sunazimuth4") is not None:
+                            sunAzimuthStr = request.form["sunazimuth4"]
+                            if sunAzimuthStr != "":
+                                sunAzimuth = float(sunAzimuthStr)
+                                times = sun.find_times_for_azimuth(now, sunAzimuth)
+                                if len(times) > 0:
+                                    dt = times[0]["time"]
+                                    dts = dt.strftime("%Y-%m-%d %H:%M")
+                                    sunAzimuths[dts] = sunAzimuth
+                                else:
+                                    errAzimuths.append(sunAzimuth)
+                                    
+                        # Sort azimuths by time
+                        sunAzimuths = dict(sorted(sunAzimuths.items(), key=lambda item: item[0]))
+                        errAzimuths.sort()
+
+                        n = 0
+                        for azimithTime, azimuth in sunAzimuths.items():
+                            n += 1
+                            if n == 1:
+                                sr.sunAzimuth1 = azimuth
+                                sr.sunAzimuth1Time = datetime.strptime(azimithTime, "%Y-%m-%d %H:%M")
+                            elif n == 2:
+                                sr.sunAzimuth2 = azimuth
+                                sr.sunAzimuth2Time = datetime.strptime(azimithTime, "%Y-%m-%d %H:%M")
+                            elif n == 3:
+                                sr.sunAzimuth3 = azimuth
+                                sr.sunAzimuth3Time = datetime.strptime(azimithTime, "%Y-%m-%d %H:%M")
+                            elif n == 4:    
+                                sr.sunAzimuth4 = azimuth
+                                sr.sunAzimuth4Time = datetime.strptime(azimithTime, "%Y-%m-%d %H:%M")
+                        for azimuth in errAzimuths:
+                            n += 1
+                            if n == 1:
+                                sr.sunAzimuth1 = azimuth
+                                sr.sunAzimuth1Time = None
+                            elif n == 2:
+                                sr.sunAzimuth2 = azimuth
+                                sr.sunAzimuth2Time = None
+                            elif n == 3:
+                                sr.sunAzimuth3 = azimuth
+                                sr.sunAzimuth3Time = None
+                            elif n == 4:    
+                                sr.sunAzimuth4 = azimuth
+                                sr.sunAzimuth4Time = None
+                        for m in range(n+1, 5):
+                            if m == 1:
+                                sr.sunAzimuth1 = None
+                                sr.sunAzimuth1Time = None
+                            elif m == 2:
+                                sr.sunAzimuth2 = None
+                                sr.sunAzimuth2Time = None
+                            elif m == 3:
+                                sr.sunAzimuth3 = None
+                                sr.sunAzimuth3Time = None
+                            elif m == 4:    
+                                sr.sunAzimuth4 = None
+                                sr.sunAzimuth4Time = None
+
+                        if len(sunAzimuths) > 0 \
+                        or len(errAzimuths) > 0:
+                            msg = calcSunAzimuthSeries(sr, sun)
+                            if msg != "":
+                                ok = False
+                        else:
+                            ok = False
+                            msg = "Please specify at least one Azimuth"
         if ok:
             if not locked:
                 sr.nextStatus("configure")
             sr.persist()
+            logger.debug("tlseries_properties - Series persisted")
+        if msg != "":
+            flash(msg)
     return render_template("photoseries/main.html", sc=sc, tl=tl, sr=sr, cp=cp)
 
 def calcExpSeries(start, stop, int):

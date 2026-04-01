@@ -1,4 +1,4 @@
-# raspiCamSrv V4.9.0
+# raspiCamSrv V4.10.0
 
 **raspiCamSrv** is a Web server for Raspberry Pi systems providing an App for control and streaming of CSI and USB cameras as well as for controlling a large variety of connected GPIO devices.
 
@@ -15,7 +15,7 @@ USB web cams are seamlessly integrated.
 
 Due to responsive layout from W3.CSS, all modern browsers on PC, Mac or mobile devices can be used as clients.
 
-For more details, refer to the [raspiCamSrv Documentation](https://signag.github.io/raspi-cam-srv/latest/)    
+For more details, refer to the [raspiCamSrv Documentation](https://signag.github.io/raspi-cam-srv/latest/), especially the [Features List](https://signag.github.io/raspi-cam-srv/latest/features/)    
 or check the [Release Notes](https://signag.github.io/raspi-cam-srv/latest/ReleaseNotes/) for current version and latest updates.
 
 

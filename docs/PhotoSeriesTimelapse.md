@@ -6,14 +6,21 @@ This screen allows special configurations for Photo Series in the Timelapse doma
 Of course, every normal Photo Series can be used for Timelapse purposes. However, users often require specific features like specific time slots for multi-day series or automatic exposure adjustment during sunset/sunrise phases (Autoramping / "Timelapse Holy Grail").
 
 This page is dedicated to this kind of configuration settings.   
-Currently, raspiCamSrv supports limiting photo shooting to configurable periods depending on sunrise and sunset.
+Currently, raspiCamSrv supports the following *Sun-control Mode*s:
+
+- *Sunrise/Sunset*
+<br>limiting photo shooting to configurable periods depending on sunrise and sunset.
+- *Azimuth*
+<br>taking photos at specific azimuth values over a period of days so that photos are taken with the same horizontal direction of sun.
 
 Usage of this feature requires calculation of sunrise and sunset, depending on date.    
 The algorithm (see [Sunrise Equation](#sunrise-equation)) requires information about the geografic coordinates of the camera position.   
 These need to be specified on the [Settings](./Settings.md) screen before a Series can be classified as "Sun-controlled".   
 It is recommended to [store the configuration](./SettingsConfiguration.md#server-configuration-storage) in order to have these settings available after a server restart.
 
-When this screen is activated after a [new Series](./PhotoSeries.md#creation-of-a-new-series) has been created, it will show up as
+## Sunrise/Sunset Mode
+
+When this screen is activated after a [new Series](./PhotoSeries.md#creation-of-a-new-series) has been created, it will be initialized with *Sunrise/Sunset* mode:
 
 ![Timelapse1](./img/PhotoSeriesTL1.jpg)
 
@@ -32,13 +39,43 @@ When submitting entries with a reasonable interval and Number of Days, the syste
 
 ![Timelapse2](./img/PhotoSeriesTL2.jpg)
 
-## Example: Single Period for Daylight Photos
+### Example: Single Period for Daylight Photos
 
 ![Timelapse3](./img/PhotoSeriesTL3.jpg)
 
-## Example: Two Periods around Sunrise and Sunset
+### Example: Two Periods around Sunrise and Sunset
 
 ![Timelapse4](./img/PhotoSeriesTL4.jpg)
+
+## Azimuth Mode
+
+When choosing *Sun-Control Mode* "Azimuth", the screen layout will change to
+
+![Timelapse5](./img/PhotoSeriesTLAzimuth1.jpg)
+
+- *Time for Azimuth*
+<br>can be used to calculate the azimuth at a specific time.
+<br>When its value is not explicitely set, it will be updated with the current date/time. 
+- *Azimuth [°]*
+<br>is the azimuth at the given time
+- *Elevation [°]*
+<br>is the elevation of the sun above horizon at the given time
+- *Azimuth 1*, ... *Azimuth 4*
+<br>Here, you can specify up to 4 azimuth values for which photos shall be taken at every day within the specified number of days from series start.
+<br>For each value the *Todays Time* at the current day will be calculated when the sun position will have this azimuth.
+<br>The system will also verify that azimuth values are valid for the entire period of the series. If this is not the case, an error message will be shown.
+<br>When entering more than one azimuth value, these will be sorted with increasing times.
+
+
+![Timelapse6](./img/PhotoSeriesTLAzimuth.jpg)
+
+### Series Log File
+
+For photo series using *Azimuth* Mode, the [Series Log File](./PhotoSeries.md#series-log-file) will include the Azimuth value for each photo:
+
+![Timelapse7](./img/PhotoSeriesTLAzimuthLog.jpg)
+
+
 
 ## Sunrise Equation
 

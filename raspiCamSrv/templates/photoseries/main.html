@@ -580,7 +580,12 @@
             <!-- Timelapse definitions -->
             <p>Here, you can specify special settings for timelapse series.</p>
             {% if tl.hasCurSeries %}
-            <table>
+            {% if sr.status == "NEW" or sr.status == "READY" %}
+            {% set locked = "" %}
+            {% else %}
+            {% set locked = "disabled" %}
+            {% endif %}
+            <table style="width:100%">
                 <form method="post" id="tlseriesform" action="{{ url_for('photoseries.tlseries_properties') }}">
                     <tr>
                         <td style="width:30%">
@@ -608,7 +613,7 @@
                         </td>
                         <td style="width:20%">
                             <input style="width:100%" type="number" id="serinterval2" name="serinterval2" min="0.1" max="999999" step="0.1"
-                                value="{{ sr.interval }}">
+                                value="{{ sr.interval }}" {{ locked }}>
                         </td>
                         <td style="width:5%">
                         </td>
@@ -648,10 +653,37 @@
                         </td>
                         <td style="width:20%">
                             {% if sr.isSunControlledSeries == True %}
-                            <input type="checkbox" id="issuncontrolled" name="issuncontrolled" value="1" checked>
+                            <input type="checkbox" id="issuncontrolled" name="issuncontrolled" value="1" checked {{ locked }}>
                             {% else %}
-                            <input type="checkbox" id="issuncontrolled" name="issuncontrolled" value="0">
+                            <input type="checkbox" id="issuncontrolled" name="issuncontrolled" value="0" {{ locked }}>
                             {% endif %}
+                        </td>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:20%">
+                        </td>
+                        <td style="width:5%">
+                        </td>
+                        <td style="width:20%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:30%" class="w3-tooltip">
+                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                Activate this checkbox if you want the series to be controlled by sunrise and/or sunset.
+                            </span>
+                            <label for="sunctrlmode">Sun-control Mode:</label>
+                        </td>
+                        <td style="width:20%">
+                            <select name="sunctrlmode" id="sunctrlmode" onchange="changeSunCtrlMode()" {{ locked }}>
+                                {% for mode in sr.SUNCONTROLMODES %}
+                                {% if sr.sunCtrlMode == loop.index %}
+                                <option value="{{ loop.index }}" selected>{{ mode }}</option>
+                                {% else %}
+                                <option value="{{ loop.index }}">{{ mode }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
                         </td>
                         <td style="width:5%">
                         </td>
@@ -683,15 +715,10 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="width:30%" class="w3-tooltip">
-                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Todays sunrise.<br>
-                                Show/Refresh with Submit.
-                            </span>
-                            <label for="sunrise">Sunrise:</label>
+                        <td style="width:30%">
+                            <p>&nbsp;</p>
                         </td>
                         <td style="width:20%">
-                            <input style="width:100%" type="datetime-local" id="sunrise" name="sunrise" value="{{ sr.sunriseIso }}" disabled>
                         </td>
                         <td style="width:5%">
                         </td>
@@ -702,231 +729,455 @@
                         <td style="width:20%">
                         </td>
                     </tr>
-                    <tr>
-                        <td style="width:30%" class="w3-tooltip">
-                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Todays sunset.<br>
-                                Show/Refresh with Submit.
-                            </span>
-                            <label for="sunset">Sunset:</label>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="datetime-local" id="sunset" name="sunset" value="{{ sr.sunsetIso }}" disabled>
-                        </td>
-                        <td style="width:5%">
-                        </td>
-                        <td style="width:20%">
-                        </td>
-                        <td style="width:5%">
-                        </td>
-                        <td style="width:20%">
-                        </td>
-                    </tr>
+                    {% if sr.sunCtrlMode == 1 %}
+                    <tbody id="sunctrlmode_1">
+                    {% else %}
+                    <tbody id="sunctrlmode_1" style="display:none">
+                    {% endif %}
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Todays sunrise.<br>
+                                    Show/Refresh with Submit.
+                                </span>
+                                <label for="sunrise">Sunrise:</label>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunrise" name="sunrise" value="{{ sr.sunriseIso }}" disabled>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Todays sunset.<br>
+                                    Show/Refresh with Submit.
+                                </span>
+                                <label for="sunset">Sunset:</label>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunset" name="sunset" value="{{ sr.sunsetIso }}" disabled>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%">
+                            </td>
+                            <td style="width:20%">
+                                <p style="margin-bottom:0"><b>Reference</b></p>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                                <p style="margin-bottom:0"><b>Shift [Minutes]</b></p>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                                <p style="margin-bottom:0"><b>Todays Value</b></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Start of first period per day.<br>
+                                    Specify reference (Sunrise/Sunset) and shift.<br>
+                                    Result for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlstart1trg">Period 1 - Start:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlstart1trg" id="sunctrlstart1trg" {{ locked }}>
+                                    {% if sr.sunCtrlStart1Trg == 0 %}
+                                    <option value="0" selected>Unused</option>
+                                    {% else %}
+                                    <option value="0">Unused</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlStart1Trg == 1 %}
+                                    <option value="1" selected>Sunrise</option>
+                                    {% else %}
+                                    <option value="1">Sunrise</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlStart1Trg == 2 %}
+                                    <option value="2" selected>Sunset</option>
+                                    {% else %}
+                                    <option value="2">Sunset</option>
+                                    {% endif %}
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">+</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunctrlstart1shft" name="sunctrlstart1shft" min="-1440" max="1440" step="1"
+                                    value="{{ sr.sunCtrlStart1Shft }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">=</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunctrlstart1" name="sunctrlstart1" 
+                                    value="{{ sr.sunCtrlStart1Iso }}" disabled>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    End of first period per day.<br>
+                                    Specify reference (Sunrise/Sunset) and shift.<br>
+                                    Result for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlend1trg">Period 1 - End:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlend1trg" id="sunctrlend1trg" {{ locked }}>
+                                    {% if sr.sunCtrlEnd1Trg == 0 %}
+                                    <option value="0" selected>Unused</option>
+                                    {% else %}
+                                    <option value="0">Unused</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlEnd1Trg == 1 %}
+                                    <option value="1" selected>Sunrise</option>
+                                    {% else %}
+                                    <option value="1">Sunrise</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlEnd1Trg == 2 %}
+                                    <option value="2" selected>Sunset</option>
+                                    {% else %}
+                                    <option value="2">Sunset</option>
+                                    {% endif %}
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">+</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunctrlend1shft" name="sunctrlend1shft" min="-1440" max="1440"
+                                    step="1" value="{{ sr.sunCtrlEnd1Shft }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">=</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunctrlend1" name="sunctrlend1"
+                                    value="{{ sr.sunCtrlEnd1Iso }}" disabled>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Start of second period per day.<br>
+                                    Specify reference (Sunrise/Sunset) and shift.<br>
+                                    Result for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlstart2trg">Period 2 - Start:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlstart2trg" id="sunctrlstart2trg" {{ locked }}>
+                                    {% if sr.sunCtrlStart2Trg == 0 %}
+                                    <option value="0" selected>Unused</option>
+                                    {% else %}
+                                    <option value="0">Unused</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlStart2Trg == 1 %}
+                                    <option value="1" selected>Sunrise</option>
+                                    {% else %}
+                                    <option value="1">Sunrise</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlStart2Trg == 2 %}
+                                    <option value="2" selected>Sunset</option>
+                                    {% else %}
+                                    <option value="2">Sunset</option>
+                                    {% endif %}
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">+</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunctrlstart2shft" name="sunctrlstart2shft" min="-1440" max="1440"
+                                    step="1" value="{{ sr.sunCtrlStart2Shft }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">=</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunctrlstart2" name="sunctrlstart2"
+                                    value="{{ sr.sunCtrlStart2Iso }}" disabled>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    End of second period per day.<br>
+                                    Specify reference (Sunrise/Sunset) and shift.<br>
+                                    Result for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlend2trg">Period 2 - End:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlend2trg" id="sunctrlend2trg" {{ locked }}>
+                                    {% if sr.sunCtrlEnd2Trg == 0 %}
+                                    <option value="0" selected>Unused</option>
+                                    {% else %}
+                                    <option value="0">Unused</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlEnd2Trg == 1 %}
+                                    <option value="1" selected>Sunrise</option>
+                                    {% else %}
+                                    <option value="1">Sunrise</option>
+                                    {% endif %}
+                                    {% if sr.sunCtrlEnd2Trg == 2 %}
+                                    <option value="2" selected>Sunset</option>
+                                    {% else %}
+                                    <option value="2">Sunset</option>
+                                    {% endif %}
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">+</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunctrlend2shft" name="sunctrlend2shft" min="-1440" max="1440"
+                                    step="1" value="{{ sr.sunCtrlEnd2Shft }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0">=</p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunctrlend2" name="sunctrlend2"
+                                    value="{{ sr.sunCtrlEnd2Iso }}" disabled>
+                            </td>
+                        </tr>
+                    </tbody>
+                    {% if sr.sunCtrlMode == 2 %}
+                    <tbody id="sunctrlmode_2">
+                    {% else %}
+                    <tbody id="sunctrlmode_2" style="display:none">
+                    {% endif %}
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Time for Azimuth<br>
+                                    Update to current time with Submit.
+                                </span>
+                                <label for="sunazimuthtime">Time for Azimuth:</label>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunazimuthtime" name="sunazimuthtime" value="{{ sr.sunAzimuthTimeIso }}">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Azimuth at given time.<br>
+                                    Update with Submit.
+                                </span>
+                                <label for="sunazimuth">Azimuth [°]:</label>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunazimuth" name="sunazimuth" min="0.00" max="365.00" step="0.01"
+                                    value="{{ sr.sunAzimuth }}" disabled>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Elevation at given time.<br>
+                                    Update with Submit.
+                                </span>
+                                <label for="sunelevation">Elevation [°]:</label>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunelevation" name="sunelevation" min="0.00" max="90.00" step="0.01"
+                                    value="{{ sr.sunElevation }}" disabled>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%">
+                            </td>
+                            <td style="width:20%">
+                                <p style="margin-bottom:0"><b>Reference</b></p>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                                <p style="margin-bottom:0"><b>Azimuth [°]</b></p>
+                            </td>
+                            <td style="width:5%">
+                            </td>
+                            <td style="width:20%">
+                                <p style="margin-bottom:0"><b>Todays Time</b></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    First Azimuth per day.<br>
+                                    Time for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlazimuth1">Azimuth 1:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlazimuth1" id="sunctrlazimuth1" disabled>
+                                    <option value="0" selected>Azimuth</option>
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunazimuth1" name="sunazimuth1" min="0.00" max="365.00" step="0.01"
+                                    value="{{ sr.sunAzimuth1 }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunazimuth1Time" name="sunazimuth1Time" 
+                                    value="{{ sr.sunAzimuth1TimeIso }}" disabled>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Second Azimuth per day.<br>
+                                    Time for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlazimuth2">Azimuth 2:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlazimuth2" id="sunctrlazimuth2" disabled>
+                                    <option value="0" selected>Azimuth</option>
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunazimuth2" name="sunazimuth2" min="0.00" max="365.00" step="0.01"
+                                    value="{{ sr.sunAzimuth2 }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunazimuth2Time" name="sunazimuth2Time" 
+                                    value="{{ sr.sunAzimuth2TimeIso }}" disabled>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Third Azimuth per day.<br>
+                                    Time for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlazimuth3">Azimuth 3:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlazimuth3" id="sunctrlazimuth3" disabled>
+                                    <option value="0" selected>Azimuth</option>
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunazimuth3" name="sunazimuth3" min="0.00" max="365.00" step="0.01"
+                                    value="{{ sr.sunAzimuth3 }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunazimuth3Time" name="sunazimuth3Time" 
+                                    value="{{ sr.sunAzimuth3TimeIso }}" disabled>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%" class="w3-tooltip">
+                                <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
+                                    Fourth Azimuth per day.<br>
+                                    Time for today will be shown after Submit.
+                                </span>
+                                <label for="sunctrlazimuth4">Azimuth 4:</label>
+                            </td>
+                            <td style="width:20%">
+                                <select name="sunctrlazimuth4" id="sunctrlazimuth4" disabled>
+                                    <option value="0" selected>Azimuth</option>
+                                </select>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="number" id="sunazimuth4" name="sunazimuth4" min="0.00" max="365.00" step="0.01"
+                                    value="{{ sr.sunAzimuth4 }}" {{ locked }}>
+                            </td>
+                            <td style="width:5%">
+                                <p style="margin:0"></p>
+                            </td>
+                            <td style="width:20%">
+                                <input style="width:100%" type="datetime-local" id="sunazimuth4Time" name="sunazimuth4Time" 
+                                    value="{{ sr.sunAzimuth4TimeIso }}" disabled>
+                            </td>
+                        </tr>
+                    </tbody>
                     <tr>
                         <td style="width:30%">
-                        </td>
-                        <td style="width:20%">
-                            <p style="margin-bottom:0"><b>Reference</b></p>
-                        </td>
-                        <td style="width:5%">
-                        </td>
-                        <td style="width:20%">
-                            <p style="margin-bottom:0"><b>Shift [Minutes]</b></p>
-                        </td>
-                        <td style="width:5%">
-                        </td>
-                        <td style="width:20%">
-                            <p style="margin-bottom:0"><b>Todays Value</b></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width:30%" class="w3-tooltip">
-                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Start of first period per day.<br>
-                                Specify reference (Sunrise/Sunset) and shift.<br>
-                                Result for today will be shown after Submit.
-                            </span>
-                            <label for="sunctrlstart1trg">Period 1 - Start:</label>
-                        </td>
-                        <td style="width:20%">
-                            <select name="sunctrlstart1trg" id="sunctrlstart1trg">
-                                {% if sr.sunCtrlStart1Trg == 0 %}
-                                <option value="0" selected>Unused</option>
-                                {% else %}
-                                <option value="0">Unused</option>
-                                {% endif %}
-                                {% if sr.sunCtrlStart1Trg == 1 %}
-                                <option value="1" selected>Sunrise</option>
-                                {% else %}
-                                <option value="1">Sunrise</option>
-                                {% endif %}
-                                {% if sr.sunCtrlStart1Trg == 2 %}
-                                <option value="2" selected>Sunset</option>
-                                {% else %}
-                                <option value="2">Sunset</option>
-                                {% endif %}
-                            </select>
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">+</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="number" id="sunctrlstart1shft" name="sunctrlstart1shft" min="-1440" max="1440" step="1"
-                                value="{{ sr.sunCtrlStart1Shft }}">
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">=</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="datetime-local" id="sunctrlstart1" name="sunctrlstart1" 
-                                value="{{ sr.sunCtrlStart1Iso }}" disabled>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width:30%" class="w3-tooltip">
-                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                End of first period per day.<br>
-                                Specify reference (Sunrise/Sunset) and shift.<br>
-                                Result for today will be shown after Submit.
-                            </span>
-                            <label for="sunctrlend1trg">Period 1 - End:</label>
-                        </td>
-                        <td style="width:20%">
-                            <select name="sunctrlend1trg" id="sunctrlend1trg">
-                                {% if sr.sunCtrlEnd1Trg == 0 %}
-                                <option value="0" selected>Unused</option>
-                                {% else %}
-                                <option value="0">Unused</option>
-                                {% endif %}
-                                {% if sr.sunCtrlEnd1Trg == 1 %}
-                                <option value="1" selected>Sunrise</option>
-                                {% else %}
-                                <option value="1">Sunrise</option>
-                                {% endif %}
-                                {% if sr.sunCtrlEnd1Trg == 2 %}
-                                <option value="2" selected>Sunset</option>
-                                {% else %}
-                                <option value="2">Sunset</option>
-                                {% endif %}
-                            </select>
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">+</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="number" id="sunctrlend1shft" name="sunctrlend1shft" min="-1440" max="1440"
-                                step="1" value="{{ sr.sunCtrlEnd1Shft }}">
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">=</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="datetime-local" id="sunctrlend1" name="sunctrlend1"
-                                value="{{ sr.sunCtrlEnd1Iso }}" disabled>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width:30%">
-                        </td>
-                        <td style="width:20%">
-                        </td>
-                        <td style="width:5%">
-                        </td>
-                        <td style="width:20%">
-                        </td>
-                        <td style="width:5%">
-                        </td>
-                        <td style="width:20%">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width:30%" class="w3-tooltip">
-                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                Start of second period per day.<br>
-                                Specify reference (Sunrise/Sunset) and shift.<br>
-                                Result for today will be shown after Submit.
-                            </span>
-                            <label for="sunctrlstart2trg">Period 2 - Start:</label>
-                        </td>
-                        <td style="width:20%">
-                            <select name="sunctrlstart2trg" id="sunctrlstart2trg">
-                                {% if sr.sunCtrlStart2Trg == 0 %}
-                                <option value="0" selected>Unused</option>
-                                {% else %}
-                                <option value="0">Unused</option>
-                                {% endif %}
-                                {% if sr.sunCtrlStart2Trg == 1 %}
-                                <option value="1" selected>Sunrise</option>
-                                {% else %}
-                                <option value="1">Sunrise</option>
-                                {% endif %}
-                                {% if sr.sunCtrlStart2Trg == 2 %}
-                                <option value="2" selected>Sunset</option>
-                                {% else %}
-                                <option value="2">Sunset</option>
-                                {% endif %}
-                            </select>
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">+</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="number" id="sunctrlstart2shft" name="sunctrlstart2shft" min="-1440" max="1440"
-                                step="1" value="{{ sr.sunCtrlStart2Shft }}">
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">=</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="datetime-local" id="sunctrlstart2" name="sunctrlstart2"
-                                value="{{ sr.sunCtrlStart2Iso }}" disabled>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width:30%" class="w3-tooltip">
-                            <span style="position:absolute;left:0;bottom:30px" class="w3-text w3-tag">
-                                End of second period per day.<br>
-                                Specify reference (Sunrise/Sunset) and shift.<br>
-                                Result for today will be shown after Submit.
-                            </span>
-                            <label for="sunctrlend2trg">Period 2 - End:</label>
-                        </td>
-                        <td style="width:20%">
-                            <select name="sunctrlend2trg" id="sunctrlend2trg">
-                                {% if sr.sunCtrlEnd2Trg == 0 %}
-                                <option value="0" selected>Unused</option>
-                                {% else %}
-                                <option value="0">Unused</option>
-                                {% endif %}
-                                {% if sr.sunCtrlEnd2Trg == 1 %}
-                                <option value="1" selected>Sunrise</option>
-                                {% else %}
-                                <option value="1">Sunrise</option>
-                                {% endif %}
-                                {% if sr.sunCtrlEnd2Trg == 2 %}
-                                <option value="2" selected>Sunset</option>
-                                {% else %}
-                                <option value="2">Sunset</option>
-                                {% endif %}
-                            </select>
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">+</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="number" id="sunctrlend2shft" name="sunctrlend2shft" min="-1440" max="1440"
-                                step="1" value="{{ sr.sunCtrlEnd2Shft }}">
-                        </td>
-                        <td style="width:5%">
-                            <p style="margin:0">=</p>
-                        </td>
-                        <td style="width:20%">
-                            <input style="width:100%" type="datetime-local" id="sunctrlend2" name="sunctrlend2"
-                                value="{{ sr.sunCtrlEnd2Iso }}" disabled>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width:30%">
+                            <p>&nbsp;</p>
                         </td>
                         <td style="width:20%">
                         </td>
@@ -1550,6 +1801,19 @@
                 document.getElementById(form).method = "get";
             }
         }
+
+        function changeSunCtrlMode() {
+            mode = document.getElementById("sunctrlmode").value;
+            if (mode == "1") {
+                document.getElementById("sunctrlmode_1").style.display = "table-row-group";
+                document.getElementById("sunctrlmode_2").style.display = "none";
+            }
+            if (mode == "2") {
+                document.getElementById("sunctrlmode_1").style.display = "none";
+                document.getElementById("sunctrlmode_2").style.display = "table-row-group";
+            }
+        }
+
         function onlineHelp() {
             window.open("{{ sc.getBaseHelpUrl() }}/PhotoSeries/");
         }

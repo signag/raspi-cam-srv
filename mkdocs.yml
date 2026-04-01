@@ -1,4 +1,4 @@
-site_name: raspiCamSrv V4.9.x Documentation
+site_name: raspiCamSrv V4.10.x Documentation
 plugins:
     - search
     - mike
@@ -113,6 +113,9 @@ nav:
       - Configuration Management: SettingsConfiguration_NoCam.md
 
   - API: API.md
+  - Tutorials:
+      - Overview: tutorials/Tutorials_Overview.md
+      - Automatic White Balance with Neural Networks: tutorials/AWB_with_neural_networks.md
 
 
 

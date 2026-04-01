@@ -6860,7 +6860,7 @@ class Camera:
             stop = False
             while not stop:
                 nextTime = ser.nextTime(lastTime)
-                curShots, nextPhoto = ser.nextPhoto()
+                curShots, nextPhoto, serMetaData = ser.nextPhoto()
                 logger.debug(
                     "Thread %s: Camera._photoSeriesThread - nextPhoto: %s nextTime %s",
                     get_ident(),
@@ -7060,7 +7060,7 @@ class Camera:
                             else:
                                 raise RuntimeError("Failed to capture image from USB camera")
                         ser.curShots = curShots
-                        ser.logPhoto(nextPhoto, lastTime, metadata)
+                        ser.logPhoto(nextPhoto, lastTime, metadata, serMetaData)
                         if (
                             ser.isFocusStackingSeries == False
                             and ser.isExposureSeries == False
@@ -7095,6 +7095,7 @@ class Camera:
                                 get_ident(),
                                 dest,
                             )
+                            plt.close()
 
                         # For exposure series apply controls
                         if ser.isExposureSeries:

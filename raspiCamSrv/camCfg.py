@@ -6181,6 +6181,45 @@ class ServerConfig():
         return info
 
     @property
+    def libcameraInfo(self) -> str:
+        try:
+            result = subprocess.run(
+                ["dpkg", "-l"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+        except Exception:
+            return "Unknown"
+
+        vers = ""
+        for line in result.stdout.splitlines():
+            if "libcamera" in line and line.startswith("ii"):
+                parts = line.split()
+                if len(parts) >= 3:
+                    pkg_name = parts[1]
+                    version = parts[2]
+
+                    # Prefer the main runtime package
+                    if pkg_name.startswith("libcamera0"):
+                        vers = version
+
+        if vers == "":
+            # Fallback: return first libcamera-related package version
+            for line in result.stdout.splitlines():
+                if "libcamera" in line and line.startswith("ii"):
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        vers = parts[2]
+
+        if vers == "":
+            info = "Unknown"
+        else:
+            info = f"Ver: {vers}"
+
+        return info
+
+    @property
     def picamera2Info(self) -> str:
         """Get version and location of picamera2 module
         """

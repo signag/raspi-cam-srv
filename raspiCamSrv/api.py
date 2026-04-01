@@ -5,6 +5,7 @@ from raspiCamSrv.db import get_db
 
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg, TuningConfig
+from raspiCamSrv.photoseriesCfg import PhotoSeriesCfg
 from _thread import get_ident
 import datetime
 import time
