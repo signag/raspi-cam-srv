@@ -2385,7 +2385,7 @@
   <span class="md-ellipsis">
     
   
-    Active Motion Capturing
+    Active Event Handling
   
 
     
@@ -2481,6 +2481,17 @@
     <span class="md-ellipsis">
       
         Photos/Videos with ROI/RoNI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events-from-configured-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events from configured Triggers
       
     </span>
   </a>
@@ -3698,6 +3709,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#events-from-configured-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events from configured Triggers
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3740,7 +3762,7 @@ shows, from top to bottom:</p>
 <li>Event date</li>
 <li>Event time</li>
 <li>Event trigger</li>
-<li>Event trigger algorithm <br />
+<li>Event trigger algorithm (for Motion Detection)<br />
 <a href="../TriggerMotion/">Mean Square Diff</a>  <br />
 <a href="../TriggerMotion/#test-for-frame-differencing-algorithm">Frame Diff.</a>  <br />
 <a href="../TriggerMotion/#test-for-optical-flow-algorithm">Optical Flow</a>  <br />
@@ -3765,7 +3787,16 @@ Model : <em>Background Subtraction Model</em> (1=MOG2, 2=KNN)</li>
 </ul>
 <p>In case that photos have been taken together with videos, this is represented as shown below. <br />
 Videos show the video length in the footer.</p>
-<p><img alt="EventsVodeoPhoto" src="../img/Trigger_Events_Photo.jpg" /></p>
+<p><img alt="EventsVideoPhoto" src="../img/Trigger_Events_Photo.jpg" /></p>
+<h2 id="events-from-configured-triggers">Events from configured Triggers</h2>
+<p>Events originating from configured <a href="../TriggerTriggers/">Triggers</a> (GPIO input devices, Camera action events or camera-based motion detection) are also shown on this page.</p>
+<p><img alt="GPIO_Events" src="../img/Trigger_Events_GPIO.jpg" /></p>
+<p>If the <a href="../TriggerActions/">Actions</a> associated with such a Trigger include one of the available camera actions (<em>take_photo</em>, <em>record_video</em>, <em>start_video</em>, <em>stop_video</em>), videos and photos taken will be accessible here.</p>
+<p>If the <a href="../TriggerTriggerActions/">Trigger-Actions</a> include video actions but no action to take a photo, the system will stage a placeholder photo through which the video taken will be accessible.</p>
+<p>If an action starts video recording (<em>start_video</em>), the video will be accessible but cannot be played while the camera is recording. The lengt of the video will be shown as "0 sec"  <br />
+If later another event fires which has an action to stop recording (<em>stop_video</em>), the system will calculate the video length as the time difference between start and stop actions.</p>
+<p>If video recording is currently active, while an <a href="../TriggerActions/">Action</a> executes, which tries to start recording, this will not be done and the <a href="../TriggerActive/#log-file">log file</a> will show an error message</p>
+<p><strong>NOTE</strong>: Camera actions started through an <a href="../ConsoleActionButtons/">Action Button</a>, the resulting video or photo will not be visible here but in the <a href="../PhotoViewer/">Photo Viewer</a>. If, however, the camera action fires a trigger, this will be visible here, in case that the background process has been started.</p>
 
 
 

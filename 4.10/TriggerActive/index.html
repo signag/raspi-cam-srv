@@ -23,7 +23,7 @@
     
     
       
-        <title>Active Motion Capturing - raspiCamSrv V4.10.x Documentation</title>
+        <title>Active Event Handling - raspiCamSrv V4.10.x Documentation</title>
       
     
     
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#triggered-capture-of-videos-and-photos" class="md-skip">
+        <a href="#active-event-handling-and-motion-capturing" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Active Motion Capturing
+              Active Event Handling
             
           </span>
         </div>
@@ -2387,6 +2387,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Event Handling
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -2394,7 +2412,7 @@
   <span class="md-ellipsis">
     
   
-    Active Motion Capturing
+    Active Event Handling
   
 
     
@@ -2403,6 +2421,153 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#event-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-activities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel Activities
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parallel Activities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dos-and-donts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dos and Don'ts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dos and Don&#39;ts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#blocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blocked:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-zoom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing Zoom
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-focus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing Focus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-camera-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing Camera Controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log File
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Log File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-id-and-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event ID and Timestamps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -3611,6 +3776,142 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#event-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-activities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel Activities
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parallel Activities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dos-and-donts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dos and Don'ts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dos and Don&#39;ts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#blocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blocked:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-zoom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing Zoom
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-focus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing Focus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-camera-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing Camera Controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log File
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Log File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-id-and-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event ID and Timestamps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -3626,19 +3927,22 @@
 
 
 
-<h1 id="triggered-capture-of-videos-and-photos">Triggered Capture of Videos and Photos</h1>
 <p><a href="../TriggerOverview/"><img alt="Up" src="../img/goup.gif" /></a></p>
-<h1 id="active-motion-capturing">Active Motion Capturing</h1>
-<p>The <em>Start</em> button on the <em>Control</em> page starts the trigger capturing process.</p>
+<h1 id="active-event-handling-and-motion-capturing">Active Event Handling and Motion Capturing</h1>
+<p>The <em>Start</em> button on the <em>Control</em> page starts the trigger handling process.</p>
 <p><img alt="ActiveCapture" src="../img/Trigger_Active.jpg" /></p>
-<p>An active capture process is indicated with red <a href="../UserGuide/#process-status-indicators">Process Status Indicator</a></p>
+<p>You can choose to activate pure Motion Capturing, pure capturing of <a href="../TriggerTriggers/">Trigger</a> events or both</p>
+<p>An active capture process is indicated with red <a href="../UserGuide/#process-status-indicators">Process Status Indicators</a> for both types.</p>
 <p>The <em>Start</em> button has changed to <em>Stop</em>, which allows stopping the process.</p>
-<p>If motion capturing is currently active but operation paused because of schedule settings, this is indicated by a yellow process status indicator:</p>
+<p>If motion capturing and/or Trigger handling is currently active but operation paused because of schedule settings, this is indicated by yellow process status indicators:</p>
 <p><img alt="Capturepaused" src="../img/ProcessIndicator8.jpg" /></p>
 <h2 id="event-data">Event Data</h2>
 <p>Event data are stored in directory <code>./prg/raspi-cam-srv/raspiCamSrv/static/events</code>:</p>
 <p><img alt="Eventstorage" src="../img/Trigger_Storage.jpg" /></p>
 <p>Storage includes a log file as well as video and photo files.</p>
+<p><strong>NOTE</strong>:   <br />
+For Motion Capturing, event data and related media (photos, videos) will always be located here.  <br />
+For events originating from configured <a href="../TriggerTriggers/">Triggers</a>, this is only the case if their <em>Control</em> parameter set includes <code>event_log: True</code> (See <a href="../TriggerTriggers/#control">Control</a>).</p>
 <h2 id="parallel-activities">Parallel Activities</h2>
 <p>While motion capturing is active, the live stream process will be kept active because this is used for motion detection.</p>
 <p>While motion capturing is active, you may continue working with <strong>raspiCamSrv</strong>. <br />
@@ -3652,16 +3956,37 @@ You may even take photos, videos or photo series.</p>
 <li>Changing <a href="../Configuration/">Camera Configuration</a></li>
 </ul>
 <h4 id="changing-zoom">Changing Zoom</h4>
-<p>This can be done while trigger capturing is active. <br />
+<p>This can be done while motion capturing is active. <br />
 However the moment when the new zoom setting is activated will be registered as motion event.</p>
 <h4 id="changing-focus">Changing Focus</h4>
 <p>To improve the focus for camera model 3, you may change <a href="../FocusHandling/">Focus Settings</a> and <a href="../FocusHandling/#trigger-autofocus">Trigger Autofocus</a></p>
 <h4 id="changing-camera-controls">Changing Camera Controls</h4>
 <p>In order to change the quality of videos and photos, you may change any <a href="../CameraControls/">Camera Controls</a> while motion capturing is active.</p>
 <h2 id="log-file">Log File</h2>
-<p>While events are registered and videos and photos are taken, the system maintains a log file (<code>events/_events.log</code>) with antries for all events and the times when photos are captured or videos are started and stopped:</p>
+<p>While events are registered and videos and photos are taken, the system maintains a log file (<code>static/events/_events.log</code>) with entries for all events and the times when photos are captured or videos are started and stopped:</p>
 <p><img alt="EventLog" src="../img/Trigger_Logfile.jpg" /></p>
-<p>The log file of the above screenshot shows examples without delayed actions as well as with configurations with 4 photos in the <em>Photo Burst</em>.    </p>
+<p>The log file of the above screenshot shows examples for:</p>
+<ul>
+<li>(lines 1 to 8): detection of motion  with a 10 sec video being recorded and a placeholder photo being taken.    </li>
+<li>(lines 9 to 19): a physical button (BTN) being pressed (line 9) which starts video recording (line 14) and placing a placeholder photo (line 10), which is done before starting recording.
+<br>When the camera starts recording, another trigger fires (line 11) on which a LED is switched on (lines 12-13).
+<br>Later (line 15), another physical button (BTN2) is pressed, which stops recording (line 19).
+<br>When recording stops, a Camera trigger fires (line 16) on which the LED is switched off (lines 17-18)</li>
+<li>(lines 25, 27) show an example where button BTN was pressed but where the associated action to start recording could not be executed because the camera was already active at this time.</li>
+</ul>
+<p>The fact that the Camera triggers fire, before the associated camera action start/stop is completed, is due to the fact that the latter operations require some time-consuming preparation and cleanup activities.</p>
+<h3 id="event-id-and-timestamps">Event ID and Timestamps</h3>
+<p>While Motion Detection will hardly require subsecond discrimination, this is different for events from GPIO-related input devices.</p>
+<p>In order to be able to uniquely identify events, the event key
+<br>(e.g. <code>2026-07-01T15:12:32.612750_0000</code>)
+<br>is built from</p>
+<ul>
+<li>a time part with microsecond precision</li>
+<li>extended with a counter which is zeroed once within a second and then incremented for each event occurring in the same second (see lines 9, 11 of the <a href="#log-file">Log File</a>)</li>
+</ul>
+<p>In the log file, each line starts with the event ID which includes the timestamp when the event has occurred.   <br />
+For any actions associated with an event, the additional timestamp indicates the time of action execution.</p>
+<p><strong>raspiCamSrv</strong> processes each event in an own thread. Therefore, the sequences for different events may be interleaving.</p>
 <h2 id="database">Database</h2>
 <p>Events and event actions are also stored in the SQLite3 database stored at <br />
 <code>./prg/raspi-cam-srv/instance/raspiCamSrv.sqlite</code>.</p>
