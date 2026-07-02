@@ -2,6 +2,27 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.10.1
+
+### Bugfixes
+
+- Fixed a bug which prevented [Motion Detection](./TriggerMotion.md) to start correctly in cases when the live stream was not active. This happened in particuar in cases when Motion Detection was [automatically started with server](./TriggerControl.md). This bug came in with [V4.6.0](#v460) where an animation was introduced while the camera is starting and not yet delivering images.
+<br>For the case of Motion Detection, this caused the background process to block. As a consequence, Motion Detection could not be stopped successfully.
+- All [Events](./Trigger.md) from configured [Triggers](./TriggerTriggers.md) as well a [Motion Detection](./TriggerMotion.md) will now have a unique key (see [Event ID and Timestamps](./TriggerActive.md#event-id-and-timestamps)). This will avoid conflicts when multiple events occur within the same second.
+- Fixed errors which could occur with [Actions](./TriggerActions.md) "start_video" and "stop_video".
+<br>Refers to [raspi-cam-srv Issue #96](https://github.com/signag/raspi-cam-srv/issues/96)
+- Previously, when the set of [Actions](./TriggerActions.md) associated with a [Trigger](./TriggerTriggers.md) included a video action (*start_video*, *stop_video*, *record_video*) but no photo action (*take_photo*), the recorded video was not visible in the [Event Viewer](./TriggerEventViewer.md) because no placeholder photo was available.
+<br>Now, in this case, the system will stage a dummy placeholder photo through which the video viewer can be started.
+<br>In case a photo action was included, the photo was not considered as video placeholder, before, because it usually had a different timestamp and name. Now the first photo found for the same event, will be treated as placeholder for the video.
+
+### Modifications
+
+- Previously, when a Camera [Action](./TriggerActions.md) was triggered, the camera actions (e.g. "start_video" or "stop_video") were not allowed to trigger events themselves. This is now allowed.
+<br>So, if you have, for example, a Button "when_pressed" [Trigger](./TriggerTriggers.md) triggering a Camera [Action](./TriggerActions.md) "start_video", the buttop press will start video recording.
+<br>Now, you can define a Camera Trigger "when_recording_starts" which triggers a LED action "on".
+<br>Then, the LED will be switched on when recording is really started, which may be a few seconds later than the trigger, because of camera warm up.
+<br>Defining analogous triggers and actions for stopping the camera, the LED will definitely indicate active camera recording.
+
 ## V4.10.0
 
 ### New Features

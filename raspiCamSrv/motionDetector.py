@@ -1,5 +1,6 @@
 from raspiCamSrv.camera_pi import Camera
 from raspiCamSrv.camCfg import CameraCfg
+from raspiCamSrv.timeKeyGenerator import TimeKeyGenerator
 import numpy as np
 from _thread import get_ident, allocate_lock
 import threading
@@ -123,7 +124,7 @@ class MotionDetector():
                 else:
                     tc.error = f"Error while initializing MotionDetector: algorithm {tc.motionDetectAlgo} currently not supported."
                     tc.errorSource = "MotionDetector.__new__"
-                    logger.error("Error while initializing MotionDetector: algorithm %s currently not supported", tc.motionDetectAlg)
+                    logger.error("Error while initializing MotionDetector: algorithm %s currently not supported", tc.motionDetectAlgo)
 
         return cls._instance
 
@@ -376,7 +377,7 @@ class MotionDetector():
         now = datetime.now()
         logger.debug("Thread %s: MotionDetector._doAction - now: %s", get_ident(), now)
         if cls.eventStart is None:
-            cls.eventKey = now.strftime("%Y-%m-%dT%H:%M:%S")
+            cls.eventKey = TimeKeyGenerator().make_key(now)
             cls.eventStart = now
             logEvent = True
             logger.debug("Thread %s: MotionDetector._doAction - New event started with key: %s", get_ident(), cls.eventKey)
@@ -388,7 +389,7 @@ class MotionDetector():
         if deltaSec > tc.detectionPauseSec:
             # Difference to previous event is larger than pause -> new event
             logger.debug("Thread %s: MotionDetector._doAction - Starting new event", get_ident())
-            cls.eventKey = now.strftime("%Y-%m-%dT%H:%M:%S")
+            cls.eventKey = TimeKeyGenerator().make_key(now)
             cls.eventStart = now
             cls.nrPhotos = 0
             cls.lastPhoto = None
@@ -443,7 +444,7 @@ class MotionDetector():
             logger.debug("Thread %s: MotionDetector._doAction - delta<delay  - logEvent: %s startVideo: %s recordVideo: %s doPhoto: %s doNotify: %s", get_ident(), logEvent, startVideo, recordVideo, doPhoto, doNotify)
 
         fnRaw = now.strftime("%Y-%m-%dT%H-%M-%S")
-        logTS = now.strftime("%Y-%m-%dT%H:%M:%S")
+        logTS = now.strftime("%Y-%m-%dT%H:%M:%S.%f")
         fnPhoto = fnRaw + ".jpg"
         fnVideo = fnRaw + ".mp4"
 
@@ -452,9 +453,9 @@ class MotionDetector():
                 MotionDetector().when_motion_detected()
 
         if logEvent:
-            with open(tc.logFilePath, "a") as f:
-                f.write(logTS + " Event  detected       Trigger: " + trigger["trigger"] + " - '" + trigger["triggertype"] + "' " + str(trigger["triggerparam"]) + "\n")
             key = cls.eventKey
+            with open(tc.logFilePath, "a") as f:
+                f.write(key + " " + 26 * " " + " Event   detected       Trigger: " + trigger["trigger"] + " - '" + trigger["triggertype"] + "' " + str(trigger["triggerparam"]) + "\n")
             # logger.debug("Thread %s: MotionDetector._doAction - INSERT INTO events - timestamp: %s", get_ident(), key)
             cls.db.execute(
                 "INSERT INTO events (timestamp, date, minute, time, type, trigger, triggertype, triggerparam) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -482,7 +483,7 @@ class MotionDetector():
                     cls.videoEncoder = encoder
                 cls.videoName = fnVideo
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Video: " + fnVideo + " started" + "\n")
+                    f.write(cls.eventKey + " " + logTS + "  Video: " + fnVideo + " started" + "\n")
                 cls.videoKey = logTS
                 # logger.debug("Thread %s: MotionDetector._doAction - INSERT INTO eventactions - Video", get_ident())
                 cls.db.execute(
@@ -493,7 +494,7 @@ class MotionDetector():
                 # logger.debug("Thread %s: MotionDetector._doAction - DB committed", get_ident())
             else:
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Video: " + fnVideo + " Start   Error: " + err + "\n")
+                    f.write(cls.eventKey + " " + logTS + "  Video: " + fnVideo + " Start   Error: " + err + "\n")
 
         photoDone = False
         if doPhoto:
@@ -504,7 +505,7 @@ class MotionDetector():
             photoDone = done
             if done:
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Photo: " + fnPhoto + "\n")
+                    f.write(cls.eventKey + " " + logTS + "  Photo: " + fnPhoto + "\n")
                 # logger.debug("Thread %s: MotionDetector._doAction - INSERT INTO eventactions - Photo", get_ident())
                 cls.db.execute(
                     "INSERT INTO eventactions (event, timestamp, date, time, actiontype, actionduration, filename, fullpath) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -524,7 +525,7 @@ class MotionDetector():
             else:
                 if err != "":
                     with open(tc.logFilePath, "a") as f:
-                        f.write(logTS + " Photo: " + fnPhoto + " Error:  " + err + "\n")
+                        f.write(cls.eventKey + " " + logTS + "  Photo: " + fnPhoto + " Error:  " + err + "\n")
 
         if doNotify:
             cls.notificationDone = now
@@ -708,11 +709,11 @@ class MotionDetector():
                         and tc.videoBboxes == True:
                             cls.mdAlgo.stopRecordMotion()
                             done = True
-                        logTS = now.strftime("%Y-%m-%d %H:%M:%S")
+                        logTS = now.strftime("%Y-%m-%dT%H:%M:%S.%f")
                         if done:
                             cls.videoEncoder = None
                             with open(tc.logFilePath, "a") as f:
-                                f.write(logTS + " Video: " + cls.videoName + " stopped" + "\n")
+                                f.write(cls.eventKey + " " + logTS + "  Video: " + cls.videoName + " stopped" + "\n")
                             logger.debug("Thread %s: MotionDetector._stopAction - UPDATE eventactions", get_ident())
                             cls.db.execute(
                                 "UPDATE eventactions set actionduration = ? WHERE event = ? AND timestamp = ? AND actiontype = ?",
@@ -731,7 +732,7 @@ class MotionDetector():
                                     cls._sendNotification()
                         else:
                             with open(tc.logFilePath, "a") as f:
-                                f.write(logTS + " Video: " + cls.videoName + " Stop     Error" + err + "\n")
+                                f.write(cls.eventKey + " " + logTS + "  Video: " + cls.videoName + " Stop     Error" + err + "\n")
                         cls.videoStop = now
                     else:
                         waitForVideo = True
@@ -805,13 +806,16 @@ class MotionDetector():
                 logger.error("Circular output not started: %s", err)
                 cfg.triggerConfig.actionVR = 1
         stop = False
+        logger.debug("Thread %s: MotionDetector._motionThread - starting loop - stop=%s, isActive=%s", get_ident(), stop, cls._isActive())
         while not stop:
             if cls._isActive():
                 if not cfg.serverConfig.isLiveStream:
                     cam.startLiveStream()
+                    # logger.debug("Thread %s: MotionDetector._motionThread - Live stream started", get_ident())
                 try:
                     # Just to keep the live stream running
-                    frame, frameRaw = cam.get_frame()
+                    frame, frameRaw = cam.get_frame(noAnimation=True)
+                    # logger.debug("Thread %s: MotionDetector._motionThread - accessed frame to keep camera active", get_ident())
                     cur = cam.getLiveViewImageForMotionDetection()
                     # logger.debug("Thread %s: MotionDetector._motionThread - got live view buffer", get_ident())
                     if prv is not None:
@@ -844,7 +848,7 @@ class MotionDetector():
                                 cls.mdAlgo.recordMotion()
                     prv = cur
                     if cls.mThreadStop:
-                        logger.debug("Thread %s: MotionDetector._motionThread - stop requested", get_ident())
+                        # logger.debug("Thread %s: MotionDetector._motionThread - stop requested", get_ident())
                         cls._stopAction(force=True)
                         stop = True
                 except Exception as e:
@@ -868,6 +872,7 @@ class MotionDetector():
             else:
                 logger.error("Circular output not stopped: %s", err)
         cls.mThread = None
+        logger.debug("Thread %s: MotionDetector._motionThread - thread stopped", get_ident())
 
     @classmethod
     def startMotionDetection(cls):

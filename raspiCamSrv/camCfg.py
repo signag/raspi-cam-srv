@@ -1289,7 +1289,15 @@ class TriggerConfig():
                                         (ts, "Photo", eventactions["timestamp"])
                     ).fetchone()
                     if videophoto is None:
-                        eventVideo["photo"] = None
+                        # If no placeholder photo(same timestamp as video) exists, 
+                        # try to find the first photo for the event and use that as the placeholder for the video
+                        videophoto = db.execute("SELECT * FROM eventactions WHERE event = ? AND (actiontype = ? or actiontype = ?) ORDER BY timestamp ASC",
+                                            (ts, "Photo", "Photo(ph)")
+                        ).fetchone()
+                        if videophoto is None:
+                            eventVideo["photo"] = None
+                        else:
+                            eventVideo["photo"] = videophoto["filename"]
                     else:
                         eventVideo["photo"] = videophoto["filename"]
                 ev["video"] = eventVideo
@@ -4439,6 +4447,7 @@ class ServerConfig():
         self._isMicMuted = False
         self._recordAudio = False
         self._audioSync = 0.3
+        self._staticFilesPath = "."
         self._photoRoot = "."
         self._cameraPhotoSubPath = "."
         self._prgOutputPath = "."
@@ -4465,6 +4474,9 @@ class ServerConfig():
         self._isLiveStream = False
         self._isLiveStream2 = None
         self._isVideoRecording = False
+        self._currentVideoPath = ""
+        self._currentVideoFile = ""
+        self._currentVideoStartTime = None
         self._isVideoRecording2 = False
         self._isStereoCamActive = False
         self._isStereoCamRecording = False
@@ -4902,6 +4914,14 @@ class ServerConfig():
         self._audioSync = value
 
     @property
+    def staticFilesPath(self):
+        return self._staticFilesPath
+    
+    @staticFilesPath.setter
+    def staticFilesPath(self, value: str):
+        self._staticFilesPath = value
+
+    @property
     def photoRoot(self):
         return self._photoRoot
 
@@ -5150,6 +5170,30 @@ class ServerConfig():
     @isVideoRecording.setter
     def isVideoRecording(self, value: bool):
         self._isVideoRecording = value
+
+    @property
+    def currentVideoPath(self) -> str:
+        return self._currentVideoPath
+
+    @currentVideoPath.setter
+    def currentVideoPath(self, value: str):
+        self._currentVideoPath = value
+
+    @property
+    def currentVideoFile(self) -> str:
+        return self._currentVideoFile
+
+    @currentVideoFile.setter
+    def currentVideoFile(self, value: str):
+        self._currentVideoFile = value
+
+    @property
+    def currentVideoStartTime(self) -> datetime:
+        return self._currentVideoStartTime
+
+    @currentVideoStartTime.setter
+    def currentVideoStartTime(self, value: datetime):
+        self._currentVideoStartTime = value
 
     @property
     def isVideoRecording2(self) -> bool:

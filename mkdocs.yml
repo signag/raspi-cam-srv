@@ -78,7 +78,7 @@ nav:
           - Motion Detection Configuration: TriggerMotion.md
           - Camera Action Configuration: TriggerCameraActions.md
           - Notification Configuration: TriggerNotification.md
-          - Active Motion Capturing: TriggerActive.md
+          - Active Event Handling: TriggerActive.md
           - Event Viewer: TriggerEventViewer.md
           - Event Calendar: TriggerCalendar.md
       - Cam Menu:

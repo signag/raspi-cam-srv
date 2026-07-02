@@ -9,11 +9,14 @@ from datetime import datetime, timedelta
 from raspiCamSrv.dbx import get_dbx
 from sqlite3 import Connection
 from uuid import uuid4, UUID
+import shutil
 import smtplib
 import json
 from email.message import EmailMessage
 import mimetypes
 import time
+import os
+from raspiCamSrv.timeKeyGenerator import TimeKeyGenerator
 import threading
 import logging
 
@@ -380,6 +383,46 @@ class TriggerHandler():
         return done
     
     @classmethod
+    def _stageVideoPlaceholder(cls, tc:TriggerConfig, sc:ServerConfig, eventId:UUID, db:Connection, name:str):
+        """ Create a placeholder file for the video to be recorded
+
+        Args:
+            tc (TriggerConfig): Trigger configuration
+            sc (ServerConfig): Server configuration
+            eventId (UUID): Unique ID of the event in the context of which the action is executed
+            db (Connection): Database connection
+            name (str): Name of the video file (without extension)
+        """
+        logger.debug("Thread %s: TriggerHandler._stageVideoPlaceholder", get_ident())
+        hasPhoto = False
+        eCtx = cls._getEventContext(eventId)
+        if "trigger" in eCtx:
+            id = eCtx["trigger"]
+            trg =  tc.getTrigger(id)
+            for act, status in trg.actions.items():
+                if status == True:
+                    action = tc.getAction(act)
+                    if action.isActive:
+                        if action.source == "Camera":
+                            if action.method == "take_photo":
+                                hasPhoto = True
+        if hasPhoto == False:
+            path = tc.actionPath
+            # Copy ./static/video_placeholder.jpg to the action path with the name of the video to be recorded
+            placeholder_path = f"{sc.staticFilesPath}/video_placeholder.jpg"
+            destination_path = f"{path}/{name}.jpg"
+            logger.debug("Thread %s: TriggerHandler._stageVideoPlaceholder - Copying placeholder from %s to %s", get_ident(), placeholder_path, destination_path)
+            shutil.copy(placeholder_path, destination_path)
+            photoCtx = {}
+            photoCtx["photo_file"] = f"{name}.jpg"
+            photoCtx["photo_path"] = destination_path
+            photoCtx["photo_time"] = datetime.now()
+            cls._logEvent(db, "placeholder_placed", tc, eCtx, None, photoCtx)
+        else:
+            logger.debug("Thread %s: TriggerHandler._stageVideoPlaceholder - No placeholder needed, photo will be taken", get_ident())
+
+
+    @classmethod
     def _videoTimer(cls, action:Action, isEvent:bool, sc:ServerConfig, tc:TriggerConfig, eventId:UUID):
         """ Record video with duration according to action control. Then stop
 
@@ -478,7 +521,9 @@ class TriggerHandler():
         timeImg = datetime.now()
         if isEvent == True:
             path = tc.actionPath
-            filenameVid = timeImg.strftime("%Y-%m-%dT%H-%M-%S") + "." + typ
+            name = timeImg.strftime("%Y-%m-%dT%H-%M-%S")
+            cls._stageVideoPlaceholder(tc, sc, eventId, db, name)
+            filenameVid = name + "." + typ
             filename = ""
         else:
             path = ""
@@ -492,7 +537,7 @@ class TriggerHandler():
         video["video_file"] = filenameVid
         logger.debug("Thread %s: TriggerHandler._doStartVideo - Recording a video %s", get_ident(), filenameVid)
         try:
-            fp = Camera().recordVideo(filenameVid, filename, alternatePath=path, noEvents=True)
+            fp = Camera().recordVideo(filenameVid, filename, alternatePath=path, noEvents=False)
             video["video_path"] = fp
             time.sleep(2)
             if not sc.error:
@@ -551,8 +596,14 @@ class TriggerHandler():
         if not "video" in ctx:
             ctx["video"] = {}
         video = ctx["video"]
+        if "video_start" not in video:
+            video["video_start"] = sc.currentVideoStartTime
+        if "video_file" not in video:
+            video["video_file"] = sc.currentVideoFile
+        if "video_path" not in video:
+            video["video_path"] = sc.currentVideoPath
         try:
-            Camera().stopVideoRecording(noEvents=True)
+            Camera().stopVideoRecording(noEvents=False)
             video["video_stop"] = datetime.now()
             time.sleep(2)
             if Camera.isVideoRecording() == False:
@@ -640,10 +691,10 @@ class TriggerHandler():
                 if typ == "dng":
                     filename = file + "." + sc.photoType
                     filenameRaw = file + "." + typ
-                    fp = Camera().takeRawImage(filenameRaw, filename, alternatePath=path, noEvents=True)
+                    fp = Camera().takeRawImage(filenameRaw, filename, alternatePath=path, noEvents=False)
                 else:
                     filename = file + "." + typ
-                    fp = Camera().takeImage(filename, alternatePath=path, noEvents=True)
+                    fp = Camera().takeImage(filename, alternatePath=path, noEvents=False)
                     
                 photoCtx = {}
                 photoCtx["photo_time"] = timeImg
@@ -674,6 +725,42 @@ class TriggerHandler():
 
         logger.debug("Thread %s: TriggerHandler._doTakePhoto - exit - done=%s msg=%s", get_ident(), done, msg)
         return done, msg
+
+    @classmethod
+    def _findActiveCameraAction(cls, tc:TriggerConfig, eventId:UUID=None):
+        """ Find an event with an active camera action. 
+        
+        If found, return the eventId. 
+        Otherwise return None
+
+        Returns:
+            tuple(dict, dict): Event context and action context of the event with an active camera action
+        """
+        logger.debug("Thread %s: TriggerHandler._findActiveCameraAction - eventId=%s", get_ident(), eventId)
+        now = datetime.now()
+        videoActive = False
+        latestAccess = None
+        camEventCtx = None
+        camActionCtx = None
+        for eventCtx in cls._event_contexts:
+            logger.debug("Thread %s: TriggerHandler._findActiveCameraAction - eventCtx=%s", get_ident(), eventCtx)
+            if eventId is not None:
+                if eventCtx["event_id"] != eventId:
+                    if "actions" in eventCtx:
+                        actions = eventCtx["actions"]
+                        for actionCtx in actions:
+                            action = tc.getAction(actionCtx["action"])
+                            if action.device == "CAM-1":
+                                videoActive = True
+                                camEventCtx = eventCtx
+                                camActionCtx = actionCtx
+                                break
+        if camEventCtx is None:
+            eventId = ""
+        else:
+            eventId = camEventCtx["event_id"]
+        logger.debug("Thread %s: TriggerHandler._findActiveCameraAction - videoActive=%s, latestAccess=%s, eventId=%s", get_ident(), videoActive, latestAccess, eventId)
+        return videoActive, camEventCtx, camActionCtx
     
     @classmethod
     def _doCameraAction(cls, action:Action, trigger:Trigger=None, eventId:UUID=None, last:bool=False, threadRegistered:bool=True, wait:bool=True) -> tuple[bool, str]:
@@ -718,11 +805,16 @@ class TriggerHandler():
         acquired = True
         
         if action.device == "CAM-1":
+            logger.debug("Thread %s: TriggerHandler._doCameraAction - isVideoRecording=%s", get_ident(), sc.isVideoRecording)
+            active, camEventCtx, camActionCtx = cls._findActiveCameraAction(tc, eventId)
             if sc.isVideoRecording == True:
+                active = True
+            if active == True:
                 if action.method == "stop_video":
                     acquired = True
                 else:
                     acquired = False
+                    msg = f"Camera is busy with video recording. Action {action.method} not executed"
             else:
                 if action.method == "stop_video":
                     acquired = False
@@ -764,6 +856,10 @@ class TriggerHandler():
             logger.debug("Thread %s: TriggerHandler._doCameraAction - action=%s trigger.id=%s - Not executing. Device busy", get_ident(), action.id, triggerDisp)
             if msg == "":
                 msg = f"Dev:ice {action.device} busy. Please try later."
+            if isEvent == True:
+                eventCtx = cls._getEventContext(eventId)
+                ctx = cls._getActionContext(eventId, action.id)
+                cls._logEvent(db, "camera_err", tc, eventCtx, ctx, err=msg)
 
 
         if last == True:
@@ -790,7 +886,7 @@ class TriggerHandler():
         if "event_id" in ctx:
             logTS = ctx["event_TS"]
         else:
-            logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            logTS =  TimeKeyGenerator().make_key()
         if "trigger" in ctx:
             triggerId = ctx["trigger"]
             trg = tc.getTrigger(triggerId)
@@ -1166,20 +1262,29 @@ class TriggerHandler():
     @classmethod
     def _logEvent(cls, db:Connection, logType:str, tc:TriggerConfig, eventCtx:dict, actionCtx:dict=None, photoCtx:dict=None, err:str=""):
         logger.debug("Thread %s: TriggerHandler._logEvent - entry", get_ident())
-        
+
+        sc = CameraCfg().serverConfig       
         triggerId = eventCtx["trigger"]
         trigger = tc.getTrigger(triggerId)
         eventTS = eventCtx["event_TS"]
+        if trigger.source == "GPIO":
+            triggerType = "Sensor"
+        elif trigger.source == "Camera":
+            triggerType = "Camera"
+        elif trigger.source == "MotionDetector":
+            triggerType = "Motion"
+        else:
+            triggerType = "Unknown"
         
         if logType == "start":
             # Event start
             logTS = eventTS
             key = eventTS
             with open(tc.logFilePath, "a") as f:
-                f.write(eventCtx["event_TS"] + " Event  detected       Trigger: " + trigger.id + " - '" + trigger.source + "' " + str(trigger.params) + "\n")
+                f.write(eventCtx["event_TS"] + " " + 26 * " " + " Event   detected       Trigger: " + trigger.id + " - '" + trigger.source + "' " + str(trigger.params) + "\n")
             db.execute(
                 "INSERT INTO events (timestamp, date, minute, time, type, trigger, triggertype, triggerparam) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (key, key[:10], key[11:16], key[11:19], "Motion", trigger.id, trigger.source, str(trigger.params))
+                (key, key[:10], key[11:16], key[11:19], triggerType, trigger.id, trigger.source, str(trigger.params))
             )
             db.commit()
             
@@ -1194,12 +1299,12 @@ class TriggerHandler():
                     duration = action.control["duration"]
                     if duration > 0:
                         hasDuration = True
-                logTS = actionCtx["action_start"].strftime("%Y-%m-%dT%H:%M:%S")
+                logTS = actionCtx["action_start"].strftime("%Y-%m-%dT%H:%M:%S.%f")
                 with open(tc.logFilePath, "a") as f:
                     if hasDuration == True:
-                        f.write(logTS + "  GPIO: " + actionId + " started\n")
+                        f.write(eventTS + " " + logTS + "   GPIO: " + actionId + " started\n")
                     else:
-                        f.write(logTS + "  GPIO: " + actionId + "\n")
+                        f.write(eventTS + " " + logTS + "   GPIO: " + actionId + "\n")
                 db.execute(
                     "INSERT INTO eventactions (event, timestamp, date, time, actiontype, actionduration, filename, fullpath) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (eventTS, logTS, logTS[:10], logTS[11:19], actionId, duration, "", "")
@@ -1211,12 +1316,12 @@ class TriggerHandler():
             if "action" in actionCtx:
                 actionId = actionCtx["action"]
                 action = tc.getAction(actionId)
-                actionTS = actionCtx["action_start"].strftime("%Y-%m-%dT%H:%M:%S")
-                logTS = actionCtx["action_stop"].strftime("%Y-%m-%dT%H:%M:%S")
+                actionTS = actionCtx["action_start"].strftime("%Y-%m-%dT%H:%M:%S.%f")
+                logTS = actionCtx["action_stop"].strftime("%Y-%m-%dT%H:%M:%S.%f")
                 duration = actionCtx["action_stop"] - actionCtx["action_start"]
                 actionDuration = duration.total_seconds()
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + "  GPIO: " + actionId + " stopped\n")
+                    f.write(eventTS + " " + logTS + "   GPIO: " + actionId + " stopped\n")
                 db.execute(
                     "UPDATE eventactions set actionduration = ? WHERE event = ? AND timestamp = ? AND actiontype = ?",
                     (actionDuration, eventTS, actionTS, actionId)
@@ -1227,38 +1332,50 @@ class TriggerHandler():
             # GPIO Error
             if "action" in actionCtx:
                 actionId = actionCtx["action"]
-                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + "  GPIO: " + actionId + " Error:  " + err + "\n")
+                    f.write(eventTS + " " + logTS + "   GPIO: " + actionId + " Error:  " + err + "\n")
             
         elif logType == "photo_taken":
             # Photo taken
             if "photo_file" in photoCtx:
                 fnPhoto = photoCtx["photo_file"]
                 fpPhoto = photoCtx["photo_path"]
-                logTS = photoCtx["photo_time"].strftime("%Y-%m-%dT%H:%M:%S")
+                logTS = photoCtx["photo_time"].strftime("%Y-%m-%dT%H:%M:%S.%f")
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Photo: " + fnPhoto + "\n")
+                    f.write(eventTS + " " + logTS + "  Photo: " + fnPhoto + "\n")
                 db.execute(
                     "INSERT INTO eventactions (event, timestamp, date, time, actiontype, actionduration, filename, fullpath) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (eventTS, logTS, logTS[:10], logTS[11:19], "Photo", 0, fnPhoto, fpPhoto)
                 )
                 db.commit()
         
+        elif logType == "camera_err":
+            # Camera Action error
+            logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+            with open(tc.logFilePath, "a") as f:
+                f.write(eventTS + " " + logTS + " Action: " + actionCtx["action"] + "   Error: " + err + "\n")
+        
         elif logType == "photo_error":
             # Photo Error
             if "photo_file" in photoCtx:
                 fnPhoto = photoCtx["photo_file"]
-                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Photo: " + fnPhoto + " Error:  " + err + "\n")
+                    f.write(eventTS + " " + logTS + "  Photo: " + fnPhoto + " Error:  " + err + "\n")
 
         elif logType == "video_start":
             # Video Start
             if "video" in actionCtx:
-                fnVideo = actionCtx["video"]["video_file"]
-                fpVideo = actionCtx["video"]["video_path"]
-                logTS = actionCtx["video"]["video_start"].strftime("%Y-%m-%dT%H:%M:%S")
+                if "video_file" in actionCtx["video"]:
+                    fnVideo = actionCtx["video"]["video_file"]
+                else:
+                    fnVideo = ""
+                if "video_path" in actionCtx["video"]:
+                    fpVideo = actionCtx["video"]["video_path"]
+                else:
+                    fpVideo = ""
+                logTS = actionCtx["video"]["video_start"].strftime("%Y-%m-%dT%H:%M:%S.%f")
                 actionId = actionCtx["action"]
                 action = tc.getAction(actionId)
                 if "duration" in action.control:
@@ -1266,7 +1383,7 @@ class TriggerHandler():
                 else:
                     actionDuration = 0
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Video: " + fnVideo + " started" + "\n")
+                    f.write(eventTS + " " + logTS + "  Video: " + fnVideo + " started" + "\n")
                 db.execute(
                     "INSERT INTO eventactions (event, timestamp, date, time, actiontype, actionduration, filename, fullpath) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (eventTS, logTS, logTS[:10], logTS[11:19], "Video", actionDuration, fnVideo, fpVideo)
@@ -1276,40 +1393,85 @@ class TriggerHandler():
         elif logType == "video_start_err":
             # Video Start error
             if "video" in actionCtx:
-                fnVideo = actionCtx["video"]["video_file"]
-                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                if "video_file" in actionCtx["video"]:
+                    fnVideo = actionCtx["video"]["video_file"]
+                else:
+                    fnVideo = ""
+                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Video: " + fnVideo + " Start   Error: " + err + "\n")
+                    f.write(eventTS + " " + logTS + "  Video: " + fnVideo + " Start   Error: " + err + "\n")
             
         elif logType == "video_stop":
             # Video stopped
             if "video" in actionCtx:
-                fnVideo = actionCtx["video"]["video_file"]
-                fpVideo = actionCtx["video"]["video_path"]
-                videoKey = actionCtx["video"]["video_start"].strftime("%Y-%m-%dT%H:%M:%S")
-                logTS = actionCtx["video"]["video_stop"].strftime("%Y-%m-%dT%H:%M:%S")
+                if "video_file" in actionCtx["video"]:
+                    fnVideo = actionCtx["video"]["video_file"]
+                else:
+                    fnVideo = ""
+                if "video_path" in actionCtx["video"]:
+                    fpVideo = actionCtx["video"]["video_path"]
+                else:
+                    fpVideo = ""
+                if "video_start" in actionCtx["video"]:
+                    videoStart = actionCtx["video"]["video_start"]
+                    videoKey = actionCtx["video"]["video_start"].strftime("%Y-%m-%dT%H:%M:%S.%f")
+                else:
+                    videoStart = None
+                    videoKey = ""
+                if "video_stop" in actionCtx["video"]:
+                    videoStop = actionCtx["video"]["video_stop"]
+                    logTS = actionCtx["video"]["video_stop"].strftime("%Y-%m-%dT%H:%M:%S.%f")
+                else:
+                    videoStop = None
+                    logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
                 actionId = actionCtx["action"]
                 action = tc.getAction(actionId)
                 if "duration" in action.control:
                     actionDuration = action.control["duration"]
                 else:
                     actionDuration = 0
+                if videoStart is not None and videoStop is not None:
+                    duration = videoStop - videoStart
+                    actionDuration = duration.total_seconds()
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Video: " + fnVideo + " stopped" + "\n")
-                logger.debug("Thread %s: MotionDetector._stopAction - UPDATE eventactions", get_ident())
+                    f.write(eventTS + " " + logTS + "  Video: " + fnVideo + " stopped" + "\n")
+                fullPath = os.path.join(fpVideo, fnVideo)
+                logger.debug("Thread %s: TriggerHandler._stopAction - UPDATE eventactions", get_ident())
+                #db.execute(
+                #    "UPDATE eventactions set actionduration = ? WHERE event = ? AND timestamp = ? AND actiontype = ?",
+                #    (round(actionDuration,0), eventTS, videoKey, "Video")
+                #)
                 db.execute(
-                    "UPDATE eventactions set actionduration = ? WHERE event = ? AND timestamp = ? AND actiontype = ?",
-                    (round(actionDuration,0), eventTS, videoKey, "Video")
+                    "UPDATE eventactions set actionduration = ? WHERE fullpath = ?",
+                    (round(actionDuration,0), fullPath)
                 )
                 db.commit()
         
         elif logType == "video_stop_err":
             # Video stop error
             if "video" in actionCtx:
-                fnVideo = actionCtx["video"]["video_file"]
-                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                if "video_file" in actionCtx["video"]:
+                    fnVideo = actionCtx["video"]["video_file"]
+                else:
+                    fnVideo = ""
+                logTS = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
                 with open(tc.logFilePath, "a") as f:
-                    f.write(logTS + " Video: " + fnVideo + " Stop     Error" + err + "\n")
+                    f.write(eventTS + " " + logTS + "  Video: " + fnVideo + " Stop     Error" + err + "\n")
+
+        elif logType == "placeholder_placed":
+            # Placeholder for Video placed
+            if "photo_file" in photoCtx:
+                fnPhoto = photoCtx["photo_file"]
+                fpPhoto = photoCtx["photo_path"]
+                logTS = photoCtx["photo_time"].strftime("%Y-%m-%dT%H:%M:%S.%f")
+                with open(tc.logFilePath, "a") as f:
+                    f.write(eventTS + " " + logTS + "  Photo: " + fnPhoto + " (placeholder)" "\n")
+                db.execute(
+                    "INSERT INTO eventactions (event, timestamp, date, time, actiontype, actionduration, filename, fullpath) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (eventTS, logTS, logTS[:10], logTS[11:19], "Photo(ph)", 0, fnPhoto, fpPhoto)
+                )
+                db.commit()
+
         else:
             logger.error("TriggerHandler._logEvent - Unknown logType %s", logType)
         
@@ -1330,7 +1492,7 @@ class TriggerHandler():
                 "trigger": trigger,
                 "event_time": eventTime,
                 "event_TS": eventTimestamp,
-                "actions]:[
+                "actions":[
                     {
                         "action": action,
                         "is_last": is_last,
@@ -1383,7 +1545,7 @@ class TriggerHandler():
                 eventCtx["trigger"] = trigger.id
                 now = datetime.now()
                 eventCtx["event_time"] = now
-                eventCtx["event_TS"] = now.strftime("%Y-%m-%dT%H:%M:%S")
+                eventCtx["event_TS"] = TimeKeyGenerator().make_key(now)
                 eventCtx["actions"] = []
                 with cls._context_lock:
                     cls._event_contexts.append(eventCtx)
@@ -1521,7 +1683,7 @@ class TriggerHandler():
                 attr = getattr(deviceObj, event)
                 assignment = f"{deviceClass}.{event}"
                 setattr(deviceObj, event, lambda deviceObj=deviceObj, trg=trg: cls._actionDispatcher(deviceObj, trigger=trg))
-                logger.debug("Thread %s: TriggerHandler._registerGpioTrigger - Trigger: %s - callback assigned to %s", get_ident(),  triggerId, assignment)
+                logger.debug("Thread %s: TriggerHandler._registerCameraTrigger - Trigger: %s - callback assigned to %s", get_ident(),  triggerId, assignment)
                 with cls._registry_lock:
                     reg["methods"].append(event)
             else:

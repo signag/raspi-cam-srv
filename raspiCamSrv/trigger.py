@@ -234,14 +234,14 @@ def test_motion_detection():
                 MotionDetector().setAlgorithm()
                 MotionDetector().startMotionDetection()
                 if sc.error:
-                    logger.debug("In motion detection - test not started because of error")
+                    logger.debug("In test_motion_detection - test not started because of error")
                     msg = "Error in " + sc.errorSource + ": " + sc.error
                     flash(msg)
                     if sc.error2:
                         flash(sc.error2)
                     err = None
                 elif tc.error:
-                    logger.debug("In motion detection - test not started because of error")
+                    logger.debug("In test_motion_detection - test not started because of error")
                     msg = "Error in " + tc.errorSource + ": " + tc.error
                     flash(msg)
                     if tc.error2:
@@ -249,9 +249,9 @@ def test_motion_detection():
                     err = None
                 else:
                     sc.isTriggerRecording = True
-                    logger.debug("In motion detection - test started")
+                    logger.debug("In test_motion_detection - test started")
             else:
-                err = "Motion detection is not activated activated"
+                err = "Motion detection is not activated! Please activate it in the 'Control' tab to test it."
             if err:
                 flash(err)
         else:
@@ -510,14 +510,14 @@ def start_triggered_capture():
             if tc.triggeredByEvents:
                 TriggerHandler().start()
             if sc.error:
-                logger.debug("In motion detection not started because of error")
+                logger.debug("In start_triggered_capture - not started because of error")
                 msg = "Error in " + sc.errorSource + ": " + sc.error
                 flash(msg)
                 if sc.error2:
                     flash(sc.error2)
                 err = None
             elif tc.error:
-                logger.debug("In motion detection not started because of error")
+                logger.debug("In start_triggered_capture - not started because of error")
                 msg = "Error in " + tc.errorSource + ": " + tc.error
                 flash(msg)
                 if tc.error2:
@@ -528,7 +528,7 @@ def start_triggered_capture():
                     sc.isTriggerRecording = True
                 if tc.triggeredByEvents:
                     sc.isEventhandling = True
-                logger.debug("In motion detection started")
+                logger.debug("In start_triggered_capture - started")
         else:
             err = "There is no trigger activated"
         if err:
@@ -553,11 +553,11 @@ def stop_triggered_capture():
             MotionDetector().stopMotionDetection()
             sc.isTriggerRecording = False
             sc.isTriggerWaiting = False
-            logger.debug("In motion - detection stopped")
+            logger.debug("In stop_triggered_capture - MotionDetector stopped")
         if sc.isEventhandling:
             TriggerHandler().stop()
             sc.isEventhandling = False
-            logger.debug("In Eventhandling stopped")
+            logger.debug("In stop_triggered_capture - TriggerHandler stopped")
     return render_template("trigger/trigger.html", tc=tc, sc=sc, tmp=tmp)
 
 @bp.route("/prev_month", methods=("GET", "POST"))
@@ -1496,7 +1496,7 @@ def trigger_action():
                                 has_video = True
                     if has_video == True \
                     and has_photo == False:
-                        err = f"Trigger {trigger.id} has 'event_log' set. Therefore you should add a 'take_photo' action in addition to the video action!"
+                        err = f"Trigger {trigger.id} has 'event_log' set. If you do not add a 'take_photo' action, a placeholder photo will be used for the video!"
                         break
             if trigger.source == "MotionDetector":
                 # Check that no Camera actions are assigned

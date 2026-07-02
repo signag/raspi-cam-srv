@@ -29,7 +29,7 @@ shows, from top to bottom:
 - Event date
 - Event time
 - Event trigger
-- Event trigger algorithm   
+- Event trigger algorithm (for Motion Detection)  
 [Mean Square Diff](./TriggerMotion.md)    
 [Frame Diff.](./TriggerMotion.md#test-for-frame-differencing-algorithm)    
 [Optical Flow](./TriggerMotion.md#test-for-optical-flow-algorithm)    
@@ -57,4 +57,21 @@ When [Photos/Videos with RoI/RoNI](./TriggerMotion.md) has been activated, borde
 In case that photos have been taken together with videos, this is represented as shown below.   
 Videos show the video length in the footer.
 
-![EventsVodeoPhoto](./img/Trigger_Events_Photo.jpg)
+![EventsVideoPhoto](./img/Trigger_Events_Photo.jpg)
+
+## Events from configured Triggers
+
+Events originating from configured [Triggers](./TriggerTriggers.md) (GPIO input devices, Camera action events or camera-based motion detection) are also shown on this page.
+
+![GPIO_Events](./img/Trigger_Events_GPIO.jpg)
+
+If the [Actions](./TriggerActions.md) associated with such a Trigger include one of the available camera actions (*take_photo*, *record_video*, *start_video*, *stop_video*), videos and photos taken will be accessible here.
+
+If the [Trigger-Actions](./TriggerTriggerActions.md) include video actions but no action to take a photo, the system will stage a placeholder photo through which the video taken will be accessible.
+
+If an action starts video recording (*start_video*), the video will be accessible but cannot be played while the camera is recording. The lengt of the video will be shown as "0 sec"    
+If later another event fires which has an action to stop recording (*stop_video*), the system will calculate the video length as the time difference between start and stop actions.
+
+If video recording is currently active, while an [Action](./TriggerActions.md) executes, which tries to start recording, this will not be done and the [log file](./TriggerActive.md#log-file) will show an error message
+
+**NOTE**: Camera actions started through an [Action Button](./ConsoleActionButtons.md), the resulting video or photo will not be visible here but in the [Photo Viewer](./PhotoViewer.md). If, however, the camera action fires a trigger, this will be visible here, in case that the background process has been started.

@@ -130,6 +130,7 @@ def create_app(test_config=None):
     from . import settings
     cfg = camCfg.CameraCfg()
     sc = cfg.serverConfig
+    sc.staticFilesPath = app.static_folder
     sc.photoRoot = app.static_folder
     sc.prgOutputPath = prgOutPath
     sc.checkEnvironment()
@@ -144,6 +145,7 @@ def create_app(test_config=None):
         cfg.loadConfig(cfgPath)
     cfg = camCfg.CameraCfg()
     sc = cfg.serverConfig
+    sc.staticFilesPath = app.static_folder
     sc.serverStartTime = serverStartTime
     sc.cfgPath = cfgPath
     sc.cfgBackupPath = os.path.dirname(app.instance_path) + "/backups"

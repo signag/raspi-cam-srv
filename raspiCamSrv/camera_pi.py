@@ -2748,20 +2748,23 @@ class Camera:
             time.sleep(0.05)
         return canvas
 
-    def get_frame(self):
+    def get_frame(self, noAnimation=False):
         """Return the current camera frame."""
         # logger.debug("Thread %s: Camera.get_frame", get_ident())
         
         with Camera.threadLock:
             Camera.last_access = time.time()
         
-        if cv2Available == True:
-            if Camera.camWaitingForFirstFrame == True:
-                frame = self.startAnimation()
-                stat, frame_jpg = cv2.imencode(".jpg", frame)
-                if stat:
-                    return frame_jpg.tobytes(), None
-                return None, None
+        if noAnimation == False:
+            if cv2Available == True:
+                if Camera.camWaitingForFirstFrame == True:
+                    frame = self.startAnimation()
+                    stat, frame_jpg = cv2.imencode(".jpg", frame)
+                    if stat:
+                        # logger.debug("Thread %s: Camera.get_frame - Returning animation frame", get_ident())
+                        return frame_jpg.tobytes(), None
+                    # logger.error("Thread %s: Camera.get_frame - Error encoding animation frame", get_ident())
+                    return None, None
 
         # wait for a signal from the camera thread
         # logger.debug("Thread %s: Camera.get_frame - waiting for frame", get_ident())
@@ -2769,7 +2772,7 @@ class Camera:
         # logger.debug("Thread %s: Camera.get_frame - continue", get_ident())
         Camera.event.clear()
 
-        # logger.debug("Thread %s: Returning frame", get_ident())
+        # logger.debug("Thread %s: Camera.get_frame - Returning frame", get_ident())
         return Camera.frame, Camera.frameRaw
 
     def get_frame2(self):
@@ -6102,6 +6105,8 @@ class Camera:
                     elapsed = time.time() - videoStart
                 sc.isVideoRecording = False
                 sc.isAudioRecording = False
+                sc.currentVideoPath = ""
+                sc.currentVideoFile = ""
             else:
                 while Camera.stopVideoRequested == False:
                     ret, frame = Camera.cam.read()
@@ -6226,6 +6231,8 @@ class Camera:
                     time.sleep(0.1)
                     elapsed = time.time() - videoStart
                 sc.isVideoRecording = False
+                sc.currentVideoPath = ""
+                sc.currentVideoFile = ""
                 sc.isAudioRecording = False
             else:
                 while Camera.stopVideoRequested == False:
@@ -6568,6 +6575,9 @@ class Camera:
             path = alternatePath
         output = path + "/" + filenameVid
         prgoutput = sc.prgOutputPath + "/" + filenameVid
+        sc.currentVideoPath = path
+        sc.currentVideoFile = filenameVid
+        sc.currentVideoStartTime = datetime.datetime.now()
 
         if Camera.videoThread is None:
             Camera.videoOutput = output
