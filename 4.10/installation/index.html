@@ -4145,14 +4145,15 @@ If you want to update an existing installation to the latest version, see <a hre
 <ol>
 <li>Connect to the Pi using SSH: <br><code>ssh &lt;user&gt;@&lt;host&gt;</code><br>with <code>&lt;user&gt;</code> and <code>&lt;host&gt;</code> as specified during setup with Imager.</li>
 <li>Make sure that the system is up to date<br><code>sudo apt update</code> <br><code>sudo apt full-upgrade</code></li>
-<li>Run the automatic installer with:    <br />
-<code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/signag/raspi-cam-srv/main/scripts/install_raspiCamSrv.sh)</code>  <br />
-Follow instructions given by the installer (see <a href="#installer">below</a>)</li>
-<li>When the installer has finished successfully, open a browser and connect to raspiCamSrv using the indicated URL.</li>
-<li>Before you can login, you first need to <a href="../Authentication/">register</a>.<br>The first user will automatically be SuperUser who can later register other users (<a href="../Authentication/#user-management">User Management</a>)</li>
-<li>After successful log-in, the <a href="../LiveScreen/">Live screen</a> will be shown, if at least one camera is connected, otherwise the <a href="../Information/">Info</a> screen.</li>
-<li>For usage of <strong>raspiCamSrv</strong>, please refer to the <a href="../UserGuide/">User Guide</a></li>
+<li>Run the automatic installer with:      </li>
 </ol>
+<pre><code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/signag/raspi-cam-srv/main/scripts/install_raspiCamSrv.sh)
+</code></pre>
+<p>Follow instructions given by the installer (see <a href="#installer">below</a>)
+4. When the installer has finished successfully, open a browser and connect to raspiCamSrv using the indicated URL.
+5. Before you can login, you first need to <a href="../Authentication/">register</a>.<br>The first user will automatically be SuperUser who can later register other users (<a href="../Authentication/#user-management">User Management</a>)
+6. After successful log-in, the <a href="../LiveScreen/">Live screen</a> will be shown, if at least one camera is connected, otherwise the <a href="../Information/">Info</a> screen.
+7. For usage of <strong>raspiCamSrv</strong>, please refer to the <a href="../UserGuide/">User Guide</a></p>
 <h2 id="installer">Installer</h2>
 <p><strong>NOTE</strong>: You can run the installer multiple times without any risk, also over an existing installation.</p>
 <p>So, if you want to switch the <a href="../Information_Sys/#wsgi-server">WSGI server</a> or need more <a href="../installation_man/#gunicorn-settings">threads for Gunicorn</a>, or if you want to extend the softwarestack with a missing package, just rerun the installer. It will not touch your existing data, but just update the installation to the latest version and adjust the service configuration to your requirements.</p>
