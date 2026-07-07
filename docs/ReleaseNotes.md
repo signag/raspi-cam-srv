@@ -2,6 +2,15 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.10.2
+
+### Bugfixes
+
+- Fixed a bug which under certain conditions caused an exception ```AttributeError: 'Picamera2' object has no attribute 'allocator'```. (See alsp [Picamera2 issue #1401](https://github.com/raspberrypi/picamera2/issues/1401))
+<br>The root cause was the introduction of an animation to bridge the time until the camera delivers the first image ([V4.6.0](#v460)). This was especially introduced for the AI camera which has significantly longer start times compared with other cameras.
+<br>With animation, the stream starts although the camera has not yet been started. This signalled to other parts of the application that a stream was available and the camera could be used, for example, for video recording.
+<br>This race condition has led to the above exception mainly on systems with lower performance (Pi 4 and lower) but not on Pi 5. 
+
 ## V4.10.1
 
 ### Bugfixes

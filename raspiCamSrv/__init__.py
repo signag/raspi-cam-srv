@@ -193,7 +193,7 @@ def create_app(test_config=None):
                 if sr.continueOnServerStart == True:
                     sr.nextStatus("pause")
                     # Start live stream in order to load lowres config for later live stream compatibility
-                    Camera().startLiveStream()
+                    Camera().startLiveStream(noAnimation=True)
                     time.sleep(2)
                     Camera().startPhotoSeries(sr)
                     time.sleep(2)

@@ -810,7 +810,7 @@ class MotionDetector():
         while not stop:
             if cls._isActive():
                 if not cfg.serverConfig.isLiveStream:
-                    cam.startLiveStream()
+                    cam.startLiveStream(noAnimation=True)
                     # logger.debug("Thread %s: MotionDetector._motionThread - Live stream started", get_ident())
                 try:
                     # Just to keep the live stream running
@@ -917,7 +917,7 @@ class MotionDetector():
                 if not cls.mdAlgo is None:
                     cls.mdAlgo.test = False
             if not CameraCfg().serverConfig.isLiveStream:
-                Camera().startLiveStream()
+                Camera().startLiveStream(noAnimation=True)
             if not sc.error:
                 logger.debug("Thread %s: MotionDetector.startMotionDetection - starting new thread", get_ident())
                 cls.mThread = threading.Thread(target=cls._motionThread, daemon=True)

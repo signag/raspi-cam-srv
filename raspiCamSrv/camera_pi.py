@@ -2384,7 +2384,7 @@ class Camera:
             )
 
     @classmethod
-    def startLiveStream(cls):
+    def startLiveStream(cls, noAnimation=False):
         """Start thread for live stream"""
         logger.debug("Thread %s: Camera.startLiveStream", get_ident())
         if (not CameraCfg().serverConfig.error) and (not CameraCfg().serverConfig.noCamera):
@@ -2420,7 +2420,7 @@ class Camera:
                         get_ident(),
                     )
                     # Waiting not necessary if camera-start animation is shown
-                    if cv2Available == False:
+                    if cv2Available == False or noAnimation == True:
                         Camera.event.wait()
                     if not CameraCfg().serverConfig.error:
                         CameraCfg().serverConfig.isLiveStream = True
@@ -2428,7 +2428,7 @@ class Camera:
                     logger.debug(
                         "Thread %s: Camera.startLiveStream - Thread exists", get_ident()
                     )
-                    if not Camera.thread.is_alive:
+                    if not Camera.thread.is_alive():
                         logger.debug(
                             "Thread %s: Camera.startLiveStream - Thread is not alive",
                             get_ident(),
@@ -2441,7 +2441,7 @@ class Camera:
                         )
 
     @classmethod
-    def startLiveStream2(cls):
+    def startLiveStream2(cls, noAnimation = False):
         """Start thread for live stream"""
         logger.debug("Thread %s: Camera.startLiveStream2", get_ident())
         if not CameraCfg().serverConfig.errorc2:
@@ -2477,7 +2477,7 @@ class Camera:
                             get_ident(),
                         )
                         # Waiting not necessary if camera-start animation is shown
-                        if cv2Available == False:
+                        if cv2Available == False or noAnimation == True:
                             Camera.event2.wait()
                         if not CameraCfg().serverConfig.errorc2:
                             CameraCfg().serverConfig.isLiveStream2 = True
@@ -2486,7 +2486,7 @@ class Camera:
                             "Thread %s: Camera.startLiveStream2 - Thread exists",
                             get_ident(),
                         )
-                        if not Camera.thread2.is_alive:
+                        if not Camera.thread2.is_alive():
                             logger.debug(
                                 "Thread %s: Camera.startLiveStream2 - Thread is not alive",
                                 get_ident(),

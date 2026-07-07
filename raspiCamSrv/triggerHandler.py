@@ -825,7 +825,7 @@ class TriggerHandler():
         streamActive = sc.isLiveStream
         logger.debug("Thread %s: TriggerHandler._doCameraAction - Initially: sc.isLivestream=%s", get_ident(), streamActive)
         with cls._livestream_lock:
-            Camera().startLiveStream()
+            Camera().startLiveStream(noAnimation=True)
             while sc.isLiveStream == False:
                 time.sleep(0.1)
             logger.debug("Thread %s: TriggerHandler._doCameraAction - Finally: sc.isLivestream=%s", get_ident(), sc.isLiveStream)
@@ -835,7 +835,7 @@ class TriggerHandler():
                     logger.debug("Thread %s: TriggerHandler._doCameraAction - Camera requires time for auto algorithms", get_ident())
                     time.sleep(2)
             
-        if acquired:
+        if acquired == True:
             if action.device == "CAM-1":
                 method = action.method
                 if method == "take_photo":

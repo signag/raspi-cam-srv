@@ -2257,7 +2257,7 @@ def enableAi():
         if restart:
             Camera.resetAiCache()
             Camera().liveViewDeactivated = False
-            Camera().startLiveStream()
+            Camera().startLiveStream(noAnimation=True)
         if len(msg) > 0:
             flash(msg)
     return render_template(

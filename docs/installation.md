@@ -11,7 +11,9 @@ If you want to update an existing installation to the latest version, see [Updat
 1. Connect to the Pi using SSH: <br>```ssh <user>@<host>```<br>with ```<user>``` and ```<host>``` as specified during setup with Imager.
 2. Make sure that the system is up to date<br>```sudo apt update``` <br>```sudo apt full-upgrade```
 3. Run the automatic installer with:      
-```bash <(curl -fsSL https://raw.githubusercontent.com/signag/raspi-cam-srv/main/scripts/install_raspiCamSrv.sh)```    
+```
+bash <(curl -fsSL https://raw.githubusercontent.com/signag/raspi-cam-srv/main/scripts/install_raspiCamSrv.sh)
+```    
 Follow instructions given by the installer (see [below](#installer))
 4. When the installer has finished successfully, open a browser and connect to raspiCamSrv using the indicated URL.
 5. Before you can login, you first need to [register](./Authentication.md).<br>The first user will automatically be SuperUser who can later register other users ([User Management](./Authentication.md#user-management))
