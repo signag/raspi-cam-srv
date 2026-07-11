@@ -2,6 +2,14 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.10.3
+
+### Bugfixes
+
+- Fixed a bug where the MJPEG encoder for the live stream was not correctly stopped in cases where the live stream is terminating because of inactivity.
+<br>In special cases, this has caused en error ```[Errno 2] No such file or directory```
+<br>This fix resolves [raspi-cam-srv Issue #96](https://github.com/signag/raspi-cam-srv/issues/96)
+
 ## V4.10.2
 
 ### Bugfixes

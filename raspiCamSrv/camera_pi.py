@@ -4969,21 +4969,29 @@ class Camera:
             )
             prgLogger.debug("time.sleep(videoDuration)")
             Camera.ctrl.registerEncoder(Camera.ENCODER_LIVESTREAM, encoder)
-            logger.debug("Thread %s: Camera.frames - encoder started", get_ident())
+            logger.debug("Thread %s: Camera.frames - encoder registered", get_ident())
 
             # Get the live view scaler crop
             metadata = Camera.cam.capture_metadata()
             srvCam.serverConfig.scalerCropLiveView = metadata["ScalerCrop"]
-            while True:
-                # logger.debug("Thread %s: Camera.frames - Receiving camera stream", get_ident())
-                with Camera.streamOutput.condition:
-                    # logger.debug("Thread %s: Camera.frames - waiting", get_ident())
-                    Camera.streamOutput.condition.wait()
-                    # logger.debug("Thread %s: Camera.frames - waiting done", get_ident())
-                    frame = Camera.streamOutput.frame
-                    l = len(frame)
-                # logger.debug("Thread %s: Camera.frames - got frame with length %s", get_ident(), l)
-                yield frame, None
+            try:
+                while True:
+                    # logger.debug("Thread %s: Camera.frames - Receiving camera stream", get_ident())
+                    with Camera.streamOutput.condition:
+                        # logger.debug("Thread %s: Camera.frames - waiting", get_ident())
+                        Camera.streamOutput.condition.wait()
+                        # logger.debug("Thread %s: Camera.frames - waiting done", get_ident())
+                        frame = Camera.streamOutput.frame
+                        l = len(frame)
+                    # logger.debug("Thread %s: Camera.frames - got frame with length %s", get_ident(), l)
+                    yield frame, None
+            finally:
+                logger.debug("Thread %s: Camera.frames - Stopping encoder", get_ident())
+                try:
+                    Camera.ctrl.stopEncoder(Camera.cam, Camera.ENCODER_LIVESTREAM)
+                    logger.debug("Thread %s: Camera.frames - Encoder stopped", get_ident())
+                except Exception as e:
+                    logger.error("Thread %s: Camera.frames - Exception while stopping encoder: %s", get_ident(), e)
         except Exception as e:
             logger.error("Thread %s: Camera.frames - Exception: %s", get_ident(), e)
             raise
@@ -5081,18 +5089,26 @@ class Camera:
                 name=srvCam.streamingCfg[str(Camera.camNum2)]["liveconfig"].stream,
             )
             Camera.ctrl2.registerEncoder(Camera.ENCODER_LIVESTREAM, encoder)
-            logger.debug("Thread %s: Camera.frames2 - encoder started", get_ident())
+            logger.debug("Thread %s: Camera.frames2 - encoder registered", get_ident())
 
-            while True:
-                # logger.debug("Thread %s: Camera.frames2 - Receiving camera stream", get_ident())
-                with Camera.stream2Output.condition:
-                    # logger.debug("Thread %s: Camera.frames2 - waiting", get_ident())
-                    Camera.stream2Output.condition.wait()
-                    # logger.debug("Thread %s: Camera.frames2 - waiting done", get_ident())
-                    frame = Camera.stream2Output.frame
-                    l = len(frame)
-                # logger.debug("Thread %s: Camera.frames2 - got frame with length %s", get_ident(), l)
-                yield frame, None
+            try:
+                while True:
+                    # logger.debug("Thread %s: Camera.frames2 - Receiving camera stream", get_ident())
+                    with Camera.stream2Output.condition:
+                        # logger.debug("Thread %s: Camera.frames2 - waiting", get_ident())
+                        Camera.stream2Output.condition.wait()
+                        # logger.debug("Thread %s: Camera.frames2 - waiting done", get_ident())
+                        frame = Camera.stream2Output.frame
+                        l = len(frame)
+                    # logger.debug("Thread %s: Camera.frames2 - got frame with length %s", get_ident(), l)
+                    yield frame, None
+            finally:
+                logger.debug("Thread %s: Camera.frames2 - Stopping encoder", get_ident())
+                try:
+                    Camera.ctrl2.stopEncoder(Camera.cam2, Camera.ENCODER_LIVESTREAM)
+                    logger.debug("Thread %s: Camera.frames2 - Encoder stopped", get_ident())
+                except Exception as e:
+                    logger.error("Thread %s: Camera.frames2 - Exception while stopping encoder: %s", get_ident(), e)
         except Exception as e:
             logger.error("Thread %s: Camera.frames2 - Exception: %s", get_ident(), e)
             raise
