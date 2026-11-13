@@ -1457,10 +1457,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pixel-array-size-and-sensor-modes" class="md-nav__link">
+  <a href="#pixel-array-area-and-sensor-modes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pixel Array Size and Sensor Modes
+        Pixel Array Area and Sensor Modes
       
     </span>
   </a>
@@ -3690,10 +3690,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pixel-array-size-and-sensor-modes" class="md-nav__link">
+  <a href="#pixel-array-area-and-sensor-modes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pixel Array Size and Sensor Modes
+        Pixel Array Area and Sensor Modes
       
     </span>
   </a>
@@ -3741,9 +3741,10 @@
 
 <h1 id="image-cropping-and-sensor-modes">Image Cropping and Sensor Modes</h1>
 <p><a href="../ZoomPan/"><img alt="Up" src="../img/goup.gif" /></a></p>
-<h2 id="pixel-array-size-and-sensor-modes">Pixel Array Size and Sensor Modes</h2>
-<p>Raspberry Pi cameras have sensors with various Pixel Array Sizes which are shown in the <a href="../Information_CamPrp/">Camera Properies</a> section of the <a href="../Information/">Info</a> screen.</p>
-<p>For example, the V3 camera (Imx708) has a PixelArraySize of 4608 x 2592 pixels.</p>
+<h2 id="pixel-array-area-and-sensor-modes">Pixel Array Area and Sensor Modes</h2>
+<p><strong>NOTE</strong>: <em>PixelArrayArea</em> was named <em>PixelArraySize</em> in libcamera versions older than v0.7.2+rpt20261009 (see <a href="https://gitlab.com/libcamera/ci/-/commit/fd88c9fa80f3f6925fbe703b813fcb6db648fa69">libcamera commit fd88c9fa</a>)</p>
+<p>Raspberry Pi cameras have sensors with various Pixel Array Areas which are shown in the <a href="../Information_CamPrp/">Camera Properies</a> section of the <a href="../Information/">Info</a> screen.</p>
+<p>For example, the V3 camera (Imx708) has a PixelArrayArea of 4608 x 2592 pixels.</p>
 <p><img alt="SensorModes" src="../img/Cropping_SensorModes.jpg" /></p>
 <p>A camera can operate in a limited number of <strong>Sensor Modes</strong> (e.g. Sensor Modes 0, 1, 2 for the Imx708).</p>
 <p>Information on Sensor Modes is shown in the <a href="../Information_Sensor/">Sensor Mode x</a> section of the <a href="../Information/">Info</a> screen.</p>
@@ -3751,7 +3752,7 @@
 <ul>
 <li>a Bit Depth</li>
 <li>a Frame Rate</li>
-<li>a specific field of view (Crop Limits) which either spans the entire PixelArraySize or a subarea of it.</li>
+<li>a specific field of view (Crop Limits) which either spans the entire PixelArrayArea or a subarea of it.</li>
 <li>an output size which specifies the resolution of the image obtained with this Sensor Mode. <br />
 Here, an image pixel corresponds to a single sensor pixel or a group of 2x2 pixels. <br />
 The output sizes for Imx708 are  <br />
@@ -3774,7 +3775,7 @@ Only width and height are relevant and width and height of the effective ScalerC
 <li>Scaler Crop Default   <br />
 This is the default ScalerCrop rectangle which will always be chosen by the camera if an effective ScalerCrop rectangle is not requested within the Camera Properties.    </li>
 </ul>
-<p>Whereas in a standard case, ScalerCrop Maximum and ScalerCrop Default cover the entire PixelArraySize, the pictures below show the situation for two extreme cases:</p>
+<p>Whereas in a standard case, ScalerCrop Maximum and ScalerCrop Default cover the entire PixelArrayArea, the pictures below show the situation for two extreme cases:</p>
 <p><img alt="ScalerCrop Sensor Mode 0" src="../img/Cropping_ScalerCrop_0.jpg" /> &nbsp; <img alt="ScalerCrop Sensor Mode 0" src="../img/Cropping_ScalerCrop_2.jpg" /></p>
 <h2 id="strategy">Strategy</h2>
 <p>The strategies, by which the camera operates, are not fully documented in detail. <br />
