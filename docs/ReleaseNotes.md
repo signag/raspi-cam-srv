@@ -2,6 +2,16 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.10.4
+
+### Bugfixes
+
+- Fixed KeyError: 'PixelArraySize' which occurred for new libcamera versions (v0.7.2+rpt20261009 and later).
+<br>There was a breaking change in libcamera (see [libcamera issue #364](https://github.com/raspberrypi/libcamera/issues/364)) where the camera property ```PixelArraySize``` was renamed to ```PixelArrayArea``` and changed from a (width, height) tuple to a rectangle.
+<br>The fix works for old and new libcamera versions.
+<br>Inside raspiCamSrv, a property ```pixelArraySize``` is retained but it s populated from the camera property ```PixelArrayArea``` for new libcamera versions.
+<br>This fix resolves [raspiCamSrv issue #100](https://github.com/signag/raspi-cam-srv/issues/100)
+
 ## V4.10.3
 
 ### Bugfixes

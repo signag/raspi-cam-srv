@@ -3,11 +3,13 @@
 [![Up](img/goup.gif)](./ZoomPan.md)
 
 
-## Pixel Array Size and Sensor Modes
+## Pixel Array Area and Sensor Modes
 
-Raspberry Pi cameras have sensors with various Pixel Array Sizes which are shown in the [Camera Properies](./Information_CamPrp.md) section of the [Info](./Information.md) screen.
+**NOTE**: *PixelArrayArea* was named *PixelArraySize* in libcamera versions older than v0.7.2+rpt20261009 (see [libcamera commit fd88c9fa](https://gitlab.com/libcamera/ci/-/commit/fd88c9fa80f3f6925fbe703b813fcb6db648fa69))
 
-For example, the V3 camera (Imx708) has a PixelArraySize of 4608 x 2592 pixels.
+Raspberry Pi cameras have sensors with various Pixel Array Areas which are shown in the [Camera Properies](./Information_CamPrp.md) section of the [Info](./Information.md) screen.
+
+For example, the V3 camera (Imx708) has a PixelArrayArea of 4608 x 2592 pixels.
 
 ![SensorModes](./img/Cropping_SensorModes.jpg)
 
@@ -19,7 +21,7 @@ Each Sensor Mode is characterized by (among others)
 
 - a Bit Depth
 - a Frame Rate
-- a specific field of view (Crop Limits) which either spans the entire PixelArraySize or a subarea of it.
+- a specific field of view (Crop Limits) which either spans the entire PixelArrayArea or a subarea of it.
 - an output size which specifies the resolution of the image obtained with this Sensor Mode.   
 Here, an image pixel corresponds to a single sensor pixel or a group of 2x2 pixels.   
 The output sizes for Imx708 are    
@@ -45,7 +47,7 @@ Only width and height are relevant and width and height of the effective ScalerC
 - Scaler Crop Default     
 This is the default ScalerCrop rectangle which will always be chosen by the camera if an effective ScalerCrop rectangle is not requested within the Camera Properties.    
 
-Whereas in a standard case, ScalerCrop Maximum and ScalerCrop Default cover the entire PixelArraySize, the pictures below show the situation for two extreme cases:
+Whereas in a standard case, ScalerCrop Maximum and ScalerCrop Default cover the entire PixelArrayArea, the pictures below show the situation for two extreme cases:
 
 ![ScalerCrop Sensor Mode 0](./img/Cropping_ScalerCrop_0.jpg) &nbsp; ![ScalerCrop Sensor Mode 0](./img/Cropping_ScalerCrop_2.jpg)
 

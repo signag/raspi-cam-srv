@@ -2918,7 +2918,13 @@ class Camera:
                 cfgProps.unitCellSize = camPprops["UnitCellSize"]
             cfgProps.location = camPprops["Location"]
             cfgProps.rotation = camPprops["Rotation"]
-            cfgProps.pixelArraySize = camPprops["PixelArraySize"]
+            if "PixelArraySize" in camPprops:
+                cfgProps.pixelArraySize = camPprops["PixelArraySize"]
+            else:
+                cfgProps.pixelArraySize = [camPprops["PixelArrayArea"][2], camPprops["PixelArrayArea"][3]]
+            logger.debug(
+                "Thread %s: Camera.loadCameraSpecifics cfgProps.pixelArraySize: %s", get_ident(), cfgProps.pixelArraySize
+            )
             cfgProps.pixelArrayActiveAreas = camPprops["PixelArrayActiveAreas"]
             cfgProps.colorFilterArrangement = camPprops["ColorFilterArrangement"]
             cfgProps.scalerCropMaximum = camPprops["ScalerCropMaximum"]
@@ -2931,12 +2937,20 @@ class Camera:
             cfgProps.hasHdr = "HdrMode" in Camera.cam.camera_controls
 
             if cfgCtrls.include_scalerCrop == False:
-                cfgCtrls.scalerCrop = (
-                    0,
-                    0,
-                    camPprops["PixelArraySize"][0],
-                    camPprops["PixelArraySize"][1],
-                )
+                if "PixelArraySize" in camPprops:
+                    cfgCtrls.scalerCrop = (
+                        0,
+                        0,
+                        camPprops["PixelArraySize"][0],
+                        camPprops["PixelArraySize"][1],
+                    )
+                else:
+                    cfgCtrls.scalerCrop = (
+                        0,
+                        0,
+                        camPprops["PixelArrayArea"][2],
+                        camPprops["PixelArrayArea"][3],
+                    )
                 # This must be updated after the camera has been started
                 Camera.resetScalerCropRequested = True
             logger.debug(
@@ -3478,7 +3492,10 @@ class Camera:
                     scfg["is_ok"] = True
                     camPprops = cls.cam2.camera_properties
                     hasFocus = "AfMode" in cls.cam2.camera_controls
-                    pixelArraySize = copy.copy(camPprops["PixelArraySize"])
+                    if "PixelArraySize" in camPprops:
+                        pixelArraySize = copy.copy(camPprops["PixelArraySize"])
+                    else:
+                        pixelArraySize = [copy.copy(camPprops["PixelArrayArea"][2]), copy.copy(camPprops["PixelArrayArea"][3])]
                     sensorModes = copy.copy(cls.cam2.sensor_modes)
                     maxMode = len(sensorModes) - 1
                     liveViewConfig = CameraConfig()
