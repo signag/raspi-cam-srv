@@ -2,6 +2,17 @@
 
 [![Up](img/goup.gif)](./index.md)
 
+## V4.10.5
+
+### Bugfixes
+
+- Fixed a potential vulnerability issue caused by a hard-coded Flask SECRET_KEY.
+<br>Now, at server start, raspiCamSrv tries to read the key (```flask_secret_key```) from the secrets store (```~/.secrets/raspiCamSrv.secrets```)`.
+<br>If the key is not found in the secrets store, it is generated as a 32 byte random URL-safe text string.
+<br>If the secrets store does not yet exist, it is created with read/write protection restricted to the owner.
+<br>The new flask secret key will be stored for future server starts. The secrets store is also used for storage of the [JWT secret key for the API](./SettingsAPI.md) as well as for [mail server credentials for event notification](./TriggerNotification.md)
+<br>The fix resolves [raspi-cam-srv Issue #98](https://github.com/signag/raspi-cam-srv/issues/98).
+
 ## V4.10.4
 
 ### Bugfixes
@@ -9,7 +20,7 @@
 - Fixed KeyError: 'PixelArraySize' which occurred for new libcamera versions (v0.7.2+rpt20261009 and later).
 <br>There was a breaking change in libcamera (see [libcamera issue #364](https://github.com/raspberrypi/libcamera/issues/364)) where the camera property ```PixelArraySize``` was renamed to ```PixelArrayArea``` and changed from a (width, height) tuple to a rectangle.
 <br>The fix works for old and new libcamera versions.
-<br>Inside raspiCamSrv, a property ```pixelArraySize``` is retained but it s populated from the camera property ```PixelArrayArea``` for new libcamera versions.
+<br>Inside raspiCamSrv, a property ```pixelArraySize``` is retained but it is populated from the camera property ```PixelArrayArea``` for new libcamera versions.
 <br>This fix resolves [raspiCamSrv issue #100](https://github.com/signag/raspi-cam-srv/issues/100)
 
 ## V4.10.3

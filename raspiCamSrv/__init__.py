@@ -10,13 +10,33 @@ from raspiCamSrv.triggerHandler import TriggerHandler
 import json
 import datetime
 import time
+import secrets
 from werkzeug.serving import is_running_from_reloader
 
 def create_app(test_config=None):
+    # get the secret key for the app
+    secret_key = None
+    secrets_path = Path.home() / ".secrets"
+    secrets_store = secrets_path / "raspiCamSrv.secrets"
+    data = {}
+    if secrets_store.exists():
+        data = json.loads(secrets_store.read_text())
+        if "flask_secret_key" in data:
+            secret_key = data.get("flask_secret_key")
+    else:
+        os.makedirs(secrets_path, exist_ok=True)
+        secrets_store.touch(exist_ok=True)
+        secrets_store.chmod(0o600)
+
+    if not secret_key:
+        secret_key = secrets.token_urlsafe(32)
+        data["flask_secret_key"] = secret_key
+        secrets_store.write_text(json.dumps(data,indent=4))
+
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY="dev",
+        SECRET_KEY=secret_key,
         DATABASE=os.path.join(app.instance_path, "raspiCamSrv.sqlite"),
     )
 

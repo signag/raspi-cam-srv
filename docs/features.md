@@ -168,7 +168,7 @@ The [automatic installer](./installation.md) as well as the [Docker Image](https
 - Login requires a password
 - For streaming, it is possible to disable the necessity of authentication
 - API access is secured through JSON Web Tokens (JWT).
-- Secrets (mail account, JWT secret key) are held in a separate secrets store which is not part of the persisted configuration data.
+- Secrets (Flask secret key, mail account, JWT secret key) are held in a separate secrets store which is not part of the persisted configuration data.
 
 ### Configuration Management
 
